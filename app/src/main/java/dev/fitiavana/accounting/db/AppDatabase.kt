@@ -1,4 +1,4 @@
-package com.example.app4_4_api_19.db
+package dev.fitiavana.accounting.db
 
 import android.content.Context
 import androidx.room.Database

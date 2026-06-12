@@ -1,12 +1,12 @@
-package com.example.app4_4_api_19
+package dev.fitiavana.accounting
 
 import android.os.Bundle
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.example.app4_4_api_19.db.AppDatabase
-import com.example.app4_4_api_19.db.TestNote
+import dev.fitiavana.accounting.db.AppDatabase
+import dev.fitiavana.accounting.db.TestNote
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(layout)
 
         Thread {
-            val db = AppDatabase.getInstance(this)
+            val db = AppDatabase.Companion.getInstance(this)
             val dao = db.testNoteDao()
 
             dao.insert(TestNote(content = "Room works!"))

@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "App4_4_API_19"
+rootProject.name = "Accounting"
 include(":app")
  
