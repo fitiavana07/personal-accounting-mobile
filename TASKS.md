@@ -2,14 +2,14 @@
 
 ## Active
 
-- [ ] Accounts CRUD
+- [ ] Account balances
 
 ## Backlog
 
-- [ ] Account balances
-
 ## Completed
 
+- [x] Transactions
+- [x] Accounts CRUD
 - [x] Add bottom nav bar
 - [x] Set up MVVM
 - [x] Improve CLAUDE.md
