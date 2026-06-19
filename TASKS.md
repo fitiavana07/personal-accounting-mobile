@@ -4,9 +4,11 @@
 
 ## Backlog
 
-- [ ] Improve CLAUDE.md
 - [ ] Accounts CRUD
+- [ ] Account balances
 
 ## Completed
 
 - [x] Set up MVVM
+- [x] Improve CLAUDE.md
+- [x] Accounts list
