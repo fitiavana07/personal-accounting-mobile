@@ -42,3 +42,8 @@ ui/
 
 - Minimalist UI design. Simple colors
 - Focus on functionality, more than fancy visuals
+
+## Code
+
+- Avoid using `@Deprecated` methods when possible, use recommended 
+  replacement instead.
