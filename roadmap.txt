@@ -1,5 +1,6 @@
 - Accounts
+- Multi-currency (including crypto)
 - Balances
-- Multi-currency
 - Journal
 - Accounting for gains on assets sale
+- Sync via Bluetooth
