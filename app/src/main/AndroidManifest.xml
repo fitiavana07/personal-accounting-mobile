@@ -23,6 +23,14 @@
             android:name=".ui.editaccount.EditAccountActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
+        <activity
+            android:name=".ui.addtransaction.AddTransactionActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+        <activity
+            android:name=".ui.transactiondetail.TransactionDetailActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
     </application>
 
 </manifest>

@@ -11,4 +11,24 @@
     <string name="dialog_delete_account_message">Are you sure you want to delete this account?</string>
     <string name="accounts">Accounts</string>
     <string name="roadmap">Roadmap</string>
+    <string name="nav_transactions">Transactions</string>
+    <string name="title_new_transaction">New Transaction</string>
+    <string name="title_transaction">Transaction</string>
+    <string name="hint_note">Note (optional)</string>
+    <string name="action_add_entry">Add Entry</string>
+    <string name="label_debit">Debit</string>
+    <string name="label_credit">Credit</string>
+    <string name="label_account">Account</string>
+    <string name="label_date">Date</string>
+    <string name="label_note">Note</string>
+    <string name="label_entries">Entries</string>
+    <string name="label_created">Created</string>
+    <string name="label_id">ID</string>
+    <string name="label_total">Total</string>
+    <string name="label_transaction_date">Transaction Date</string>
+    <string name="empty_transactions">No transactions yet</string>
+    <string name="empty_transactions_no_accounts">Add accounts first to record transactions</string>
+    <string name="error_validation_balance">Debits must equal credits</string>
+    <string name="error_validation_entry_incomplete">Each entry needs an account and an amount</string>
+    <string name="error_entry_both_filled">Each entry can only have debit OR credit, not both</string>
 </resources>

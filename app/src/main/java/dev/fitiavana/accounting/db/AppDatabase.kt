@@ -7,16 +7,43 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import dev.fitiavana.accounting.data.dao.AccountDao
+import dev.fitiavana.accounting.data.dao.TransactionDao
 import dev.fitiavana.accounting.data.model.Account
-import java.util.UUID
+import dev.fitiavana.accounting.data.model.Transaction
+import dev.fitiavana.accounting.data.model.TransactionEntry
 
-@Database(entities = [Account::class], version = 1)
+@Database(entities = [Account::class, Transaction::class, TransactionEntry::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
+    abstract fun transactionDao(): TransactionDao
 
     companion object {
         @Volatile
         private var instance: AppDatabase? = null
+
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `transactions` (" +
+                    "`id` TEXT NOT NULL PRIMARY KEY, " +
+                    "`creationTimestamp` INTEGER NOT NULL, " +
+                    "`transactionDatetime` INTEGER NOT NULL, " +
+                    "`note` TEXT NOT NULL)"
+                )
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `transaction_entries` (" +
+                    "`id` TEXT NOT NULL PRIMARY KEY, " +
+                    "`transactionId` TEXT NOT NULL, " +
+                    "`accountId` TEXT NOT NULL, " +
+                    "`debitAmount` REAL, " +
+                    "`creditAmount` REAL, " +
+                    "FOREIGN KEY(`transactionId`) REFERENCES `transactions`(`id`) ON DELETE CASCADE, " +
+                    "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON DELETE RESTRICT)"
+                )
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_transactionId` ON `transaction_entries` (`transactionId`)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_accountId` ON `transaction_entries` (`accountId`)")
+            }
+        }
 
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
@@ -25,6 +52,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app.db"
                 )
+                    .addMigrations(MIGRATION_1_2)
                     .build().also { instance = it }
             }
         }

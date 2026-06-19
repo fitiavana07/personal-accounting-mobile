@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-06-19T16:46:50.916103040Z">
+        <DropdownSelection timestamp="2026-06-19T17:25:44.872782227Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/home/fitiavana/.config/.android/avd/API_19.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=0123456789ABCDEF" />
             </handle>
           </Target>
         </DropdownSelection>

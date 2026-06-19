@@ -28,4 +28,7 @@ interface AccountDao {
 
     @Query("SELECT COUNT(*) FROM accounts")
     fun count(): Int
+
+    @Query("SELECT * FROM accounts ORDER BY name ASC")
+    fun getAllSync(): List<Account>
 }
