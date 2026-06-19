@@ -10,7 +10,8 @@ Build:
 
 ## Target Platform
 
-This is an Android project targeting **API 19 (KitKat)**. Avoid using APIs above API 19 without adding appropriate compatibility notes or checks.
+This is an Android project targeting **API 19 (KitKat)**. Avoid using APIs
+above API 19 without adding appropriate compatibility notes or checks.
 
 ## General
 
@@ -19,8 +20,10 @@ This is an Android project targeting **API 19 (KitKat)**. Avoid using APIs above
 
 ## Architecture
 
-- **UI:** Android Views (XML layouts) — Jetpack Compose requires API 21+ and is not compatible with the API 19 target.
-- **Architecture pattern:** MVVM (ViewModel + LiveData) — current Android best practice for View-based apps.
+- **UI:** Android Views (XML layouts) — Jetpack Compose requires API 21+ and is
+  not compatible with the API 19 target.
+- **Architecture pattern:** MVVM (ViewModel + LiveData) — current Android best
+  practice for View-based apps.
 - **Local storage:** Room (SQLite ORM).
 
 ### Package structure (by feature)
@@ -37,7 +40,8 @@ ui/
   journal/     # (planned)
 ```
 
-- Account ID is a UUID stored as `String`; generate with `UUID.randomUUID().toString()`.
+- Account ID is a UUID stored as `String`; generate with
+  `UUID.randomUUID().toString()`.
 
 ## Testing
 
@@ -48,13 +52,14 @@ ui/
 
 - Minimalist UI design. Simple colors
 - Focus on functionality, more than fancy visuals
-- Respect basic UI/UX principles, such as colors on primary vs. non-primary 
+- Respect basic UI/UX principles, such as colors on primary vs. non-primary
   actions, colors on destructive actions
 
 ## Code
 
-- Avoid using `@Deprecated` methods when possible, use recommended 
+- Avoid using `@Deprecated` methods when possible, use recommended
   replacement instead.
+- Never include Co-Authored-By in commits
 
 ## On new features
 
