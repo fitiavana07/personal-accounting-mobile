@@ -30,6 +30,7 @@ import dev.fitiavana.accounting.data.model.Account
 import dev.fitiavana.accounting.data.model.Transaction
 import dev.fitiavana.accounting.data.model.TransactionEntry
 import dev.fitiavana.accounting.data.repository.AccountRepository
+import dev.fitiavana.accounting.data.repository.BalanceRepository
 import dev.fitiavana.accounting.data.repository.TransactionRepository
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.transactions.TransactionValidator
@@ -334,6 +335,15 @@ class AddTransactionActivity : AppCompatActivity() {
                         creditAmount = entry.creditAmount
                     )
                 )
+            }
+            val balanceRepo = BalanceRepository(
+                accountRepo.dao,
+                AppDatabase.getInstance(this).accountBalanceDao(),
+                AppDatabase.getInstance(this).transactionDao()
+            )
+            for (entry in entryDataList) {
+                val account = accounts.first { it.id == entry.accountId }
+                balanceRepo.recalculateForAccount(entry.accountId, account.type)
             }
             runOnUiThread { finish() }
         }.start()

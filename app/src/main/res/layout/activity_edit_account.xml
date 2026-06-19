@@ -24,6 +24,23 @@
             android:inputType="textCapWords"
             android:maxLines="1" />
 
+        <TextView
+            android:id="@+id/label_account_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/input_account_name"
+            android:layout_marginTop="16dp"
+            android:text="@string/label_account_type"
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary" />
+
+        <Spinner
+            android:id="@+id/spinner_account_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/label_account_type"
+            android:layout_marginTop="4dp" />
+
         <Button
             android:id="@+id/button_save"
             android:layout_width="match_parent"

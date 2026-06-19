@@ -6,16 +6,19 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import dev.fitiavana.accounting.data.dao.AccountBalanceDao
 import dev.fitiavana.accounting.data.dao.AccountDao
 import dev.fitiavana.accounting.data.dao.TransactionDao
 import dev.fitiavana.accounting.data.model.Account
+import dev.fitiavana.accounting.data.model.AccountBalance
 import dev.fitiavana.accounting.data.model.Transaction
 import dev.fitiavana.accounting.data.model.TransactionEntry
 
-@Database(entities = [Account::class, Transaction::class, TransactionEntry::class], version = 3)
+@Database(entities = [Account::class, Transaction::class, TransactionEntry::class, AccountBalance::class], version = 4)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
     abstract fun transactionDao(): TransactionDao
+    abstract fun accountBalanceDao(): AccountBalanceDao
 
     companion object {
         @Volatile
@@ -68,6 +71,20 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `accounts` ADD COLUMN `type` TEXT NOT NULL DEFAULT 'asset'")
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `account_balances` (" +
+                    "`accountId` TEXT NOT NULL PRIMARY KEY, " +
+                    "`balance` INTEGER NOT NULL, " +
+                    "`updatedAt` INTEGER NOT NULL, " +
+                    "`createdAt` INTEGER NOT NULL, " +
+                    "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON DELETE CASCADE)"
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -75,7 +92,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app.db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build().also { instance = it }
             }
         }

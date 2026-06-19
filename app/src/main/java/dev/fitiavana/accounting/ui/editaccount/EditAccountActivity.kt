@@ -6,8 +6,10 @@ import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Spinner
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -17,12 +19,15 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.data.repository.AccountRepository
+import dev.fitiavana.accounting.data.repository.BalanceRepository
 import dev.fitiavana.accounting.db.AppDatabase
 
 class EditAccountActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_ACCOUNT_ID = "account_id"
+
+        private val TYPE_VALUES = listOf("asset", "liability", "equity", "revenue", "expense")
 
         fun addIntent(context: Context): Intent =
             Intent(context, EditAccountActivity::class.java)
@@ -34,6 +39,7 @@ class EditAccountActivity : AppCompatActivity() {
 
     private lateinit var viewModel: EditAccountViewModel
     private lateinit var nameInput: EditText
+    private lateinit var typeSpinner: Spinner
     private var accountId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,12 +59,19 @@ class EditAccountActivity : AppCompatActivity() {
             }
         }
 
-        val repository = AccountRepository(AppDatabase.getInstance(this).accountDao())
+        val db = AppDatabase.getInstance(this)
+        val repository = AccountRepository(db.accountDao())
         viewModel = ViewModelProvider(this, EditAccountViewModelFactory(repository))
             .get(EditAccountViewModel::class.java)
 
         nameInput = findViewById(R.id.input_account_name)
+        typeSpinner = findViewById(R.id.spinner_account_type)
         val saveButton: Button = findViewById(R.id.button_save)
+
+        val typeDisplayNames = resources.getStringArray(R.array.account_type_display)
+        val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, typeDisplayNames)
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        typeSpinner.adapter = spinnerAdapter
 
         accountId = intent.getStringExtra(EXTRA_ACCOUNT_ID)
 
@@ -66,11 +79,16 @@ class EditAccountActivity : AppCompatActivity() {
             title = getString(R.string.title_edit_account)
             Thread {
                 val account = viewModel.getAccount(accountId!!)
+                val balanceRepo = BalanceRepository(db.accountDao(), db.accountBalanceDao(), db.transactionDao())
+                val locked = balanceRepo.hasTransactions(accountId!!)
                 runOnUiThread {
                     if (account != null) {
                         nameInput.setText(account.name)
                         nameInput.setSelection(account.name.length)
+                        val typeIndex = TYPE_VALUES.indexOf(account.type).takeIf { it >= 0 } ?: 0
+                        typeSpinner.setSelection(typeIndex)
                     }
+                    typeSpinner.isEnabled = !locked
                 }
             }.start()
         } else {
@@ -80,8 +98,9 @@ class EditAccountActivity : AppCompatActivity() {
         saveButton.setOnClickListener {
             val name = nameInput.text.toString().trim()
             if (name.isNotEmpty()) {
+                val selectedType = TYPE_VALUES[typeSpinner.selectedItemPosition]
                 Thread {
-                    viewModel.saveAccount(accountId, name)
+                    viewModel.saveAccount(accountId, name, selectedType)
                     runOnUiThread { finish() }
                 }.start()
             }
@@ -98,18 +117,33 @@ class EditAccountActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_delete_account -> {
-                AlertDialog.Builder(this)
-                    .setTitle(R.string.dialog_delete_account_title)
-                    .setMessage(R.string.dialog_delete_account_message)
-                    .setPositiveButton(R.string.action_delete) { _, _ ->
-                        Thread {
-                            val account = viewModel.getAccount(accountId!!)
-                            if (account != null) viewModel.deleteAccount(account)
-                            runOnUiThread { finish() }
-                        }.start()
+                Thread {
+                    val db = AppDatabase.getInstance(this)
+                    val balanceRepo = BalanceRepository(db.accountDao(), db.accountBalanceDao(), db.transactionDao())
+                    val hasTransactions = balanceRepo.hasTransactions(accountId!!)
+                    runOnUiThread {
+                        if (hasTransactions) {
+                            AlertDialog.Builder(this)
+                                .setTitle(R.string.dialog_cannot_delete_account_title)
+                                .setMessage(R.string.dialog_cannot_delete_account_message)
+                                .setPositiveButton(android.R.string.ok, null)
+                                .show()
+                        } else {
+                            AlertDialog.Builder(this)
+                                .setTitle(R.string.dialog_delete_account_title)
+                                .setMessage(R.string.dialog_delete_account_message)
+                                .setPositiveButton(R.string.action_delete) { _, _ ->
+                                    Thread {
+                                        val account = viewModel.getAccount(accountId!!)
+                                        if (account != null) viewModel.deleteAccount(account)
+                                        runOnUiThread { finish() }
+                                    }.start()
+                                }
+                                .setNegativeButton(android.R.string.cancel, null)
+                                .show()
+                        }
                     }
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .show()
+                }.start()
                 true
             }
             else -> super.onOptionsItemSelected(item)

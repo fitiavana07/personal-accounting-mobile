@@ -9,12 +9,12 @@ class EditAccountViewModel(private val repository: AccountRepository) : ViewMode
 
     fun getAccount(id: String): Account? = repository.getById(id)
 
-    fun saveAccount(id: String?, name: String) {
+    fun saveAccount(id: String?, name: String, type: String) {
         val trimmed = name.trim()
         if (id == null) {
-            repository.insert(Account(id = UUID.randomUUID().toString(), name = trimmed))
+            repository.insert(Account(id = UUID.randomUUID().toString(), name = trimmed, type = type))
         } else {
-            repository.update(Account(id = id, name = trimmed))
+            repository.update(Account(id = id, name = trimmed, type = type))
         }
     }
 

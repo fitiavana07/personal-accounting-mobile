@@ -2,10 +2,10 @@
 
 Accounting app with features like accounts, balances, journal, reports.
 
-Build:
+Build and test
 
 ```
-./gradlew assembleDebug
+./gradlew assembleDebug testDebugUnitTest
 ```
 
 ## Target Platform

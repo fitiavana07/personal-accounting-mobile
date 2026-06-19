@@ -32,4 +32,11 @@
     <string name="error_validation_entry_incomplete">Each entry needs an account and an amount</string>
     <string name="error_entry_both_filled">Each entry can only have debit OR credit, not both</string>
     <string name="error_duplicate_account">Each account can only appear once per transaction</string>
+    <string name="nav_balances">Balances</string>
+    <string name="empty_balances">No balances yet</string>
+    <string name="action_recalculate">Recalculate</string>
+    <string name="balances_recalculated">Balances recalculated</string>
+    <string name="label_account_type">Account type</string>
+    <string name="dialog_cannot_delete_account_title">Cannot Delete Account</string>
+    <string name="dialog_cannot_delete_account_message">This account has transactions associated with it and cannot be deleted.</string>
 </resources>

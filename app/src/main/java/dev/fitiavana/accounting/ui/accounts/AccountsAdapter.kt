@@ -33,9 +33,11 @@ class AccountsAdapter(
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val nameView: TextView = view.findViewById(R.id.text_account_name)
+        private val typeView: TextView = view.findViewById(R.id.text_account_type)
 
         fun bind(account: Account, onClick: (Account) -> Unit) {
             nameView.text = account.name
+            typeView.text = account.type.replaceFirstChar { it.uppercase() }
             itemView.setOnClickListener { onClick(account) }
         }
     }

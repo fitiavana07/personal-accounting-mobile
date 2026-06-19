@@ -9,6 +9,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import dev.fitiavana.accounting.ui.accounts.AccountsFragment
+import dev.fitiavana.accounting.ui.balances.BalancesFragment
 import dev.fitiavana.accounting.ui.roadmap.RoadmapFragment
 import dev.fitiavana.accounting.ui.transactions.TransactionsFragment
 
@@ -39,13 +40,14 @@ class MainActivity : AppCompatActivity() {
 
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, TransactionsFragment())
+                .replace(R.id.fragment_container, BalancesFragment())
                 .commit()
-            bottomNav.selectedItemId = R.id.nav_transactions
+            bottomNav.selectedItemId = R.id.nav_balances
         }
 
         bottomNav.setOnItemSelectedListener { item ->
             val fragment = when (item.itemId) {
+                R.id.nav_balances -> BalancesFragment()
                 R.id.nav_transactions -> TransactionsFragment()
                 R.id.nav_accounts -> AccountsFragment()
                 R.id.nav_roadmap -> RoadmapFragment()

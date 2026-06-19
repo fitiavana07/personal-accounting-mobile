@@ -25,4 +25,13 @@ interface TransactionDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertEntry(entry: TransactionEntry)
+
+    @Query("SELECT COALESCE(SUM(debitAmount), 0) FROM transaction_entries WHERE accountId = :accountId")
+    fun sumDebitsForAccount(accountId: String): Int
+
+    @Query("SELECT COALESCE(SUM(creditAmount), 0) FROM transaction_entries WHERE accountId = :accountId")
+    fun sumCreditsForAccount(accountId: String): Int
+
+    @Query("SELECT COUNT(*) FROM transaction_entries WHERE accountId = :accountId")
+    fun countEntriesForAccount(accountId: String): Int
 }

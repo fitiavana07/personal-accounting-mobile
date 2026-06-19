@@ -10,7 +10,7 @@ class AccountsViewModel(private val repository: AccountRepository) : ViewModel()
     val accounts: LiveData<List<Account>> = repository.getAll()
 
     fun addAccount(name: String) {
-        val account = Account(id = UUID.randomUUID().toString(), name = name.trim())
+        val account = Account(id = UUID.randomUUID().toString(), name = name.trim(), type = "asset")
         Thread { repository.insert(account) }.start()
     }
 }
