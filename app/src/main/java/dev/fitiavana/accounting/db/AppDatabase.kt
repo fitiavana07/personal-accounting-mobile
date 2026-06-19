@@ -15,19 +15,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
 
     companion object {
-        @Volatile private var instance: AppDatabase? = null
-
-        private val SEED_CALLBACK = object : RoomDatabase.Callback() {
-            override fun onCreate(db: SupportSQLiteDatabase) {
-                super.onCreate(db)
-                listOf("Aave3 USDC Base", "Binance RWUSD", "CEM").forEach { name ->
-                    db.execSQL(
-                        "INSERT INTO accounts (id, name) VALUES (?, ?)",
-                        arrayOf(UUID.randomUUID().toString(), name)
-                    )
-                }
-            }
-        }
+        @Volatile
+        private var instance: AppDatabase? = null
 
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
@@ -36,8 +25,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app.db"
                 )
-                .addCallback(SEED_CALLBACK)
-                .build().also { instance = it }
+                    .build().also { instance = it }
             }
         }
     }
