@@ -19,6 +19,7 @@
             android:layout_weight="1"
             android:textSize="15sp"
             android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"
             android:ellipsize="end"
             android:maxLines="1" />
 
@@ -29,6 +30,7 @@
             android:layout_marginStart="8dp"
             android:textSize="15sp"
             android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"
             android:gravity="end" />
 
     </LinearLayout>

@@ -4,6 +4,8 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -19,6 +21,10 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.ImageViewCompat
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.data.model.Account
 import dev.fitiavana.accounting.data.model.Transaction
@@ -26,6 +32,7 @@ import dev.fitiavana.accounting.data.model.TransactionEntry
 import dev.fitiavana.accounting.data.repository.AccountRepository
 import dev.fitiavana.accounting.data.repository.TransactionRepository
 import dev.fitiavana.accounting.db.AppDatabase
+import dev.fitiavana.accounting.ui.transactions.TransactionValidator
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -37,7 +44,8 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var accountRepo: AccountRepository
     private lateinit var accounts: List<Account>
 
-    private val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+    private val dateFormat =
+        SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
     private var selectedCalendar = Calendar.getInstance()
 
     private lateinit var textDatetime: TextView
@@ -62,6 +70,16 @@ class AddTransactionActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = getString(R.string.title_new_transaction)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            ViewCompat.setOnApplyWindowInsetsListener(toolbar) { view, insets ->
+                val statusBar =
+                    insets.getInsets(WindowInsetsCompat.Type.statusBars())
+                view.setPadding(0, statusBar.top, 0, 0)
+                insets
+            }
+        }
 
         val db = AppDatabase.getInstance(this)
         transactionRepo = TransactionRepository(db.transactionDao())
@@ -98,40 +116,74 @@ class AddTransactionActivity : AppCompatActivity() {
 
     private fun pickDate() {
         val cal = selectedCalendar
-        DatePickerDialog(this, { _, year, month, day ->
-            selectedCalendar.set(Calendar.YEAR, year)
-            selectedCalendar.set(Calendar.MONTH, month)
-            selectedCalendar.set(Calendar.DAY_OF_MONTH, day)
-            pickTime()
-        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+        DatePickerDialog(
+            this,
+            { _, year, month, day ->
+                selectedCalendar.set(Calendar.YEAR, year)
+                selectedCalendar.set(Calendar.MONTH, month)
+                selectedCalendar.set(Calendar.DAY_OF_MONTH, day)
+                pickTime()
+            },
+            cal.get(Calendar.YEAR),
+            cal.get(Calendar.MONTH),
+            cal.get(Calendar.DAY_OF_MONTH)
+        ).show()
     }
 
     private fun pickTime() {
         val cal = selectedCalendar
-        TimePickerDialog(this, { _, hour, minute ->
-            selectedCalendar.set(Calendar.HOUR_OF_DAY, hour)
-            selectedCalendar.set(Calendar.MINUTE, minute)
-            selectedCalendar.set(Calendar.SECOND, 0)
-            updateDatetimeDisplay()
-        }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
+        TimePickerDialog(
+            this,
+            { _, hour, minute ->
+                selectedCalendar.set(Calendar.HOUR_OF_DAY, hour)
+                selectedCalendar.set(Calendar.MINUTE, minute)
+                selectedCalendar.set(Calendar.SECOND, 0)
+                updateDatetimeDisplay()
+            },
+            cal.get(Calendar.HOUR_OF_DAY),
+            cal.get(Calendar.MINUTE),
+            true
+        ).show()
     }
 
     private fun addEntryRow() {
-        val row = layoutInflater.inflate(R.layout.item_entry_row, entriesContainer, false)
+        val row = layoutInflater.inflate(
+            R.layout.item_entry_row,
+            entriesContainer,
+            false
+        )
         val spinner = row.findViewById<Spinner>(R.id.spinner_account)
         val editDebit = row.findViewById<EditText>(R.id.edit_debit)
         val editCredit = row.findViewById<EditText>(R.id.edit_credit)
         val btnRemove = row.findViewById<ImageButton>(R.id.btn_remove_entry)
 
         val accountNames = accounts.map { it.name }
-        val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, accountNames)
+        val spinnerAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            accountNames
+        )
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = spinnerAdapter
 
         editDebit.addTextChangedListener(object : TextWatcher {
             var updating = false
-            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
-            override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun beforeTextChanged(
+                s: CharSequence?,
+                st: Int,
+                c: Int,
+                a: Int
+            ) {
+            }
+
+            override fun onTextChanged(
+                s: CharSequence?,
+                st: Int,
+                c: Int,
+                a: Int
+            ) {
+            }
+
             override fun afterTextChanged(s: Editable?) {
                 if (!updating && !s.isNullOrEmpty()) {
                     updating = true
@@ -143,8 +195,22 @@ class AddTransactionActivity : AppCompatActivity() {
 
         editCredit.addTextChangedListener(object : TextWatcher {
             var updating = false
-            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
-            override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun beforeTextChanged(
+                s: CharSequence?,
+                st: Int,
+                c: Int,
+                a: Int
+            ) {
+            }
+
+            override fun onTextChanged(
+                s: CharSequence?,
+                st: Int,
+                c: Int,
+                a: Int
+            ) {
+            }
+
             override fun afterTextChanged(s: Editable?) {
                 if (!updating && !s.isNullOrEmpty()) {
                     updating = true
@@ -153,6 +219,16 @@ class AddTransactionActivity : AppCompatActivity() {
                 }
             }
         })
+
+        ImageViewCompat.setImageTintList(
+            btnRemove,
+            ColorStateList.valueOf(
+                ContextCompat.getColor(
+                    this,
+                    R.color.icon_remove
+                )
+            )
+        )
 
         val entryRow = EntryRow(row, spinner, editDebit, editCredit, btnRemove)
         entryRows.add(entryRow)
@@ -169,47 +245,73 @@ class AddTransactionActivity : AppCompatActivity() {
 
     private fun updateRemoveButtonVisibility() {
         val visible = entryRows.size > 2
-        entryRows.forEach { it.btnRemove.visibility = if (visible) View.VISIBLE else View.GONE }
+        entryRows.forEach {
+            it.btnRemove.visibility = if (visible) View.VISIBLE else View.GONE
+        }
     }
 
     private fun saveTransaction() {
         if (entryRows.isEmpty()) return
 
-        var totalDebit = 0.0
-        var totalCredit = 0.0
-        val validatedEntries = mutableListOf<Triple<String, Double?, Double?>>()
+        val entryDataList = mutableListOf<TransactionValidator.EntryData>()
+        val accountIdForEntry = mutableListOf<String>()
 
-        for ((index, row) in entryRows.withIndex()) {
+        for (row in entryRows) {
             val accountPos = row.spinner.selectedItemPosition
             if (accountPos < 0 || accountPos >= accounts.size) {
-                Toast.makeText(this, getString(R.string.error_validation_entry_incomplete), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_validation_entry_incomplete),
+                    Toast.LENGTH_SHORT
+                ).show()
                 return
             }
             val accountId = accounts[accountPos].id
-            val debitStr = row.editDebit.text.toString().trim()
-            val creditStr = row.editCredit.text.toString().trim()
-
-            val debit = debitStr.toDoubleOrNull()
-            val credit = creditStr.toDoubleOrNull()
-
-            if (debit != null && credit != null) {
-                Toast.makeText(this, getString(R.string.error_entry_both_filled), Toast.LENGTH_SHORT).show()
-                return
-            }
-            if (debit == null && credit == null) {
-                Toast.makeText(this, getString(R.string.error_validation_entry_incomplete), Toast.LENGTH_SHORT).show()
-                return
-            }
-
-            totalDebit += debit ?: 0.0
-            totalCredit += credit ?: 0.0
-            validatedEntries.add(Triple(accountId, debit, credit))
+            val debit = row.editDebit.text.toString().trim().toIntOrNull()
+            val credit = row.editCredit.text.toString().trim().toIntOrNull()
+            entryDataList.add(
+                TransactionValidator.EntryData(
+                    accountId,
+                    debit,
+                    credit
+                )
+            )
+            accountIdForEntry.add(accountId)
         }
 
-        val epsilon = 0.001
-        if (Math.abs(totalDebit - totalCredit) > epsilon) {
-            Toast.makeText(this, getString(R.string.error_validation_balance), Toast.LENGTH_SHORT).show()
-            return
+        when (TransactionValidator.validate(entryDataList)) {
+            TransactionValidator.ValidationResult.Valid -> Unit
+            TransactionValidator.ValidationResult.Error.DuplicateAccount -> {
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_duplicate_account),
+                    Toast.LENGTH_SHORT
+                ).show(); return
+            }
+
+            TransactionValidator.ValidationResult.Error.BothFilled -> {
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_entry_both_filled),
+                    Toast.LENGTH_SHORT
+                ).show(); return
+            }
+
+            TransactionValidator.ValidationResult.Error.Incomplete -> {
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_validation_entry_incomplete),
+                    Toast.LENGTH_SHORT
+                ).show(); return
+            }
+
+            TransactionValidator.ValidationResult.Error.Unbalanced -> {
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_validation_balance),
+                    Toast.LENGTH_SHORT
+                ).show(); return
+            }
         }
 
         val transactionId = UUID.randomUUID().toString()
@@ -222,14 +324,14 @@ class AddTransactionActivity : AppCompatActivity() {
 
         Thread {
             transactionRepo.insert(transaction)
-            for ((accountId, debit, credit) in validatedEntries) {
+            for (entry in entryDataList) {
                 transactionRepo.insertEntry(
                     TransactionEntry(
                         id = UUID.randomUUID().toString(),
                         transactionId = transactionId,
-                        accountId = accountId,
-                        debitAmount = debit,
-                        creditAmount = credit
+                        accountId = entry.accountId,
+                        debitAmount = entry.debitAmount,
+                        creditAmount = entry.creditAmount
                     )
                 )
             }
@@ -243,6 +345,7 @@ class AddTransactionActivity : AppCompatActivity() {
     }
 
     companion object {
-        fun intent(context: Context) = Intent(context, AddTransactionActivity::class.java)
+        fun intent(context: Context) =
+            Intent(context, AddTransactionActivity::class.java)
     }
 }

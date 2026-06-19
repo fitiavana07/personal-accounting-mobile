@@ -8,8 +8,6 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -18,7 +16,6 @@ class TransactionsAdapter(
     private val onClick: (TransactionDisplayItem) -> Unit
 ) : ListAdapter<TransactionDisplayItem, TransactionsAdapter.ViewHolder>(DIFF) {
 
-    private val amountFormat = DecimalFormat("#,##0.00", DecimalFormatSymbols(Locale.US))
     private val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -45,34 +42,20 @@ class TransactionsAdapter(
             .filter { it.creditAmount != null }
             .mapNotNull { item.accountsMap[it.accountId] }
 
-        holder.accounts.text = "${formatAccountList(debitAccounts)} ⇄ ${formatAccountList(creditAccounts)}"
+        holder.accounts.text = "${TransactionDisplay.formatAccountList(debitAccounts)} ⇄ ${TransactionDisplay.formatAccountList(creditAccounts)}"
 
-        val totalDebit = item.entries.sumOf { it.debitAmount ?: 0.0 }
-        holder.amount.text = "Ar ${amountFormat.format(totalDebit)}"
+        val totalDebit = item.entries.sumOf { it.debitAmount ?: 0 }
+        holder.amount.text = "Ar ${TransactionDisplay.formatAmount(totalDebit)}"
 
-        val noteText = item.transaction.note
-        if (noteText.isBlank()) {
+        val notePreview = TransactionDisplay.formatNotePreview(item.transaction.note)
+        if (notePreview.isEmpty()) {
             holder.note.visibility = View.GONE
         } else {
             holder.note.visibility = View.VISIBLE
-            val firstLine = noteText.lines().first()
-            val truncated = if (noteText.lines().size > 1) {
-                if (firstLine.length > 60) firstLine.take(60) + "..." else firstLine + "..."
-            } else {
-                if (firstLine.length > 60) firstLine.take(60) + "..." else firstLine
-            }
-            holder.note.text = truncated
+            holder.note.text = notePreview
         }
 
         holder.date.text = dateFormat.format(Date(item.transaction.transactionDatetime))
-    }
-
-    private fun formatAccountList(names: List<String>): String {
-        if (names.isEmpty()) return "?"
-        return when {
-            names.size <= 2 -> names.joinToString(", ")
-            else -> names.take(2).joinToString(", ") + ", ..."
-        }
     }
 
     companion object {

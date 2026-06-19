@@ -30,6 +30,6 @@ data class TransactionEntry(
     @PrimaryKey val id: String,
     val transactionId: String,
     val accountId: String,
-    val debitAmount: Double?,
-    val creditAmount: Double?
+    val debitAmount: Int?,
+    val creditAmount: Int?
 )

@@ -2,6 +2,7 @@ package dev.fitiavana.accounting.ui.transactiondetail
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.widget.LinearLayout
@@ -10,14 +11,15 @@ import android.widget.TableRow
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.data.model.TransactionEntry
 import dev.fitiavana.accounting.data.model.TransactionWithEntries
 import dev.fitiavana.accounting.data.repository.AccountRepository
 import dev.fitiavana.accounting.data.repository.TransactionRepository
 import dev.fitiavana.accounting.db.AppDatabase
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -25,7 +27,6 @@ import java.util.Locale
 class TransactionDetailActivity : AppCompatActivity() {
 
     private val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm:ss", Locale.getDefault())
-    private val amountFormat = DecimalFormat("#,##0.00", DecimalFormatSymbols(Locale.US))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,6 +36,15 @@ class TransactionDetailActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = getString(R.string.title_transaction)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            ViewCompat.setOnApplyWindowInsetsListener(toolbar) { view, insets ->
+                val statusBar = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+                view.setPadding(0, statusBar.top, 0, 0)
+                insets
+            }
+        }
 
         val transactionId = intent.getStringExtra(EXTRA_TRANSACTION_ID) ?: run { finish(); return }
 
@@ -73,12 +83,12 @@ class TransactionDetailActivity : AppCompatActivity() {
 
         addTableHeader(tableEntries)
 
-        var totalDebit = 0.0
-        var totalCredit = 0.0
+        var totalDebit = 0
+        var totalCredit = 0
         for (entry in twe.entries) {
             addEntryRow(tableEntries, accountsMap[entry.accountId] ?: entry.accountId, entry)
-            totalDebit += entry.debitAmount ?: 0.0
-            totalCredit += entry.creditAmount ?: 0.0
+            totalDebit += entry.debitAmount ?: 0
+            totalCredit += entry.creditAmount ?: 0
         }
 
         addTotalsRow(tableEntries, totalDebit, totalCredit)
@@ -99,18 +109,20 @@ class TransactionDetailActivity : AppCompatActivity() {
     private fun addEntryRow(table: TableLayout, accountName: String, entry: TransactionEntry) {
         val row = TableRow(this)
         row.addView(makeCell(accountName))
-        row.addView(makeCell(entry.debitAmount?.let { amountFormat.format(it) } ?: "-", gravity = Gravity.END))
-        row.addView(makeCell(entry.creditAmount?.let { amountFormat.format(it) } ?: "-", gravity = Gravity.END))
+        row.addView(makeCell(entry.debitAmount?.let { formatAmount(it) } ?: "-", gravity = Gravity.END))
+        row.addView(makeCell(entry.creditAmount?.let { formatAmount(it) } ?: "-", gravity = Gravity.END))
         table.addView(row)
     }
 
-    private fun addTotalsRow(table: TableLayout, totalDebit: Double, totalCredit: Double) {
+    private fun addTotalsRow(table: TableLayout, totalDebit: Int, totalCredit: Int) {
         val row = TableRow(this)
         row.addView(makeCell(getString(R.string.label_total), bold = true))
-        row.addView(makeCell(amountFormat.format(totalDebit), bold = true, gravity = Gravity.END))
-        row.addView(makeCell(amountFormat.format(totalCredit), bold = true, gravity = Gravity.END))
+        row.addView(makeCell(formatAmount(totalDebit), bold = true, gravity = Gravity.END))
+        row.addView(makeCell(formatAmount(totalCredit), bold = true, gravity = Gravity.END))
         table.addView(row)
     }
+
+    private fun formatAmount(amount: Int): String = String.format("%,d", amount)
 
     private fun makeCell(text: String, bold: Boolean = false, gravity: Int = Gravity.START): TextView {
         return TextView(this).apply {
