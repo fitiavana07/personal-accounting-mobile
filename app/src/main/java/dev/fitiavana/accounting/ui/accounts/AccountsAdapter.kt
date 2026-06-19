@@ -8,7 +8,9 @@ import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.data.model.Account
 
-class AccountsAdapter : RecyclerView.Adapter<AccountsAdapter.ViewHolder>() {
+class AccountsAdapter(
+    private val onItemClick: (Account) -> Unit
+) : RecyclerView.Adapter<AccountsAdapter.ViewHolder>() {
 
     private var items: List<Account> = emptyList()
 
@@ -24,7 +26,7 @@ class AccountsAdapter : RecyclerView.Adapter<AccountsAdapter.ViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(items[position])
+        holder.bind(items[position], onItemClick)
     }
 
     override fun getItemCount() = items.size
@@ -32,8 +34,9 @@ class AccountsAdapter : RecyclerView.Adapter<AccountsAdapter.ViewHolder>() {
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val nameView: TextView = view.findViewById(R.id.text_account_name)
 
-        fun bind(account: Account) {
+        fun bind(account: Account, onClick: (Account) -> Unit) {
             nameView.text = account.name
+            itemView.setOnClickListener { onClick(account) }
         }
     }
 }

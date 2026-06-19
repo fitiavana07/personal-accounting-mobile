@@ -2,9 +2,10 @@
 
 ## Active
 
+- [ ] Accounts CRUD
+
 ## Backlog
 
-- [ ] Accounts CRUD
 - [ ] Account balances
 
 ## Completed

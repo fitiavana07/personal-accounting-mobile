@@ -2,6 +2,12 @@
 
 Accounting app with features like accounts, balances, journal, reports.
 
+Build:
+
+```
+./gradlew assembleDebug
+```
+
 ## Target Platform
 
 This is an Android project targeting **API 19 (KitKat)**. Avoid using APIs above API 19 without adding appropriate compatibility notes or checks.
@@ -42,8 +48,14 @@ ui/
 
 - Minimalist UI design. Simple colors
 - Focus on functionality, more than fancy visuals
+- Respect basic UI/UX principles, such as colors on primary vs. non-primary 
+  actions, colors on destructive actions
 
 ## Code
 
 - Avoid using `@Deprecated` methods when possible, use recommended 
   replacement instead.
+
+## On new features
+
+- Add new unit tests when relevant. Update existing tests if needed.
