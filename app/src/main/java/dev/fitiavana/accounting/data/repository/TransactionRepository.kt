@@ -13,4 +13,8 @@ class TransactionRepository(private val dao: TransactionDao) {
     fun insertEntry(entry: TransactionEntry) = dao.insertEntry(entry)
     fun getFilteredWithEntries(startMs: Long, endMs: Long, accountId: String?): LiveData<List<TransactionWithEntries>> =
         dao.getFilteredWithEntries(startMs, endMs, accountId)
+    fun clearAll() {
+        dao.deleteAllEntries()
+        dao.deleteAll()
+    }
 }

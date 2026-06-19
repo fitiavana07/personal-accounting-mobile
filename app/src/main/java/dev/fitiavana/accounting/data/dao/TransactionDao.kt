@@ -49,4 +49,10 @@ interface TransactionDao {
         endMs: Long,
         accountId: String?
     ): LiveData<List<TransactionWithEntries>>
+
+    @Query("DELETE FROM transaction_entries")
+    fun deleteAllEntries()
+
+    @Query("DELETE FROM transactions")
+    fun deleteAll()
 }

@@ -44,4 +44,7 @@
     <string name="filter_to">To</string>
     <string name="filter_all_accounts">All accounts</string>
     <string name="empty_transactions_filtered">No transactions match the selected filters</string>
+    <string name="action_clear_transactions">Clear all transactions</string>
+    <string name="dialog_clear_transactions_title">Clear all transactions</string>
+    <string name="dialog_clear_transactions_message">This will permanently delete all transactions. This cannot be undone.</string>
 </resources>

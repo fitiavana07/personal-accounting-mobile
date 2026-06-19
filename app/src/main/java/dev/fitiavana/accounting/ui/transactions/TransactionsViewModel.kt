@@ -31,6 +31,10 @@ class TransactionsViewModel(
             transactionRepository.getFilteredWithEntries(f.startMs, f.endMs, f.accountId)
         }
 
+    fun clearAllTransactions() {
+        Thread { transactionRepository.clearAll() }.start()
+    }
+
     val combined = MediatorLiveData<Pair<List<TransactionWithEntries>, List<Account>>>().apply {
         var latestTransactions: List<TransactionWithEntries> = emptyList()
         var latestAccounts: List<Account> = emptyList()
