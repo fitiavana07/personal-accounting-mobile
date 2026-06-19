@@ -6,6 +6,8 @@
 
 ## Backlog
 
+- [ ] Configure different debug and release build to have dev vs. prod data
+
 ## Completed
 
 - [x] Transactions
