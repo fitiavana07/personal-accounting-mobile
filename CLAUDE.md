@@ -60,6 +60,7 @@ ui/
 - Avoid using `@Deprecated` methods when possible, use recommended
   replacement instead.
 - Never include Co-Authored-By in commits
+- DRY: Reuse code when possible, refactor if needed
 
 ## On new features
 
