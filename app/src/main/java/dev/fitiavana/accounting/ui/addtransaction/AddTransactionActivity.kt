@@ -158,7 +158,7 @@ class AddTransactionActivity : AppCompatActivity() {
         val editCredit = row.findViewById<EditText>(R.id.edit_credit)
         val btnRemove = row.findViewById<ImageButton>(R.id.btn_remove_entry)
 
-        val accountNames = accounts.map { it.name }
+        val accountNames = listOf(getString(R.string.spinner_select_account)) + accounts.map { it.name }
         val spinnerAdapter = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_item,
@@ -166,6 +166,7 @@ class AddTransactionActivity : AppCompatActivity() {
         )
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = spinnerAdapter
+        spinner.setSelection(0)
 
         editDebit.addTextChangedListener(object : TextWatcher {
             var updating = false
@@ -235,6 +236,26 @@ class AddTransactionActivity : AppCompatActivity() {
         entryRows.add(entryRow)
         entriesContainer.addView(row)
 
+        editDebit.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus && entryRows.size == 2) {
+                val text = editDebit.text.toString().trim()
+                if (text.isNotEmpty()) {
+                    val other = entryRows.first { it !== entryRow }
+                    if (other.editCredit.text.isNullOrEmpty()) other.editCredit.setText(text)
+                }
+            }
+        }
+
+        editCredit.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus && entryRows.size == 2) {
+                val text = editCredit.text.toString().trim()
+                if (text.isNotEmpty()) {
+                    val other = entryRows.first { it !== entryRow }
+                    if (other.editDebit.text.isNullOrEmpty()) other.editDebit.setText(text)
+                }
+            }
+        }
+
         btnRemove.setOnClickListener {
             entriesContainer.removeView(row)
             entryRows.remove(entryRow)
@@ -259,7 +280,7 @@ class AddTransactionActivity : AppCompatActivity() {
 
         for (row in entryRows) {
             val accountPos = row.spinner.selectedItemPosition
-            if (accountPos < 0 || accountPos >= accounts.size) {
+            if (accountPos <= 0 || accountPos > accounts.size) {
                 Toast.makeText(
                     this,
                     getString(R.string.error_validation_entry_incomplete),
@@ -267,7 +288,7 @@ class AddTransactionActivity : AppCompatActivity() {
                 ).show()
                 return
             }
-            val accountId = accounts[accountPos].id
+            val accountId = accounts[accountPos - 1].id
             val debit = row.editDebit.text.toString().trim().toIntOrNull()
             val credit = row.editCredit.text.toString().trim().toIntOrNull()
             entryDataList.add(

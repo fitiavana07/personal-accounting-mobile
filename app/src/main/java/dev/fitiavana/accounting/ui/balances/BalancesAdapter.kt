@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -47,7 +48,7 @@ class BalancesAdapter : RecyclerView.Adapter<BalancesAdapter.ViewHolder>() {
         fun bind(item: BalanceItem, dateFormat: SimpleDateFormat) {
             nameView.text = item.accountName
             updatedAtView.text = dateFormat.format(Date(item.updatedAt))
-            amountView.text = "Ar ${item.balance}"
+            amountView.text = "Ar ${TransactionDisplay.formatAmount(item.balance)}"
         }
     }
 }

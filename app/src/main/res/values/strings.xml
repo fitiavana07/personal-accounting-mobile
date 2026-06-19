@@ -31,6 +31,7 @@
     <string name="error_validation_balance">Debits must equal credits</string>
     <string name="error_validation_entry_incomplete">Each entry needs an account and an amount</string>
     <string name="error_entry_both_filled">Each entry can only have debit OR credit, not both</string>
+    <string name="spinner_select_account">Select account…</string>
     <string name="error_duplicate_account">Each account can only appear once per transaction</string>
     <string name="nav_balances">Balances</string>
     <string name="empty_balances">No balances yet</string>
