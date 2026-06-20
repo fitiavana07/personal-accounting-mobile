@@ -40,4 +40,8 @@
     <string name="label_account_type">Account type</string>
     <string name="dialog_cannot_delete_account_title">Cannot Delete Account</string>
     <string name="dialog_cannot_delete_account_message">This account has transactions associated with it and cannot be deleted.</string>
+    <string name="filter_from">From</string>
+    <string name="filter_to">To</string>
+    <string name="filter_all_accounts">All accounts</string>
+    <string name="empty_transactions_filtered">No transactions match the selected filters</string>
 </resources>
