@@ -2,14 +2,14 @@
 
 ## Active
 
-- [ ] Account balances
-
 ## Backlog
 
+- [ ] Export/Import data
 - [ ] Configure different debug and release build to have dev vs. prod data
 
 ## Completed
 
+- [x] Account balances
 - [x] Transactions
 - [x] Accounts CRUD
 - [x] Add bottom nav bar
