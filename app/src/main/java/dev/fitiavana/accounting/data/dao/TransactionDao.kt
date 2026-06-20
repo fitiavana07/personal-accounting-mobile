@@ -36,14 +36,17 @@ interface TransactionDao {
     fun countEntriesForAccount(accountId: String): Int
 
     @Transaction
-    @Query("""
+    @Query(
+        """
         SELECT * FROM transactions
         WHERE transactionDatetime >= :startMs AND transactionDatetime <= :endMs
         AND (:accountId IS NULL OR id IN (SELECT transactionId FROM transaction_entries WHERE accountId = :accountId))
         ORDER BY transactionDatetime DESC
-    """)
-    fun getFilteredWithEntries(startMs: Long, endMs: Long, accountId: String?): LiveData<List<TransactionWithEntries>>
-
-    @Query("DELETE FROM transactions")
-    fun clearAll()
+    """
+    )
+    fun getFilteredWithEntries(
+        startMs: Long,
+        endMs: Long,
+        accountId: String?
+    ): LiveData<List<TransactionWithEntries>>
 }
