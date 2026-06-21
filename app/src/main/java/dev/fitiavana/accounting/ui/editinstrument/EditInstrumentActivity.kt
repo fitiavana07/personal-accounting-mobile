@@ -59,7 +59,8 @@ class EditInstrumentActivity : AppCompatActivity() {
             }
         }
 
-        val repository = InstrumentRepository(AppDatabase.getInstance(this).instrumentDao())
+        val db = AppDatabase.getInstance(this)
+        val repository = InstrumentRepository(db.instrumentDao(), db.accountDao())
         viewModel = ViewModelProvider(this, EditInstrumentViewModelFactory(repository))
             .get(EditInstrumentViewModel::class.java)
 
@@ -121,18 +122,31 @@ class EditInstrumentActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_delete_instrument -> {
-                AlertDialog.Builder(this)
-                    .setTitle(R.string.dialog_delete_instrument_title)
-                    .setMessage(R.string.dialog_delete_instrument_message)
-                    .setPositiveButton(R.string.action_delete) { _, _ ->
-                        Thread {
-                            val instrument = viewModel.getInstrument(instrumentCode!!)
-                            if (instrument != null) viewModel.deleteInstrument(instrument)
-                            runOnUiThread { finish() }
-                        }.start()
+                Thread {
+                    val hasAccounts = viewModel.hasAccounts(instrumentCode!!)
+                    runOnUiThread {
+                        if (hasAccounts) {
+                            AlertDialog.Builder(this)
+                                .setTitle(R.string.dialog_cannot_delete_instrument_title)
+                                .setMessage(R.string.dialog_cannot_delete_instrument_message)
+                                .setPositiveButton(android.R.string.ok, null)
+                                .show()
+                        } else {
+                            AlertDialog.Builder(this)
+                                .setTitle(R.string.dialog_delete_instrument_title)
+                                .setMessage(R.string.dialog_delete_instrument_message)
+                                .setPositiveButton(R.string.action_delete) { _, _ ->
+                                    Thread {
+                                        val instrument = viewModel.getInstrument(instrumentCode!!)
+                                        if (instrument != null) viewModel.deleteInstrument(instrument)
+                                        runOnUiThread { finish() }
+                                    }.start()
+                                }
+                                .setNegativeButton(android.R.string.cancel, null)
+                                .show()
+                        }
                     }
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .show()
+                }.start()
                 true
             }
             else -> super.onOptionsItemSelected(item)

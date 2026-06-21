@@ -20,6 +20,8 @@ class EditInstrumentViewModel(private val repository: InstrumentRepository) : Vi
         repository.insert(Instrument(code = code.trim(), note = note.trim(), type = type))
     }
 
+    fun hasAccounts(instrumentCode: String): Boolean = repository.hasAccounts(instrumentCode)
+
     fun deleteInstrument(instrument: Instrument) {
         repository.delete(instrument)
     }

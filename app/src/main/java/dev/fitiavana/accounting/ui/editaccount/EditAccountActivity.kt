@@ -66,7 +66,7 @@ class EditAccountActivity : AppCompatActivity() {
 
         val db = AppDatabase.getInstance(this)
         val repository = AccountRepository(db.accountDao())
-        val instrumentRepository = InstrumentRepository(db.instrumentDao())
+        val instrumentRepository = InstrumentRepository(db.instrumentDao(), db.accountDao())
         viewModel = ViewModelProvider(this, EditAccountViewModelFactory(repository, instrumentRepository))
             .get(EditAccountViewModel::class.java)
 

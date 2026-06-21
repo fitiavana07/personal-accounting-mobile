@@ -32,7 +32,8 @@ class InstrumentsFragment : Fragment() {
     ): View = inflater.inflate(R.layout.fragment_instruments, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val repository = InstrumentRepository(AppDatabase.getInstance(requireContext()).instrumentDao())
+        val db = AppDatabase.getInstance(requireContext())
+        val repository = InstrumentRepository(db.instrumentDao(), db.accountDao())
         viewModel = ViewModelProvider(this, InstrumentsViewModelFactory(repository))
             .get(InstrumentsViewModel::class.java)
 

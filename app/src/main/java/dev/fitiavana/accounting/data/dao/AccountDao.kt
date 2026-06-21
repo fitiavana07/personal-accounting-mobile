@@ -31,4 +31,7 @@ interface AccountDao {
 
     @Query("SELECT * FROM accounts ORDER BY name ASC")
     fun getAllSync(): List<Account>
+
+    @Query("SELECT COUNT(*) > 0 FROM accounts WHERE instrument_code = :instrumentCode")
+    fun hasAccountsWithInstrument(instrumentCode: String): Boolean
 }
