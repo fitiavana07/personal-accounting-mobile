@@ -41,6 +41,23 @@
             android:layout_below="@id/label_account_type"
             android:layout_marginTop="4dp" />
 
+        <TextView
+            android:id="@+id/label_instrument"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/spinner_account_type"
+            android:layout_marginTop="16dp"
+            android:text="@string/label_instrument"
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary" />
+
+        <Spinner
+            android:id="@+id/spinner_instrument"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/label_instrument"
+            android:layout_marginTop="4dp" />
+
         <Button
             android:id="@+id/button_save"
             android:layout_width="match_parent"

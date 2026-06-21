@@ -18,8 +18,10 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.data.model.Instrument
 import dev.fitiavana.accounting.data.repository.AccountRepository
 import dev.fitiavana.accounting.data.repository.BalanceRepository
+import dev.fitiavana.accounting.data.repository.InstrumentRepository
 import dev.fitiavana.accounting.db.AppDatabase
 
 class EditAccountActivity : AppCompatActivity() {
@@ -40,7 +42,10 @@ class EditAccountActivity : AppCompatActivity() {
     private lateinit var viewModel: EditAccountViewModel
     private lateinit var nameInput: EditText
     private lateinit var typeSpinner: Spinner
+    private lateinit var instrumentSpinner: Spinner
     private var accountId: String? = null
+
+    private var instruments: List<Instrument> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,11 +66,13 @@ class EditAccountActivity : AppCompatActivity() {
 
         val db = AppDatabase.getInstance(this)
         val repository = AccountRepository(db.accountDao())
-        viewModel = ViewModelProvider(this, EditAccountViewModelFactory(repository))
+        val instrumentRepository = InstrumentRepository(db.instrumentDao())
+        viewModel = ViewModelProvider(this, EditAccountViewModelFactory(repository, instrumentRepository))
             .get(EditAccountViewModel::class.java)
 
         nameInput = findViewById(R.id.input_account_name)
         typeSpinner = findViewById(R.id.spinner_account_type)
+        instrumentSpinner = findViewById(R.id.spinner_instrument)
         val saveButton: Button = findViewById(R.id.button_save)
 
         val typeDisplayNames = resources.getStringArray(R.array.account_type_display)
@@ -74,6 +81,26 @@ class EditAccountActivity : AppCompatActivity() {
         typeSpinner.adapter = spinnerAdapter
 
         accountId = intent.getStringExtra(EXTRA_ACCOUNT_ID)
+
+        viewModel.instruments.observe(this) { list ->
+            instruments = list
+            val displayNames = listOf(getString(R.string.spinner_no_instrument)) + list.map { it.code }
+            val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, displayNames)
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            instrumentSpinner.adapter = adapter
+
+            if (accountId != null) {
+                Thread {
+                    val account = viewModel.getAccount(accountId!!)
+                    runOnUiThread {
+                        if (account != null) {
+                            val index = list.indexOfFirst { it.code == account.instrumentCode }
+                            instrumentSpinner.setSelection(if (index >= 0) index + 1 else 0)
+                        }
+                    }
+                }.start()
+            }
+        }
 
         if (accountId != null) {
             title = getString(R.string.title_edit_account)
@@ -99,8 +126,10 @@ class EditAccountActivity : AppCompatActivity() {
             val name = nameInput.text.toString().trim()
             if (name.isNotEmpty()) {
                 val selectedType = TYPE_VALUES[typeSpinner.selectedItemPosition]
+                val instrumentPos = instrumentSpinner.selectedItemPosition
+                val selectedInstrumentCode = if (instrumentPos == 0) null else instruments[instrumentPos - 1].code
                 Thread {
-                    viewModel.saveAccount(accountId, name, selectedType)
+                    viewModel.saveAccount(accountId, name, selectedType, selectedInstrumentCode)
                     runOnUiThread { finish() }
                 }.start()
             }

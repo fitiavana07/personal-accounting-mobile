@@ -16,7 +16,7 @@ import dev.fitiavana.accounting.data.model.Instrument
 import dev.fitiavana.accounting.data.model.Transaction
 import dev.fitiavana.accounting.data.model.TransactionEntry
 
-@Database(entities = [Account::class, Transaction::class, TransactionEntry::class, AccountBalance::class, Instrument::class], version = 5)
+@Database(entities = [Account::class, Transaction::class, TransactionEntry::class, AccountBalance::class, Instrument::class], version = 6)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
     abstract fun transactionDao(): TransactionDao
@@ -99,6 +99,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `accounts` ADD COLUMN `instrument_code` TEXT REFERENCES `instruments`(`code`) ON DELETE SET NULL")
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_instrument_code` ON `accounts` (`instrument_code`)")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -106,7 +113,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app.db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .build().also { instance = it }
             }
         }

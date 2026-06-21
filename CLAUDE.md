@@ -64,4 +64,8 @@ ui/
 
 ## On new features
 
-- Add new unit tests when relevant. Update existing tests if needed.
+After every new feature added:
+
+- generate a testing checklist
+- write unit tests (new or update existing ones) conforming to this
+  checklist, for everything that is worth to be unit-tested 
