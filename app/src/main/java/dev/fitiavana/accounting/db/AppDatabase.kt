@@ -18,7 +18,7 @@ import dev.fitiavana.accounting.data.model.TransactionEntry
 
 @Database(
     entities = [Account::class, Transaction::class, TransactionEntry::class, AccountBalance::class, Instrument::class],
-    version = 9
+    version = 10
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
@@ -147,6 +147,25 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Rename instrument_code -> instrumentCode (SQLite <3.25 has no RENAME COLUMN)
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `accounts_new` (" +
+                            "`id` TEXT NOT NULL PRIMARY KEY, " +
+                            "`name` TEXT NOT NULL, " +
+                            "`type` TEXT NOT NULL, " +
+                            "`instrumentCode` TEXT REFERENCES `instruments`(`code`) ON DELETE SET NULL)"
+                )
+                database.execSQL(
+                    "INSERT INTO `accounts_new` SELECT `id`, `name`, `type`, `instrument_code` FROM `accounts`"
+                )
+                database.execSQL("DROP TABLE `accounts`")
+                database.execSQL("ALTER TABLE `accounts_new` RENAME TO `accounts`")
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_instrumentCode` ON `accounts` (`instrumentCode`)")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -162,7 +181,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_5_6,
                         MIGRATION_6_7,
                         MIGRATION_7_8,
-                        MIGRATION_8_9
+                        MIGRATION_8_9,
+                        MIGRATION_9_10
                     )
                     .build().also { instance = it }
             }

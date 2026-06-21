@@ -1,6 +1,5 @@
 package dev.fitiavana.accounting.data.model
 
-import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -12,15 +11,15 @@ import androidx.room.PrimaryKey
         ForeignKey(
             entity = Instrument::class,
             parentColumns = ["code"],
-            childColumns = ["instrument_code"],
+            childColumns = ["instrumentCode"],
             onDelete = ForeignKey.SET_NULL
         )
     ],
-    indices = [Index("instrument_code")]
+    indices = [Index("instrumentCode")]
 )
 data class Account(
     @PrimaryKey val id: String,
     val name: String,
     val type: String,
-    @ColumnInfo(name = "instrument_code") val instrumentCode: String? = null
+    val instrumentCode: String? = null
 )
