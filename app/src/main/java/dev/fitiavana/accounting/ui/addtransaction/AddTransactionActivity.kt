@@ -64,7 +64,9 @@ class AddTransactionActivity : AppCompatActivity() {
         val editDebit: EditText,
         val editCredit: EditText,
         val btnRemove: ImageButton,
-        val editInstrumentAmount: EditText
+        val editInstrumentDebit: EditText,
+        val editInstrumentCredit: EditText,
+        val instrumentRow: View
     )
 
     private val entryRows = mutableListOf<EntryRow>()
@@ -164,7 +166,9 @@ class AddTransactionActivity : AppCompatActivity() {
         val editDebit = row.findViewById<EditText>(R.id.edit_debit)
         val editCredit = row.findViewById<EditText>(R.id.edit_credit)
         val btnRemove = row.findViewById<ImageButton>(R.id.btn_remove_entry)
-        val editInstrumentAmount = row.findViewById<EditText>(R.id.edit_instrument_amount)
+        val editInstrumentDebit = row.findViewById<EditText>(R.id.edit_instrument_debit)
+        val editInstrumentCredit = row.findViewById<EditText>(R.id.edit_instrument_credit)
+        val instrumentRow = row.findViewById<View>(R.id.row_instrument_amounts)
 
         val accountNames = listOf(getString(R.string.spinner_select_account)) + accounts.map { it.name }
         val spinnerAdapter = ArrayAdapter(
@@ -182,18 +186,47 @@ class AddTransactionActivity : AppCompatActivity() {
                     accounts[position - 1].instrumentCode?.let { instrumentsMap[it] }
                 } else null
                 if (instrument != null) {
-                    editInstrumentAmount.hint = getString(R.string.hint_amount_instrument, instrument.code)
-                    editInstrumentAmount.visibility = View.VISIBLE
+                    editInstrumentDebit.hint = getString(R.string.hint_amount_instrument, instrument.code)
+                    editInstrumentCredit.hint = getString(R.string.hint_amount_instrument, instrument.code)
+                    instrumentRow.visibility = View.VISIBLE
                 } else {
-                    editInstrumentAmount.text = null
-                    editInstrumentAmount.visibility = View.GONE
+                    editInstrumentDebit.text = null
+                    editInstrumentCredit.text = null
+                    instrumentRow.visibility = View.GONE
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {
-                editInstrumentAmount.text = null
-                editInstrumentAmount.visibility = View.GONE
+                editInstrumentDebit.text = null
+                editInstrumentCredit.text = null
+                instrumentRow.visibility = View.GONE
             }
         }
+
+        editInstrumentDebit.addTextChangedListener(object : TextWatcher {
+            var updating = false
+            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                if (!updating && !s.isNullOrEmpty()) {
+                    updating = true
+                    editInstrumentCredit.text = null
+                    updating = false
+                }
+            }
+        })
+
+        editInstrumentCredit.addTextChangedListener(object : TextWatcher {
+            var updating = false
+            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                if (!updating && !s.isNullOrEmpty()) {
+                    updating = true
+                    editInstrumentDebit.text = null
+                    updating = false
+                }
+            }
+        })
 
         editDebit.addTextChangedListener(object : TextWatcher {
             var updating = false
@@ -259,7 +292,7 @@ class AddTransactionActivity : AppCompatActivity() {
             )
         )
 
-        val entryRow = EntryRow(row, spinner, editDebit, editCredit, btnRemove, editInstrumentAmount)
+        val entryRow = EntryRow(row, spinner, editDebit, editCredit, btnRemove, editInstrumentDebit, editInstrumentCredit, instrumentRow)
         entryRows.add(entryRow)
         entriesContainer.addView(row)
 
@@ -302,9 +335,9 @@ class AddTransactionActivity : AppCompatActivity() {
     private fun saveTransaction() {
         if (entryRows.isEmpty()) return
 
+        data class InstrumentAmounts(val debit: Long?, val credit: Long?)
         val entryDataList = mutableListOf<TransactionValidator.EntryData>()
-        val instrumentAmounts = mutableListOf<Long?>()
-        val accountIdForEntry = mutableListOf<String>()
+        val instrumentAmountsList = mutableListOf<InstrumentAmounts>()
 
         for (row in entryRows) {
             val accountPos = row.spinner.selectedItemPosition
@@ -322,8 +355,11 @@ class AddTransactionActivity : AppCompatActivity() {
             val credit = row.editCredit.text.toString().trim().toIntOrNull()
 
             if (instrument != null) {
-                val raw = row.editInstrumentAmount.text.toString().trim()
-                if (raw.isEmpty()) {
+                val rawDebit = row.editInstrumentDebit.text.toString().trim()
+                val rawCredit = row.editInstrumentCredit.text.toString().trim()
+                val parsedDebit = rawDebit.toDoubleOrNull()
+                val parsedCredit = rawCredit.toDoubleOrNull()
+                if (parsedDebit == null && parsedCredit == null) {
                     Toast.makeText(
                         this,
                         getString(R.string.error_instrument_amount_required, instrument.code),
@@ -331,22 +367,16 @@ class AddTransactionActivity : AppCompatActivity() {
                     ).show()
                     return
                 }
-                val parsed = raw.toDoubleOrNull()
-                if (parsed == null) {
-                    Toast.makeText(
-                        this,
-                        getString(R.string.error_instrument_amount_required, instrument.code),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return
-                }
-                instrumentAmounts.add((parsed * 10.0.pow(instrument.decimalPlaces)).roundToLong())
+                val factor = 10.0.pow(instrument.decimalPlaces)
+                instrumentAmountsList.add(InstrumentAmounts(
+                    debit = parsedDebit?.let { (it * factor).roundToLong() },
+                    credit = parsedCredit?.let { (it * factor).roundToLong() }
+                ))
             } else {
-                instrumentAmounts.add(null)
+                instrumentAmountsList.add(InstrumentAmounts(null, null))
             }
 
             entryDataList.add(TransactionValidator.EntryData(account.id, debit, credit))
-            accountIdForEntry.add(account.id)
         }
 
         when (TransactionValidator.validate(entryDataList)) {
@@ -395,6 +425,7 @@ class AddTransactionActivity : AppCompatActivity() {
         Thread {
             transactionRepo.insert(transaction)
             entryDataList.forEachIndexed { i, entry ->
+                val ia = instrumentAmountsList[i]
                 transactionRepo.insertEntry(
                     TransactionEntry(
                         id = UUID.randomUUID().toString(),
@@ -402,7 +433,8 @@ class AddTransactionActivity : AppCompatActivity() {
                         accountId = entry.accountId,
                         debitAmount = entry.debitAmount,
                         creditAmount = entry.creditAmount,
-                        instrumentAmount = instrumentAmounts[i]
+                        instrumentDebitAmount = ia.debit,
+                        instrumentCreditAmount = ia.credit
                     )
                 )
             }

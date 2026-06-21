@@ -91,8 +91,7 @@ class TransactionDetailActivity : AppCompatActivity() {
         for (entry in twe.entries) {
             val account = accountsMap[entry.accountId]
             val instrument = account?.instrumentCode?.let { instruments[it] }
-            val accountLabel = buildAccountLabel(account?.name ?: entry.accountId, entry, instrument)
-            addEntryRow(tableEntries, accountLabel, entry)
+            addEntryRow(tableEntries, account?.name ?: entry.accountId, entry, instrument)
             totalDebit += entry.debitAmount ?: 0
             totalCredit += entry.creditAmount ?: 0
         }
@@ -104,20 +103,18 @@ class TransactionDetailActivity : AppCompatActivity() {
         findViewById<TextView>(id).text = value
     }
 
-    private fun buildAccountLabel(accountName: String, entry: TransactionEntry, instrument: Instrument?): String {
-        if (instrument == null || entry.instrumentAmount == null) return accountName
+    private fun formatInstrumentAmount(amount: Long, instrument: Instrument): String {
         val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())
-        val formatted = if (instrument.decimalPlaces > 0) {
-            val raw = String.format("%.${instrument.decimalPlaces}f", entry.instrumentAmount / factor)
+        return if (instrument.decimalPlaces > 0) {
+            val raw = String.format("%.${instrument.decimalPlaces}f", amount / factor)
             val stripped = raw.trimEnd('0')
             val dotPos = stripped.indexOf('.')
             val intPart = String.format("%,d", stripped.substring(0, dotPos).toLong())
             val decPart = stripped.substring(dotPos + 1).ifEmpty { "0" }
-            "$intPart.$decPart"
+            "$intPart.$decPart ${instrument.code}"
         } else {
-            String.format("%,d", entry.instrumentAmount)
+            "${String.format("%,d", amount)} ${instrument.code}"
         }
-        return "$accountName ($formatted ${instrument.code})"
     }
 
     private fun addTableHeader(table: TableLayout) {
@@ -128,12 +125,26 @@ class TransactionDetailActivity : AppCompatActivity() {
         table.addView(row)
     }
 
-    private fun addEntryRow(table: TableLayout, accountName: String, entry: TransactionEntry) {
+    private fun addEntryRow(table: TableLayout, accountName: String, entry: TransactionEntry, instrument: Instrument?) {
         val row = TableRow(this)
         row.addView(makeCell(accountName))
         row.addView(makeCell(entry.debitAmount?.let { formatAmount(it) } ?: "-", gravity = Gravity.END))
         row.addView(makeCell(entry.creditAmount?.let { formatAmount(it) } ?: "-", gravity = Gravity.END))
         table.addView(row)
+
+        if (instrument != null && (entry.instrumentDebitAmount != null || entry.instrumentCreditAmount != null)) {
+            val instrRow = TableRow(this)
+            instrRow.addView(makeCell("  ${instrument.code}", italic = true))
+            instrRow.addView(makeCell(
+                entry.instrumentDebitAmount?.let { formatInstrumentAmount(it, instrument) } ?: "-",
+                italic = true, gravity = Gravity.END
+            ))
+            instrRow.addView(makeCell(
+                entry.instrumentCreditAmount?.let { formatInstrumentAmount(it, instrument) } ?: "-",
+                italic = true, gravity = Gravity.END
+            ))
+            table.addView(instrRow)
+        }
     }
 
     private fun addTotalsRow(table: TableLayout, totalDebit: Int, totalCredit: Int) {
@@ -146,12 +157,18 @@ class TransactionDetailActivity : AppCompatActivity() {
 
     private fun formatAmount(amount: Int): String = String.format("%,d", amount)
 
-    private fun makeCell(text: String, bold: Boolean = false, gravity: Int = Gravity.START): TextView {
+    private fun makeCell(text: String, bold: Boolean = false, italic: Boolean = false, gravity: Int = Gravity.START): TextView {
         return TextView(this).apply {
             this.text = text
             this.gravity = gravity
             setPadding(8, 8, 8, 8)
-            if (bold) setTypeface(typeface, android.graphics.Typeface.BOLD)
+            val style = when {
+                bold && italic -> android.graphics.Typeface.BOLD_ITALIC
+                bold -> android.graphics.Typeface.BOLD
+                italic -> android.graphics.Typeface.ITALIC
+                else -> android.graphics.Typeface.NORMAL
+            }
+            setTypeface(typeface, style)
             layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
         }
     }

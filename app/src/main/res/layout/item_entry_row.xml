@@ -50,13 +50,36 @@
 
     </LinearLayout>
 
-    <EditText
-        android:id="@+id/edit_instrument_amount"
+    <LinearLayout
+        android:id="@+id/row_instrument_amounts"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:inputType="numberDecimal"
-        android:maxLines="1"
-        android:visibility="gone" />
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2" />
+
+        <EditText
+            android:id="@+id/edit_instrument_debit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:inputType="numberDecimal"
+            android:maxLines="1" />
+
+        <EditText
+            android:id="@+id/edit_instrument_credit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:inputType="numberDecimal"
+            android:maxLines="1" />
+
+    </LinearLayout>
 
 </LinearLayout>
