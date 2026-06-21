@@ -32,6 +32,9 @@ menu) and `release`. Both can be installed side-by-side.
 No dependency injection framework. Each ViewModel has a manual ViewModelFactory
 that receives Repository instances from the Activity/Fragment.
 
+RoomDatabase singleton in
+app/src/main/java/dev/fitiavana/accounting/db/AppDatabase.kt
+
 ### Package structure (by feature)
 
 ```

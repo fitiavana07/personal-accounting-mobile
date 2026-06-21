@@ -40,6 +40,7 @@ class EditInstrumentActivity : AppCompatActivity() {
     private lateinit var codeInput: EditText
     private lateinit var noteInput: EditText
     private lateinit var typeSpinner: Spinner
+    private lateinit var decimalPlacesInput: EditText
     private var instrumentCode: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,6 +68,7 @@ class EditInstrumentActivity : AppCompatActivity() {
         codeInput = findViewById(R.id.input_instrument_code)
         noteInput = findViewById(R.id.input_instrument_note)
         typeSpinner = findViewById(R.id.spinner_instrument_type)
+        decimalPlacesInput = findViewById(R.id.input_decimal_places)
         val saveButton: Button = findViewById(R.id.button_save)
 
         val typeDisplayNames = resources.getStringArray(R.array.instrument_type_display)
@@ -88,6 +90,7 @@ class EditInstrumentActivity : AppCompatActivity() {
                         noteInput.setSelection(instrument.note.length)
                         val typeIndex = TYPE_VALUES.indexOf(instrument.type).takeIf { it >= 0 } ?: 0
                         typeSpinner.setSelection(typeIndex)
+                        decimalPlacesInput.setText(instrument.decimalPlaces.toString())
                     }
                 }
             }.start()
@@ -98,13 +101,14 @@ class EditInstrumentActivity : AppCompatActivity() {
         saveButton.setOnClickListener {
             val code = codeInput.text.toString().trim()
             val note = noteInput.text.toString().trim()
+            val decimalPlaces = decimalPlacesInput.text.toString().trim().toIntOrNull() ?: 0
             if (code.isNotEmpty()) {
                 val selectedType = TYPE_VALUES[typeSpinner.selectedItemPosition]
                 Thread {
                     if (instrumentCode == null) {
-                        viewModel.saveNewInstrument(code, note, selectedType)
+                        viewModel.saveNewInstrument(code, note, selectedType, decimalPlaces)
                     } else {
-                        viewModel.saveInstrument(instrumentCode, note, selectedType)
+                        viewModel.saveInstrument(instrumentCode, note, selectedType, decimalPlaces)
                     }
                     runOnUiThread { finish() }
                 }.start()

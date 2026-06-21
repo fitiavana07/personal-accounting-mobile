@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -27,6 +28,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.ImageViewCompat
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.data.model.Account
+import dev.fitiavana.accounting.data.model.Instrument
 import dev.fitiavana.accounting.data.model.Transaction
 import dev.fitiavana.accounting.data.model.TransactionEntry
 import dev.fitiavana.accounting.data.repository.AccountRepository
@@ -34,6 +36,8 @@ import dev.fitiavana.accounting.data.repository.BalanceRepository
 import dev.fitiavana.accounting.data.repository.TransactionRepository
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.transactions.TransactionValidator
+import kotlin.math.pow
+import kotlin.math.roundToLong
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -44,6 +48,7 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var transactionRepo: TransactionRepository
     private lateinit var accountRepo: AccountRepository
     private lateinit var accounts: List<Account>
+    private lateinit var instrumentsMap: Map<String, Instrument>
 
     private val dateFormat =
         SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
@@ -58,7 +63,8 @@ class AddTransactionActivity : AppCompatActivity() {
         val spinner: Spinner,
         val editDebit: EditText,
         val editCredit: EditText,
-        val btnRemove: ImageButton
+        val btnRemove: ImageButton,
+        val editInstrumentAmount: EditText
     )
 
     private val entryRows = mutableListOf<EntryRow>()
@@ -96,6 +102,7 @@ class AddTransactionActivity : AppCompatActivity() {
 
         Thread {
             accounts = db.accountDao().getAllSync()
+            instrumentsMap = db.instrumentDao().getAllSync().associateBy { it.code }
             runOnUiThread {
                 addEntryRow()
                 addEntryRow()
@@ -157,6 +164,7 @@ class AddTransactionActivity : AppCompatActivity() {
         val editDebit = row.findViewById<EditText>(R.id.edit_debit)
         val editCredit = row.findViewById<EditText>(R.id.edit_credit)
         val btnRemove = row.findViewById<ImageButton>(R.id.btn_remove_entry)
+        val editInstrumentAmount = row.findViewById<EditText>(R.id.edit_instrument_amount)
 
         val accountNames = listOf(getString(R.string.spinner_select_account)) + accounts.map { it.name }
         val spinnerAdapter = ArrayAdapter(
@@ -167,6 +175,25 @@ class AddTransactionActivity : AppCompatActivity() {
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = spinnerAdapter
         spinner.setSelection(0)
+
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val instrument = if (position > 0 && position <= accounts.size) {
+                    accounts[position - 1].instrumentCode?.let { instrumentsMap[it] }
+                } else null
+                if (instrument != null) {
+                    editInstrumentAmount.hint = getString(R.string.hint_amount_instrument, instrument.code)
+                    editInstrumentAmount.visibility = View.VISIBLE
+                } else {
+                    editInstrumentAmount.text = null
+                    editInstrumentAmount.visibility = View.GONE
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                editInstrumentAmount.text = null
+                editInstrumentAmount.visibility = View.GONE
+            }
+        }
 
         editDebit.addTextChangedListener(object : TextWatcher {
             var updating = false
@@ -232,7 +259,7 @@ class AddTransactionActivity : AppCompatActivity() {
             )
         )
 
-        val entryRow = EntryRow(row, spinner, editDebit, editCredit, btnRemove)
+        val entryRow = EntryRow(row, spinner, editDebit, editCredit, btnRemove, editInstrumentAmount)
         entryRows.add(entryRow)
         entriesContainer.addView(row)
 
@@ -276,6 +303,7 @@ class AddTransactionActivity : AppCompatActivity() {
         if (entryRows.isEmpty()) return
 
         val entryDataList = mutableListOf<TransactionValidator.EntryData>()
+        val instrumentAmounts = mutableListOf<Long?>()
         val accountIdForEntry = mutableListOf<String>()
 
         for (row in entryRows) {
@@ -288,17 +316,37 @@ class AddTransactionActivity : AppCompatActivity() {
                 ).show()
                 return
             }
-            val accountId = accounts[accountPos - 1].id
+            val account = accounts[accountPos - 1]
+            val instrument = account.instrumentCode?.let { instrumentsMap[it] }
             val debit = row.editDebit.text.toString().trim().toIntOrNull()
             val credit = row.editCredit.text.toString().trim().toIntOrNull()
-            entryDataList.add(
-                TransactionValidator.EntryData(
-                    accountId,
-                    debit,
-                    credit
-                )
-            )
-            accountIdForEntry.add(accountId)
+
+            if (instrument != null) {
+                val raw = row.editInstrumentAmount.text.toString().trim()
+                if (raw.isEmpty()) {
+                    Toast.makeText(
+                        this,
+                        getString(R.string.error_instrument_amount_required, instrument.code),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return
+                }
+                val parsed = raw.toDoubleOrNull()
+                if (parsed == null) {
+                    Toast.makeText(
+                        this,
+                        getString(R.string.error_instrument_amount_required, instrument.code),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return
+                }
+                instrumentAmounts.add((parsed * 10.0.pow(instrument.decimalPlaces)).roundToLong())
+            } else {
+                instrumentAmounts.add(null)
+            }
+
+            entryDataList.add(TransactionValidator.EntryData(account.id, debit, credit))
+            accountIdForEntry.add(account.id)
         }
 
         when (TransactionValidator.validate(entryDataList)) {
@@ -346,14 +394,15 @@ class AddTransactionActivity : AppCompatActivity() {
 
         Thread {
             transactionRepo.insert(transaction)
-            for (entry in entryDataList) {
+            entryDataList.forEachIndexed { i, entry ->
                 transactionRepo.insertEntry(
                     TransactionEntry(
                         id = UUID.randomUUID().toString(),
                         transactionId = transactionId,
                         accountId = entry.accountId,
                         debitAmount = entry.debitAmount,
-                        creditAmount = entry.creditAmount
+                        creditAmount = entry.creditAmount,
+                        instrumentAmount = instrumentAmounts[i]
                     )
                 )
             }

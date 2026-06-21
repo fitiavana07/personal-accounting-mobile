@@ -31,5 +31,6 @@ data class TransactionEntry(
     val transactionId: String,
     val accountId: String,
     val debitAmount: Int?,
-    val creditAmount: Int?
+    val creditAmount: Int?,
+    val instrumentAmount: Long? = null
 )

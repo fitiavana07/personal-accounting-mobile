@@ -15,6 +15,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.data.model.Account
+import dev.fitiavana.accounting.data.model.Instrument
 import dev.fitiavana.accounting.data.model.TransactionEntry
 import dev.fitiavana.accounting.data.model.TransactionWithEntries
 import dev.fitiavana.accounting.data.repository.AccountRepository
@@ -55,15 +57,16 @@ class TransactionDetailActivity : AppCompatActivity() {
         Thread {
             val twe = transactionRepo.getWithEntries(transactionId)
             val accounts = accountRepo.getAll().value ?: db.accountDao().getAllSync()
-            val accountsMap = accounts.associate { it.id to it.name }
+            val instruments = db.instrumentDao().getAllSync().associateBy { it.code }
+            val accountsMap = accounts.associate { it.id to it }
             runOnUiThread {
-                if (twe != null) bindData(twe, accountsMap)
+                if (twe != null) bindData(twe, accountsMap, instruments)
                 else finish()
             }
         }.start()
     }
 
-    private fun bindData(twe: TransactionWithEntries, accountsMap: Map<String, String>) {
+    private fun bindData(twe: TransactionWithEntries, accountsMap: Map<String, Account>, instruments: Map<String, Instrument>) {
         val t = twe.transaction
 
         setFieldValue(R.id.value_id, t.id)
@@ -86,7 +89,10 @@ class TransactionDetailActivity : AppCompatActivity() {
         var totalDebit = 0
         var totalCredit = 0
         for (entry in twe.entries) {
-            addEntryRow(tableEntries, accountsMap[entry.accountId] ?: entry.accountId, entry)
+            val account = accountsMap[entry.accountId]
+            val instrument = account?.instrumentCode?.let { instruments[it] }
+            val accountLabel = buildAccountLabel(account?.name ?: entry.accountId, entry, instrument)
+            addEntryRow(tableEntries, accountLabel, entry)
             totalDebit += entry.debitAmount ?: 0
             totalCredit += entry.creditAmount ?: 0
         }
@@ -96,6 +102,22 @@ class TransactionDetailActivity : AppCompatActivity() {
 
     private fun setFieldValue(id: Int, value: String) {
         findViewById<TextView>(id).text = value
+    }
+
+    private fun buildAccountLabel(accountName: String, entry: TransactionEntry, instrument: Instrument?): String {
+        if (instrument == null || entry.instrumentAmount == null) return accountName
+        val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())
+        val formatted = if (instrument.decimalPlaces > 0) {
+            val raw = String.format("%.${instrument.decimalPlaces}f", entry.instrumentAmount / factor)
+            val stripped = raw.trimEnd('0')
+            val dotPos = stripped.indexOf('.')
+            val intPart = String.format("%,d", stripped.substring(0, dotPos).toLong())
+            val decPart = stripped.substring(dotPos + 1).ifEmpty { "0" }
+            "$intPart.$decPart"
+        } else {
+            String.format("%,d", entry.instrumentAmount)
+        }
+        return "$accountName ($formatted ${instrument.code})"
     }
 
     private fun addTableHeader(table: TableLayout) {
