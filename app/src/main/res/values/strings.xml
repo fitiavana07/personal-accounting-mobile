@@ -47,4 +47,12 @@
     <string name="action_clear_transactions">Clear all transactions</string>
     <string name="dialog_clear_transactions_title">Clear all transactions</string>
     <string name="dialog_clear_transactions_message">This will permanently delete all transactions. This cannot be undone.</string>
+    <string name="instruments">Instruments</string>
+    <string name="title_add_instrument">Add Instrument</string>
+    <string name="title_edit_instrument">Edit Instrument</string>
+    <string name="hint_instrument_code">Code</string>
+    <string name="action_add_instrument">Add instrument</string>
+    <string name="label_instrument_type">Instrument type</string>
+    <string name="dialog_delete_instrument_title">Delete Instrument</string>
+    <string name="dialog_delete_instrument_message">Are you sure you want to delete this instrument?</string>
 </resources>

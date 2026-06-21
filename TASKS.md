@@ -2,8 +2,11 @@
 
 ## Active
 
+- [ ] Currencies CRUD
+
 ## Backlog
 
+- [ ] Multi-currencies
 - [ ] Bluetooth Sync
 
 ## Completed

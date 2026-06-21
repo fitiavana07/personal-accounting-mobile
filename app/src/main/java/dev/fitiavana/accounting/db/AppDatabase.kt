@@ -8,17 +8,20 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import dev.fitiavana.accounting.data.dao.AccountBalanceDao
 import dev.fitiavana.accounting.data.dao.AccountDao
+import dev.fitiavana.accounting.data.dao.InstrumentDao
 import dev.fitiavana.accounting.data.dao.TransactionDao
 import dev.fitiavana.accounting.data.model.Account
 import dev.fitiavana.accounting.data.model.AccountBalance
+import dev.fitiavana.accounting.data.model.Instrument
 import dev.fitiavana.accounting.data.model.Transaction
 import dev.fitiavana.accounting.data.model.TransactionEntry
 
-@Database(entities = [Account::class, Transaction::class, TransactionEntry::class, AccountBalance::class], version = 4)
+@Database(entities = [Account::class, Transaction::class, TransactionEntry::class, AccountBalance::class, Instrument::class], version = 5)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
     abstract fun transactionDao(): TransactionDao
     abstract fun accountBalanceDao(): AccountBalanceDao
+    abstract fun instrumentDao(): InstrumentDao
 
     companion object {
         @Volatile
@@ -85,6 +88,17 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `instruments` (" +
+                    "`code` TEXT NOT NULL PRIMARY KEY, " +
+                    "`note` TEXT NOT NULL, " +
+                    "`type` TEXT NOT NULL)"
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -92,7 +106,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app.db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .build().also { instance = it }
             }
         }

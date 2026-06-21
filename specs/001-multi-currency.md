@@ -71,6 +71,14 @@ Transaction 3 is exchanging 0.5 BTC for 32,000 USD, at price 64,000 USD.
 
 TBD
 
-## Examples
+## Examples (test cases)
 
-- USD Account <-> USD Account
+- Buy/Sell USDT <-> MGA
+- Buy/Sell BTC <-> USDT
+- Buy/Sell NVDA <-> USD
+
+## Task
+
+- Show balance in foreign account currency in the balances screen
+- Add final currency in account modification and creation
+- Add intermediary currencies in account modification and creation

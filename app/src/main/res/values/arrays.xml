@@ -7,4 +7,14 @@
         <item>Revenue</item>
         <item>Expense</item>
     </string-array>
+    <string-array name="instrument_type_display">
+        <item>Currency</item>
+        <item>Cryptocurrency</item>
+        <item>Stock</item>
+    </string-array>
+    <string-array name="instrument_type_values">
+        <item>currency</item>
+        <item>cryptocurrency</item>
+        <item>stock</item>
+    </string-array>
 </resources>

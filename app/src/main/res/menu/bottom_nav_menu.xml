@@ -16,4 +16,8 @@
         android:id="@+id/nav_roadmap"
         android:icon="@drawable/ic_roadmap"
         android:title="@string/roadmap" />
+    <item
+        android:id="@+id/nav_instruments"
+        android:icon="@drawable/ic_instruments"
+        android:title="@string/instruments" />
 </menu>
