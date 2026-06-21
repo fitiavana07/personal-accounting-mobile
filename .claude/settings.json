@@ -4,5 +4,18 @@
       "Bash(./gradlew assembleDebug)",
       "Bash(./gradlew assembleDebug testDebugUnitTest)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file=$(echo \"$CLAUDE_TOOL_INPUT\" | jq -r '.file_path // empty'); [[ \"$file\" == *.kt ]] && ktlint --format \"$file\" || true"
+          }
+        ]
+      }
+    ]
   }
 }
