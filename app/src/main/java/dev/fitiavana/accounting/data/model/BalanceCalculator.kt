@@ -7,4 +7,11 @@ object BalanceCalculator {
             else -> totalCredits - totalDebits // liability, equity, revenue
         }
     }
+
+    fun compute(accountType: String, totalDebits: Long, totalCredits: Long): Long {
+        return when (accountType) {
+            "asset", "expense" -> totalDebits - totalCredits
+            else -> totalCredits - totalDebits
+        }
+    }
 }

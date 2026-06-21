@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.data.model.Instrument
 import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -15,6 +16,8 @@ data class BalanceItem(
     val accountId: String,
     val accountName: String,
     val balance: Int,
+    val instrumentBalance: Long,
+    val instrument: Instrument?,
     val updatedAt: Long
 )
 
@@ -44,11 +47,18 @@ class BalancesAdapter : RecyclerView.Adapter<BalancesAdapter.ViewHolder>() {
         private val nameView: TextView = view.findViewById(R.id.text_balance_account_name)
         private val updatedAtView: TextView = view.findViewById(R.id.text_balance_updated_at)
         private val amountView: TextView = view.findViewById(R.id.text_balance_amount)
+        private val instrumentAmountView: TextView = view.findViewById(R.id.text_balance_instrument_amount)
 
         fun bind(item: BalanceItem, dateFormat: SimpleDateFormat) {
             nameView.text = item.accountName
             updatedAtView.text = dateFormat.format(Date(item.updatedAt))
             amountView.text = "Ar ${TransactionDisplay.formatAmount(item.balance)}"
+            if (item.instrument != null) {
+                instrumentAmountView.text = TransactionDisplay.formatInstrumentAmount(item.instrumentBalance, item.instrument)
+                instrumentAmountView.visibility = View.VISIBLE
+            } else {
+                instrumentAmountView.visibility = View.GONE
+            }
         }
     }
 }

@@ -81,7 +81,7 @@ Transaction amounts stored as integers
 
 ## On new features
 
-After every new feature added:
+After every change:
 
 - generate a testing checklist
 - write unit tests (new or update existing ones) conforming to this

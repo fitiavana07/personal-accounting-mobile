@@ -21,6 +21,7 @@ import dev.fitiavana.accounting.data.model.TransactionEntry
 import dev.fitiavana.accounting.data.model.TransactionWithEntries
 import dev.fitiavana.accounting.data.repository.AccountRepository
 import dev.fitiavana.accounting.data.repository.TransactionRepository
+import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
 import dev.fitiavana.accounting.db.AppDatabase
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -103,20 +104,6 @@ class TransactionDetailActivity : AppCompatActivity() {
         findViewById<TextView>(id).text = value
     }
 
-    private fun formatInstrumentAmount(amount: Long, instrument: Instrument): String {
-        val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())
-        return if (instrument.decimalPlaces > 0) {
-            val raw = String.format("%.${instrument.decimalPlaces}f", amount / factor)
-            val stripped = raw.trimEnd('0')
-            val dotPos = stripped.indexOf('.')
-            val intPart = String.format("%,d", stripped.substring(0, dotPos).toLong())
-            val decPart = stripped.substring(dotPos + 1).ifEmpty { "0" }
-            "$intPart.$decPart ${instrument.code}"
-        } else {
-            "${String.format("%,d", amount)} ${instrument.code}"
-        }
-    }
-
     private fun addTableHeader(table: TableLayout) {
         val row = TableRow(this)
         row.addView(makeCell(getString(R.string.label_account), bold = true))
@@ -136,11 +123,11 @@ class TransactionDetailActivity : AppCompatActivity() {
             val instrRow = TableRow(this)
             instrRow.addView(makeCell("  ${instrument.code}", italic = true))
             instrRow.addView(makeCell(
-                entry.instrumentDebitAmount?.let { formatInstrumentAmount(it, instrument) } ?: "-",
+                entry.instrumentDebitAmount?.let { TransactionDisplay.formatInstrumentAmount(it, instrument) } ?: "-",
                 italic = true, gravity = Gravity.END
             ))
             instrRow.addView(makeCell(
-                entry.instrumentCreditAmount?.let { formatInstrumentAmount(it, instrument) } ?: "-",
+                entry.instrumentCreditAmount?.let { TransactionDisplay.formatInstrumentAmount(it, instrument) } ?: "-",
                 italic = true, gravity = Gravity.END
             ))
             table.addView(instrRow)

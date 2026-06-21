@@ -32,6 +32,12 @@ interface TransactionDao {
     @Query("SELECT COALESCE(SUM(creditAmount), 0) FROM transaction_entries WHERE accountId = :accountId")
     fun sumCreditsForAccount(accountId: String): Int
 
+    @Query("SELECT COALESCE(SUM(instrumentDebitAmount), 0) FROM transaction_entries WHERE accountId = :accountId")
+    fun sumInstrumentDebitsForAccount(accountId: String): Long
+
+    @Query("SELECT COALESCE(SUM(instrumentCreditAmount), 0) FROM transaction_entries WHERE accountId = :accountId")
+    fun sumInstrumentCreditsForAccount(accountId: String): Long
+
     @Query("SELECT COUNT(*) FROM transaction_entries WHERE accountId = :accountId")
     fun countEntriesForAccount(accountId: String): Int
 

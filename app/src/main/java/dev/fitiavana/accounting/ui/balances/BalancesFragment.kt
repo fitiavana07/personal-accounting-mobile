@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.data.repository.AccountRepository
 import dev.fitiavana.accounting.data.repository.BalanceRepository
+import dev.fitiavana.accounting.data.repository.InstrumentRepository
 import dev.fitiavana.accounting.db.AppDatabase
 
 class BalancesFragment : Fragment() {
@@ -38,8 +39,9 @@ class BalancesFragment : Fragment() {
         val db = AppDatabase.getInstance(requireContext())
         val balanceRepo = BalanceRepository(db.accountDao(), db.accountBalanceDao(), db.transactionDao())
         val accountRepo = AccountRepository(db.accountDao())
+        val instrumentRepo = InstrumentRepository(db.instrumentDao(), db.accountDao())
 
-        viewModel = ViewModelProvider(this, BalancesViewModelFactory(balanceRepo, accountRepo))
+        viewModel = ViewModelProvider(this, BalancesViewModelFactory(balanceRepo, accountRepo, instrumentRepo))
             .get(BalancesViewModel::class.java)
 
         adapter = BalancesAdapter()
