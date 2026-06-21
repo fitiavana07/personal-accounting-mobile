@@ -38,7 +38,12 @@ class AccountsAdapter(
         fun bind(account: Account, onClick: (Account) -> Unit) {
             nameView.text = account.name
             val typeLabel = account.type.replaceFirstChar { it.uppercase() }
-            typeView.text = if (account.instrumentCode != null) "$typeLabel · ${account.instrumentCode}" else typeLabel
+            val instrumentDisplay = when {
+                account.intermediaryInstrumentCode != null -> "${account.instrumentCode} via ${account.intermediaryInstrumentCode}"
+                account.instrumentCode != null -> account.instrumentCode
+                else -> null
+            }
+            typeView.text = if (instrumentDisplay != null) "$typeLabel · $instrumentDisplay" else typeLabel
             itemView.setOnClickListener { onClick(account) }
         }
     }

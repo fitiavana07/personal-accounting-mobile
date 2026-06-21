@@ -33,5 +33,7 @@ data class TransactionEntry(
     val debitAmount: Int?,
     val creditAmount: Int?,
     val instrumentDebitAmount: Long? = null,
-    val instrumentCreditAmount: Long? = null
+    val instrumentCreditAmount: Long? = null,
+    val intermediaryDebitAmount: Long? = null,
+    val intermediaryCreditAmount: Long? = null
 )

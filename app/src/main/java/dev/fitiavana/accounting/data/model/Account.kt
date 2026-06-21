@@ -13,13 +13,20 @@ import androidx.room.PrimaryKey
             parentColumns = ["code"],
             childColumns = ["instrumentCode"],
             onDelete = ForeignKey.SET_NULL
+        ),
+        ForeignKey(
+            entity = Instrument::class,
+            parentColumns = ["code"],
+            childColumns = ["intermediaryInstrumentCode"],
+            onDelete = ForeignKey.SET_NULL
         )
     ],
-    indices = [Index("instrumentCode")]
+    indices = [Index("instrumentCode"), Index("intermediaryInstrumentCode")]
 )
 data class Account(
     @PrimaryKey val id: String,
     val name: String,
     val type: String,
-    val instrumentCode: String? = null
+    val instrumentCode: String? = null,
+    val intermediaryInstrumentCode: String? = null
 )

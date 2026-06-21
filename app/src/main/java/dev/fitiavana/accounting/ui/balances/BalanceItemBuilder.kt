@@ -15,12 +15,15 @@ object BalanceItemBuilder {
             .mapNotNull { balance ->
                 val account = accountMap[balance.accountId] ?: return@mapNotNull null
                 val instrument = account.instrumentCode?.let { instruments[it] }
+                val intermediaryInstrument = account.intermediaryInstrumentCode?.let { instruments[it] }
                 BalanceItem(
                     accountId = balance.accountId,
                     accountName = account.name,
                     balance = balance.balance,
                     instrumentBalance = balance.instrumentBalance,
                     instrument = instrument,
+                    intermediaryBalance = balance.intermediaryBalance,
+                    intermediaryInstrument = intermediaryInstrument,
                     updatedAt = balance.updatedAt
                 )
             }

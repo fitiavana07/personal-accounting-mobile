@@ -18,6 +18,8 @@ data class BalanceItem(
     val balance: Int,
     val instrumentBalance: Long,
     val instrument: Instrument?,
+    val intermediaryBalance: Long = 0,
+    val intermediaryInstrument: Instrument? = null,
     val updatedAt: Long
 )
 
@@ -54,7 +56,12 @@ class BalancesAdapter : RecyclerView.Adapter<BalancesAdapter.ViewHolder>() {
             updatedAtView.text = dateFormat.format(Date(item.updatedAt))
             amountView.text = "Ar ${TransactionDisplay.formatAmount(item.balance)}"
             if (item.instrument != null) {
-                instrumentAmountView.text = TransactionDisplay.formatInstrumentAmount(item.instrumentBalance, item.instrument)
+                val instrumentText = TransactionDisplay.formatInstrumentAmount(item.instrumentBalance, item.instrument)
+                instrumentAmountView.text = if (item.intermediaryInstrument != null) {
+                    "$instrumentText · ${TransactionDisplay.formatInstrumentAmount(item.intermediaryBalance, item.intermediaryInstrument)}"
+                } else {
+                    instrumentText
+                }
                 instrumentAmountView.visibility = View.VISIBLE
             } else {
                 instrumentAmountView.visibility = View.GONE

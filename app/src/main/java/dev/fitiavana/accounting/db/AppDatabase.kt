@@ -18,7 +18,7 @@ import dev.fitiavana.accounting.data.model.TransactionEntry
 
 @Database(
     entities = [Account::class, Transaction::class, TransactionEntry::class, AccountBalance::class, Instrument::class],
-    version = 10
+    version = 11
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
@@ -147,6 +147,16 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `accounts` ADD COLUMN `intermediaryInstrumentCode` TEXT REFERENCES `instruments`(`code`) ON DELETE SET NULL")
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_intermediaryInstrumentCode` ON `accounts` (`intermediaryInstrumentCode`)")
+                database.execSQL("ALTER TABLE `transaction_entries` ADD COLUMN `intermediaryDebitAmount` INTEGER")
+                database.execSQL("ALTER TABLE `transaction_entries` ADD COLUMN `intermediaryCreditAmount` INTEGER")
+                database.execSQL("ALTER TABLE `account_balances` ADD COLUMN `intermediaryBalance` INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         private val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 // Rename instrument_code -> instrumentCode (SQLite <3.25 has no RENAME COLUMN)
@@ -182,7 +192,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_6_7,
                         MIGRATION_7_8,
                         MIGRATION_8_9,
-                        MIGRATION_9_10
+                        MIGRATION_9_10,
+                        MIGRATION_10_11
                     )
                     .build().also { instance = it }
             }

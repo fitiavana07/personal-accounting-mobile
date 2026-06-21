@@ -43,9 +43,11 @@ class EditAccountActivity : AppCompatActivity() {
     private lateinit var nameInput: EditText
     private lateinit var typeSpinner: Spinner
     private lateinit var instrumentSpinner: Spinner
+    private lateinit var intermediaryInstrumentSpinner: Spinner
     private var accountId: String? = null
 
     private var instruments: List<Instrument> = emptyList()
+    private var isLocked: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,6 +75,7 @@ class EditAccountActivity : AppCompatActivity() {
         nameInput = findViewById(R.id.input_account_name)
         typeSpinner = findViewById(R.id.spinner_account_type)
         instrumentSpinner = findViewById(R.id.spinner_instrument)
+        intermediaryInstrumentSpinner = findViewById(R.id.spinner_intermediary_instrument)
         val saveButton: Button = findViewById(R.id.button_save)
 
         val typeDisplayNames = resources.getStringArray(R.array.account_type_display)
@@ -89,6 +92,10 @@ class EditAccountActivity : AppCompatActivity() {
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             instrumentSpinner.adapter = adapter
 
+            val intermediaryAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, displayNames)
+            intermediaryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            intermediaryInstrumentSpinner.adapter = intermediaryAdapter
+
             if (accountId != null) {
                 Thread {
                     val account = viewModel.getAccount(accountId!!)
@@ -96,9 +103,26 @@ class EditAccountActivity : AppCompatActivity() {
                         if (account != null) {
                             val index = list.indexOfFirst { it.code == account.instrumentCode }
                             instrumentSpinner.setSelection(if (index >= 0) index + 1 else 0)
+                            val interIndex = list.indexOfFirst { it.code == account.intermediaryInstrumentCode }
+                            intermediaryInstrumentSpinner.setSelection(if (interIndex >= 0) interIndex + 1 else 0)
                         }
+                        updateIntermediarySpinnerEnabled()
                     }
                 }.start()
+            } else {
+                updateIntermediarySpinnerEnabled()
+            }
+        }
+
+        instrumentSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                if (position == 0) {
+                    intermediaryInstrumentSpinner.setSelection(0)
+                }
+                updateIntermediarySpinnerEnabled()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {
+                updateIntermediarySpinnerEnabled()
             }
         }
 
@@ -115,7 +139,10 @@ class EditAccountActivity : AppCompatActivity() {
                         val typeIndex = TYPE_VALUES.indexOf(account.type).takeIf { it >= 0 } ?: 0
                         typeSpinner.setSelection(typeIndex)
                     }
+                    isLocked = locked
                     typeSpinner.isEnabled = !locked
+                    instrumentSpinner.isEnabled = !locked
+                    updateIntermediarySpinnerEnabled()
                 }
             }.start()
         } else {
@@ -128,12 +155,18 @@ class EditAccountActivity : AppCompatActivity() {
                 val selectedType = TYPE_VALUES[typeSpinner.selectedItemPosition]
                 val instrumentPos = instrumentSpinner.selectedItemPosition
                 val selectedInstrumentCode = if (instrumentPos == 0) null else instruments[instrumentPos - 1].code
+                val interPos = intermediaryInstrumentSpinner.selectedItemPosition
+                val selectedIntermediaryCode = if (interPos == 0 || selectedInstrumentCode == null) null else instruments[interPos - 1].code
                 Thread {
-                    viewModel.saveAccount(accountId, name, selectedType, selectedInstrumentCode)
+                    viewModel.saveAccount(accountId, name, selectedType, selectedInstrumentCode, selectedIntermediaryCode)
                     runOnUiThread { finish() }
                 }.start()
             }
         }
+    }
+
+    private fun updateIntermediarySpinnerEnabled() {
+        intermediaryInstrumentSpinner.isEnabled = !isLocked && instrumentSpinner.selectedItemPosition > 0
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

@@ -19,6 +19,7 @@ data class AccountBalance(
     @PrimaryKey val accountId: String,
     val balance: Int,
     val instrumentBalance: Long = 0,
+    val intermediaryBalance: Long = 0,
     val updatedAt: Long,
     val createdAt: Long
 )

@@ -17,10 +17,23 @@ class BalanceRepository(
     fun recalculateForAccount(accountId: String, accountType: String) {
         val totalDebits = transactionDao.sumDebitsForAccount(accountId)
         val totalCredits = transactionDao.sumCreditsForAccount(accountId)
-        val balance = BalanceCalculator.compute(accountType, totalDebits, totalCredits)
-        val totalInstrumentDebits = transactionDao.sumInstrumentDebitsForAccount(accountId)
-        val totalInstrumentCredits = transactionDao.sumInstrumentCreditsForAccount(accountId)
-        val instrumentBalance = BalanceCalculator.compute(accountType, totalInstrumentDebits, totalInstrumentCredits)
+        val balance =
+            BalanceCalculator.compute(accountType, totalDebits, totalCredits)
+
+        val totalInstrumentDebits =
+            transactionDao.sumInstrumentDebitsForAccount(accountId)
+        val totalInstrumentCredits =
+            transactionDao.sumInstrumentCreditsForAccount(accountId)
+        val instrumentBalance = BalanceCalculator.compute(
+            accountType,
+            totalInstrumentDebits,
+            totalInstrumentCredits
+        )
+
+        val totalIntermediaryDebits = transactionDao.sumIntermediaryDebitsForAccount(accountId)
+        val totalIntermediaryCredits = transactionDao.sumIntermediaryCreditsForAccount(accountId)
+        val intermediaryBalance = BalanceCalculator.compute(accountType, totalIntermediaryDebits, totalIntermediaryCredits)
+
         val now = System.currentTimeMillis()
         val existing = balanceDao.getByAccountId(accountId)
         balanceDao.insert(
@@ -28,6 +41,7 @@ class BalanceRepository(
                 accountId = accountId,
                 balance = balance,
                 instrumentBalance = instrumentBalance,
+                intermediaryBalance = intermediaryBalance,
                 updatedAt = now,
                 createdAt = existing?.createdAt ?: now
             )

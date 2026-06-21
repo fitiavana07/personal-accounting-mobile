@@ -57,6 +57,8 @@
     <string name="action_add_instrument">Add instrument</string>
     <string name="label_instrument_type">Instrument type</string>
     <string name="label_instrument">Instrument</string>
+    <string name="label_intermediary_instrument">Intermediary Instrument</string>
+    <string name="hint_amount">Amount</string>
     <string name="spinner_no_instrument">None</string>
     <string name="dialog_delete_instrument_title">Delete Instrument</string>
     <string name="dialog_delete_instrument_message">Are you sure you want to delete this instrument?</string>

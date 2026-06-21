@@ -92,7 +92,7 @@ class TransactionDetailActivity : AppCompatActivity() {
         for (entry in twe.entries) {
             val account = accountsMap[entry.accountId]
             val instrument = account?.instrumentCode?.let { instruments[it] }
-            addEntryRow(tableEntries, account?.name ?: entry.accountId, entry, instrument)
+            addEntryRow(tableEntries, account?.name ?: entry.accountId, entry, instrument, account, instruments)
             totalDebit += entry.debitAmount ?: 0
             totalCredit += entry.creditAmount ?: 0
         }
@@ -112,7 +112,7 @@ class TransactionDetailActivity : AppCompatActivity() {
         table.addView(row)
     }
 
-    private fun addEntryRow(table: TableLayout, accountName: String, entry: TransactionEntry, instrument: Instrument?) {
+    private fun addEntryRow(table: TableLayout, accountName: String, entry: TransactionEntry, instrument: Instrument?, account: Account?, instruments: Map<String, Instrument>) {
         val row = TableRow(this)
         row.addView(makeCell(accountName))
         row.addView(makeCell(entry.debitAmount?.let { formatAmount(it) } ?: "-", gravity = Gravity.END))
@@ -131,6 +131,21 @@ class TransactionDetailActivity : AppCompatActivity() {
                 italic = true, gravity = Gravity.END
             ))
             table.addView(instrRow)
+        }
+
+        val intermediaryInstrument = account?.intermediaryInstrumentCode?.let { instruments[it] }
+        if (intermediaryInstrument != null && (entry.intermediaryDebitAmount != null || entry.intermediaryCreditAmount != null)) {
+            val interRow = TableRow(this)
+            interRow.addView(makeCell("  ${intermediaryInstrument.code}", italic = true))
+            interRow.addView(makeCell(
+                entry.intermediaryDebitAmount?.let { TransactionDisplay.formatInstrumentAmount(it, intermediaryInstrument) } ?: "-",
+                italic = true, gravity = Gravity.END
+            ))
+            interRow.addView(makeCell(
+                entry.intermediaryCreditAmount?.let { TransactionDisplay.formatInstrumentAmount(it, intermediaryInstrument) } ?: "-",
+                italic = true, gravity = Gravity.END
+            ))
+            table.addView(interRow)
         }
     }
 

@@ -66,7 +66,12 @@ class AddTransactionActivity : AppCompatActivity() {
         val btnRemove: ImageButton,
         val editInstrumentDebit: EditText,
         val editInstrumentCredit: EditText,
-        val instrumentRow: View
+        val instrumentRow: View,
+        val textInstrumentCode: TextView,
+        val editIntermediaryDebit: EditText,
+        val editIntermediaryCredit: EditText,
+        val intermediaryRow: View,
+        val textIntermediaryCode: TextView
     )
 
     private val entryRows = mutableListOf<EntryRow>()
@@ -169,6 +174,11 @@ class AddTransactionActivity : AppCompatActivity() {
         val editInstrumentDebit = row.findViewById<EditText>(R.id.edit_instrument_debit)
         val editInstrumentCredit = row.findViewById<EditText>(R.id.edit_instrument_credit)
         val instrumentRow = row.findViewById<View>(R.id.row_instrument_amounts)
+        val textInstrumentCode = row.findViewById<TextView>(R.id.text_instrument_code)
+        val editIntermediaryDebit = row.findViewById<EditText>(R.id.edit_intermediary_debit)
+        val editIntermediaryCredit = row.findViewById<EditText>(R.id.edit_intermediary_credit)
+        val intermediaryRow = row.findViewById<View>(R.id.row_intermediary_amounts)
+        val textIntermediaryCode = row.findViewById<TextView>(R.id.text_intermediary_instrument_code)
 
         val accountNames = listOf(getString(R.string.spinner_select_account)) + accounts.map { it.name }
         val spinnerAdapter = ArrayAdapter(
@@ -182,23 +192,33 @@ class AddTransactionActivity : AppCompatActivity() {
 
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val instrument = if (position > 0 && position <= accounts.size) {
-                    accounts[position - 1].instrumentCode?.let { instrumentsMap[it] }
-                } else null
+                val account = if (position > 0 && position <= accounts.size) accounts[position - 1] else null
+                val instrument = account?.instrumentCode?.let { instrumentsMap[it] }
                 if (instrument != null) {
-                    editInstrumentDebit.hint = getString(R.string.hint_amount_instrument, instrument.code)
-                    editInstrumentCredit.hint = getString(R.string.hint_amount_instrument, instrument.code)
+                    textInstrumentCode.text = instrument.code
                     instrumentRow.visibility = View.VISIBLE
                 } else {
                     editInstrumentDebit.text = null
                     editInstrumentCredit.text = null
                     instrumentRow.visibility = View.GONE
                 }
+                val intermediaryInstrument = account?.intermediaryInstrumentCode?.let { instrumentsMap[it] }
+                if (intermediaryInstrument != null) {
+                    textIntermediaryCode.text = intermediaryInstrument.code
+                    intermediaryRow.visibility = View.VISIBLE
+                } else {
+                    editIntermediaryDebit.text = null
+                    editIntermediaryCredit.text = null
+                    intermediaryRow.visibility = View.GONE
+                }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 editInstrumentDebit.text = null
                 editInstrumentCredit.text = null
                 instrumentRow.visibility = View.GONE
+                editIntermediaryDebit.text = null
+                editIntermediaryCredit.text = null
+                intermediaryRow.visibility = View.GONE
             }
         }
 
@@ -223,6 +243,32 @@ class AddTransactionActivity : AppCompatActivity() {
                 if (!updating && !s.isNullOrEmpty()) {
                     updating = true
                     editInstrumentDebit.text = null
+                    updating = false
+                }
+            }
+        })
+
+        editIntermediaryDebit.addTextChangedListener(object : TextWatcher {
+            var updating = false
+            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                if (!updating && !s.isNullOrEmpty()) {
+                    updating = true
+                    editIntermediaryCredit.text = null
+                    updating = false
+                }
+            }
+        })
+
+        editIntermediaryCredit.addTextChangedListener(object : TextWatcher {
+            var updating = false
+            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                if (!updating && !s.isNullOrEmpty()) {
+                    updating = true
+                    editIntermediaryDebit.text = null
                     updating = false
                 }
             }
@@ -292,7 +338,7 @@ class AddTransactionActivity : AppCompatActivity() {
             )
         )
 
-        val entryRow = EntryRow(row, spinner, editDebit, editCredit, btnRemove, editInstrumentDebit, editInstrumentCredit, instrumentRow)
+        val entryRow = EntryRow(row, spinner, editDebit, editCredit, btnRemove, editInstrumentDebit, editInstrumentCredit, instrumentRow, textInstrumentCode, editIntermediaryDebit, editIntermediaryCredit, intermediaryRow, textIntermediaryCode)
         entryRows.add(entryRow)
         entriesContainer.addView(row)
 
@@ -335,7 +381,7 @@ class AddTransactionActivity : AppCompatActivity() {
     private fun saveTransaction() {
         if (entryRows.isEmpty()) return
 
-        data class InstrumentAmounts(val debit: Long?, val credit: Long?)
+        data class InstrumentAmounts(val debit: Long?, val credit: Long?, val interDebit: Long?, val interCredit: Long?)
         val entryDataList = mutableListOf<TransactionValidator.EntryData>()
         val instrumentAmountsList = mutableListOf<InstrumentAmounts>()
 
@@ -368,12 +414,18 @@ class AddTransactionActivity : AppCompatActivity() {
                     return
                 }
                 val factor = 10.0.pow(instrument.decimalPlaces)
+                val intermediaryInstrument = account.intermediaryInstrumentCode?.let { instrumentsMap[it] }
+                val interFactor = intermediaryInstrument?.let { 10.0.pow(it.decimalPlaces) }
+                val rawInterDebit = row.editIntermediaryDebit.text.toString().trim()
+                val rawInterCredit = row.editIntermediaryCredit.text.toString().trim()
                 instrumentAmountsList.add(InstrumentAmounts(
                     debit = parsedDebit?.let { (it * factor).roundToLong() },
-                    credit = parsedCredit?.let { (it * factor).roundToLong() }
+                    credit = parsedCredit?.let { (it * factor).roundToLong() },
+                    interDebit = if (interFactor != null) rawInterDebit.toDoubleOrNull()?.let { (it * interFactor).roundToLong() } else null,
+                    interCredit = if (interFactor != null) rawInterCredit.toDoubleOrNull()?.let { (it * interFactor).roundToLong() } else null
                 ))
             } else {
-                instrumentAmountsList.add(InstrumentAmounts(null, null))
+                instrumentAmountsList.add(InstrumentAmounts(null, null, null, null))
             }
 
             entryDataList.add(TransactionValidator.EntryData(account.id, debit, credit))
@@ -434,7 +486,9 @@ class AddTransactionActivity : AppCompatActivity() {
                         debitAmount = entry.debitAmount,
                         creditAmount = entry.creditAmount,
                         instrumentDebitAmount = ia.debit,
-                        instrumentCreditAmount = ia.credit
+                        instrumentCreditAmount = ia.credit,
+                        intermediaryDebitAmount = ia.interDebit,
+                        intermediaryCreditAmount = ia.interCredit
                     )
                 )
             }

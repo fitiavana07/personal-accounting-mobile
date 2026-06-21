@@ -17,12 +17,12 @@ class EditAccountViewModel(
 
     fun getAccount(id: String): Account? = repository.getById(id)
 
-    fun saveAccount(id: String?, name: String, type: String, instrumentCode: String?) {
+    fun saveAccount(id: String?, name: String, type: String, instrumentCode: String?, intermediaryInstrumentCode: String?) {
         val trimmed = name.trim()
         if (id == null) {
-            repository.insert(Account(id = UUID.randomUUID().toString(), name = trimmed, type = type, instrumentCode = instrumentCode))
+            repository.insert(Account(id = UUID.randomUUID().toString(), name = trimmed, type = type, instrumentCode = instrumentCode, intermediaryInstrumentCode = intermediaryInstrumentCode))
         } else {
-            repository.update(Account(id = id, name = trimmed, type = type, instrumentCode = instrumentCode))
+            repository.update(Account(id = id, name = trimmed, type = type, instrumentCode = instrumentCode, intermediaryInstrumentCode = intermediaryInstrumentCode))
         }
     }
 
