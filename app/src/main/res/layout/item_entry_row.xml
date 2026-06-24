@@ -26,7 +26,8 @@
             android:layout_marginStart="4dp"
             android:hint="@string/label_debit"
             android:inputType="number"
-            android:maxLines="1" />
+            android:maxLines="1"
+            android:textSize="12sp" />
 
         <EditText
             android:id="@+id/edit_credit"
@@ -36,7 +37,8 @@
             android:layout_marginStart="4dp"
             android:hint="@string/label_credit"
             android:inputType="number"
-            android:maxLines="1" />
+            android:maxLines="1"
+            android:textSize="12sp" />
 
         <ImageButton
             android:id="@+id/btn_remove_entry"
@@ -75,7 +77,8 @@
             android:layout_marginStart="4dp"
             android:hint="@string/hint_amount"
             android:inputType="numberDecimal"
-            android:maxLines="1" />
+            android:maxLines="1"
+            android:textSize="12sp" />
 
         <EditText
             android:id="@+id/edit_instrument_credit"
@@ -85,7 +88,8 @@
             android:layout_marginStart="4dp"
             android:hint="@string/hint_amount"
             android:inputType="numberDecimal"
-            android:maxLines="1" />
+            android:maxLines="1"
+            android:textSize="12sp" />
 
     </LinearLayout>
 
@@ -114,7 +118,8 @@
             android:layout_marginStart="4dp"
             android:hint="@string/hint_amount"
             android:inputType="numberDecimal"
-            android:maxLines="1" />
+            android:maxLines="1"
+            android:textSize="12sp" />
 
         <EditText
             android:id="@+id/edit_intermediary_credit"
@@ -124,7 +129,8 @@
             android:layout_marginStart="4dp"
             android:hint="@string/hint_amount"
             android:inputType="numberDecimal"
-            android:maxLines="1" />
+            android:maxLines="1"
+            android:textSize="12sp" />
 
     </LinearLayout>
 
