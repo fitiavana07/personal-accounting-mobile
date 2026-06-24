@@ -49,6 +49,8 @@ class EditAccountActivity : AppCompatActivity() {
 
     private var instruments: List<Instrument> = emptyList()
     private var isLocked: Boolean = false
+    private var instrumentInitiallyUnset: Boolean = true
+    private var intermediaryInitiallyUnset: Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -128,6 +130,8 @@ class EditAccountActivity : AppCompatActivity() {
                             val interIndex =
                                 list.indexOfFirst { it.code == account.intermediaryInstrumentCode }
                             intermediaryInstrumentSpinner.setSelection(if (interIndex >= 0) interIndex + 1 else 0)
+                            instrumentInitiallyUnset = account.instrumentCode == null
+                            intermediaryInitiallyUnset = account.intermediaryInstrumentCode == null
                         }
                         updateIntermediarySpinnerEnabled()
                     }
@@ -176,7 +180,7 @@ class EditAccountActivity : AppCompatActivity() {
                     }
                     isLocked = locked
                     typeSpinner.isEnabled = !locked
-                    instrumentSpinner.isEnabled = !locked
+                    instrumentSpinner.isEnabled = !locked || instrumentInitiallyUnset
                     updateIntermediarySpinnerEnabled()
                 }
             }.start()
@@ -211,8 +215,9 @@ class EditAccountActivity : AppCompatActivity() {
     }
 
     private fun updateIntermediarySpinnerEnabled() {
+        val canEdit = !isLocked || intermediaryInitiallyUnset
         intermediaryInstrumentSpinner.isEnabled =
-            !isLocked && instrumentSpinner.selectedItemPosition > 0
+            canEdit && instrumentSpinner.selectedItemPosition > 0
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
