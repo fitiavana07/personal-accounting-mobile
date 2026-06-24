@@ -69,7 +69,8 @@
                     android:layout_marginStart="4dp"
                     android:text="@string/label_debit"
                     android:textStyle="bold"
-                    android:textSize="13sp" />
+                    android:textSize="13sp"
+                    android:gravity="center" />
 
                 <TextView
                     android:layout_width="0dp"
@@ -78,7 +79,8 @@
                     android:layout_marginStart="4dp"
                     android:text="@string/label_credit"
                     android:textStyle="bold"
-                    android:textSize="13sp" />
+                    android:textSize="13sp"
+                    android:gravity="center" />
 
                 <View
                     android:layout_width="40dp"
