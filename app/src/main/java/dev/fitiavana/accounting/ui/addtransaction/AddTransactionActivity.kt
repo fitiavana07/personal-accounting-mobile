@@ -35,6 +35,7 @@ import dev.fitiavana.accounting.data.repository.AccountRepository
 import dev.fitiavana.accounting.data.repository.BalanceRepository
 import dev.fitiavana.accounting.data.repository.TransactionRepository
 import dev.fitiavana.accounting.db.AppDatabase
+import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
 import dev.fitiavana.accounting.ui.transactions.TransactionValidator
 import kotlin.math.pow
 import kotlin.math.roundToLong
@@ -49,6 +50,7 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var accountRepo: AccountRepository
     private lateinit var accounts: List<Account>
     private lateinit var instrumentsMap: Map<String, Instrument>
+    private lateinit var accountBalanceDao: dev.fitiavana.accounting.data.dao.AccountBalanceDao
 
     private val dateFormat =
         SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
@@ -71,7 +73,13 @@ class AddTransactionActivity : AppCompatActivity() {
         val editIntermediaryDebit: EditText,
         val editIntermediaryCredit: EditText,
         val intermediaryRow: View,
-        val textIntermediaryCode: TextView
+        val textIntermediaryCode: TextView,
+        val textBalanceRow: View,
+        val textBalance: TextView,
+        val textInstrumentBalanceRow: View,
+        val textInstrumentBalance: TextView,
+        val textIntermediaryBalanceRow: View,
+        val textIntermediaryBalance: TextView
     )
 
     private val entryRows = mutableListOf<EntryRow>()
@@ -98,6 +106,7 @@ class AddTransactionActivity : AppCompatActivity() {
         val db = AppDatabase.getInstance(this)
         transactionRepo = TransactionRepository(db.transactionDao())
         accountRepo = AccountRepository(db.accountDao())
+        accountBalanceDao = db.accountBalanceDao()
 
         textDatetime = findViewById(R.id.text_datetime)
         editNote = findViewById(R.id.edit_note)
@@ -179,11 +188,17 @@ class AddTransactionActivity : AppCompatActivity() {
         val editIntermediaryCredit = row.findViewById<EditText>(R.id.edit_intermediary_credit)
         val intermediaryRow = row.findViewById<View>(R.id.row_intermediary_amounts)
         val textIntermediaryCode = row.findViewById<TextView>(R.id.text_intermediary_instrument_code)
+        val textBalanceRow = row.findViewById<View>(R.id.text_balance_row)
+        val textBalance = row.findViewById<TextView>(R.id.text_balance)
+        val textInstrumentBalanceRow = row.findViewById<View>(R.id.text_instrument_balance_row)
+        val textInstrumentBalance = row.findViewById<TextView>(R.id.text_instrument_balance)
+        val textIntermediaryBalanceRow = row.findViewById<View>(R.id.text_intermediary_balance_row)
+        val textIntermediaryBalance = row.findViewById<TextView>(R.id.text_intermediary_balance)
 
         val accountNames = listOf(getString(R.string.spinner_select_account)) + accounts.map { it.name }
         val spinnerAdapter = ArrayAdapter(
             this,
-            android.R.layout.simple_spinner_item,
+            R.layout.item_spinner_small,
             accountNames
         )
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -201,6 +216,7 @@ class AddTransactionActivity : AppCompatActivity() {
                     editInstrumentDebit.text = null
                     editInstrumentCredit.text = null
                     instrumentRow.visibility = View.GONE
+                    textInstrumentBalanceRow.visibility = View.GONE
                 }
                 val intermediaryInstrument = account?.intermediaryInstrumentCode?.let { instrumentsMap[it] }
                 if (intermediaryInstrument != null) {
@@ -210,6 +226,26 @@ class AddTransactionActivity : AppCompatActivity() {
                     editIntermediaryDebit.text = null
                     editIntermediaryCredit.text = null
                     intermediaryRow.visibility = View.GONE
+                    textIntermediaryBalanceRow.visibility = View.GONE
+                }
+                if (account != null) {
+                    Thread {
+                        val bal = accountBalanceDao.getByAccountId(account.id)
+                        runOnUiThread {
+                            textBalance.text = "Balance: ${TransactionDisplay.formatAmount(bal?.balance ?: 0)} Ar"
+                            textBalanceRow.visibility = View.VISIBLE
+                            if (instrument != null) {
+                                textInstrumentBalance.text = "Balance: ${TransactionDisplay.formatInstrumentAmount(bal?.instrumentBalance ?: 0L, instrument)}"
+                                textInstrumentBalanceRow.visibility = View.VISIBLE
+                            }
+                            if (intermediaryInstrument != null) {
+                                textIntermediaryBalance.text = "Balance: ${TransactionDisplay.formatInstrumentAmount(bal?.intermediaryBalance ?: 0L, intermediaryInstrument)}"
+                                textIntermediaryBalanceRow.visibility = View.VISIBLE
+                            }
+                        }
+                    }.start()
+                } else {
+                    textBalanceRow.visibility = View.GONE
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -219,6 +255,9 @@ class AddTransactionActivity : AppCompatActivity() {
                 editIntermediaryDebit.text = null
                 editIntermediaryCredit.text = null
                 intermediaryRow.visibility = View.GONE
+                textBalanceRow.visibility = View.GONE
+                textInstrumentBalanceRow.visibility = View.GONE
+                textIntermediaryBalanceRow.visibility = View.GONE
             }
         }
 
@@ -338,7 +377,7 @@ class AddTransactionActivity : AppCompatActivity() {
             )
         )
 
-        val entryRow = EntryRow(row, spinner, editDebit, editCredit, btnRemove, editInstrumentDebit, editInstrumentCredit, instrumentRow, textInstrumentCode, editIntermediaryDebit, editIntermediaryCredit, intermediaryRow, textIntermediaryCode)
+        val entryRow = EntryRow(row, spinner, editDebit, editCredit, btnRemove, editInstrumentDebit, editInstrumentCredit, instrumentRow, textInstrumentCode, editIntermediaryDebit, editIntermediaryCredit, intermediaryRow, textIntermediaryCode, textBalanceRow, textBalance, textInstrumentBalanceRow, textInstrumentBalance, textIntermediaryBalanceRow, textIntermediaryBalance)
         entryRows.add(entryRow)
         entriesContainer.addView(row)
 

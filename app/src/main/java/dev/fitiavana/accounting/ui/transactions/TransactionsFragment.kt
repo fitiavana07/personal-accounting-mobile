@@ -198,7 +198,7 @@ class TransactionsFragment : Fragment() {
 
         val spinnerAdapter = ArrayAdapter(
             requireContext(),
-            android.R.layout.simple_spinner_item,
+            R.layout.item_spinner_small,
             labels
         ).apply {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
