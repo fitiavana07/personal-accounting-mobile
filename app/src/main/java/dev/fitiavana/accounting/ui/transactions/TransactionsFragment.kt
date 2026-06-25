@@ -1,6 +1,7 @@
 package dev.fitiavana.accounting.ui.transactions
 
 import android.app.DatePickerDialog
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -13,6 +14,8 @@ import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
+import androidx.core.widget.TextViewCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -92,6 +95,12 @@ class TransactionsFragment : Fragment() {
         val spinnerAccount = view.findViewById<Spinner>(R.id.spinner_account)
         val textDateStart = view.findViewById<TextView>(R.id.text_date_start)
         val textDateEnd = view.findViewById<TextView>(R.id.text_date_end)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val calendarIcon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_calendar)
+            TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(textDateStart, null, null, calendarIcon, null)
+            TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(textDateEnd, null, null, calendarIcon, null)
+        }
 
         fab.setOnClickListener {
             startActivity(AddTransactionActivity.intent(requireContext()))
