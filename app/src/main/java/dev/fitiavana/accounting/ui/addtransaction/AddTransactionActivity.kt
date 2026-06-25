@@ -79,7 +79,19 @@ class AddTransactionActivity : AppCompatActivity() {
         val textInstrumentBalanceRow: View,
         val textInstrumentBalance: TextView,
         val textIntermediaryBalanceRow: View,
-        val textIntermediaryBalance: TextView
+        val textIntermediaryBalance: TextView,
+        val textNewBalanceRow: View,
+        val textNewBalance: TextView,
+        val textNewInstrumentBalanceRow: View,
+        val textNewInstrumentBalance: TextView,
+        val textNewIntermediaryBalanceRow: View,
+        val textNewIntermediaryBalance: TextView,
+        var currentBalance: Int = 0,
+        var currentAccountType: String = "",
+        var currentInstrumentBalance: Long = 0L,
+        var currentInstrument: dev.fitiavana.accounting.data.model.Instrument? = null,
+        var currentIntermediaryBalance: Long = 0L,
+        var currentIntermediaryInstrument: dev.fitiavana.accounting.data.model.Instrument? = null
     )
 
     private val entryRows = mutableListOf<EntryRow>()
@@ -194,6 +206,15 @@ class AddTransactionActivity : AppCompatActivity() {
         val textInstrumentBalance = row.findViewById<TextView>(R.id.text_instrument_balance)
         val textIntermediaryBalanceRow = row.findViewById<View>(R.id.text_intermediary_balance_row)
         val textIntermediaryBalance = row.findViewById<TextView>(R.id.text_intermediary_balance)
+        val textNewBalanceRow = row.findViewById<View>(R.id.text_new_balance_row)
+        val textNewBalance = row.findViewById<TextView>(R.id.text_new_balance)
+        val textNewInstrumentBalanceRow = row.findViewById<View>(R.id.text_new_instrument_balance_row)
+        val textNewInstrumentBalance = row.findViewById<TextView>(R.id.text_new_instrument_balance)
+        val textNewIntermediaryBalanceRow = row.findViewById<View>(R.id.text_new_intermediary_balance_row)
+        val textNewIntermediaryBalance = row.findViewById<TextView>(R.id.text_new_intermediary_balance)
+
+        // holder to let closures below reference entryRow before it is assigned
+        val entryRowRef = arrayOfNulls<EntryRow>(1)
 
         val accountNames = listOf(getString(R.string.spinner_select_account)) + accounts.map { it.name }
         val spinnerAdapter = ArrayAdapter(
@@ -217,6 +238,7 @@ class AddTransactionActivity : AppCompatActivity() {
                     editInstrumentCredit.text = null
                     instrumentRow.visibility = View.GONE
                     textInstrumentBalanceRow.visibility = View.GONE
+                    textNewInstrumentBalanceRow.visibility = View.GONE
                 }
                 val intermediaryInstrument = account?.intermediaryInstrumentCode?.let { instrumentsMap[it] }
                 if (intermediaryInstrument != null) {
@@ -227,25 +249,39 @@ class AddTransactionActivity : AppCompatActivity() {
                     editIntermediaryCredit.text = null
                     intermediaryRow.visibility = View.GONE
                     textIntermediaryBalanceRow.visibility = View.GONE
+                    textNewIntermediaryBalanceRow.visibility = View.GONE
                 }
                 if (account != null) {
                     Thread {
                         val bal = accountBalanceDao.getByAccountId(account.id)
                         runOnUiThread {
-                            textBalance.text = "Balance: ${TransactionDisplay.formatAmount(bal?.balance ?: 0)} Ar"
+                            val balance = bal?.balance ?: 0
+                            textBalance.text = "Balance: ${TransactionDisplay.formatAmount(balance)} Ar"
                             textBalanceRow.visibility = View.VISIBLE
                             if (instrument != null) {
-                                textInstrumentBalance.text = "Balance: ${TransactionDisplay.formatInstrumentAmount(bal?.instrumentBalance ?: 0L, instrument)}"
+                                val instrBal = bal?.instrumentBalance ?: 0L
+                                textInstrumentBalance.text = "Balance: ${TransactionDisplay.formatInstrumentAmount(instrBal, instrument)}"
                                 textInstrumentBalanceRow.visibility = View.VISIBLE
+                                entryRowRef[0]?.currentInstrumentBalance = instrBal
+                                entryRowRef[0]?.currentInstrument = instrument
+                                entryRowRef[0]?.let { updateNewInstrumentBalance(it) }
                             }
                             if (intermediaryInstrument != null) {
-                                textIntermediaryBalance.text = "Balance: ${TransactionDisplay.formatInstrumentAmount(bal?.intermediaryBalance ?: 0L, intermediaryInstrument)}"
+                                val interBal = bal?.intermediaryBalance ?: 0L
+                                textIntermediaryBalance.text = "Balance: ${TransactionDisplay.formatInstrumentAmount(interBal, intermediaryInstrument)}"
                                 textIntermediaryBalanceRow.visibility = View.VISIBLE
+                                entryRowRef[0]?.currentIntermediaryBalance = interBal
+                                entryRowRef[0]?.currentIntermediaryInstrument = intermediaryInstrument
+                                entryRowRef[0]?.let { updateNewIntermediaryBalance(it) }
                             }
+                            entryRowRef[0]?.currentBalance = balance
+                            entryRowRef[0]?.currentAccountType = account.type
+                            entryRowRef[0]?.let { updateNewBalance(it) }
                         }
                     }.start()
                 } else {
                     textBalanceRow.visibility = View.GONE
+                    textNewBalanceRow.visibility = View.GONE
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -258,6 +294,9 @@ class AddTransactionActivity : AppCompatActivity() {
                 textBalanceRow.visibility = View.GONE
                 textInstrumentBalanceRow.visibility = View.GONE
                 textIntermediaryBalanceRow.visibility = View.GONE
+                textNewBalanceRow.visibility = View.GONE
+                textNewInstrumentBalanceRow.visibility = View.GONE
+                textNewIntermediaryBalanceRow.visibility = View.GONE
             }
         }
 
@@ -271,6 +310,7 @@ class AddTransactionActivity : AppCompatActivity() {
                     editInstrumentCredit.text = null
                     updating = false
                 }
+                entryRowRef[0]?.let { updateNewInstrumentBalance(it) }
             }
         })
 
@@ -284,6 +324,7 @@ class AddTransactionActivity : AppCompatActivity() {
                     editInstrumentDebit.text = null
                     updating = false
                 }
+                entryRowRef[0]?.let { updateNewInstrumentBalance(it) }
             }
         })
 
@@ -297,6 +338,7 @@ class AddTransactionActivity : AppCompatActivity() {
                     editIntermediaryCredit.text = null
                     updating = false
                 }
+                entryRowRef[0]?.let { updateNewIntermediaryBalance(it) }
             }
         })
 
@@ -310,60 +352,35 @@ class AddTransactionActivity : AppCompatActivity() {
                     editIntermediaryDebit.text = null
                     updating = false
                 }
+                entryRowRef[0]?.let { updateNewIntermediaryBalance(it) }
             }
         })
 
         editDebit.addTextChangedListener(object : TextWatcher {
             var updating = false
-            override fun beforeTextChanged(
-                s: CharSequence?,
-                st: Int,
-                c: Int,
-                a: Int
-            ) {
-            }
-
-            override fun onTextChanged(
-                s: CharSequence?,
-                st: Int,
-                c: Int,
-                a: Int
-            ) {
-            }
-
+            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 if (!updating && !s.isNullOrEmpty()) {
                     updating = true
                     editCredit.text = null
                     updating = false
                 }
+                entryRowRef[0]?.let { updateNewBalance(it) }
             }
         })
 
         editCredit.addTextChangedListener(object : TextWatcher {
             var updating = false
-            override fun beforeTextChanged(
-                s: CharSequence?,
-                st: Int,
-                c: Int,
-                a: Int
-            ) {
-            }
-
-            override fun onTextChanged(
-                s: CharSequence?,
-                st: Int,
-                c: Int,
-                a: Int
-            ) {
-            }
-
+            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 if (!updating && !s.isNullOrEmpty()) {
                     updating = true
                     editDebit.text = null
                     updating = false
                 }
+                entryRowRef[0]?.let { updateNewBalance(it) }
             }
         })
 
@@ -377,7 +394,8 @@ class AddTransactionActivity : AppCompatActivity() {
             )
         )
 
-        val entryRow = EntryRow(row, spinner, editDebit, editCredit, btnRemove, editInstrumentDebit, editInstrumentCredit, instrumentRow, textInstrumentCode, editIntermediaryDebit, editIntermediaryCredit, intermediaryRow, textIntermediaryCode, textBalanceRow, textBalance, textInstrumentBalanceRow, textInstrumentBalance, textIntermediaryBalanceRow, textIntermediaryBalance)
+        val entryRow = EntryRow(row, spinner, editDebit, editCredit, btnRemove, editInstrumentDebit, editInstrumentCredit, instrumentRow, textInstrumentCode, editIntermediaryDebit, editIntermediaryCredit, intermediaryRow, textIntermediaryCode, textBalanceRow, textBalance, textInstrumentBalanceRow, textInstrumentBalance, textIntermediaryBalanceRow, textIntermediaryBalance, textNewBalanceRow, textNewBalance, textNewInstrumentBalanceRow, textNewInstrumentBalance, textNewIntermediaryBalanceRow, textNewIntermediaryBalance)
+        entryRowRef[0] = entryRow
         entryRows.add(entryRow)
         entriesContainer.addView(row)
 
@@ -408,6 +426,58 @@ class AddTransactionActivity : AppCompatActivity() {
         }
 
         updateRemoveButtonVisibility()
+    }
+
+    private fun updateNewBalance(entryRow: EntryRow) {
+        if (entryRow.currentAccountType.isEmpty()) {
+            entryRow.textNewBalanceRow.visibility = View.GONE
+            return
+        }
+        val debit = entryRow.editDebit.text.toString().trim().replace(",", "").toIntOrNull() ?: 0
+        val credit = entryRow.editCredit.text.toString().trim().replace(",", "").toIntOrNull() ?: 0
+        val newBalance = if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense") {
+            entryRow.currentBalance + debit - credit
+        } else {
+            entryRow.currentBalance + credit - debit
+        }
+        entryRow.textNewBalance.text = "New balance: ${TransactionDisplay.formatAmount(newBalance)} Ar"
+        entryRow.textNewBalanceRow.visibility = View.VISIBLE
+    }
+
+    private fun updateNewInstrumentBalance(entryRow: EntryRow) {
+        val instrument = entryRow.currentInstrument
+        if (instrument == null || entryRow.currentAccountType.isEmpty()) {
+            entryRow.textNewInstrumentBalanceRow.visibility = View.GONE
+            return
+        }
+        val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())
+        val debit = entryRow.editInstrumentDebit.text.toString().trim().toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
+        val credit = entryRow.editInstrumentCredit.text.toString().trim().toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
+        val newBalance = if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense") {
+            entryRow.currentInstrumentBalance + debit - credit
+        } else {
+            entryRow.currentInstrumentBalance + credit - debit
+        }
+        entryRow.textNewInstrumentBalance.text = "New balance: ${TransactionDisplay.formatInstrumentAmount(newBalance, instrument)}"
+        entryRow.textNewInstrumentBalanceRow.visibility = View.VISIBLE
+    }
+
+    private fun updateNewIntermediaryBalance(entryRow: EntryRow) {
+        val instrument = entryRow.currentIntermediaryInstrument
+        if (instrument == null || entryRow.currentAccountType.isEmpty()) {
+            entryRow.textNewIntermediaryBalanceRow.visibility = View.GONE
+            return
+        }
+        val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())
+        val debit = entryRow.editIntermediaryDebit.text.toString().trim().toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
+        val credit = entryRow.editIntermediaryCredit.text.toString().trim().toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
+        val newBalance = if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense") {
+            entryRow.currentIntermediaryBalance + debit - credit
+        } else {
+            entryRow.currentIntermediaryBalance + credit - debit
+        }
+        entryRow.textNewIntermediaryBalance.text = "New balance: ${TransactionDisplay.formatInstrumentAmount(newBalance, instrument)}"
+        entryRow.textNewIntermediaryBalanceRow.visibility = View.VISIBLE
     }
 
     private fun updateRemoveButtonVisibility() {

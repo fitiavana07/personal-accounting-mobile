@@ -1,5 +1,0 @@
-- Accounts
-- Balances
-- Multi-currency
-- Journal
-- Accounting for gains on assets sale
