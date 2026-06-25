@@ -258,6 +258,7 @@ class AddTransactionActivity : AppCompatActivity() {
                             val balance = bal?.balance ?: 0
                             textBalance.text = "Balance: ${TransactionDisplay.formatAmount(balance)} Ar"
                             textBalanceRow.visibility = View.VISIBLE
+                            entryRowRef[0]?.currentAccountType = account.type
                             if (instrument != null) {
                                 val instrBal = bal?.instrumentBalance ?: 0L
                                 textInstrumentBalance.text = "Balance: ${TransactionDisplay.formatInstrumentAmount(instrBal, instrument)}"
