@@ -63,4 +63,6 @@
     <string name="dialog_delete_instrument_message">Are you sure you want to delete this instrument?</string>
     <string name="dialog_cannot_delete_instrument_title">Cannot Delete Instrument</string>
     <string name="dialog_cannot_delete_instrument_message">This instrument is assigned to one or more accounts and cannot be deleted.</string>
+    <string name="dialog_cannot_delete_instrument_message_intermediary">This instrument is used as an intermediary instrument on one or more accounts and cannot be deleted.</string>
+    <string name="dialog_cannot_delete_instrument_message_both">This instrument is assigned to one or more accounts and used as an intermediary instrument on others, and cannot be deleted.</string>
 </resources>

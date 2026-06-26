@@ -34,4 +34,7 @@ interface AccountDao {
 
     @Query("SELECT COUNT(*) > 0 FROM accounts WHERE instrumentCode = :instrumentCode")
     fun hasAccountsWithInstrument(instrumentCode: String): Boolean
+
+    @Query("SELECT COUNT(*) > 0 FROM accounts WHERE intermediaryInstrumentCode = :instrumentCode")
+    fun hasAccountsWithIntermediaryInstrument(instrumentCode: String): Boolean
 }

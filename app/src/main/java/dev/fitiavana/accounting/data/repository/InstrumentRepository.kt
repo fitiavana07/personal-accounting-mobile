@@ -12,4 +12,6 @@ class InstrumentRepository(private val dao: InstrumentDao, private val accountDa
     fun update(instrument: Instrument) = dao.update(instrument)
     fun delete(instrument: Instrument) = dao.delete(instrument)
     fun hasAccounts(instrumentCode: String): Boolean = accountDao.hasAccountsWithInstrument(instrumentCode)
+    fun hasIntermediaryAccounts(instrumentCode: String): Boolean =
+        accountDao.hasAccountsWithIntermediaryInstrument(instrumentCode)
 }

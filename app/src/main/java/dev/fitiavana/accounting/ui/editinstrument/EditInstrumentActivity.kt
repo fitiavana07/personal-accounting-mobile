@@ -128,11 +128,21 @@ class EditInstrumentActivity : AppCompatActivity() {
             R.id.action_delete_instrument -> {
                 Thread {
                     val hasAccounts = viewModel.hasAccounts(instrumentCode!!)
+                    val hasIntermediaryAccounts =
+                        viewModel.hasIntermediaryAccounts(instrumentCode!!)
                     runOnUiThread {
-                        if (hasAccounts) {
+                        if (hasAccounts || hasIntermediaryAccounts) {
+                            val message = when {
+                                hasAccounts && hasIntermediaryAccounts -> getString(
+                                    R.string.dialog_cannot_delete_instrument_message_both
+                                )
+
+                                hasAccounts -> getString(R.string.dialog_cannot_delete_instrument_message)
+                                else -> getString(R.string.dialog_cannot_delete_instrument_message_intermediary)
+                            }
                             AlertDialog.Builder(this)
                                 .setTitle(R.string.dialog_cannot_delete_instrument_title)
-                                .setMessage(R.string.dialog_cannot_delete_instrument_message)
+                                .setMessage(message)
                                 .setPositiveButton(android.R.string.ok, null)
                                 .show()
                         } else {

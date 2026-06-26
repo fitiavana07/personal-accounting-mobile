@@ -21,6 +21,8 @@ class EditInstrumentViewModel(private val repository: InstrumentRepository) : Vi
     }
 
     fun hasAccounts(instrumentCode: String): Boolean = repository.hasAccounts(instrumentCode)
+    fun hasIntermediaryAccounts(instrumentCode: String): Boolean =
+        repository.hasIntermediaryAccounts(instrumentCode)
 
     fun deleteInstrument(instrument: Instrument) {
         repository.delete(instrument)

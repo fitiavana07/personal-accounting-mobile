@@ -12,13 +12,13 @@ import androidx.room.PrimaryKey
             entity = Instrument::class,
             parentColumns = ["code"],
             childColumns = ["instrumentCode"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.RESTRICT
         ),
         ForeignKey(
             entity = Instrument::class,
             parentColumns = ["code"],
             childColumns = ["intermediaryInstrumentCode"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.RESTRICT
         )
     ],
     indices = [Index("instrumentCode"), Index("intermediaryInstrumentCode")]
