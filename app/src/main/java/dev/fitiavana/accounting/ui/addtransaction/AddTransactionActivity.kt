@@ -436,7 +436,7 @@ class AddTransactionActivity : AppCompatActivity() {
         }
         val debit = entryRow.editDebit.text.toString().trim().replace(",", "").toIntOrNull() ?: 0
         val credit = entryRow.editCredit.text.toString().trim().replace(",", "").toIntOrNull() ?: 0
-        val newBalance = if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense") {
+        val newBalance = if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense" || entryRow.currentAccountType == "drawing" || entryRow.currentAccountType == "loss") {
             entryRow.currentBalance + debit - credit
         } else {
             entryRow.currentBalance + credit - debit
@@ -454,7 +454,7 @@ class AddTransactionActivity : AppCompatActivity() {
         val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())
         val debit = entryRow.editInstrumentDebit.text.toString().trim().toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
         val credit = entryRow.editInstrumentCredit.text.toString().trim().toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
-        val newBalance = if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense") {
+        val newBalance = if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense" || entryRow.currentAccountType == "drawing" || entryRow.currentAccountType == "loss") {
             entryRow.currentInstrumentBalance + debit - credit
         } else {
             entryRow.currentInstrumentBalance + credit - debit
@@ -472,7 +472,7 @@ class AddTransactionActivity : AppCompatActivity() {
         val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())
         val debit = entryRow.editIntermediaryDebit.text.toString().trim().toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
         val credit = entryRow.editIntermediaryCredit.text.toString().trim().toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
-        val newBalance = if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense") {
+        val newBalance = if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense" || entryRow.currentAccountType == "drawing" || entryRow.currentAccountType == "loss") {
             entryRow.currentIntermediaryBalance + debit - credit
         } else {
             entryRow.currentIntermediaryBalance + credit - debit

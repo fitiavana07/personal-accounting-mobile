@@ -30,7 +30,7 @@ class EditAccountActivity : AppCompatActivity() {
         const val EXTRA_ACCOUNT_ID = "account_id"
 
         private val TYPE_VALUES =
-            listOf("asset", "liability", "equity", "revenue", "expense")
+            listOf("asset", "liability", "equity", "revenue", "expense", "drawing", "gain", "loss")
 
         fun addIntent(context: Context): Intent =
             Intent(context, EditAccountActivity::class.java)

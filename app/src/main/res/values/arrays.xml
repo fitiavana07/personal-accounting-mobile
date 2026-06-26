@@ -6,6 +6,9 @@
         <item>Equity</item>
         <item>Revenue</item>
         <item>Expense</item>
+        <item>Drawing</item>
+        <item>Gain</item>
+        <item>Loss</item>
     </string-array>
     <string-array name="instrument_type_display">
         <item>Currency</item>
