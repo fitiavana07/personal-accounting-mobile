@@ -1,16 +1,31 @@
 package dev.fitiavana.accounting.ui.accounts
 
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import dev.fitiavana.accounting.data.model.Account
 import dev.fitiavana.accounting.data.repository.AccountRepository
-import java.util.UUID
 
-class AccountsViewModel(private val repository: AccountRepository) : ViewModel() {
-    val accounts: LiveData<List<Account>> = repository.getAll()
+class AccountsViewModel(private val repository: AccountRepository) :
+    ViewModel() {
 
-    fun addAccount(name: String) {
-        val account = Account(id = UUID.randomUUID().toString(), name = name.trim(), type = "asset")
-        Thread { repository.insert(account) }.start()
+    private val allAccounts: LiveData<List<Account>> = repository.getAll()
+    val typeFilter = MutableLiveData<String?>(null)
+
+    val accounts: LiveData<List<Account>> =
+        MediatorLiveData<List<Account>>().apply {
+            fun update() {
+                val list = allAccounts.value ?: emptyList()
+                val type = typeFilter.value
+                value =
+                    if (type == null) list else list.filter { it.type == type }
+            }
+            addSource(allAccounts) { update() }
+            addSource(typeFilter) { update() }
+        }
+
+    fun setTypeFilter(type: String?) {
+        typeFilter.value = type
     }
 }

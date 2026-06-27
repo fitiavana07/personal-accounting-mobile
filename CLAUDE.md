@@ -2,7 +2,7 @@
 
 Accounting app with features like accounts, balances, journal, reports.
 
-Build and test
+Build and test. Make sure to run it after every change.
 
 ```
 ./gradlew assembleDebug testDebugUnitTest
