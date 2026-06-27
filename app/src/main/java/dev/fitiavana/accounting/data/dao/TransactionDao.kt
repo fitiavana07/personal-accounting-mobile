@@ -27,10 +27,10 @@ interface TransactionDao {
     fun insertEntry(entry: TransactionEntry)
 
     @Query("SELECT COALESCE(SUM(debitAmount), 0) FROM transaction_entries WHERE accountId = :accountId")
-    fun sumDebitsForAccount(accountId: String): Int
+    fun sumDebitsForAccount(accountId: String): Long
 
     @Query("SELECT COALESCE(SUM(creditAmount), 0) FROM transaction_entries WHERE accountId = :accountId")
-    fun sumCreditsForAccount(accountId: String): Int
+    fun sumCreditsForAccount(accountId: String): Long
 
     @Query("SELECT COALESCE(SUM(instrumentDebitAmount), 0) FROM transaction_entries WHERE accountId = :accountId")
     fun sumInstrumentDebitsForAccount(accountId: String): Long

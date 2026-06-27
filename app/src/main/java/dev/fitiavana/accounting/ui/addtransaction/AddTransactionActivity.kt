@@ -88,7 +88,7 @@ class AddTransactionActivity : AppCompatActivity() {
         val textNewInstrumentBalance: TextView,
         val textNewIntermediaryBalanceRow: View,
         val textNewIntermediaryBalance: TextView,
-        var currentBalance: Int = 0,
+        var currentBalance: Long = 0L,
         var currentAccountType: String = "",
         var currentInstrumentBalance: Long = 0L,
         var currentInstrument: dev.fitiavana.accounting.data.model.Instrument? = null,
@@ -424,8 +424,8 @@ class AddTransactionActivity : AppCompatActivity() {
             entryRow.textNewBalanceRow.visibility = View.GONE
             return
         }
-        val debit = entryRow.editDebit.text.toString().trim().replace(",", "").toIntOrNull() ?: 0
-        val credit = entryRow.editCredit.text.toString().trim().replace(",", "").toIntOrNull() ?: 0
+        val debit = entryRow.editDebit.text.toString().trim().replace(",", "").toLongOrNull() ?: 0L
+        val credit = entryRow.editCredit.text.toString().trim().replace(",", "").toLongOrNull() ?: 0L
         val newBalance = if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense" || entryRow.currentAccountType == "drawing" || entryRow.currentAccountType == "loss") {
             entryRow.currentBalance + debit - credit
         } else {
@@ -497,8 +497,8 @@ class AddTransactionActivity : AppCompatActivity() {
             }
             val account = accounts[accountPos - 1]
             val instrument = account.instrumentCode?.let { instrumentsMap[it] }
-            val debit = row.editDebit.text.toString().trim().toIntOrNull()
-            val credit = row.editCredit.text.toString().trim().toIntOrNull()
+            val debit = row.editDebit.text.toString().trim().toLongOrNull()
+            val credit = row.editCredit.text.toString().trim().toLongOrNull()
 
             if (instrument != null) {
                 val rawDebit = row.editInstrumentDebit.text.toString().trim()

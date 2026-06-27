@@ -15,7 +15,7 @@ import java.util.Locale
 data class BalanceItem(
     val accountId: String,
     val accountName: String,
-    val balance: Int,
+    val balance: Long,
     val instrumentBalance: Long,
     val instrument: Instrument?,
     val intermediaryBalance: Long = 0,

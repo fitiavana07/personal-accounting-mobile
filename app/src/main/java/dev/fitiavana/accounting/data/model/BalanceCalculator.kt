@@ -1,14 +1,11 @@
 package dev.fitiavana.accounting.data.model
 
 object BalanceCalculator {
-    fun compute(accountType: String, totalDebits: Int, totalCredits: Int): Int {
-        return when (accountType) {
-            "asset", "expense", "drawing", "loss" -> totalDebits - totalCredits
-            else -> totalCredits - totalDebits // liability, equity, revenue, gain
-        }
-    }
-
-    fun compute(accountType: String, totalDebits: Long, totalCredits: Long): Long {
+    fun compute(
+        accountType: String,
+        totalDebits: Long,
+        totalCredits: Long
+    ): Long {
         return when (accountType) {
             "asset", "expense", "drawing", "loss" -> totalDebits - totalCredits
             else -> totalCredits - totalDebits

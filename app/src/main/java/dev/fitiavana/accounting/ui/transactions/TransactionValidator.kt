@@ -4,8 +4,8 @@ object TransactionValidator {
 
     data class EntryData(
         val accountId: String,
-        val debitAmount: Int?,
-        val creditAmount: Int?
+        val debitAmount: Long?,
+        val creditAmount: Long?
     )
 
     sealed class ValidationResult {
@@ -27,8 +27,8 @@ object TransactionValidator {
             if (entry.debitAmount == null && entry.creditAmount == null) return ValidationResult.Error.Incomplete
         }
 
-        val totalDebit = entries.sumOf { it.debitAmount ?: 0 }
-        val totalCredit = entries.sumOf { it.creditAmount ?: 0 }
+        val totalDebit = entries.sumOf { it.debitAmount ?: 0L }
+        val totalCredit = entries.sumOf { it.creditAmount ?: 0L }
         if (totalDebit != totalCredit) return ValidationResult.Error.Unbalanced
 
         return ValidationResult.Valid

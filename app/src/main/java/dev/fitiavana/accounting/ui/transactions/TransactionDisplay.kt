@@ -37,5 +37,5 @@ object TransactionDisplay {
         }
     }
 
-    fun formatAmount(amount: Int): String = String.format("%,d", amount)
+    fun formatAmount(amount: Long): String = String.format("%,d", amount)
 }

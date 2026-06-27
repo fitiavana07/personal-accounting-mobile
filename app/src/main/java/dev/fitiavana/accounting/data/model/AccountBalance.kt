@@ -17,7 +17,7 @@ import androidx.room.PrimaryKey
 )
 data class AccountBalance(
     @PrimaryKey val accountId: String,
-    val balance: Int,
+    val balance: Long,
     val instrumentBalance: Long = 0,
     val intermediaryBalance: Long = 0,
     val updatedAt: Long,

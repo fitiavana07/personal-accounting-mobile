@@ -72,14 +72,14 @@ class TransactionDetailActivity : AppCompatActivity() {
 
         addTableHeader(tableEntries)
 
-        var totalDebit = 0
-        var totalCredit = 0
+        var totalDebit = 0L
+        var totalCredit = 0L
         for (entry in twe.entries) {
             val account = accountsMap[entry.accountId]
             val instrument = account?.instrumentCode?.let { instruments[it] }
             addEntryRow(tableEntries, account?.name ?: entry.accountId, entry, instrument, account, instruments)
-            totalDebit += entry.debitAmount ?: 0
-            totalCredit += entry.creditAmount ?: 0
+            totalDebit += entry.debitAmount ?: 0L
+            totalCredit += entry.creditAmount ?: 0L
         }
 
         addTotalsRow(tableEntries, totalDebit, totalCredit)
@@ -134,7 +134,7 @@ class TransactionDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun addTotalsRow(table: TableLayout, totalDebit: Int, totalCredit: Int) {
+    private fun addTotalsRow(table: TableLayout, totalDebit: Long, totalCredit: Long) {
         val row = TableRow(this)
         row.addView(makeCell(getString(R.string.label_total), bold = true))
         row.addView(makeCell(formatAmount(totalDebit), bold = true, gravity = Gravity.END))
@@ -142,7 +142,7 @@ class TransactionDetailActivity : AppCompatActivity() {
         table.addView(row)
     }
 
-    private fun formatAmount(amount: Int): String = String.format("%,d", amount)
+    private fun formatAmount(amount: Long): String = String.format("%,d", amount)
 
     private fun makeCell(text: String, bold: Boolean = false, italic: Boolean = false, gravity: Int = Gravity.START): TextView {
         return TextView(this).apply {
