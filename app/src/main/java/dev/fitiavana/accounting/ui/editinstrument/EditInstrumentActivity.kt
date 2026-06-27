@@ -101,14 +101,29 @@ class EditInstrumentActivity : AppCompatActivity() {
         saveButton.setOnClickListener {
             val code = codeInput.text.toString().trim()
             val note = noteInput.text.toString().trim()
-            val decimalPlaces = decimalPlacesInput.text.toString().trim().toIntOrNull() ?: 0
-            if (code.isNotEmpty()) {
+            val decimalPlaces =
+                decimalPlacesInput.text.toString().trim().toIntOrNull() ?: 0
                 val selectedType = TYPE_VALUES[typeSpinner.selectedItemPosition]
+
+            if (code.isNotEmpty()) {
                 Thread {
+                    val instrumentCode = this.instrumentCode;
                     if (instrumentCode == null) {
-                        viewModel.saveNewInstrument(code, note, selectedType, decimalPlaces)
+                        // we're creating
+                        viewModel.saveNewInstrument(
+                            code,
+                            note,
+                            selectedType,
+                            decimalPlaces
+                        )
                     } else {
-                        viewModel.saveInstrument(instrumentCode, note, selectedType, decimalPlaces)
+                        //we're updating
+                        viewModel.saveInstrument(
+                            instrumentCode,
+                            note,
+                            selectedType,
+                            decimalPlaces
+                        )
                     }
                     runOnUiThread { finish() }
                 }.start()

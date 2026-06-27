@@ -8,12 +8,20 @@ class EditInstrumentViewModel(private val repository: InstrumentRepository) : Vi
 
     fun getInstrument(code: String): Instrument? = repository.getByCode(code)
 
-    fun saveInstrument(code: String?, note: String, type: String, decimalPlaces: Int) {
-        if (code == null) {
-            repository.insert(Instrument(code = "", note = note.trim(), type = type, decimalPlaces = decimalPlaces))
-        } else {
-            repository.update(Instrument(code = code, note = note.trim(), type = type, decimalPlaces = decimalPlaces))
-        }
+    fun saveInstrument(
+        code: String,
+        note: String,
+        type: String,
+        decimalPlaces: Int
+    ) {
+        repository.update(
+            Instrument(
+                code = code,
+                note = note.trim(),
+                type = type,
+                decimalPlaces = decimalPlaces
+            )
+        )
     }
 
     fun saveNewInstrument(code: String, note: String, type: String, decimalPlaces: Int) {
