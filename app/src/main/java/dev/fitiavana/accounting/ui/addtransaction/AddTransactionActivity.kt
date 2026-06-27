@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.ImageViewCompat
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.data.model.Account
@@ -35,6 +36,7 @@ import dev.fitiavana.accounting.data.repository.AccountRepository
 import dev.fitiavana.accounting.data.repository.BalanceRepository
 import dev.fitiavana.accounting.data.repository.TransactionRepository
 import dev.fitiavana.accounting.db.AppDatabase
+import dev.fitiavana.accounting.ui.UiUtils
 import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
 import dev.fitiavana.accounting.ui.transactions.TransactionValidator
 import kotlin.math.pow
@@ -100,20 +102,8 @@ class AddTransactionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_transaction)
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = getString(R.string.title_new_transaction)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            ViewCompat.setOnApplyWindowInsetsListener(toolbar) { view, insets ->
-                val statusBar =
-                    insets.getInsets(WindowInsetsCompat.Type.statusBars())
-                view.setPadding(0, statusBar.top, 0, 0)
-                insets
-            }
-        }
+        UiUtils.setupActionBar(this)
+        title = getString(R.string.title_new_transaction)
 
         val db = AppDatabase.getInstance(this)
         transactionRepo = TransactionRepository(db.transactionDao())

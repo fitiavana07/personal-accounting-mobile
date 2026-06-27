@@ -2,7 +2,6 @@ package dev.fitiavana.accounting.ui.transactiondetail
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.widget.LinearLayout
@@ -10,10 +9,6 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.data.model.Account
 import dev.fitiavana.accounting.data.model.Instrument
@@ -23,6 +18,7 @@ import dev.fitiavana.accounting.data.repository.AccountRepository
 import dev.fitiavana.accounting.data.repository.TransactionRepository
 import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
 import dev.fitiavana.accounting.db.AppDatabase
+import dev.fitiavana.accounting.ui.UiUtils
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -35,19 +31,8 @@ class TransactionDetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_transaction_detail)
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = getString(R.string.title_transaction)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            ViewCompat.setOnApplyWindowInsetsListener(toolbar) { view, insets ->
-                val statusBar = insets.getInsets(WindowInsetsCompat.Type.statusBars())
-                view.setPadding(0, statusBar.top, 0, 0)
-                insets
-            }
-        }
+        UiUtils.setupActionBar(this)
+        title = getString(R.string.title_transaction)
 
         val transactionId = intent.getStringExtra(EXTRA_TRANSACTION_ID) ?: run { finish(); return }
 

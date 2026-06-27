@@ -2,7 +2,6 @@ package dev.fitiavana.accounting.ui.editinstrument
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -12,14 +11,11 @@ import android.widget.EditText
 import android.widget.Spinner
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.data.repository.InstrumentRepository
 import dev.fitiavana.accounting.db.AppDatabase
+import dev.fitiavana.accounting.ui.UiUtils
 
 class EditInstrumentActivity : AppCompatActivity() {
 
@@ -37,33 +33,26 @@ class EditInstrumentActivity : AppCompatActivity() {
     }
 
     private lateinit var viewModel: EditInstrumentViewModel
+    private var instrumentCode: String? = null
+
     private lateinit var codeInput: EditText
     private lateinit var noteInput: EditText
     private lateinit var typeSpinner: Spinner
     private lateinit var decimalPlacesInput: EditText
-    private var instrumentCode: String? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_instrument)
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            ViewCompat.setOnApplyWindowInsetsListener(toolbar) { view, insets ->
-                val statusBar = insets.getInsets(WindowInsetsCompat.Type.statusBars())
-                view.setPadding(0, statusBar.top, 0, 0)
-                insets
-            }
-        }
+        UiUtils.setupActionBar(this)
 
         val db = AppDatabase.getInstance(this)
-        val repository = InstrumentRepository(db.instrumentDao(), db.accountDao())
-        viewModel = ViewModelProvider(this, EditInstrumentViewModelFactory(repository))
-            .get(EditInstrumentViewModel::class.java)
+        val repository =
+            InstrumentRepository(db.instrumentDao(), db.accountDao())
+        viewModel =
+            ViewModelProvider(this, EditInstrumentViewModelFactory(repository))
+                .get(EditInstrumentViewModel::class.java)
 
         codeInput = findViewById(R.id.input_instrument_code)
         noteInput = findViewById(R.id.input_instrument_note)
@@ -71,8 +60,13 @@ class EditInstrumentActivity : AppCompatActivity() {
         decimalPlacesInput = findViewById(R.id.input_decimal_places)
         val saveButton: Button = findViewById(R.id.button_save)
 
-        val typeDisplayNames = resources.getStringArray(R.array.instrument_type_display)
-        val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, typeDisplayNames)
+        val typeDisplayNames =
+            resources.getStringArray(R.array.instrument_type_display)
+        val spinnerAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            typeDisplayNames
+        )
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         typeSpinner.adapter = spinnerAdapter
 
@@ -81,6 +75,7 @@ class EditInstrumentActivity : AppCompatActivity() {
         if (instrumentCode != null) {
             title = getString(R.string.title_edit_instrument)
             codeInput.isEnabled = false
+            decimalPlacesInput.isEnabled = false
             Thread {
                 val instrument = viewModel.getInstrument(instrumentCode!!)
                 runOnUiThread {
@@ -88,7 +83,8 @@ class EditInstrumentActivity : AppCompatActivity() {
                         codeInput.setText(instrument.code)
                         noteInput.setText(instrument.note)
                         noteInput.setSelection(instrument.note.length)
-                        val typeIndex = TYPE_VALUES.indexOf(instrument.type).takeIf { it >= 0 } ?: 0
+                        val typeIndex = TYPE_VALUES.indexOf(instrument.type)
+                            .takeIf { it >= 0 } ?: 0
                         typeSpinner.setSelection(typeIndex)
                         decimalPlacesInput.setText(instrument.decimalPlaces.toString())
                     }
@@ -103,7 +99,7 @@ class EditInstrumentActivity : AppCompatActivity() {
             val note = noteInput.text.toString().trim()
             val decimalPlaces =
                 decimalPlacesInput.text.toString().trim().toIntOrNull() ?: 0
-                val selectedType = TYPE_VALUES[typeSpinner.selectedItemPosition]
+            val selectedType = TYPE_VALUES[typeSpinner.selectedItemPosition]
 
             if (code.isNotEmpty()) {
                 Thread {
