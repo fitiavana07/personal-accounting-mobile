@@ -88,6 +88,30 @@ class BalanceCalculatorTest {
         assertEquals(200, BalanceCalculator.compute("unknown", totalDebits = 300, totalCredits = 500))
     }
 
+    // --- Drawing: same rule as asset (debit-normal) ---
+
+    @Test
+    fun `drawing debit increases balance`() {
+        assertEquals(400, BalanceCalculator.compute("drawing", totalDebits = 400, totalCredits = 0))
+    }
+
+    @Test
+    fun `drawing credit decreases balance`() {
+        assertEquals(100, BalanceCalculator.compute("drawing", totalDebits = 400, totalCredits = 300))
+    }
+
+    // --- Loss: same rule as asset (debit-normal) ---
+
+    @Test
+    fun `loss debit increases balance`() {
+        assertEquals(750, BalanceCalculator.compute("loss", totalDebits = 750, totalCredits = 0))
+    }
+
+    @Test
+    fun `loss credit decreases balance`() {
+        assertEquals(250, BalanceCalculator.compute("loss", totalDebits = 750, totalCredits = 500))
+    }
+
     // --- Zero inputs ---
 
     @Test

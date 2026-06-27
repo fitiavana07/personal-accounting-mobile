@@ -92,6 +92,27 @@ class TransactionValidatorTest {
         assertEquals(ValidationResult.Valid, TransactionValidator.validate(entries))
     }
 
+    // --- Single entry ---
+
+    @Test
+    fun `single entry with only debit is Unbalanced`() {
+        val entries = listOf(EntryData("acc1", debitAmount = 100, creditAmount = null))
+        assertEquals(ValidationResult.Error.Unbalanced, TransactionValidator.validate(entries))
+    }
+
+    @Test
+    fun `single entry with only credit is Unbalanced`() {
+        val entries = listOf(EntryData("acc1", debitAmount = null, creditAmount = 100))
+        assertEquals(ValidationResult.Error.Unbalanced, TransactionValidator.validate(entries))
+    }
+
+    // --- Empty list ---
+
+    @Test
+    fun `empty list returns Valid because totals are both zero`() {
+        assertEquals(ValidationResult.Valid, TransactionValidator.validate(emptyList()))
+    }
+
     // --- Error priority: duplicate is checked before balance ---
 
     @Test

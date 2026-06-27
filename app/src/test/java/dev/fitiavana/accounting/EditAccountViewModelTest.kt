@@ -101,4 +101,42 @@ class EditAccountViewModelTest {
         verify(accountRepository).update(captor.capture())
         assertEquals("Savings", captor.firstValue.name)
     }
+
+    // --- intermediaryInstrumentCode ---
+
+    @Test
+    fun `new account with intermediaryInstrumentCode sets it correctly`() {
+        viewModel.saveAccount(id = null, name = "FX", type = "asset", instrumentCode = "USD", intermediaryInstrumentCode = "EUR")
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).insert(captor.capture())
+        assertEquals("EUR", captor.firstValue.intermediaryInstrumentCode)
+    }
+
+    @Test
+    fun `update account with intermediaryInstrumentCode sets it correctly`() {
+        viewModel.saveAccount(id = "abc", name = "FX", type = "asset", instrumentCode = "USD", intermediaryInstrumentCode = "EUR")
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).update(captor.capture())
+        assertEquals("EUR", captor.firstValue.intermediaryInstrumentCode)
+    }
+
+    @Test
+    fun `update account clears intermediaryInstrumentCode when null passed`() {
+        viewModel.saveAccount(id = "abc", name = "Cash", type = "asset", instrumentCode = null, intermediaryInstrumentCode = null)
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).update(captor.capture())
+        assertNull(captor.firstValue.intermediaryInstrumentCode)
+    }
+
+    // --- deleteAccount ---
+
+    @Test
+    fun `deleteAccount calls repository delete`() {
+        val account = Account(id = "1", name = "Cash", type = "asset")
+        viewModel.deleteAccount(account)
+        verify(accountRepository).delete(account)
+    }
 }

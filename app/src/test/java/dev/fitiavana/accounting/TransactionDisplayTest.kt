@@ -1,5 +1,6 @@
 package dev.fitiavana.accounting
 
+import dev.fitiavana.accounting.data.model.Instrument
 import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -93,5 +94,61 @@ class TransactionDisplayTest {
     @Test
     fun `zero formatted as zero`() {
         assertEquals("0", TransactionDisplay.formatAmount(0))
+    }
+
+    // --- formatInstrumentAmount ---
+
+    @Test
+    fun `two decimal places strips trailing zeros`() {
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        assertEquals("1.5 USD", TransactionDisplay.formatInstrumentAmount(150, usd))
+    }
+
+    @Test
+    fun `two decimal places with whole number strips trailing zeros then adds zero after dot`() {
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        assertEquals("1.0 USD", TransactionDisplay.formatInstrumentAmount(100, usd))
+    }
+
+    @Test
+    fun `two decimal places with exact cents`() {
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        assertEquals("12.34 USD", TransactionDisplay.formatInstrumentAmount(1234, usd))
+    }
+
+    @Test
+    fun `zero decimal places formats as integer with instrument code`() {
+        val jpy = Instrument(code = "JPY", note = "", type = "currency", decimalPlaces = 0)
+        assertEquals("1,500 JPY", TransactionDisplay.formatInstrumentAmount(1500, jpy))
+    }
+
+    @Test
+    fun `zero decimal places small amount no grouping`() {
+        val jpy = Instrument(code = "JPY", note = "", type = "currency", decimalPlaces = 0)
+        assertEquals("42 JPY", TransactionDisplay.formatInstrumentAmount(42, jpy))
+    }
+
+    @Test
+    fun `three decimal places strips trailing zeros`() {
+        val bhd = Instrument(code = "BHD", note = "", type = "currency", decimalPlaces = 3)
+        assertEquals("1.5 BHD", TransactionDisplay.formatInstrumentAmount(1500, bhd))
+    }
+
+    @Test
+    fun `large amount with decimal places has grouped integer part`() {
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        assertEquals("1,000.0 USD", TransactionDisplay.formatInstrumentAmount(100000, usd))
+    }
+
+    @Test
+    fun `zero amount with decimal places`() {
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        assertEquals("0.0 USD", TransactionDisplay.formatInstrumentAmount(0, usd))
+    }
+
+    @Test
+    fun `zero amount with no decimal places`() {
+        val jpy = Instrument(code = "JPY", note = "", type = "currency", decimalPlaces = 0)
+        assertEquals("0 JPY", TransactionDisplay.formatInstrumentAmount(0, jpy))
     }
 }
