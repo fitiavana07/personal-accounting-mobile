@@ -18,7 +18,7 @@ import dev.fitiavana.accounting.data.model.TransactionEntry
 
 @Database(
     entities = [Account::class, Transaction::class, TransactionEntry::class, AccountBalance::class, Instrument::class],
-    version = 12
+    version = 13
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
@@ -147,6 +147,35 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Rename instrument_code -> instrumentCode (SQLite <3.25 has no RENAME COLUMN)
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `accounts_new` (" +
+                            "`id` TEXT NOT NULL PRIMARY KEY, " +
+                            "`name` TEXT NOT NULL, " +
+                            "`type` TEXT NOT NULL, " +
+                            "`instrumentCode` TEXT REFERENCES `instruments`(`code`) ON DELETE SET NULL)"
+                )
+                database.execSQL(
+                    "INSERT INTO `accounts_new` SELECT `id`, `name`, `type`, `instrument_code` FROM `accounts`"
+                )
+                database.execSQL("DROP TABLE `accounts`")
+                database.execSQL("ALTER TABLE `accounts_new` RENAME TO `accounts`")
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_instrumentCode` ON `accounts` (`instrumentCode`)")
+            }
+        }
+
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `accounts` ADD COLUMN `intermediaryInstrumentCode` TEXT REFERENCES `instruments`(`code`) ON DELETE SET NULL")
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_intermediaryInstrumentCode` ON `accounts` (`intermediaryInstrumentCode`)")
+                database.execSQL("ALTER TABLE `transaction_entries` ADD COLUMN `intermediaryDebitAmount` INTEGER")
+                database.execSQL("ALTER TABLE `transaction_entries` ADD COLUMN `intermediaryCreditAmount` INTEGER")
+                database.execSQL("ALTER TABLE `account_balances` ADD COLUMN `intermediaryBalance` INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         private val MIGRATION_11_12 = object : Migration(11, 12) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 // SQLite <3.25 has no RENAME COLUMN — recreate table
@@ -165,32 +194,26 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_10_11 = object : Migration(10, 11) {
+        private val MIGRATION_12_13 = object : Migration(12, 13) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `accounts` ADD COLUMN `intermediaryInstrumentCode` TEXT REFERENCES `instruments`(`code`) ON DELETE SET NULL")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_intermediaryInstrumentCode` ON `accounts` (`intermediaryInstrumentCode`)")
-                database.execSQL("ALTER TABLE `transaction_entries` ADD COLUMN `intermediaryDebitAmount` INTEGER")
-                database.execSQL("ALTER TABLE `transaction_entries` ADD COLUMN `intermediaryCreditAmount` INTEGER")
-                database.execSQL("ALTER TABLE `account_balances` ADD COLUMN `intermediaryBalance` INTEGER NOT NULL DEFAULT 0")
-            }
-        }
-
-        private val MIGRATION_9_10 = object : Migration(9, 10) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                // Rename instrument_code -> instrumentCode (SQLite <3.25 has no RENAME COLUMN)
+                // Fix accounts FK constraints: SET NULL → RESTRICT, and add missing indices
                 database.execSQL(
                     "CREATE TABLE IF NOT EXISTS `accounts_new` (" +
                             "`id` TEXT NOT NULL PRIMARY KEY, " +
                             "`name` TEXT NOT NULL, " +
                             "`type` TEXT NOT NULL, " +
-                            "`instrumentCode` TEXT REFERENCES `instruments`(`code`) ON DELETE SET NULL)"
+                            "`instrumentCode` TEXT, " +
+                            "`intermediaryInstrumentCode` TEXT, " +
+                            "FOREIGN KEY(`instrumentCode`) REFERENCES `instruments`(`code`) ON DELETE RESTRICT, " +
+                            "FOREIGN KEY(`intermediaryInstrumentCode`) REFERENCES `instruments`(`code`) ON DELETE RESTRICT)"
                 )
                 database.execSQL(
-                    "INSERT INTO `accounts_new` SELECT `id`, `name`, `type`, `instrument_code` FROM `accounts`"
+                    "INSERT INTO `accounts_new` SELECT `id`, `name`, `type`, `instrumentCode`, `intermediaryInstrumentCode` FROM `accounts`"
                 )
                 database.execSQL("DROP TABLE `accounts`")
                 database.execSQL("ALTER TABLE `accounts_new` RENAME TO `accounts`")
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_instrumentCode` ON `accounts` (`instrumentCode`)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_intermediaryInstrumentCode` ON `accounts` (`intermediaryInstrumentCode`)")
             }
         }
 
@@ -212,7 +235,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_8_9,
                         MIGRATION_9_10,
                         MIGRATION_10_11,
-                        MIGRATION_11_12
+                        MIGRATION_11_12,
+                        MIGRATION_12_13
                     )
                     .build().also { instance = it }
             }
