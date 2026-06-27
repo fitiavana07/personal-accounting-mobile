@@ -20,10 +20,10 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE id = :id")
     fun getWithEntries(id: String): TransactionWithEntries?
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insert(transaction: dev.fitiavana.accounting.data.model.Transaction)
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insertEntry(entry: TransactionEntry)
 
     @Query("SELECT COALESCE(SUM(debitAmount), 0) FROM transaction_entries WHERE accountId = :accountId")
