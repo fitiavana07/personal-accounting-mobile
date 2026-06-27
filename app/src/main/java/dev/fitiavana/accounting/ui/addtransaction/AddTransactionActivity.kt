@@ -569,7 +569,7 @@ class AddTransactionActivity : AppCompatActivity() {
         val transactionId = UUID.randomUUID().toString()
         val transaction = Transaction(
             id = transactionId,
-            creationTimestamp = System.currentTimeMillis(),
+            createdAt = System.currentTimeMillis(),
             transactionDatetime = selectedCalendar.timeInMillis,
             note = editNote.text.toString().trim()
         )

@@ -56,7 +56,7 @@ class TransactionDetailActivity : AppCompatActivity() {
         val t = twe.transaction
 
         setFieldValue(R.id.value_id, t.id)
-        setFieldValue(R.id.value_created, dateFormat.format(Date(t.creationTimestamp)))
+        setFieldValue(R.id.value_created, dateFormat.format(Date(t.createdAt)))
         setFieldValue(R.id.value_date, dateFormat.format(Date(t.transactionDatetime)))
 
         val noteSection = findViewById<LinearLayout>(R.id.section_note)
