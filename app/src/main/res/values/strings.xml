@@ -35,6 +35,8 @@
     <string name="hint_decimal_places">Decimal places</string>
     <string name="hint_amount_instrument">Amount (%s)</string>
     <string name="error_instrument_amount_required">Amount (%s) is required</string>
+    <string name="nav_home">Home</string>
+    <string name="coming_soon">Coming soon</string>
     <string name="nav_balances">Balances</string>
     <string name="empty_balances">No balances yet</string>
     <string name="action_recalculate">Recalculate</string>
