@@ -13,7 +13,7 @@ class BalanceItemBuilderTest {
     private fun account(id: String, name: String, instrumentCode: String? = null) =
         Account(id = id, name = name, type = "asset", instrumentCode = instrumentCode)
 
-    private fun balance(accountId: String, balance: Int, instrumentBalance: Long = 0L, updatedAt: Long = 1000L) =
+    private fun balance(accountId: String, balance: Long, instrumentBalance: Long = 0L, updatedAt: Long = 1000L) =
         AccountBalance(accountId = accountId, balance = balance, instrumentBalance = instrumentBalance, updatedAt = updatedAt, createdAt = 0L)
 
     // --- Basic mapping ---
@@ -41,7 +41,7 @@ class BalanceItemBuilderTest {
             instruments = emptyMap()
         )
         assertEquals(1, result.size)
-        assertEquals(BalanceItem("acc1", "Cash", 1000, 0L, null, 9999L), result[0])
+        assertEquals(BalanceItem("acc1", "Cash", 1000L, 0L, null, updatedAt = 9999L), result[0])
     }
 
     // --- Zero balance is included (account has transactions) ---
@@ -54,7 +54,7 @@ class BalanceItemBuilderTest {
             instruments = emptyMap()
         )
         assertEquals(1, result.size)
-        assertEquals(0, result[0].balance)
+        assertEquals(0L, result[0].balance)
     }
 
     // --- Sorting: highest balance first ---
@@ -74,7 +74,7 @@ class BalanceItemBuilderTest {
             ),
             instruments = emptyMap()
         )
-        assertEquals(listOf(10000, 3000, 1300), result.map { it.balance })
+        assertEquals(listOf(10000L, 3000L, 1300L), result.map { it.balance })
     }
 
     @Test
@@ -92,7 +92,7 @@ class BalanceItemBuilderTest {
             ),
             instruments = emptyMap()
         )
-        assertEquals(listOf(1000, 0, -500), result.map { it.balance })
+        assertEquals(listOf(1000L, 0L, -500L), result.map { it.balance })
     }
 
     // --- Multiple accounts, some without balances ---

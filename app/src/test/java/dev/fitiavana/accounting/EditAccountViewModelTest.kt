@@ -37,7 +37,7 @@ class EditAccountViewModelTest {
 
     @Test
     fun `new account with instrument sets instrumentCode`() {
-        viewModel.saveAccount(id = null, name = "Cash", type = "asset", instrumentCode = "USD")
+        viewModel.saveAccount(id = null, name = "Cash", type = "asset", instrumentCode = "USD", intermediaryInstrumentCode = null)
 
         val captor = argumentCaptor<Account>()
         verify(accountRepository).insert(captor.capture())
@@ -46,7 +46,7 @@ class EditAccountViewModelTest {
 
     @Test
     fun `new account without instrument sets instrumentCode to null`() {
-        viewModel.saveAccount(id = null, name = "Cash", type = "asset", instrumentCode = null)
+        viewModel.saveAccount(id = null, name = "Cash", type = "asset", instrumentCode = null, intermediaryInstrumentCode = null)
 
         val captor = argumentCaptor<Account>()
         verify(accountRepository).insert(captor.capture())
@@ -55,7 +55,7 @@ class EditAccountViewModelTest {
 
     @Test
     fun `new account name is trimmed`() {
-        viewModel.saveAccount(id = null, name = "  Cash  ", type = "asset", instrumentCode = null)
+        viewModel.saveAccount(id = null, name = "  Cash  ", type = "asset", instrumentCode = null, intermediaryInstrumentCode = null)
 
         val captor = argumentCaptor<Account>()
         verify(accountRepository).insert(captor.capture())
@@ -64,7 +64,7 @@ class EditAccountViewModelTest {
 
     @Test
     fun `new account fields are set correctly`() {
-        viewModel.saveAccount(id = null, name = "Revenue", type = "revenue", instrumentCode = "EUR")
+        viewModel.saveAccount(id = null, name = "Revenue", type = "revenue", instrumentCode = "EUR", intermediaryInstrumentCode = null)
 
         val captor = argumentCaptor<Account>()
         verify(accountRepository).insert(captor.capture())
@@ -76,7 +76,7 @@ class EditAccountViewModelTest {
 
     @Test
     fun `existing account update preserves instrumentCode`() {
-        viewModel.saveAccount(id = "abc", name = "Cash", type = "asset", instrumentCode = "USD")
+        viewModel.saveAccount(id = "abc", name = "Cash", type = "asset", instrumentCode = "USD", intermediaryInstrumentCode = null)
 
         val captor = argumentCaptor<Account>()
         verify(accountRepository).update(captor.capture())
@@ -86,7 +86,7 @@ class EditAccountViewModelTest {
 
     @Test
     fun `existing account update clears instrumentCode when null passed`() {
-        viewModel.saveAccount(id = "abc", name = "Cash", type = "asset", instrumentCode = null)
+        viewModel.saveAccount(id = "abc", name = "Cash", type = "asset", instrumentCode = null, intermediaryInstrumentCode = null)
 
         val captor = argumentCaptor<Account>()
         verify(accountRepository).update(captor.capture())
@@ -95,7 +95,7 @@ class EditAccountViewModelTest {
 
     @Test
     fun `existing account name is trimmed on update`() {
-        viewModel.saveAccount(id = "abc", name = "  Savings  ", type = "asset", instrumentCode = null)
+        viewModel.saveAccount(id = "abc", name = "  Savings  ", type = "asset", instrumentCode = null, intermediaryInstrumentCode = null)
 
         val captor = argumentCaptor<Account>()
         verify(accountRepository).update(captor.capture())
