@@ -50,6 +50,7 @@ class BalancesAdapter : RecyclerView.Adapter<BalancesAdapter.ViewHolder>() {
         private val updatedAtView: TextView = view.findViewById(R.id.text_balance_updated_at)
         private val amountView: TextView = view.findViewById(R.id.text_balance_amount)
         private val instrumentAmountView: TextView = view.findViewById(R.id.text_balance_instrument_amount)
+        private val exchangeRateView: TextView = view.findViewById(R.id.text_balance_exchange_rate)
 
         fun bind(item: BalanceItem, dateFormat: SimpleDateFormat) {
             nameView.text = item.accountName
@@ -65,6 +66,18 @@ class BalancesAdapter : RecyclerView.Adapter<BalancesAdapter.ViewHolder>() {
                 instrumentAmountView.visibility = View.VISIBLE
             } else {
                 instrumentAmountView.visibility = View.GONE
+            }
+
+            val exchangeRate = if (item.instrument != null && item.intermediaryInstrument == null) {
+                TransactionDisplay.formatExchangeRate(item.balance, item.instrumentBalance, item.instrument)
+            } else {
+                null
+            }
+            if (exchangeRate != null) {
+                exchangeRateView.text = exchangeRate
+                exchangeRateView.visibility = View.VISIBLE
+            } else {
+                exchangeRateView.visibility = View.GONE
             }
         }
     }

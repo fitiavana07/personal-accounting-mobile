@@ -151,4 +151,44 @@ class TransactionDisplayTest {
         val jpy = Instrument(code = "JPY", note = "", type = "currency", decimalPlaces = 0)
         assertEquals("0 JPY", TransactionDisplay.formatInstrumentAmount(0, jpy))
     }
+
+    // --- formatExchangeRate ---
+
+    @Test
+    fun `exchange rate with zero decimal places instrument`() {
+        val jpy = Instrument(code = "JPY", note = "", type = "currency", decimalPlaces = 0)
+        assertEquals("1 JPY = Ar 30", TransactionDisplay.formatExchangeRate(3000, 100, jpy))
+    }
+
+    @Test
+    fun `exchange rate accounts for instrument decimal places`() {
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        // instrumentBalance 250 means 2.50 USD; balance 10000 Ar -> rate 4000
+        assertEquals("1 USD = Ar 4,000", TransactionDisplay.formatExchangeRate(10000, 250, usd))
+    }
+
+    @Test
+    fun `exchange rate rounds to nearest integer`() {
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        // 1000 Ar / 3.33 USD = 300.3003... -> rounds to 300
+        assertEquals("1 USD = Ar 300", TransactionDisplay.formatExchangeRate(1000, 333, usd))
+    }
+
+    @Test
+    fun `exchange rate returns null when instrument amount is zero`() {
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        assertEquals(null, TransactionDisplay.formatExchangeRate(1000, 0, usd))
+    }
+
+    @Test
+    fun `exchange rate formats large values with grouping`() {
+        val jpy = Instrument(code = "JPY", note = "", type = "currency", decimalPlaces = 0)
+        assertEquals("1 JPY = Ar 1,000,000", TransactionDisplay.formatExchangeRate(1_000_000, 1, jpy))
+    }
+
+    @Test
+    fun `exchange rate handles negative balance`() {
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        assertEquals("1 USD = Ar -400", TransactionDisplay.formatExchangeRate(-4000, 1000, usd))
+    }
 }

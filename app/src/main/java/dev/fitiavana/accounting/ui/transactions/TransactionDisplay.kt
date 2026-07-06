@@ -38,4 +38,15 @@ object TransactionDisplay {
     }
 
     fun formatAmount(amount: Long): String = String.format("%,d", amount)
+
+    fun formatExchangeRate(
+        baseAmount: Long,
+        instrumentAmount: Long,
+        instrument: Instrument
+    ): String? {
+        if (instrumentAmount == 0L) return null
+        val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())
+        val rate = Math.round(baseAmount * factor / instrumentAmount)
+        return "1 ${instrument.code} = Ar ${formatAmount(rate)}"
+    }
 }
