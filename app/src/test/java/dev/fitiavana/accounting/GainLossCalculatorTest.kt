@@ -66,6 +66,18 @@ class GainLossCalculatorTest {
         assertEquals("+0.0 USDT", GainLossCalculator.formatSignedAmount(0.0, usdt))
     }
 
+    // --- formatSignedAmountAr ---
+
+    @Test
+    fun `format signed amount Ar adds plus sign for gain`() {
+        assertEquals("+Ar 25,000", GainLossCalculator.formatSignedAmountAr(25000.0))
+    }
+
+    @Test
+    fun `format signed amount Ar adds minus sign for loss`() {
+        assertEquals("-Ar 25,000", GainLossCalculator.formatSignedAmountAr(-25000.0))
+    }
+
     // --- formatSignedPercent ---
 
     @Test

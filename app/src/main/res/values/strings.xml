@@ -30,7 +30,9 @@
     <string name="home_rate_updated_at">Price as of %1$s</string>
     <string name="home_rate_never_updated">Price not fetched yet</string>
     <string name="home_refresh_failed">Failed to refresh some rates</string>
+    <string name="home_label_balance">Balance: %1$s</string>
     <string name="home_label_market_value">Market value: %1$s</string>
+    <string name="home_label_market_value_ar">Market value: Ar %1$s</string>
     <string name="home_label_book_value">Book value: %1$s</string>
     <string name="home_label_market_price">Market price: %1$s</string>
     <string name="home_label_book_price">Book price: %1$s</string>

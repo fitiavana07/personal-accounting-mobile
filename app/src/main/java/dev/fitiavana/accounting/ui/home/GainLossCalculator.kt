@@ -24,6 +24,11 @@ object GainLossCalculator {
         return "$sign${TransactionDisplay.formatInstrumentAmount(scaledAmount, instrument)}"
     }
 
+    fun formatSignedAmountAr(value: Double): String {
+        val sign = if (value >= 0) "+" else "-"
+        return "${sign}Ar ${TransactionDisplay.formatAmount(Math.round(Math.abs(value)))}"
+    }
+
     fun formatSignedPercent(value: Double): String {
         val sign = if (value >= 0) "+" else "-"
         return String.format("%s%.1f%%", sign, Math.abs(value))

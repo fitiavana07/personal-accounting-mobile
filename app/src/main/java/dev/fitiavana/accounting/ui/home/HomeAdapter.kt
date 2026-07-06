@@ -35,29 +35,22 @@ class HomeAdapter : RecyclerView.Adapter<HomeAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val nameView: TextView = view.findViewById(R.id.text_home_account_name)
+        private val balanceView: TextView = view.findViewById(R.id.text_home_balance)
         private val currentValueView: TextView = view.findViewById(R.id.text_home_current_value)
+        private val currentValueArView: TextView = view.findViewById(R.id.text_home_current_value_ar)
         private val currentRateView: TextView = view.findViewById(R.id.text_home_current_rate)
         private val bookValueView: TextView = view.findViewById(R.id.text_home_book_value)
         private val bookRateView: TextView = view.findViewById(R.id.text_home_book_rate)
         private val rateUpdatedAtView: TextView = view.findViewById(R.id.text_home_rate_updated_at)
         private val gainLossAmountView: TextView = view.findViewById(R.id.text_home_gain_loss_amount)
         private val gainLossPercentView: TextView = view.findViewById(R.id.text_home_gain_loss_percent)
+        private val gainLossArView: TextView = view.findViewById(R.id.text_home_gain_loss_ar)
 
         fun bind(item: HomeItem, dateFormat: SimpleDateFormat) {
             val context = itemView.context
             nameView.text = item.accountName
-            val bookValueText = TransactionDisplay.formatInstrumentAmount(
-                Math.round(item.bookValue * Math.pow(10.0, item.intermediaryInstrument.decimalPlaces.toDouble())),
-                item.intermediaryInstrument
-            )
-            bookValueView.text = context.getString(R.string.home_label_book_value, bookValueText)
 
-            if (item.bookRate != null) {
-                bookRateView.text = context.getString(R.string.home_label_book_price, item.bookRate)
-                bookRateView.visibility = View.VISIBLE
-            } else {
-                bookRateView.visibility = View.GONE
-            }
+            balanceView.text = context.getString(R.string.home_label_balance, item.instrumentBalanceFormatted)
 
             if (item.currentValue != null) {
                 val marketValueText = TransactionDisplay.formatInstrumentAmount(
@@ -70,11 +63,32 @@ class HomeAdapter : RecyclerView.Adapter<HomeAdapter.ViewHolder>() {
                 currentValueView.visibility = View.GONE
             }
 
+            if (item.currentValueAr != null) {
+                val marketValueArText = TransactionDisplay.formatAmount(Math.round(item.currentValueAr))
+                currentValueArView.text = context.getString(R.string.home_label_market_value_ar, marketValueArText)
+                currentValueArView.visibility = View.VISIBLE
+            } else {
+                currentValueArView.visibility = View.GONE
+            }
+
             if (item.currentRate != null) {
                 currentRateView.text = context.getString(R.string.home_label_market_price, item.currentRate)
                 currentRateView.visibility = View.VISIBLE
             } else {
                 currentRateView.visibility = View.GONE
+            }
+
+            val bookValueText = TransactionDisplay.formatInstrumentAmount(
+                Math.round(item.bookValue * Math.pow(10.0, item.intermediaryInstrument.decimalPlaces.toDouble())),
+                item.intermediaryInstrument
+            )
+            bookValueView.text = context.getString(R.string.home_label_book_value, bookValueText)
+
+            if (item.bookRate != null) {
+                bookRateView.text = context.getString(R.string.home_label_book_price, item.bookRate)
+                bookRateView.visibility = View.VISIBLE
+            } else {
+                bookRateView.visibility = View.GONE
             }
 
             rateUpdatedAtView.text = if (item.rateFetchedAt != null) {
@@ -90,6 +104,15 @@ class HomeAdapter : RecyclerView.Adapter<HomeAdapter.ViewHolder>() {
                 gainLossAmountView.visibility = View.VISIBLE
             } else {
                 gainLossAmountView.visibility = View.GONE
+            }
+
+            if (item.gainLossAr != null) {
+                val color = if (item.gainLossAr >= 0) R.color.gain else R.color.loss
+                gainLossArView.text = GainLossCalculator.formatSignedAmountAr(item.gainLossAr)
+                gainLossArView.setTextColor(ContextCompat.getColor(context, color))
+                gainLossArView.visibility = View.VISIBLE
+            } else {
+                gainLossArView.visibility = View.GONE
             }
 
             if (item.gainLossPercent != null) {

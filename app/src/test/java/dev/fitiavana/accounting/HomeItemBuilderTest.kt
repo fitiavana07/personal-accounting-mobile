@@ -43,6 +43,7 @@ class HomeItemBuilderTest {
         assertEquals("acc1", result[0].accountId)
         assertEquals(60000.0, result[0].bookValue, 0.0001)
         assertEquals("1 BTC = 60,000.0 USDT", result[0].bookRate)
+        assertEquals("1.0 BTC", result[0].instrumentBalanceFormatted)
     }
 
     @Test
@@ -122,6 +123,39 @@ class HomeItemBuilderTest {
         assertEquals(5000.0, result[0].gainLoss!!, 0.0001)
         assertEquals(12345L, result[0].rateFetchedAt)
         assertEquals("1 BTC = 65,000.0 USDT", result[0].currentRate)
+    }
+
+    @Test
+    fun `no cached rate yields null gain loss in Ar but exposes book value in Ar`() {
+        val result = HomeItemBuilder.build(
+            balances = listOf(balance("acc1", balance = 300_000, instrumentBalance = 100_000_000, intermediaryBalance = 6_000_000)),
+            accounts = listOf(account("acc1", "Crypto", instrumentCode = "BTC", intermediaryInstrumentCode = "USDT")),
+            instruments = mapOf("BTC" to btc, "USDT" to usdt),
+            rates = emptyMap()
+        )
+        assertEquals(300_000L, result[0].bookValueAr)
+        assertNull(result[0].gainLossAr)
+    }
+
+    @Test
+    fun `cached rate produces gain loss in Ar using balance-based exchange rate`() {
+        val cache = ExchangeRateCache(
+            pairKey = ExchangeRateCache.pairKey("BTC", "USDT"),
+            instrumentCode = "BTC",
+            intermediaryCode = "USDT",
+            rate = 65000.0,
+            fetchedAt = 12345L
+        )
+        val result = HomeItemBuilder.build(
+            balances = listOf(balance("acc1", balance = 300_000, instrumentBalance = 100_000_000, intermediaryBalance = 6_000_000)),
+            accounts = listOf(account("acc1", "Crypto", instrumentCode = "BTC", intermediaryInstrumentCode = "USDT")),
+            instruments = mapOf("BTC" to btc, "USDT" to usdt),
+            rates = mapOf(cache.pairKey to cache)
+        )
+        // bookValue = 60,000 USDT for 300,000 Ar -> rate is 5 Ar/USDT; currentValue = 65,000 USDT -> 325,000 Ar
+        assertEquals(300_000L, result[0].bookValueAr)
+        assertEquals(325_000.0, result[0].currentValueAr!!, 0.0001)
+        assertEquals(25_000.0, result[0].gainLossAr!!, 0.0001)
     }
 
     @Test
