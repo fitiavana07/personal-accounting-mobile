@@ -9,6 +9,7 @@
     <string name="action_recalculate">Recalculate</string>
     <string name="action_save">Save</string>
     <string name="app_name">Accounting</string>
+    <string name="app_name_with_version">Accounting v%1$s</string>
     <string name="balances_recalculated">Balances recalculated</string>
     <string name="coming_soon">Coming soon</string>
     <string name="dialog_cannot_delete_account_message">This account has transactions associated with it and cannot be deleted.</string>

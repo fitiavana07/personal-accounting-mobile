@@ -20,6 +20,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         UiUtils.setupActionBar(this, displayHomeAsUp = false)
+        supportActionBar?.title = getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
 
