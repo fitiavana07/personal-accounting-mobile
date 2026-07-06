@@ -65,6 +65,15 @@
             android:gravity="end"
             android:visibility="gone" />
 
+        <TextView
+            android:id="@+id/text_balance_exchange_rate_secondary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:alpha="0.5"
+            android:gravity="end"
+            android:visibility="gone" />
+
     </LinearLayout>
 
 </LinearLayout>

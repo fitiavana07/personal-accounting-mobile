@@ -51,6 +51,7 @@ class BalancesAdapter : RecyclerView.Adapter<BalancesAdapter.ViewHolder>() {
         private val amountView: TextView = view.findViewById(R.id.text_balance_amount)
         private val instrumentAmountView: TextView = view.findViewById(R.id.text_balance_instrument_amount)
         private val exchangeRateView: TextView = view.findViewById(R.id.text_balance_exchange_rate)
+        private val exchangeRateSecondaryView: TextView = view.findViewById(R.id.text_balance_exchange_rate_secondary)
 
         fun bind(item: BalanceItem, dateFormat: SimpleDateFormat) {
             nameView.text = item.accountName
@@ -68,16 +69,30 @@ class BalancesAdapter : RecyclerView.Adapter<BalancesAdapter.ViewHolder>() {
                 instrumentAmountView.visibility = View.GONE
             }
 
-            val exchangeRate = if (item.instrument != null && item.intermediaryInstrument == null) {
-                TransactionDisplay.formatExchangeRate(item.balance, item.instrumentBalance, item.instrument)
-            } else {
-                null
+            var exchangeRate: String? = null
+            var exchangeRateSecondary: String? = null
+            if (item.instrument != null && item.intermediaryInstrument != null) {
+                exchangeRate = TransactionDisplay.formatInstrumentExchangeRate(
+                    item.instrumentBalance, item.instrument, item.intermediaryBalance, item.intermediaryInstrument
+                )
+                exchangeRateSecondary = TransactionDisplay.formatExchangeRate(
+                    item.balance, item.intermediaryBalance, item.intermediaryInstrument
+                )
+            } else if (item.instrument != null) {
+                exchangeRate = TransactionDisplay.formatExchangeRate(item.balance, item.instrumentBalance, item.instrument)
             }
+
             if (exchangeRate != null) {
                 exchangeRateView.text = exchangeRate
                 exchangeRateView.visibility = View.VISIBLE
             } else {
                 exchangeRateView.visibility = View.GONE
+            }
+            if (exchangeRateSecondary != null) {
+                exchangeRateSecondaryView.text = exchangeRateSecondary
+                exchangeRateSecondaryView.visibility = View.VISIBLE
+            } else {
+                exchangeRateSecondaryView.visibility = View.GONE
             }
         }
     }

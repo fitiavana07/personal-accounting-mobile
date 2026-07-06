@@ -7,15 +7,19 @@ object TransactionDisplay {
     fun formatInstrumentAmount(amount: Long, instrument: Instrument): String {
         val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())
         return if (instrument.decimalPlaces > 0) {
-            val raw = String.format("%.${instrument.decimalPlaces}f", amount / factor)
-            val stripped = raw.trimEnd('0')
-            val dotPos = stripped.indexOf('.')
-            val intPart = String.format("%,d", stripped.substring(0, dotPos).toLong())
-            val decPart = stripped.substring(dotPos + 1).ifEmpty { "0" }
-            "$intPart.$decPart ${instrument.code}"
+            "${formatDecimalValue(amount / factor, instrument.decimalPlaces)} ${instrument.code}"
         } else {
-            "${String.format("%,d", amount)} ${instrument.code}"
+            "${formatAmount(amount)} ${instrument.code}"
         }
+    }
+
+    private fun formatDecimalValue(value: Double, decimalPlaces: Int): String {
+        val raw = String.format("%.${decimalPlaces}f", value)
+        val stripped = raw.trimEnd('0')
+        val dotPos = stripped.indexOf('.')
+        val intPart = String.format("%,d", stripped.substring(0, dotPos).toLong())
+        val decPart = stripped.substring(dotPos + 1).ifEmpty { "0" }
+        return "$intPart.$decPart"
     }
 
     fun formatAccountList(names: List<String>): String {
@@ -48,5 +52,23 @@ object TransactionDisplay {
         val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())
         val rate = Math.round(baseAmount * factor / instrumentAmount)
         return "1 ${instrument.code} = Ar ${formatAmount(rate)}"
+    }
+
+    fun formatInstrumentExchangeRate(
+        fromAmount: Long,
+        fromInstrument: Instrument,
+        toAmount: Long,
+        toInstrument: Instrument
+    ): String? {
+        if (fromAmount == 0L) return null
+        val fromFactor = Math.pow(10.0, fromInstrument.decimalPlaces.toDouble())
+        val toFactor = Math.pow(10.0, toInstrument.decimalPlaces.toDouble())
+        val rate = (toAmount / toFactor) / (fromAmount / fromFactor)
+        val rateText = if (toInstrument.decimalPlaces > 0) {
+            formatDecimalValue(rate, toInstrument.decimalPlaces)
+        } else {
+            formatAmount(Math.round(rate))
+        }
+        return "1 ${fromInstrument.code} = $rateText ${toInstrument.code}"
     }
 }

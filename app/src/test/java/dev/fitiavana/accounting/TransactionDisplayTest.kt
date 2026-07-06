@@ -191,4 +191,46 @@ class TransactionDisplayTest {
         val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
         assertEquals("1 USD = Ar -400", TransactionDisplay.formatExchangeRate(-4000, 1000, usd))
     }
+
+    // --- formatInstrumentExchangeRate ---
+
+    @Test
+    fun `instrument exchange rate with decimal target strips trailing zeros`() {
+        val nvda = Instrument(code = "NVDA", note = "", type = "stock", decimalPlaces = 0)
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        // 1 NVDA share (instrumentBalance=1) worth 13245 cents = 132.45 USD
+        assertEquals(
+            "1 NVDA = 132.45 USD",
+            TransactionDisplay.formatInstrumentExchangeRate(1, nvda, 13245, usd)
+        )
+    }
+
+    @Test
+    fun `instrument exchange rate with integer target rounds and has no decimals`() {
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        val jpy = Instrument(code = "JPY", note = "", type = "currency", decimalPlaces = 0)
+        // 1 USD (100 cents) = 15050 JPY -> rate is per 1 USD -> 15050
+        assertEquals(
+            "1 USD = 15,050 JPY",
+            TransactionDisplay.formatInstrumentExchangeRate(100, usd, 15050, jpy)
+        )
+    }
+
+    @Test
+    fun `instrument exchange rate returns null when from amount is zero`() {
+        val nvda = Instrument(code = "NVDA", note = "", type = "stock", decimalPlaces = 0)
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        assertEquals(null, TransactionDisplay.formatInstrumentExchangeRate(0, nvda, 13245, usd))
+    }
+
+    @Test
+    fun `instrument exchange rate scales fractional shares correctly`() {
+        val nvda = Instrument(code = "NVDA", note = "", type = "stock", decimalPlaces = 0)
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        // 2 NVDA shares worth 26490 cents (264.90 USD total) -> 1 NVDA = 132.45 USD
+        assertEquals(
+            "1 NVDA = 132.45 USD",
+            TransactionDisplay.formatInstrumentExchangeRate(2, nvda, 26490, usd)
+        )
+    }
 }
