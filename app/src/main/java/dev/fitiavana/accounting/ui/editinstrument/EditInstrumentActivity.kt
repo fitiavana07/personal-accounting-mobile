@@ -39,6 +39,7 @@ class EditInstrumentActivity : AppCompatActivity() {
     private lateinit var noteInput: EditText
     private lateinit var typeSpinner: Spinner
     private lateinit var decimalPlacesInput: EditText
+    private lateinit var coingeckoIdInput: EditText
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,6 +59,7 @@ class EditInstrumentActivity : AppCompatActivity() {
         noteInput = findViewById(R.id.input_instrument_note)
         typeSpinner = findViewById(R.id.spinner_instrument_type)
         decimalPlacesInput = findViewById(R.id.input_decimal_places)
+        coingeckoIdInput = findViewById(R.id.input_coingecko_id)
         val saveButton: Button = findViewById(R.id.button_save)
 
         val typeDisplayNames =
@@ -87,6 +89,7 @@ class EditInstrumentActivity : AppCompatActivity() {
                             .takeIf { it >= 0 } ?: 0
                         typeSpinner.setSelection(typeIndex)
                         decimalPlacesInput.setText(instrument.decimalPlaces.toString())
+                        coingeckoIdInput.setText(instrument.coingeckoId ?: "")
                     }
                 }
             }.start()
@@ -100,6 +103,7 @@ class EditInstrumentActivity : AppCompatActivity() {
             val decimalPlaces =
                 decimalPlacesInput.text.toString().trim().toIntOrNull() ?: 0
             val selectedType = TYPE_VALUES[typeSpinner.selectedItemPosition]
+            val coingeckoId = coingeckoIdInput.text.toString().trim().ifEmpty { null }
 
             if (code.isNotEmpty()) {
                 Thread {
@@ -110,7 +114,8 @@ class EditInstrumentActivity : AppCompatActivity() {
                             code,
                             note,
                             selectedType,
-                            decimalPlaces
+                            decimalPlaces,
+                            coingeckoId
                         )
                     } else {
                         //we're updating
@@ -118,7 +123,8 @@ class EditInstrumentActivity : AppCompatActivity() {
                             instrumentCode,
                             note,
                             selectedType,
-                            decimalPlaces
+                            decimalPlaces,
+                            coingeckoId
                         )
                     }
                     runOnUiThread { finish() }

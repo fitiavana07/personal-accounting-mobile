@@ -8,23 +8,26 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import dev.fitiavana.accounting.data.dao.AccountBalanceDao
 import dev.fitiavana.accounting.data.dao.AccountDao
+import dev.fitiavana.accounting.data.dao.ExchangeRateCacheDao
 import dev.fitiavana.accounting.data.dao.InstrumentDao
 import dev.fitiavana.accounting.data.dao.TransactionDao
 import dev.fitiavana.accounting.data.model.Account
 import dev.fitiavana.accounting.data.model.AccountBalance
+import dev.fitiavana.accounting.data.model.ExchangeRateCache
 import dev.fitiavana.accounting.data.model.Instrument
 import dev.fitiavana.accounting.data.model.Transaction
 import dev.fitiavana.accounting.data.model.TransactionEntry
 
 @Database(
-    entities = [Account::class, Transaction::class, TransactionEntry::class, AccountBalance::class, Instrument::class],
-    version = 13
+    entities = [Account::class, Transaction::class, TransactionEntry::class, AccountBalance::class, Instrument::class, ExchangeRateCache::class],
+    version = 14
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
     abstract fun transactionDao(): TransactionDao
     abstract fun accountBalanceDao(): AccountBalanceDao
     abstract fun instrumentDao(): InstrumentDao
+    abstract fun exchangeRateCacheDao(): ExchangeRateCacheDao
 
     companion object {
         @Volatile
@@ -217,6 +220,20 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `instruments` ADD COLUMN `coingeckoId` TEXT")
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `exchange_rate_cache` (" +
+                            "`pairKey` TEXT NOT NULL PRIMARY KEY, " +
+                            "`instrumentCode` TEXT NOT NULL, " +
+                            "`intermediaryCode` TEXT NOT NULL, " +
+                            "`rate` REAL NOT NULL, " +
+                            "`fetchedAt` INTEGER NOT NULL)"
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -236,7 +253,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_9_10,
                         MIGRATION_10_11,
                         MIGRATION_11_12,
-                        MIGRATION_12_13
+                        MIGRATION_12_13,
+                        MIGRATION_13_14
                     )
                     .build().also { instance = it }
             }

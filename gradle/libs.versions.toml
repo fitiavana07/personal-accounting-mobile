@@ -13,6 +13,8 @@ lifecycleVersion = "2.6.2"
 recyclerView = "1.2.1"
 robolectric = "4.13"
 androidxTestCore = "1.5.0"
+swiperefreshlayout = "1.1.0"
+okhttp = "3.12.13"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,6 +33,8 @@ material = { group = "com.google.android.material", name = "material", version.r
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "roomRuntime" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

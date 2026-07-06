@@ -12,20 +12,30 @@ class EditInstrumentViewModel(private val repository: InstrumentRepository) : Vi
         code: String,
         note: String,
         type: String,
-        decimalPlaces: Int
+        decimalPlaces: Int,
+        coingeckoId: String? = null
     ) {
         repository.update(
             Instrument(
                 code = code,
                 note = note.trim(),
                 type = type,
-                decimalPlaces = decimalPlaces
+                decimalPlaces = decimalPlaces,
+                coingeckoId = coingeckoId
             )
         )
     }
 
-    fun saveNewInstrument(code: String, note: String, type: String, decimalPlaces: Int) {
-        repository.insert(Instrument(code = code.trim(), note = note.trim(), type = type, decimalPlaces = decimalPlaces))
+    fun saveNewInstrument(code: String, note: String, type: String, decimalPlaces: Int, coingeckoId: String? = null) {
+        repository.insert(
+            Instrument(
+                code = code.trim(),
+                note = note.trim(),
+                type = type,
+                decimalPlaces = decimalPlaces,
+                coingeckoId = coingeckoId
+            )
+        )
     }
 
     fun hasAccounts(instrumentCode: String): Boolean = repository.hasAccounts(instrumentCode)

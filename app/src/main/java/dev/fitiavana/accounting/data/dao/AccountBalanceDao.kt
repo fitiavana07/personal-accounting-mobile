@@ -12,6 +12,9 @@ interface AccountBalanceDao {
     @Query("SELECT * FROM account_balances")
     fun getAll(): LiveData<List<AccountBalance>>
 
+    @Query("SELECT * FROM account_balances")
+    fun getAllSync(): List<AccountBalance>
+
     @Query("SELECT * FROM account_balances WHERE accountId = :accountId")
     fun getByAccountId(accountId: String): AccountBalance?
 

@@ -64,6 +64,11 @@ object TransactionDisplay {
         val fromFactor = Math.pow(10.0, fromInstrument.decimalPlaces.toDouble())
         val toFactor = Math.pow(10.0, toInstrument.decimalPlaces.toDouble())
         val rate = (toAmount / toFactor) / (fromAmount / fromFactor)
+        return formatInstrumentRate(fromInstrument, rate, toInstrument)
+    }
+
+    /** Formats an already-computed rate (e.g. a live fetched price), not derived from balances. */
+    fun formatInstrumentRate(fromInstrument: Instrument, rate: Double, toInstrument: Instrument): String {
         val rateText = if (toInstrument.decimalPlaces > 0) {
             formatDecimalValue(rate, toInstrument.decimalPlaces)
         } else {

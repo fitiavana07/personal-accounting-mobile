@@ -26,6 +26,14 @@
     <string name="empty_accounts">No accounts yet</string>
     <string name="empty_accounts_filtered">No accounts match the selected type</string>
     <string name="empty_balances">No balances yet</string>
+    <string name="empty_home">No cryptocurrency positions with an intermediary instrument yet</string>
+    <string name="home_rate_updated_at">Price as of %1$s</string>
+    <string name="home_rate_never_updated">Price not fetched yet</string>
+    <string name="home_refresh_failed">Failed to refresh some rates</string>
+    <string name="home_label_market_value">Market value: %1$s</string>
+    <string name="home_label_book_value">Book value: %1$s</string>
+    <string name="home_label_market_price">Market price: %1$s</string>
+    <string name="home_label_book_price">Book price: %1$s</string>
     <string name="empty_transactions">No transactions yet</string>
     <string name="empty_transactions_filtered">No transactions match the selected filters</string>
     <string name="empty_transactions_no_accounts">Add accounts first to record transactions</string>
@@ -42,6 +50,7 @@
     <string name="hint_amount">Amount</string>
     <string name="hint_amount_instrument">Amount (%s)</string>
     <string name="hint_decimal_places">Decimal places</string>
+    <string name="hint_coingecko_id">CoinGecko ID (optional, e.g. bitcoin, ethereum, solana, tether, usd-coin)</string>
     <string name="hint_instrument_code">Code</string>
     <string name="hint_note">Note (optional)</string>
     <string name="instruments">Instruments</string>

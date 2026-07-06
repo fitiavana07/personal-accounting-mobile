@@ -46,6 +46,7 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+            isReturnDefaultValues = true
         }
     }
 }
@@ -69,4 +70,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.lifecycle.livedata)
     implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.okhttp)
 }

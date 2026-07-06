@@ -5,20 +5,76 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.data.repository.AccountRepository
+import dev.fitiavana.accounting.data.repository.BalanceRepository
+import dev.fitiavana.accounting.data.repository.ExchangeRateRepository
+import dev.fitiavana.accounting.data.repository.InstrumentRepository
+import dev.fitiavana.accounting.db.AppDatabase
 
 class HomeFragment : Fragment() {
+
+    private lateinit var viewModel: HomeViewModel
+    private lateinit var adapter: HomeAdapter
+    private lateinit var swipeRefresh: SwipeRefreshLayout
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        val textView = TextView(requireContext())
-        textView.text = getString(R.string.coming_soon)
-        textView.textSize = 18f
-        textView.gravity = android.view.Gravity.CENTER
-        return textView
+    ): View = inflater.inflate(R.layout.fragment_home, container, false)
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val db = AppDatabase.getInstance(requireContext())
+        val balanceRepo = BalanceRepository(db.accountDao(), db.accountBalanceDao(), db.transactionDao())
+        val accountRepo = AccountRepository(db.accountDao())
+        val instrumentRepo = InstrumentRepository(db.instrumentDao(), db.accountDao())
+        val exchangeRateRepo = ExchangeRateRepository(db.exchangeRateCacheDao())
+
+        viewModel = ViewModelProvider(
+            this,
+            HomeViewModelFactory(balanceRepo, accountRepo, instrumentRepo, exchangeRateRepo)
+        ).get(HomeViewModel::class.java)
+
+        adapter = HomeAdapter()
+        val recycler = view.findViewById<RecyclerView>(R.id.recycler_home)
+        recycler.layoutManager = LinearLayoutManager(requireContext())
+        recycler.adapter = adapter
+
+        val emptyView = view.findViewById<TextView>(R.id.text_empty_home)
+        swipeRefresh = view.findViewById(R.id.swipe_refresh_home)
+        swipeRefresh.setOnRefreshListener { refreshRates() }
+
+        viewModel.homeItems.observe(viewLifecycleOwner) { items ->
+            adapter.submitList(items)
+            if (items.isEmpty()) {
+                recycler.visibility = View.GONE
+                emptyView.visibility = View.VISIBLE
+            } else {
+                recycler.visibility = View.VISIBLE
+                emptyView.visibility = View.GONE
+            }
+        }
+
+        refreshRates()
+    }
+
+    private fun refreshRates() {
+        swipeRefresh.isRefreshing = true
+        Thread {
+            val result = viewModel.refreshRates()
+            activity?.runOnUiThread {
+                swipeRefresh.isRefreshing = false
+                if (result.failed.isNotEmpty() && result.succeeded.isEmpty()) {
+                    Toast.makeText(requireContext(), R.string.home_refresh_failed, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }.start()
     }
 }
