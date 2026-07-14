@@ -7,14 +7,11 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
-class HomeAdapter : RecyclerView.Adapter<HomeAdapter.ViewHolder>() {
+class HomeAdapter(
+    private val onItemClick: (HomeItem) -> Unit
+) : RecyclerView.Adapter<HomeAdapter.ViewHolder>() {
 
-    private val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
     private var items: List<HomeItem> = emptyList()
 
     fun submitList(list: List<HomeItem>) {
@@ -24,78 +21,26 @@ class HomeAdapter : RecyclerView.Adapter<HomeAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_home, parent, false)
-        return ViewHolder(view)
+        return ViewHolder(view, onItemClick)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(items[position], dateFormat)
+        holder.bind(items[position])
     }
 
     override fun getItemCount() = items.size
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    class ViewHolder(view: View, private val onItemClick: (HomeItem) -> Unit) : RecyclerView.ViewHolder(view) {
         private val nameView: TextView = view.findViewById(R.id.text_home_account_name)
-        private val balanceView: TextView = view.findViewById(R.id.text_home_balance)
-        private val currentValueView: TextView = view.findViewById(R.id.text_home_current_value)
-        private val currentValueArView: TextView = view.findViewById(R.id.text_home_current_value_ar)
-        private val currentRateView: TextView = view.findViewById(R.id.text_home_current_rate)
-        private val bookValueView: TextView = view.findViewById(R.id.text_home_book_value)
-        private val bookRateView: TextView = view.findViewById(R.id.text_home_book_rate)
-        private val rateUpdatedAtView: TextView = view.findViewById(R.id.text_home_rate_updated_at)
         private val gainLossAmountView: TextView = view.findViewById(R.id.text_home_gain_loss_amount)
         private val gainLossPercentView: TextView = view.findViewById(R.id.text_home_gain_loss_percent)
         private val gainLossArView: TextView = view.findViewById(R.id.text_home_gain_loss_ar)
 
-        fun bind(item: HomeItem, dateFormat: SimpleDateFormat) {
+        fun bind(item: HomeItem) {
             val context = itemView.context
             nameView.text = item.accountName
 
-            balanceView.text = context.getString(R.string.home_label_balance, item.instrumentBalanceFormatted)
-
-            if (item.currentValue != null) {
-                val marketValueText = TransactionDisplay.formatInstrumentAmount(
-                    Math.round(item.currentValue * Math.pow(10.0, item.intermediaryInstrument.decimalPlaces.toDouble())),
-                    item.intermediaryInstrument
-                )
-                currentValueView.text = context.getString(R.string.home_label_market_value, marketValueText)
-                currentValueView.visibility = View.VISIBLE
-            } else {
-                currentValueView.visibility = View.GONE
-            }
-
-            if (item.currentValueAr != null) {
-                val marketValueArText = TransactionDisplay.formatAmount(Math.round(item.currentValueAr))
-                currentValueArView.text = context.getString(R.string.home_label_market_value_ar, marketValueArText)
-                currentValueArView.visibility = View.VISIBLE
-            } else {
-                currentValueArView.visibility = View.GONE
-            }
-
-            if (item.currentRate != null) {
-                currentRateView.text = context.getString(R.string.home_label_market_price, item.currentRate)
-                currentRateView.visibility = View.VISIBLE
-            } else {
-                currentRateView.visibility = View.GONE
-            }
-
-            val bookValueText = TransactionDisplay.formatInstrumentAmount(
-                Math.round(item.bookValue * Math.pow(10.0, item.intermediaryInstrument.decimalPlaces.toDouble())),
-                item.intermediaryInstrument
-            )
-            bookValueView.text = context.getString(R.string.home_label_book_value, bookValueText)
-
-            if (item.bookRate != null) {
-                bookRateView.text = context.getString(R.string.home_label_book_price, item.bookRate)
-                bookRateView.visibility = View.VISIBLE
-            } else {
-                bookRateView.visibility = View.GONE
-            }
-
-            rateUpdatedAtView.text = if (item.rateFetchedAt != null) {
-                context.getString(R.string.home_rate_updated_at, dateFormat.format(Date(item.rateFetchedAt)))
-            } else {
-                context.getString(R.string.home_rate_never_updated)
-            }
+            itemView.setOnClickListener { onItemClick(item) }
 
             if (item.gainLoss != null) {
                 val color = if (item.gainLoss >= 0) R.color.gain else R.color.loss

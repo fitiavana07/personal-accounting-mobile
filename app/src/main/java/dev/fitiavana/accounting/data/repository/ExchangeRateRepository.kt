@@ -21,6 +21,8 @@ class ExchangeRateRepository(
 ) {
     fun getAllCached(): LiveData<List<ExchangeRateCache>> = cacheDao.getAll()
 
+    fun getAllCachedSync(): List<ExchangeRateCache> = cacheDao.getAllSync()
+
     /**
      * Fetches current rates for each (instrument, intermediaryInstrument) pair and
      * upserts them into the cache. Runs synchronously — callers must invoke this off

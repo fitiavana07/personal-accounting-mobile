@@ -17,6 +17,7 @@ import dev.fitiavana.accounting.data.repository.BalanceRepository
 import dev.fitiavana.accounting.data.repository.ExchangeRateRepository
 import dev.fitiavana.accounting.data.repository.InstrumentRepository
 import dev.fitiavana.accounting.db.AppDatabase
+import dev.fitiavana.accounting.ui.homedetail.HomeDetailActivity
 
 class HomeFragment : Fragment() {
 
@@ -42,7 +43,9 @@ class HomeFragment : Fragment() {
             HomeViewModelFactory(balanceRepo, accountRepo, instrumentRepo, exchangeRateRepo)
         ).get(HomeViewModel::class.java)
 
-        adapter = HomeAdapter()
+        adapter = HomeAdapter { item ->
+            startActivity(HomeDetailActivity.intent(requireContext(), item.accountId))
+        }
         val recycler = view.findViewById<RecyclerView>(R.id.recycler_home)
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.adapter = adapter
