@@ -5,8 +5,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
+import java.util.Locale
 
 class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -59,34 +61,84 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     class RowViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        private val root: View = view.findViewById(R.id.layout_balance_sheet_row)
+        private val divider: View = view.findViewById(R.id.divider_balance_sheet_row)
+        private val content: View = view.findViewById(R.id.content_balance_sheet_row)
         private val labelView: TextView = view.findViewById(R.id.text_balance_sheet_label)
         private val amountView: TextView = view.findViewById(R.id.text_balance_sheet_amount)
+        private val context = view.context
+        private val labelStartPadding = content.paddingStart
+        private val labelIndentPadding = labelStartPadding + dpToPx(16f)
 
         fun bindHeader(row: BalanceSheetRow.SectionHeader) {
-            labelView.text = row.title
+            labelView.text = row.title.uppercase(Locale.getDefault())
             amountView.text = ""
-            setBold(true, 17f)
+            setBold(true, 14f)
+            setLabelIndent(labelStartPadding)
+            setTextColor(ContextCompat.getColor(context, R.color.brown_500))
+            setContentVerticalPadding(10f)
+            root.setBackgroundColor(ContextCompat.getColor(context, R.color.bs_section_header_bg))
+            divider.visibility = View.GONE
         }
 
         fun bindAccount(row: BalanceSheetRow.AccountLine) {
             labelView.text = row.name
             amountView.text = row.amountText
             setBold(false, 15f)
+            setLabelIndent(labelIndentPadding)
+            setTextColor(defaultTextColor())
+            setContentVerticalPadding(4f)
+            root.setBackgroundColor(0)
+            divider.visibility = View.GONE
         }
 
         fun bindTotal(row: BalanceSheetRow.TotalLine) {
             labelView.text = row.label
             amountView.text = row.amountText
-            setBold(true, 15f)
+            setBold(true, if (row.emphasized) 16f else 15f)
+            setLabelIndent(labelStartPadding)
+            setTextColor(defaultTextColor())
+            setContentVerticalPadding(8f)
+            root.setBackgroundColor(
+                if (row.emphasized) ContextCompat.getColor(context, R.color.bs_grand_total_bg) else 0
+            )
+            divider.visibility = View.VISIBLE
+        }
+
+        private fun setLabelIndent(startPadding: Int) {
+            labelView.setPaddingRelative(startPadding, labelView.paddingTop, labelView.paddingEnd, labelView.paddingBottom)
+        }
+
+        private fun setContentVerticalPadding(verticalDp: Float) {
+            val verticalPx = dpToPx(verticalDp)
+            content.setPaddingRelative(content.paddingStart, verticalPx, content.paddingEnd, verticalPx)
         }
 
         private fun setBold(bold: Boolean, textSizeSp: Float) {
             val style = if (bold) Typeface.BOLD else Typeface.NORMAL
-            labelView.setTypeface(labelView.typeface, style)
-            amountView.setTypeface(amountView.typeface, style)
+            labelView.setTypeface(Typeface.DEFAULT, style)
+            amountView.setTypeface(Typeface.DEFAULT, style)
             labelView.textSize = textSizeSp
             amountView.textSize = textSizeSp
         }
+
+        private fun setTextColor(color: Int) {
+            labelView.setTextColor(color)
+            amountView.setTextColor(color)
+        }
+
+        private fun defaultTextColor(): Int {
+            val typedValue = android.util.TypedValue()
+            context.theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+            return if (typedValue.resourceId != 0) {
+                ContextCompat.getColor(context, typedValue.resourceId)
+            } else {
+                typedValue.data
+            }
+        }
+
+        private fun dpToPx(dp: Float): Int =
+            (dp * context.resources.displayMetrics.density).toInt()
     }
 
     companion object {

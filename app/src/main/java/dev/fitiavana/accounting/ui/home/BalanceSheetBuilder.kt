@@ -11,7 +11,11 @@ sealed class BalanceSheetRow {
     data class Title(val text: String) : BalanceSheetRow()
     data class SectionHeader(val title: String) : BalanceSheetRow()
     data class AccountLine(val name: String, val amountText: String) : BalanceSheetRow()
-    data class TotalLine(val label: String, val amountText: String) : BalanceSheetRow()
+    data class TotalLine(
+        val label: String,
+        val amountText: String,
+        val emphasized: Boolean = false
+    ) : BalanceSheetRow()
     data class DateLine(val text: String) : BalanceSheetRow()
 }
 
@@ -54,13 +58,13 @@ object BalanceSheetBuilder {
         if (assetLines.isNotEmpty()) {
             rows += BalanceSheetRow.SectionHeader("Assets")
             assetLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, formatAr(it.balance)) }
-            rows += BalanceSheetRow.TotalLine("Total Assets", formatAr(totalAssets))
+            rows += BalanceSheetRow.TotalLine("Total Assets", formatAr(totalAssets), emphasized = true)
         }
 
         if (liabilityLines.isNotEmpty()) {
             rows += BalanceSheetRow.SectionHeader("Liabilities")
             liabilityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, formatAr(it.balance)) }
-            rows += BalanceSheetRow.TotalLine("Total Liabilities", formatAr(totalLiabilities))
+            rows += BalanceSheetRow.TotalLine("Total Liabilities", formatAr(totalLiabilities), emphasized = true)
         }
 
         val hasEquitySection = listOf(
@@ -95,7 +99,7 @@ object BalanceSheetBuilder {
                 rows += BalanceSheetRow.TotalLine("Total Drawing", formatArParens(totalDrawing))
             }
 
-            rows += BalanceSheetRow.TotalLine("Total Equity", formatSignedAr(totalEquity))
+            rows += BalanceSheetRow.TotalLine("Total Equity", formatSignedAr(totalEquity), emphasized = true)
         }
 
         val balanceDate = includedBalances.maxOf { it.updatedAt }

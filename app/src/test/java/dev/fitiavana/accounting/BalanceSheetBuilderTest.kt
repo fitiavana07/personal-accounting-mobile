@@ -37,7 +37,7 @@ class BalanceSheetBuilderTest {
                 BalanceSheetRow.Title("Instant Balance Sheet"),
                 BalanceSheetRow.SectionHeader("Assets"),
                 BalanceSheetRow.AccountLine("Cash", "Ar 10,000"),
-                BalanceSheetRow.TotalLine("Total Assets", "Ar 10,000"),
+                BalanceSheetRow.TotalLine("Total Assets", "Ar 10,000", emphasized = true),
                 BalanceSheetRow.DateLine("Balances at Jan 1, 1970")
             ),
             result
@@ -89,10 +89,10 @@ class BalanceSheetBuilderTest {
                 BalanceSheetRow.Title("Instant Balance Sheet"),
                 BalanceSheetRow.SectionHeader("Assets"),
                 BalanceSheetRow.AccountLine("Cash", "Ar 1,000"),
-                BalanceSheetRow.TotalLine("Total Assets", "Ar 1,000"),
+                BalanceSheetRow.TotalLine("Total Assets", "Ar 1,000", emphasized = true),
                 BalanceSheetRow.SectionHeader("Liabilities"),
                 BalanceSheetRow.AccountLine("Loan", "Ar 200"),
-                BalanceSheetRow.TotalLine("Total Liabilities", "Ar 200"),
+                BalanceSheetRow.TotalLine("Total Liabilities", "Ar 200", emphasized = true),
                 BalanceSheetRow.SectionHeader("Equity"),
                 BalanceSheetRow.AccountLine("Owner Capital", "Ar 500"),
                 BalanceSheetRow.TotalLine("Total Original Equity", "Ar 500"),
@@ -106,7 +106,7 @@ class BalanceSheetBuilderTest {
                 BalanceSheetRow.TotalLine("Total Loss", "(Ar 30)"),
                 BalanceSheetRow.AccountLine("Owner Drawing", "(Ar 60)"),
                 BalanceSheetRow.TotalLine("Total Drawing", "(Ar 60)"),
-                BalanceSheetRow.TotalLine("Total Equity", "Ar 640"),
+                BalanceSheetRow.TotalLine("Total Equity", "Ar 640", emphasized = true),
                 BalanceSheetRow.DateLine("Balances at Jan 1, 1970")
             ),
             result
@@ -126,7 +126,7 @@ class BalanceSheetBuilderTest {
                 BalanceSheetRow.SectionHeader("Equity"),
                 BalanceSheetRow.AccountLine("Stock Gain", "Ar 80"),
                 BalanceSheetRow.TotalLine("Total Gain", "Ar 80"),
-                BalanceSheetRow.TotalLine("Total Equity", "Ar 80"),
+                BalanceSheetRow.TotalLine("Total Equity", "Ar 80", emphasized = true),
                 BalanceSheetRow.DateLine("Balances at Jan 1, 1970")
             ),
             result
@@ -142,6 +142,32 @@ class BalanceSheetBuilderTest {
 
         val totalEquity = result.filterIsInstance<BalanceSheetRow.TotalLine>().last { it.label == "Total Equity" }
         assertEquals("-Ar 500", totalEquity.amountText)
+    }
+
+    @Test
+    fun `only the three top-level totals are emphasized`() {
+        val accounts = listOf(
+            account("a", "Cash", "asset"),
+            account("l", "Loan", "liability"),
+            account("e", "Owner Capital", "equity")
+        )
+        val balances = listOf(
+            balance("a", 1000),
+            balance("l", 200),
+            balance("e", 800)
+        )
+
+        val totals = BalanceSheetBuilder.build(accounts, balances)
+            .filterIsInstance<BalanceSheetRow.TotalLine>()
+
+        assertEquals(
+            listOf("Total Assets", "Total Liabilities", "Total Equity"),
+            totals.filter { it.emphasized }.map { it.label }
+        )
+        assertEquals(
+            listOf("Total Original Equity"),
+            totals.filter { !it.emphasized }.map { it.label }
+        )
     }
 
     @Test

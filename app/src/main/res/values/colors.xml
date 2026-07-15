@@ -11,4 +11,8 @@
     <color name="loss">#C62828</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="bs_section_header_bg">#26B8860B</color>
+    <color name="bs_grand_total_bg">#1F5D4037</color>
+    <color name="bs_divider">#40888888</color>
 </resources>
