@@ -53,6 +53,24 @@ class HomeViewModel(
         }
     }
 
+    val balanceSheetRows = MediatorLiveData<List<BalanceSheetRow>>().apply {
+        var latestBalances: List<AccountBalance> = emptyList()
+        var latestAccounts: List<Account> = emptyList()
+
+        fun update() {
+            value = BalanceSheetBuilder.build(latestAccounts, latestBalances)
+        }
+
+        addSource(balances) { b ->
+            latestBalances = b ?: emptyList()
+            update()
+        }
+        addSource(accounts) { a ->
+            latestAccounts = a ?: emptyList()
+            update()
+        }
+    }
+
     /** Synchronous — callers must invoke this off the main thread. */
     fun refreshRates(): RefreshResult {
         val items = HomeItemBuilder.build(

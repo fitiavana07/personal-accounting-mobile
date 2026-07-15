@@ -8,6 +8,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -23,6 +24,7 @@ class HomeFragment : Fragment() {
 
     private lateinit var viewModel: HomeViewModel
     private lateinit var adapter: HomeAdapter
+    private lateinit var balanceSheetAdapter: BalanceSheetAdapter
     private lateinit var swipeRefresh: SwipeRefreshLayout
 
     override fun onCreateView(
@@ -46,23 +48,29 @@ class HomeFragment : Fragment() {
         adapter = HomeAdapter { item ->
             startActivity(HomeDetailActivity.intent(requireContext(), item.accountId))
         }
+        balanceSheetAdapter = BalanceSheetAdapter()
         val recycler = view.findViewById<RecyclerView>(R.id.recycler_home)
         recycler.layoutManager = LinearLayoutManager(requireContext())
-        recycler.adapter = adapter
+        recycler.adapter = ConcatAdapter(balanceSheetAdapter, adapter)
 
         val emptyView = view.findViewById<TextView>(R.id.text_empty_home)
         swipeRefresh = view.findViewById(R.id.swipe_refresh_home)
         swipeRefresh.setOnRefreshListener { refreshRates() }
 
+        fun updateEmptyState() {
+            val isEmpty = balanceSheetAdapter.itemCount == 0 && adapter.itemCount == 0
+            recycler.visibility = if (isEmpty) View.GONE else View.VISIBLE
+            emptyView.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        }
+
+        viewModel.balanceSheetRows.observe(viewLifecycleOwner) { rows ->
+            balanceSheetAdapter.submitList(rows)
+            updateEmptyState()
+        }
+
         viewModel.homeItems.observe(viewLifecycleOwner) { items ->
             adapter.submitList(items)
-            if (items.isEmpty()) {
-                recycler.visibility = View.GONE
-                emptyView.visibility = View.VISIBLE
-            } else {
-                recycler.visibility = View.VISIBLE
-                emptyView.visibility = View.GONE
-            }
+            updateEmptyState()
         }
 
         refreshRates()
