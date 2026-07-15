@@ -20,11 +20,23 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE id = :id")
     fun getWithEntries(id: String): TransactionWithEntries?
 
+    @Query("SELECT * FROM transactions")
+    fun getAllTransactionsSync(): List<dev.fitiavana.accounting.data.model.Transaction>
+
+    @Query("SELECT * FROM transaction_entries")
+    fun getAllEntriesSync(): List<TransactionEntry>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insert(transaction: dev.fitiavana.accounting.data.model.Transaction)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertAllTransactions(transactions: List<dev.fitiavana.accounting.data.model.Transaction>)
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insertEntry(entry: TransactionEntry)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertAllEntries(entries: List<TransactionEntry>)
 
     @Query("SELECT COALESCE(SUM(debitAmount), 0) FROM transaction_entries WHERE accountId = :accountId")
     fun sumDebitsForAccount(accountId: String): Long

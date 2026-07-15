@@ -20,4 +20,10 @@ interface AccountBalanceDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(balance: AccountBalance)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertAll(balances: List<AccountBalance>)
+
+    @Query("DELETE FROM account_balances")
+    fun deleteAll()
 }

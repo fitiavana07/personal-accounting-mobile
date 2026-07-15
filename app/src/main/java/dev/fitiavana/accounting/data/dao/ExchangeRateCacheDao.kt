@@ -17,4 +17,10 @@ interface ExchangeRateCacheDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun upsert(rate: ExchangeRateCache)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertAll(rates: List<ExchangeRateCache>)
+
+    @Query("DELETE FROM exchange_rate_cache")
+    fun deleteAll()
 }

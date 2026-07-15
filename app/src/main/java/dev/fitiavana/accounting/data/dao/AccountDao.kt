@@ -23,11 +23,17 @@ interface AccountDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insert(account: Account)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertAll(accounts: List<Account>)
+
     @Update
     fun update(account: Account)
 
     @Delete
     fun delete(account: Account)
+
+    @Query("DELETE FROM accounts")
+    fun deleteAll()
 
     @Query("SELECT COUNT(*) > 0 FROM accounts WHERE instrumentCode = :instrumentCode")
     fun hasAccountsWithInstrument(instrumentCode: String): Boolean

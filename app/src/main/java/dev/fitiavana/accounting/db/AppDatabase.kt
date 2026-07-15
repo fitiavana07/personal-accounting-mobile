@@ -20,7 +20,7 @@ import dev.fitiavana.accounting.data.model.TransactionEntry
 
 @Database(
     entities = [Account::class, Transaction::class, TransactionEntry::class, AccountBalance::class, Instrument::class, ExchangeRateCache::class],
-    version = 14
+    version = AppDatabase.SCHEMA_VERSION
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
@@ -30,6 +30,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun exchangeRateCacheDao(): ExchangeRateCacheDao
 
     companion object {
+        const val SCHEMA_VERSION = 14
+
         @Volatile
         private var instance: AppDatabase? = null
 
