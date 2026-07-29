@@ -79,6 +79,17 @@ Transaction amounts stored as integers
 - Never include Co-Authored-By in commits
 - DRY: Reuse code when possible, refactor if needed
 
+## Commit messages
+
+Use [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <description>
+```
+
+Common types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`,
+`perf`. Use `!` after type/scope (e.g. `feat!:`) for breaking changes.
+
 ## On new features
 
 After every change:
