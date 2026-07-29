@@ -126,8 +126,13 @@ object BalanceSheetBuilder {
                 rows += BalanceSheetRow.TotalLine("Total Drawing", formatArParens(totalDrawing))
             }
 
-            val totalChangesInEquity = totalIncome - totalExpense + totalGain - totalLoss - totalDrawing
-            rows += BalanceSheetRow.TotalLine("Total Changes in Equity", formatSignedAr(totalChangesInEquity))
+            val hasChangesInEquity = listOf(
+                incomeLines, expenseLines, gainLines, lossLines, drawingLines
+            ).any { it.isNotEmpty() }
+            if (hasChangesInEquity) {
+                val totalChangesInEquity = totalIncome - totalExpense + totalGain - totalLoss - totalDrawing
+                rows += BalanceSheetRow.TotalLine("Total Changes in Equity", formatSignedAr(totalChangesInEquity))
+            }
 
             rows += BalanceSheetRow.TotalLine("Total Equity", formatSignedAr(totalEquity), emphasized = true)
         }
