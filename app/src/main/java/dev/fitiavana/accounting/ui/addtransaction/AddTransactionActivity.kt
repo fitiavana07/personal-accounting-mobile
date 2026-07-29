@@ -19,6 +19,8 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
@@ -134,6 +136,15 @@ class AddTransactionActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_save).setOnClickListener {
             saveTransaction()
         }
+
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    confirmDiscardAndFinish()
+                }
+            }
+        )
     }
 
     private fun updateDatetimeDisplay() {
@@ -625,8 +636,34 @@ class AddTransactionActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        finish()
+        confirmDiscardAndFinish()
         return true
+    }
+
+    private fun hasUnsavedChanges(): Boolean {
+        if (editNote.text.toString().trim().isNotEmpty()) return true
+        return entryRows.any { row ->
+            row.spinner.selectedItemPosition > 0 ||
+                row.editDebit.text.toString().trim().isNotEmpty() ||
+                row.editCredit.text.toString().trim().isNotEmpty() ||
+                row.editInstrumentDebit.text.toString().trim().isNotEmpty() ||
+                row.editInstrumentCredit.text.toString().trim().isNotEmpty() ||
+                row.editIntermediaryDebit.text.toString().trim().isNotEmpty() ||
+                row.editIntermediaryCredit.text.toString().trim().isNotEmpty()
+        }
+    }
+
+    private fun confirmDiscardAndFinish() {
+        if (!hasUnsavedChanges()) {
+            finish()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.dialog_discard_transaction_title)
+            .setMessage(R.string.dialog_discard_transaction_message)
+            .setPositiveButton(R.string.action_discard) { _, _ -> finish() }
+            .setNegativeButton(R.string.action_keep_editing, null)
+            .show()
     }
 
     companion object {
