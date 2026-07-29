@@ -123,4 +123,81 @@ class TransactionValidatorTest {
         )
         assertEquals(ValidationResult.Error.DuplicateAccount, TransactionValidator.validate(entries))
     }
+
+    // --- Mixed debit/credit across currencies ---
+
+    @Test
+    fun `base debit with instrument credit returns MixedDebitCredit`() {
+        val entries = listOf(
+            EntryData("acc1", debitAmount = 100, creditAmount = null, instrumentCreditAmount = 50),
+            EntryData("acc2", debitAmount = null, creditAmount = 100)
+        )
+        assertEquals(ValidationResult.Error.MixedDebitCredit, TransactionValidator.validate(entries))
+    }
+
+    @Test
+    fun `base credit with instrument debit returns MixedDebitCredit`() {
+        val entries = listOf(
+            EntryData("acc1", debitAmount = 100, creditAmount = null),
+            EntryData("acc2", debitAmount = null, creditAmount = 100, instrumentDebitAmount = 50)
+        )
+        assertEquals(ValidationResult.Error.MixedDebitCredit, TransactionValidator.validate(entries))
+    }
+
+    @Test
+    fun `base debit with intermediary credit returns MixedDebitCredit`() {
+        val entries = listOf(
+            EntryData("acc1", debitAmount = 100, creditAmount = null, intermediaryCreditAmount = 50),
+            EntryData("acc2", debitAmount = null, creditAmount = 100)
+        )
+        assertEquals(ValidationResult.Error.MixedDebitCredit, TransactionValidator.validate(entries))
+    }
+
+    @Test
+    fun `base credit with intermediary debit returns MixedDebitCredit`() {
+        val entries = listOf(
+            EntryData("acc1", debitAmount = 100, creditAmount = null),
+            EntryData("acc2", debitAmount = null, creditAmount = 100, intermediaryDebitAmount = 50)
+        )
+        assertEquals(ValidationResult.Error.MixedDebitCredit, TransactionValidator.validate(entries))
+    }
+
+    @Test
+    fun `base debit with matching instrument and intermediary debit returns Valid`() {
+        val entries = listOf(
+            EntryData(
+                "acc1",
+                debitAmount = 100,
+                creditAmount = null,
+                instrumentDebitAmount = 50,
+                intermediaryDebitAmount = 25
+            ),
+            EntryData("acc2", debitAmount = null, creditAmount = 100)
+        )
+        assertEquals(ValidationResult.Valid, TransactionValidator.validate(entries))
+    }
+
+    @Test
+    fun `base credit with matching instrument and intermediary credit returns Valid`() {
+        val entries = listOf(
+            EntryData("acc1", debitAmount = 100, creditAmount = null),
+            EntryData(
+                "acc2",
+                debitAmount = null,
+                creditAmount = 100,
+                instrumentCreditAmount = 50,
+                intermediaryCreditAmount = 25
+            )
+        )
+        assertEquals(ValidationResult.Valid, TransactionValidator.validate(entries))
+    }
+
+    @Test
+    fun `entry with no instrument or intermediary amounts is unaffected by mixed check`() {
+        val entries = listOf(
+            EntryData("acc1", debitAmount = 100, creditAmount = null),
+            EntryData("acc2", debitAmount = null, creditAmount = 100)
+        )
+        assertEquals(ValidationResult.Valid, TransactionValidator.validate(entries))
+    }
 }

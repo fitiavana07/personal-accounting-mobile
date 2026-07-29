@@ -528,7 +528,18 @@ class AddTransactionActivity : AppCompatActivity() {
                 instrumentAmountsList.add(InstrumentAmounts(null, null, null, null))
             }
 
-            entryDataList.add(TransactionValidator.EntryData(account.id, debit, credit))
+            val ia = instrumentAmountsList.last()
+            entryDataList.add(
+                TransactionValidator.EntryData(
+                    accountId = account.id,
+                    debitAmount = debit,
+                    creditAmount = credit,
+                    instrumentDebitAmount = ia.debit,
+                    instrumentCreditAmount = ia.credit,
+                    intermediaryDebitAmount = ia.interDebit,
+                    intermediaryCreditAmount = ia.interCredit
+                )
+            )
         }
 
         when (TransactionValidator.validate(entryDataList)) {
@@ -561,6 +572,14 @@ class AddTransactionActivity : AppCompatActivity() {
                 Toast.makeText(
                     this,
                     getString(R.string.error_validation_balance),
+                    Toast.LENGTH_SHORT
+                ).show(); return
+            }
+
+            TransactionValidator.ValidationResult.Error.MixedDebitCredit -> {
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_mixed_debit_credit),
                     Toast.LENGTH_SHORT
                 ).show(); return
             }

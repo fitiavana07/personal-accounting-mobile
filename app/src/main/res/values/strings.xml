@@ -55,6 +55,7 @@
     <string name="error_duplicate_account">Each account can only appear once per transaction</string>
     <string name="error_entry_both_filled">Each entry can only have debit OR credit, not both</string>
     <string name="error_instrument_amount_required">Amount (%s) is required</string>
+    <string name="error_mixed_debit_credit">An entry cannot be debit in one currency and credit in another</string>
     <string name="error_validation_balance">Debits must equal credits</string>
     <string name="error_validation_entry_incomplete">Each entry needs an account and an amount</string>
     <string name="filter_all_accounts">All accounts</string>
