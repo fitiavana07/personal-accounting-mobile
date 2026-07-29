@@ -51,7 +51,7 @@ class BalanceSheetBuilderTest {
                 account("acc1", "Zebra Bank", "asset"),
                 account("acc2", "Alpha Bank", "asset")
             ),
-            balances = listOf(balance("acc1", 100), balance("acc2", 200))
+            balances = listOf(balance("acc1", 1_000), balance("acc2", 2_000))
         )
 
         val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
@@ -94,16 +94,22 @@ class BalanceSheetBuilderTest {
                 BalanceSheetRow.AccountLine("Loan", "Ar 200"),
                 BalanceSheetRow.TotalLine("Total Liabilities", "Ar 200", emphasized = true),
                 BalanceSheetRow.SectionHeader("Equity"),
+                BalanceSheetRow.SubsectionHeader("Original Equity"),
                 BalanceSheetRow.AccountLine("Owner Capital", "Ar 500"),
                 BalanceSheetRow.TotalLine("Total Original Equity", "Ar 500"),
+                BalanceSheetRow.SubsectionHeader("Income"),
                 BalanceSheetRow.AccountLine("Salary", "Ar 300"),
                 BalanceSheetRow.TotalLine("Total Income", "Ar 300"),
+                BalanceSheetRow.SubsectionHeader("Expense"),
                 BalanceSheetRow.AccountLine("Rent", "(Ar 150)"),
                 BalanceSheetRow.TotalLine("Total Expense", "(Ar 150)"),
+                BalanceSheetRow.SubsectionHeader("Gain"),
                 BalanceSheetRow.AccountLine("Stock Gain", "Ar 80"),
                 BalanceSheetRow.TotalLine("Total Gain", "Ar 80"),
+                BalanceSheetRow.SubsectionHeader("Loss"),
                 BalanceSheetRow.AccountLine("Stock Loss", "(Ar 30)"),
                 BalanceSheetRow.TotalLine("Total Loss", "(Ar 30)"),
+                BalanceSheetRow.SubsectionHeader("Drawing"),
                 BalanceSheetRow.AccountLine("Owner Drawing", "(Ar 60)"),
                 BalanceSheetRow.TotalLine("Total Drawing", "(Ar 60)"),
                 BalanceSheetRow.TotalLine("Total Equity", "Ar 640", emphasized = true),
@@ -124,6 +130,7 @@ class BalanceSheetBuilderTest {
             listOf(
                 BalanceSheetRow.Title("Instant Balance Sheet"),
                 BalanceSheetRow.SectionHeader("Equity"),
+                BalanceSheetRow.SubsectionHeader("Gain"),
                 BalanceSheetRow.AccountLine("Stock Gain", "Ar 80"),
                 BalanceSheetRow.TotalLine("Total Gain", "Ar 80"),
                 BalanceSheetRow.TotalLine("Total Equity", "Ar 80", emphasized = true),
@@ -168,6 +175,68 @@ class BalanceSheetBuilderTest {
             listOf("Total Original Equity"),
             totals.filter { !it.emphasized }.map { it.label }
         )
+    }
+
+    @Test
+    fun `asset accounts under 1000Ar are grouped into an Other line`() {
+        val result = BalanceSheetBuilder.build(
+            accounts = listOf(
+                account("a", "Bank", "asset"),
+                account("b", "Petty Cash", "asset"),
+                account("c", "Coin Jar", "asset")
+            ),
+            balances = listOf(balance("a", 5_000), balance("b", 400), balance("c", 250))
+        )
+
+        assertEquals(
+            listOf(
+                BalanceSheetRow.Title("Instant Balance Sheet"),
+                BalanceSheetRow.SectionHeader("Assets"),
+                BalanceSheetRow.AccountLine("Bank", "Ar 5,000"),
+                BalanceSheetRow.AccountLine("Other", "Ar 650"),
+                BalanceSheetRow.TotalLine("Total Assets", "Ar 5,650", emphasized = true),
+                BalanceSheetRow.DateLine("Balances at Jan 1, 1970")
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `asset account exactly at the 1000Ar threshold is not grouped`() {
+        val result = BalanceSheetBuilder.build(
+            accounts = listOf(account("a", "Bank", "asset")),
+            balances = listOf(balance("a", 1_000))
+        )
+
+        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        assertEquals(listOf("Bank"), accountLines.map { it.name })
+    }
+
+    @Test
+    fun `zero balance accounts are hidden but still counted in totals`() {
+        val result = BalanceSheetBuilder.build(
+            accounts = listOf(
+                account("a", "Cash", "asset"),
+                account("z", "Empty Wallet", "asset")
+            ),
+            balances = listOf(balance("a", 1000), balance("z", 0))
+        )
+
+        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        assertEquals(listOf("Cash"), accountLines.map { it.name })
+
+        val totalAssets = result.filterIsInstance<BalanceSheetRow.TotalLine>().single { it.label == "Total Assets" }
+        assertEquals("Ar 1,000", totalAssets.amountText)
+    }
+
+    @Test
+    fun `section is omitted entirely when all its accounts have zero balance`() {
+        val result = BalanceSheetBuilder.build(
+            accounts = listOf(account("l", "Zero Loan", "liability")),
+            balances = listOf(balance("l", 0))
+        )
+
+        assertTrue(result.none { it is BalanceSheetRow.SectionHeader && it.title == "Liabilities" })
     }
 
     @Test

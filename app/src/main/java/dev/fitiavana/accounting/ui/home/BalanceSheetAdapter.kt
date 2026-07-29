@@ -41,6 +41,7 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             is BalanceSheetRow.Title -> (holder as TitleViewHolder).bind(row)
             is BalanceSheetRow.DateLine -> (holder as DateViewHolder).bind(row)
             is BalanceSheetRow.SectionHeader -> (holder as RowViewHolder).bindHeader(row)
+            is BalanceSheetRow.SubsectionHeader -> (holder as RowViewHolder).bindSubsectionHeader(row)
             is BalanceSheetRow.AccountLine -> (holder as RowViewHolder).bindAccount(row)
             is BalanceSheetRow.TotalLine -> (holder as RowViewHolder).bindTotal(row)
         }
@@ -75,9 +76,20 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             amountView.text = ""
             setBold(true, 14f)
             setLabelIndent(labelStartPadding)
-            setTextColor(ContextCompat.getColor(context, R.color.brown_500))
+            setTextColor(ContextCompat.getColor(context, R.color.bs_header_text))
             setContentVerticalPadding(10f)
             root.setBackgroundColor(ContextCompat.getColor(context, R.color.bs_section_header_bg))
+            divider.visibility = View.GONE
+        }
+
+        fun bindSubsectionHeader(row: BalanceSheetRow.SubsectionHeader) {
+            labelView.text = row.title
+            amountView.text = ""
+            setBold(true, 14f)
+            setLabelIndent(labelStartPadding)
+            setTextColor(secondaryTextColor())
+            setContentVerticalPadding(6f)
+            root.setBackgroundColor(0)
             divider.visibility = View.GONE
         }
 
@@ -130,6 +142,16 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private fun defaultTextColor(): Int {
             val typedValue = android.util.TypedValue()
             context.theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+            return if (typedValue.resourceId != 0) {
+                ContextCompat.getColor(context, typedValue.resourceId)
+            } else {
+                typedValue.data
+            }
+        }
+
+        private fun secondaryTextColor(): Int {
+            val typedValue = android.util.TypedValue()
+            context.theme.resolveAttribute(android.R.attr.textColorSecondary, typedValue, true)
             return if (typedValue.resourceId != 0) {
                 ContextCompat.getColor(context, typedValue.resourceId)
             } else {

@@ -15,4 +15,6 @@
     <color name="bs_section_header_bg">#26B8860B</color>
     <color name="bs_grand_total_bg">#1F5D4037</color>
     <color name="bs_divider">#40888888</color>
+    <color name="bs_title">@color/gold_500</color>
+    <color name="bs_header_text">@color/brown_500</color>
 </resources>
