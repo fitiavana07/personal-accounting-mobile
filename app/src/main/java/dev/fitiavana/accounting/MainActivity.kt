@@ -114,7 +114,7 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
             R.id.action_restore -> {
-                openRestoreDocument.launch(arrayOf("application/json"))
+                openRestoreDocument.launch(arrayOf("*/*"))
                 return true
             }
         }
