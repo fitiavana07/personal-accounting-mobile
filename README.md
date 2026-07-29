@@ -2,6 +2,17 @@
 
 Android accounting app with double-entry bookkeeping. Targets **API 19 (KitKat)** and above.
 
+> **⚠️ Work in progress.** This app is under active development and has not been thoroughly tested. Data loss or bugs are possible — use at your own risk, and keep independent backups of anything important.
+
+## Features
+
+- **Accounts** — create and manage accounts (assets, liabilities, equity, etc.), each denominated in a chosen instrument (currency).
+- **Instruments** — define the currencies/units used across accounts, with exchange rates kept up to date via an exchange rate cache for cross-currency valuation.
+- **Transactions** — record double-entry transactions (multiple entries per transaction), with a detail view for reviewing entries.
+- **Balances** — read-only view of current account balances.
+- **Home** — portfolio overview with gain/loss calculation across instruments, plus an **Instant Balance Sheet** summarizing assets, liabilities, and equity with visual emphasis on section and grand totals.
+- **Backup & restore** — export all data to a JSON backup file and restore from one later (from the top app bar menu).
+
 ## Build variants
 
 The project has two build variants with **separate app identities**, meaning both can be installed simultaneously on the same device with completely isolated data (separate SQLite databases, separate SharedPreferences).
@@ -51,3 +62,7 @@ When running the `debug` variant, the Transactions screen exposes a **⋮ overfl
 - **Clear all transactions** — permanently deletes every transaction and its entries (with a confirmation dialog)
 
 These menu items are compiled out entirely in the `release` build via `BuildConfig.DEBUG`.
+
+## License
+
+Licensed under the [Apache License, Version 2.0](LICENSE).
