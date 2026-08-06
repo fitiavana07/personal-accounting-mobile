@@ -10,18 +10,18 @@ import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
 
 /**
- * Horizontal scrollable selector of Int values (years, or months as 0-11), used for
- * both the year and the month row on the Reports screen.
+ * Horizontal scrollable selector of values (years, months as 0-11, or report types), used
+ * for the year, month and report type rows on the Reports screen.
  */
-class PeriodSelectorAdapter(
-    private val labelFor: (Int) -> String,
-    private val onSelected: (Int) -> Unit
-) : RecyclerView.Adapter<PeriodSelectorAdapter.ViewHolder>() {
+class PeriodSelectorAdapter<T>(
+    private val labelFor: (T) -> String,
+    private val onSelected: (T) -> Unit
+) : RecyclerView.Adapter<PeriodSelectorAdapter<T>.ViewHolder>() {
 
-    private var items: List<Int> = emptyList()
-    private var selected: Int? = null
+    private var items: List<T> = emptyList()
+    private var selected: T? = null
 
-    fun submitList(items: List<Int>, selected: Int?) {
+    fun submitList(items: List<T>, selected: T?) {
         this.items = items
         this.selected = selected
         notifyDataSetChanged()
@@ -43,7 +43,7 @@ class PeriodSelectorAdapter(
         private val textView: TextView = view.findViewById(R.id.text_period_selector)
         private val underline: View = view.findViewById(R.id.underline_period_selector)
 
-        fun bind(value: Int, isSelected: Boolean) {
+        fun bind(value: T, isSelected: Boolean) {
             textView.text = labelFor(value)
             textView.setTypeface(Typeface.DEFAULT, if (isSelected) Typeface.BOLD else Typeface.NORMAL)
             textView.setTextColor(

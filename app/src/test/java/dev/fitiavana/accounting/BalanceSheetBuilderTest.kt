@@ -528,6 +528,89 @@ class BalanceSheetBuilderTest {
         )
     }
 
+    // --- buildIncomeStatement ---
+
+    @Test
+    fun `buildIncomeStatement with no balances yields empty result`() {
+        val result = BalanceSheetBuilder.buildIncomeStatement(
+            accounts = listOf(account("a", "Cash", "asset")),
+            balancesByAccountId = emptyMap()
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `buildIncomeStatement renders income, expense, gain and loss as main sections with Net Income last`() {
+        val accounts = listOf(
+            account("a", "Cash", "asset"),
+            account("r", "Salary", "revenue"),
+            account("x", "Rent", "expense"),
+            account("g", "Stock Gain", "gain"),
+            account("o", "Stock Loss", "loss")
+        )
+        val balances = mapOf("a" to 10_000L, "r" to 300L, "x" to 150L, "g" to 80L, "o" to 30L)
+
+        val result = BalanceSheetBuilder.buildIncomeStatement(accounts, balances)
+
+        // Net Income = 300 - 150 + 80 - 30 = 200
+        assertEquals(
+            listOf(
+                BalanceSheetRow.SectionHeader("Income"),
+                BalanceSheetRow.AccountLine("Salary", "300"),
+                BalanceSheetRow.TotalLine("Total Income", "Ar 300", emphasized = true),
+                BalanceSheetRow.SectionHeader("Expense"),
+                BalanceSheetRow.AccountLine("Rent", "(150)"),
+                BalanceSheetRow.TotalLine("Total Expense", "(Ar 150)", emphasized = true),
+                BalanceSheetRow.SectionHeader("Gain"),
+                BalanceSheetRow.AccountLine("Stock Gain", "80"),
+                BalanceSheetRow.TotalLine("Total Gain", "Ar 80", emphasized = true),
+                BalanceSheetRow.SectionHeader("Loss"),
+                BalanceSheetRow.AccountLine("Stock Loss", "(30)"),
+                BalanceSheetRow.TotalLine("Total Loss", "(Ar 30)", emphasized = true),
+                BalanceSheetRow.TotalLine("Net Income", "Ar 200", emphasized = true)
+            ),
+            result
+        )
+        assertTrue(result.none { it is BalanceSheetRow.SectionHeader && it.title in listOf("Assets", "Liabilities", "Equity") })
+    }
+
+    @Test
+    fun `buildIncomeStatement omits sections with no accounts`() {
+        val result = BalanceSheetBuilder.buildIncomeStatement(
+            accounts = listOf(account("r", "Salary", "revenue")),
+            balancesByAccountId = mapOf("r" to 300L)
+        )
+
+        assertTrue(result.none { it is BalanceSheetRow.SectionHeader && it.title in listOf("Expense", "Gain", "Loss") })
+        val netIncome = result.filterIsInstance<BalanceSheetRow.TotalLine>().single { it.label == "Net Income" }
+        assertEquals("Ar 300", netIncome.amountText)
+    }
+
+    @Test
+    fun `buildIncomeStatement Net Income renders as a signed amount when negative`() {
+        val result = BalanceSheetBuilder.buildIncomeStatement(
+            accounts = listOf(account("x", "Rent", "expense")),
+            balancesByAccountId = mapOf("x" to 500L)
+        )
+
+        val netIncome = result.filterIsInstance<BalanceSheetRow.TotalLine>().single { it.label == "Net Income" }
+        assertEquals("Ar -500", netIncome.amountText)
+    }
+
+    @Test
+    fun `buildIncomeStatement sorts income and expense accounts by balance decreasing`() {
+        val result = BalanceSheetBuilder.buildIncomeStatement(
+            accounts = listOf(
+                account("r1", "Small Client", "revenue"),
+                account("r2", "Big Client", "revenue")
+            ),
+            balancesByAccountId = mapOf("r1" to 100L, "r2" to 500L)
+        )
+
+        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        assertEquals(listOf("Big Client", "Small Client"), accountLines.map { it.name })
+    }
+
     @Test
     fun `asset line colors follow the same order as the pie chart slices`() {
         val accounts = listOf(

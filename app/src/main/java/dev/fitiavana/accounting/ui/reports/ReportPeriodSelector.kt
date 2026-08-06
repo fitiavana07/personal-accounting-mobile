@@ -31,6 +31,17 @@ object ReportPeriodSelector {
     }
 
     /**
+     * The first millisecond of [month] (0-11) in [year].
+     */
+    fun startOfMonthMillis(year: Int, month: Int): Long {
+        val cal = Calendar.getInstance().apply {
+            set(year, month, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        return cal.timeInMillis
+    }
+
+    /**
      * The last millisecond of [month] (0-11) in [year].
      */
     fun endOfMonthMillis(year: Int, month: Int): Long {
@@ -47,6 +58,8 @@ object ReportPeriodSelector {
     private val monthNameFormat = SimpleDateFormat("MMMM", Locale.getDefault())
 
     fun formatAsOfDate(asOfMs: Long): String = "At ${dateFormat.format(Date(asOfMs))}"
+
+    fun formatMonthEnded(asOfMs: Long): String = "Month ended ${dateFormat.format(Date(asOfMs))}"
 
     fun monthName(month: Int): String {
         val cal = Calendar.getInstance().apply { set(Calendar.MONTH, month) }

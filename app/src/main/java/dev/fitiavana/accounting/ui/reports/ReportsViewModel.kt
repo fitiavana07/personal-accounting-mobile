@@ -3,6 +3,7 @@ package dev.fitiavana.accounting.ui.reports
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import dev.fitiavana.accounting.data.model.Account
 import dev.fitiavana.accounting.data.repository.AccountRepository
 import dev.fitiavana.accounting.data.repository.BalanceRepository
 import dev.fitiavana.accounting.ui.home.BalanceSheetBuilder
@@ -15,6 +16,12 @@ class ReportsViewModel(
 
     private var monthsByYear: Map<Int, List<Int>> = emptyMap()
     private var started = false
+    private var lastAccounts: List<Account> = emptyList()
+    private var lastBalances: Map<String, Long> = emptyMap()
+    private var lastPeriodBalances: Map<String, Long> = emptyMap()
+    private var lastAsOfMs = 0L
+
+    val reportTypes: List<ReportType> = ReportType.values().toList()
 
     private val _hasTransactions = MutableLiveData<Boolean>()
     val hasTransactions: LiveData<Boolean> = _hasTransactions
@@ -30,6 +37,9 @@ class ReportsViewModel(
 
     private val _selectedMonth = MutableLiveData<Int>()
     val selectedMonth: LiveData<Int> = _selectedMonth
+
+    private val _selectedReportType = MutableLiveData(ReportType.BALANCE_SHEET)
+    val selectedReportType: LiveData<ReportType> = _selectedReportType
 
     private val _asOfDateText = MutableLiveData<String>()
     val asOfDateText: LiveData<String> = _asOfDateText
@@ -50,6 +60,12 @@ class ReportsViewModel(
 
     fun selectMonth(month: Int) {
         Thread { selectMonthSync(month) }.start()
+    }
+
+    /** Switches the displayed report; re-renders from the already-loaded balances, no DB access needed. */
+    fun selectReportType(type: ReportType) {
+        _selectedReportType.value = type
+        renderDisplay(type)
     }
 
     /** Synchronous version of the initial load, for use on a background thread (or directly in tests). */
@@ -92,10 +108,29 @@ class ReportsViewModel(
     }
 
     private fun recomputeSync(year: Int, month: Int) {
+        val startMs = ReportPeriodSelector.startOfMonthMillis(year, month)
         val asOfMs = ReportPeriodSelector.endOfMonthMillis(year, month)
-        val accounts = accountRepository.getAllSync()
-        val balances = balanceRepository.computeBalancesAsOf(asOfMs)
-        _asOfDateText.postValue(ReportPeriodSelector.formatAsOfDate(asOfMs))
-        _balanceSheetRows.postValue(BalanceSheetBuilder.buildMonthly(accounts, balances))
+        lastAsOfMs = asOfMs
+        lastAccounts = accountRepository.getAllSync()
+        lastBalances = balanceRepository.computeBalancesAsOf(asOfMs)
+        lastPeriodBalances = balanceRepository.computeBalancesBetween(startMs, asOfMs)
+        renderDisplay(_selectedReportType.value ?: ReportType.BALANCE_SHEET)
+    }
+
+    private fun renderDisplay(type: ReportType) {
+        _asOfDateText.postValue(
+            when (type) {
+                ReportType.BALANCE_SHEET -> ReportPeriodSelector.formatAsOfDate(lastAsOfMs)
+                ReportType.INCOME_STATEMENT -> ReportPeriodSelector.formatMonthEnded(lastAsOfMs)
+                ReportType.CHANGES_IN_EQUITY -> ""
+            }
+        )
+        _balanceSheetRows.postValue(
+            when (type) {
+                ReportType.BALANCE_SHEET -> BalanceSheetBuilder.buildMonthly(lastAccounts, lastBalances)
+                ReportType.INCOME_STATEMENT -> BalanceSheetBuilder.buildIncomeStatement(lastAccounts, lastPeriodBalances)
+                ReportType.CHANGES_IN_EQUITY -> emptyList()
+            }
+        )
     }
 }

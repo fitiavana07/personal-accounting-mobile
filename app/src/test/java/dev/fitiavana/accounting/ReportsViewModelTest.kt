@@ -5,6 +5,8 @@ import dev.fitiavana.accounting.data.model.Account
 import dev.fitiavana.accounting.data.repository.AccountRepository
 import dev.fitiavana.accounting.data.repository.BalanceRepository
 import dev.fitiavana.accounting.ui.home.BalanceSheetRow
+import dev.fitiavana.accounting.ui.reports.ReportPeriodSelector
+import dev.fitiavana.accounting.ui.reports.ReportType
 import dev.fitiavana.accounting.ui.reports.ReportsViewModel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -42,6 +44,7 @@ class ReportsViewModelTest {
             listOf(Account(id = "acc1", name = "Cash", type = "asset"))
         )
         whenever(balanceRepository.computeBalancesAsOf(any())).thenReturn(mapOf("acc1" to 10_000L))
+        whenever(balanceRepository.computeBalancesBetween(any(), any())).thenReturn(mapOf("acc1" to 10_000L))
         // Construction alone does no background work; tests call the *Sync methods directly
         // (start() is only invoked by the Fragment) to drive the ViewModel deterministically.
         viewModel = ReportsViewModel(accountRepository, balanceRepository)
@@ -121,6 +124,56 @@ class ReportsViewModelTest {
 
         verify(balanceRepository, timeout(1000)).getTransactionDateRange()
         verify(balanceRepository, times(1)).getTransactionDateRange()
+    }
+
+    @Test
+    fun `defaults to the Balance Sheet report type`() {
+        assertEquals(ReportType.BALANCE_SHEET, viewModel.selectedReportType.value)
+    }
+
+    @Test
+    fun `selectReportType switches to income statement rows without touching the repositories again`() {
+        val min = millisFor(2026, Calendar.MARCH, 1)
+        val max = millisFor(2026, Calendar.MARCH, 15)
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
+        whenever(accountRepository.getAllSync()).thenReturn(
+            listOf(Account(id = "acc1", name = "Salary", type = "revenue"))
+        )
+        whenever(balanceRepository.computeBalancesBetween(any(), any())).thenReturn(mapOf("acc1" to 10_000L))
+        viewModel.loadInitialSync()
+
+        viewModel.selectReportType(ReportType.INCOME_STATEMENT)
+
+        assertEquals(ReportType.INCOME_STATEMENT, viewModel.selectedReportType.value)
+        assertEquals("Month ended March 31, 2026", viewModel.asOfDateText.value)
+        val rows = viewModel.balanceSheetRows.value ?: emptyList()
+        assertTrue(rows.any { it is BalanceSheetRow.TotalLine && it.label == "Net Income" })
+        verify(accountRepository, times(1)).getAllSync()
+    }
+
+    @Test
+    fun `recomputeSync queries income statement balances scoped to the selected month only`() {
+        val min = millisFor(2026, Calendar.JANUARY, 1)
+        val max = millisFor(2026, Calendar.MARCH, 15)
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
+
+        viewModel.loadInitialSync()
+
+        val expectedStart = ReportPeriodSelector.startOfMonthMillis(2026, Calendar.MARCH)
+        val expectedEnd = ReportPeriodSelector.endOfMonthMillis(2026, Calendar.MARCH)
+        verify(balanceRepository).computeBalancesBetween(expectedStart, expectedEnd)
+    }
+
+    @Test
+    fun `selectReportType for Changes in Equity yields no rows`() {
+        val min = millisFor(2026, Calendar.MARCH, 1)
+        val max = millisFor(2026, Calendar.MARCH, 15)
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
+        viewModel.loadInitialSync()
+
+        viewModel.selectReportType(ReportType.CHANGES_IN_EQUITY)
+
+        assertEquals(emptyList<BalanceSheetRow>(), viewModel.balanceSheetRows.value)
     }
 
     @Test

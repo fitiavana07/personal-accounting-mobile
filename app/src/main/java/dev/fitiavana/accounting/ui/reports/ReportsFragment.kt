@@ -19,8 +19,9 @@ class ReportsFragment : Fragment() {
 
     private lateinit var viewModel: ReportsViewModel
     private lateinit var contentAdapter: BalanceSheetAdapter
-    private lateinit var yearsAdapter: PeriodSelectorAdapter
-    private lateinit var monthsAdapter: PeriodSelectorAdapter
+    private lateinit var yearsAdapter: PeriodSelectorAdapter<Int>
+    private lateinit var monthsAdapter: PeriodSelectorAdapter<Int>
+    private lateinit var reportTypeAdapter: PeriodSelectorAdapter<ReportType>
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,6 +39,7 @@ class ReportsFragment : Fragment() {
 
         yearsAdapter = PeriodSelectorAdapter(labelFor = { it.toString() }, onSelected = { viewModel.selectYear(it) })
         monthsAdapter = PeriodSelectorAdapter(labelFor = { ReportPeriodSelector.monthName(it) }, onSelected = { viewModel.selectMonth(it) })
+        reportTypeAdapter = PeriodSelectorAdapter(labelFor = { it.label }, onSelected = { viewModel.selectReportType(it) })
         contentAdapter = BalanceSheetAdapter()
 
         view.findViewById<RecyclerView>(R.id.recycler_reports_years).apply {
@@ -48,6 +50,10 @@ class ReportsFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = monthsAdapter
         }
+        view.findViewById<RecyclerView>(R.id.recycler_reports_type).apply {
+            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            adapter = reportTypeAdapter
+        }
         view.findViewById<RecyclerView>(R.id.recycler_reports_content).apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = contentAdapter
@@ -56,6 +62,10 @@ class ReportsFragment : Fragment() {
         val contentLayout = view.findViewById<View>(R.id.layout_reports_content)
         val emptyView = view.findViewById<TextView>(R.id.text_empty_reports)
         val asOfDateView = view.findViewById<TextView>(R.id.text_reports_as_of_date)
+        val contentRecycler = view.findViewById<RecyclerView>(R.id.recycler_reports_content)
+        val comingSoonView = view.findViewById<TextView>(R.id.text_reports_coming_soon)
+
+        reportTypeAdapter.submitList(viewModel.reportTypes, viewModel.selectedReportType.value)
 
         viewModel.hasTransactions.observe(viewLifecycleOwner) { hasTransactions ->
             contentLayout.visibility = if (hasTransactions) View.VISIBLE else View.GONE
@@ -65,6 +75,12 @@ class ReportsFragment : Fragment() {
         viewModel.selectedYear.observe(viewLifecycleOwner) { yearsAdapter.submitList(viewModel.availableYears.value ?: emptyList(), it) }
         viewModel.availableMonths.observe(viewLifecycleOwner) { monthsAdapter.submitList(it, viewModel.selectedMonth.value) }
         viewModel.selectedMonth.observe(viewLifecycleOwner) { monthsAdapter.submitList(viewModel.availableMonths.value ?: emptyList(), it) }
+        viewModel.selectedReportType.observe(viewLifecycleOwner) { reportType ->
+            reportTypeAdapter.submitList(viewModel.reportTypes, reportType)
+            val isComingSoon = reportType == ReportType.CHANGES_IN_EQUITY
+            contentRecycler.visibility = if (isComingSoon) View.GONE else View.VISIBLE
+            comingSoonView.visibility = if (isComingSoon) View.VISIBLE else View.GONE
+        }
         viewModel.asOfDateText.observe(viewLifecycleOwner) { asOfDateView.text = it }
         viewModel.balanceSheetRows.observe(viewLifecycleOwner) { contentAdapter.submitList(it) }
 

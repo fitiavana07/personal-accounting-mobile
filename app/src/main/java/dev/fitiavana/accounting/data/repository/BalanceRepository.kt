@@ -69,6 +69,15 @@ class BalanceRepository(
         }
     }
 
+    fun computeBalancesBetween(startMs: Long, endMs: Long): Map<String, Long> {
+        val accounts = accountDao.getAllSync()
+        return accounts.associate { account ->
+            val debits = transactionDao.sumDebitsForAccountBetween(account.id, startMs, endMs)
+            val credits = transactionDao.sumCreditsForAccountBetween(account.id, startMs, endMs)
+            account.id to BalanceCalculator.compute(account.type, debits, credits)
+        }
+    }
+
     fun getTransactionDateRange(): Pair<Long, Long>? {
         val min = transactionDao.getMinTransactionDatetime() ?: return null
         val max = transactionDao.getMaxTransactionDatetime() ?: return null

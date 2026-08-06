@@ -9,20 +9,18 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/text_reports_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="16dp"
-            android:paddingBottom="8dp"
-            android:text="@string/title_balance_sheet"
-            android:textSize="17sp"
-            android:textColor="?android:attr/textColorPrimary" />
-
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_reports_years"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:clipToPadding="false"
+            android:paddingTop="16dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_reports_months"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -31,7 +29,7 @@
             android:paddingEnd="12dp" />
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_reports_months"
+            android:id="@+id/recycler_reports_type"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -57,6 +55,17 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/text_reports_coming_soon"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/label_coming_soon"
+            android:textSize="15sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:visibility="gone" />
 
     </LinearLayout>
 

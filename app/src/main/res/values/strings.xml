@@ -87,6 +87,7 @@
     <string name="label_id">ID</string>
     <string name="label_instrument">Instrument</string>
     <string name="label_instrument_type">Instrument type</string>
+    <string name="label_coming_soon">Coming soon</string>
     <string name="label_intermediary_instrument">Intermediary Instrument</string>
     <string name="label_note">Note</string>
     <string name="label_total">Total</string>
@@ -95,7 +96,6 @@
     <string name="nav_home">Home</string>
     <string name="nav_reports">Reports</string>
     <string name="nav_transactions">Transactions</string>
-    <string name="title_balance_sheet">Balance Sheet</string>
     <string name="spinner_no_instrument">None</string>
     <string name="spinner_select_account">Select account…</string>
     <string name="title_add_account">Add Account</string>
