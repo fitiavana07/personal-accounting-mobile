@@ -59,6 +59,30 @@ interface TransactionDao {
     @Query("SELECT COUNT(*) FROM transaction_entries WHERE accountId = :accountId")
     fun countEntriesForAccount(accountId: String): Int
 
+    @Query(
+        """
+        SELECT COALESCE(SUM(te.debitAmount), 0) FROM transaction_entries te
+        JOIN transactions t ON t.id = te.transactionId
+        WHERE te.accountId = :accountId AND t.transactionDatetime <= :asOfMs
+    """
+    )
+    fun sumDebitsForAccountUpTo(accountId: String, asOfMs: Long): Long
+
+    @Query(
+        """
+        SELECT COALESCE(SUM(te.creditAmount), 0) FROM transaction_entries te
+        JOIN transactions t ON t.id = te.transactionId
+        WHERE te.accountId = :accountId AND t.transactionDatetime <= :asOfMs
+    """
+    )
+    fun sumCreditsForAccountUpTo(accountId: String, asOfMs: Long): Long
+
+    @Query("SELECT MIN(transactionDatetime) FROM transactions")
+    fun getMinTransactionDatetime(): Long?
+
+    @Query("SELECT MAX(transactionDatetime) FROM transactions")
+    fun getMaxTransactionDatetime(): Long?
+
     @Transaction
     @Query(
         """

@@ -20,6 +20,7 @@ import dev.fitiavana.accounting.ui.accounts.AccountsFragment
 import dev.fitiavana.accounting.ui.balances.BalancesFragment
 import dev.fitiavana.accounting.ui.home.HomeFragment
 import dev.fitiavana.accounting.ui.instruments.InstrumentsActivity
+import dev.fitiavana.accounting.ui.reports.ReportsFragment
 import dev.fitiavana.accounting.ui.transactions.TransactionsFragment
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -78,6 +79,7 @@ class MainActivity : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener { item ->
             val fragment = when (item.itemId) {
                 R.id.nav_home -> HomeFragment()
+                R.id.nav_reports -> ReportsFragment()
                 R.id.nav_balances -> BalancesFragment()
                 R.id.nav_transactions -> TransactionsFragment()
                 R.id.nav_accounts -> AccountsFragment()

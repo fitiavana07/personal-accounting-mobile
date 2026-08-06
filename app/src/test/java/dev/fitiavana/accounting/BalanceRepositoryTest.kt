@@ -202,4 +202,46 @@ class BalanceRepositoryTest {
         whenever(transactionDao.countEntriesForAccount("acc1")).thenReturn(0)
         assertEquals(false, repository.hasTransactions("acc1"))
     }
+
+    // --- computeBalancesAsOf ---
+
+    @Test
+    fun `computeBalancesAsOf computes balance for each account using up-to-date sums`() {
+        val accounts = listOf(
+            Account(id = "acc1", name = "Cash", type = "asset"),
+            Account(id = "acc2", name = "Loan", type = "liability")
+        )
+        whenever(accountDao.getAllSync()).thenReturn(accounts)
+        whenever(transactionDao.sumDebitsForAccountUpTo("acc1", 500L)).thenReturn(1000L)
+        whenever(transactionDao.sumCreditsForAccountUpTo("acc1", 500L)).thenReturn(300L)
+        whenever(transactionDao.sumDebitsForAccountUpTo("acc2", 500L)).thenReturn(200L)
+        whenever(transactionDao.sumCreditsForAccountUpTo("acc2", 500L)).thenReturn(800L)
+
+        val result = repository.computeBalancesAsOf(500L)
+
+        assertEquals(700L, result["acc1"])
+        assertEquals(600L, result["acc2"])
+    }
+
+    @Test
+    fun `computeBalancesAsOf with no accounts returns empty map`() {
+        whenever(accountDao.getAllSync()).thenReturn(emptyList())
+        assertEquals(emptyMap<String, Long>(), repository.computeBalancesAsOf(500L))
+    }
+
+    // --- getTransactionDateRange ---
+
+    @Test
+    fun `getTransactionDateRange returns null when there are no transactions`() {
+        whenever(transactionDao.getMinTransactionDatetime()).thenReturn(null)
+        whenever(transactionDao.getMaxTransactionDatetime()).thenReturn(null)
+        assertNull(repository.getTransactionDateRange())
+    }
+
+    @Test
+    fun `getTransactionDateRange returns min and max transaction datetimes`() {
+        whenever(transactionDao.getMinTransactionDatetime()).thenReturn(100L)
+        whenever(transactionDao.getMaxTransactionDatetime()).thenReturn(900L)
+        assertEquals(100L to 900L, repository.getTransactionDateRange())
+    }
 }

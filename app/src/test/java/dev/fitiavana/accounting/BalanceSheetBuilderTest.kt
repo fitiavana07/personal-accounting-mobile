@@ -393,6 +393,141 @@ class BalanceSheetBuilderTest {
         assertTrue(result.isEmpty())
     }
 
+    // --- buildMonthly ---
+
+    @Test
+    fun `buildMonthly with no balances yields empty result`() {
+        val result = BalanceSheetBuilder.buildMonthly(
+            accounts = listOf(account("acc1", "Cash", "asset")),
+            balancesByAccountId = emptyMap()
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `buildMonthly does not emit a Title or DateLine row`() {
+        val result = BalanceSheetBuilder.buildMonthly(
+            accounts = listOf(account("acc1", "Cash", "asset")),
+            balancesByAccountId = mapOf("acc1" to 10_000L)
+        )
+        assertTrue(result.none { it is BalanceSheetRow.Title || it is BalanceSheetRow.DateLine })
+    }
+
+    @Test
+    fun `buildMonthly asset lines have no color`() {
+        val result = BalanceSheetBuilder.buildMonthly(
+            accounts = listOf(account("acc1", "Cash", "asset")),
+            balancesByAccountId = mapOf("acc1" to 10_000L)
+        )
+        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        assertEquals(listOf<Int?>(null), accountLines.map { it.color })
+    }
+
+    @Test
+    fun `buildMonthly collapses income, expense, gain and loss into Unclosed Income Statement accounts`() {
+        val accounts = listOf(
+            account("a", "Cash", "asset"),
+            account("l", "Loan", "liability"),
+            account("e", "Owner Capital", "equity"),
+            account("r", "Salary", "revenue"),
+            account("x", "Rent", "expense"),
+            account("g", "Stock Gain", "gain"),
+            account("o", "Stock Loss", "loss"),
+            account("d", "Owner Drawing", "drawing")
+        )
+        val balances = mapOf(
+            "a" to 10_000L, "l" to 200L, "e" to 500L, "r" to 300L,
+            "x" to 150L, "g" to 80L, "o" to 30L, "d" to 60L
+        )
+
+        val result = BalanceSheetBuilder.buildMonthly(accounts, balances)
+
+        // Total Unclosed IS accounts = 300 - 150 + 80 - 30 = 200
+        // Total Equity = 500 + 200 - 60 = 640
+        assertEquals(
+            listOf(
+                BalanceSheetRow.SectionHeader("Assets"),
+                BalanceSheetRow.AccountLine("Cash", "10,000"),
+                BalanceSheetRow.TotalLine("Total Assets", "Ar 10,000", emphasized = true),
+                BalanceSheetRow.SectionHeader("Liabilities"),
+                BalanceSheetRow.AccountLine("Loan", "200"),
+                BalanceSheetRow.TotalLine("Total Liabilities", "Ar 200", emphasized = true),
+                BalanceSheetRow.SectionHeader("Equity"),
+                BalanceSheetRow.SubsectionHeader("Original Equity"),
+                BalanceSheetRow.AccountLine("Owner Capital", "500"),
+                BalanceSheetRow.TotalLine("Total Original Equity", "Ar 500"),
+                BalanceSheetRow.SubsectionHeader("Unclosed Income Statement accounts"),
+                BalanceSheetRow.AccountLine("Income", "Ar 300"),
+                BalanceSheetRow.AccountLine("Expense", "(Ar 150)"),
+                BalanceSheetRow.AccountLine("Gain", "Ar 80"),
+                BalanceSheetRow.AccountLine("Loss", "(Ar 30)"),
+                BalanceSheetRow.TotalLine("Total Unclosed IS accounts", "Ar 200"),
+                BalanceSheetRow.SubsectionHeader("Drawing"),
+                BalanceSheetRow.AccountLine("Owner Drawing", "(60)"),
+                BalanceSheetRow.TotalLine("Total Drawing", "(Ar 60)"),
+                BalanceSheetRow.TotalLine("Total Equity", "Ar 640", emphasized = true)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `buildMonthly never emits a Total Changes in Equity line`() {
+        val accounts = listOf(
+            account("r", "Salary", "revenue"),
+            account("d", "Owner Drawing", "drawing")
+        )
+        val balances = mapOf("r" to 300L, "d" to 60L)
+
+        val result = BalanceSheetBuilder.buildMonthly(accounts, balances)
+
+        assertTrue(result.none { it is BalanceSheetRow.TotalLine && it.label == "Total Changes in Equity" })
+    }
+
+    @Test
+    fun `buildMonthly omits Unclosed Income Statement accounts subsection when empty`() {
+        val result = BalanceSheetBuilder.buildMonthly(
+            accounts = listOf(account("e", "Owner Capital", "equity")),
+            balancesByAccountId = mapOf("e" to 500L)
+        )
+
+        assertTrue(result.none { it is BalanceSheetRow.SubsectionHeader && it.title == "Unclosed Income Statement accounts" })
+    }
+
+    @Test
+    fun `buildMonthly Equity section appears when only unclosed IS or drawing accounts exist`() {
+        val result = BalanceSheetBuilder.buildMonthly(
+            accounts = listOf(account("d", "Owner Drawing", "drawing")),
+            balancesByAccountId = mapOf("d" to 60L)
+        )
+
+        assertTrue(result.any { it is BalanceSheetRow.SectionHeader && it.title == "Equity" })
+        val totalEquity = result.filterIsInstance<BalanceSheetRow.TotalLine>().single { it.label == "Total Equity" }
+        assertEquals("Ar -60", totalEquity.amountText)
+    }
+
+    @Test
+    fun `buildMonthly asset accounts under 10000Ar are grouped into an Other line with no color`() {
+        val result = BalanceSheetBuilder.buildMonthly(
+            accounts = listOf(
+                account("a", "Bank", "asset"),
+                account("b", "Petty Cash", "asset"),
+                account("c", "Coin Jar", "asset")
+            ),
+            balancesByAccountId = mapOf("a" to 15_000L, "b" to 4_000L, "c" to 2_500L)
+        )
+
+        assertEquals(
+            listOf(
+                BalanceSheetRow.SectionHeader("Assets"),
+                BalanceSheetRow.AccountLine("Bank", "15,000"),
+                BalanceSheetRow.AccountLine("Other", "6,500"),
+                BalanceSheetRow.TotalLine("Total Assets", "Ar 21,500", emphasized = true)
+            ),
+            result
+        )
+    }
+
     @Test
     fun `asset line colors follow the same order as the pie chart slices`() {
         val accounts = listOf(
