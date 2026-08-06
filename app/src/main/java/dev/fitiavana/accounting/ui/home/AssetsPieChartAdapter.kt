@@ -65,9 +65,10 @@ class AssetsPieChartAdapter : RecyclerView.Adapter<AssetsPieChartAdapter.ViewHol
 
         fun bind(slices: List<AssetSlice>) {
             val entries = slices.map { PieEntry(Math.abs(it.amount).toFloat(), it.name) }
+            val sliceColors = slices.indices.map { AssetPalette.colorFor(it) }
             val dataSet = PieDataSet(entries, "").apply {
-                colors = slices.indices.map { AssetPalette.colorFor(it) }
-                valueTextColor = Color.WHITE
+                colors = sliceColors
+                setValueTextColors(sliceColors.map { readableLabelColorFor(it) })
                 valueTextSize = 16f
                 valueFormatter = MinPercentFormatter(MIN_VISIBLE_PERCENT)
             }
@@ -116,6 +117,14 @@ class AssetsPieChartAdapter : RecyclerView.Adapter<AssetsPieChartAdapter.ViewHol
 
     companion object {
         private const val MIN_VISIBLE_PERCENT = 5f
+
+        /** Black or white, whichever is more readable against [backgroundColor]. */
+        private fun readableLabelColorFor(backgroundColor: Int): Int {
+            val luminance = (0.299 * Color.red(backgroundColor) +
+                0.587 * Color.green(backgroundColor) +
+                0.114 * Color.blue(backgroundColor)) / 255
+            return if (luminance > 0.5) Color.BLACK else Color.WHITE
+        }
 
         private fun resolveTextColorPrimary(context: android.content.Context): Int =
             resolveThemeColor(context, android.R.attr.textColorPrimary)
