@@ -70,8 +70,9 @@ object BalanceSheetBuilder {
         val assetLines = linesFor("asset").sortedByDescending { it.balance }
         val liabilityLines = linesFor("liability")
         val equityLines = linesFor("equity")
-        val incomeLines = linesFor("revenue")
-        val expenseLines = linesFor("expense")
+        val incomeLines = linesFor("revenue").sortedByDescending { it.balance }
+        val expenseLines =
+            linesFor("expense").sortedByDescending { it.balance }
         val gainLines = linesFor("gain")
         val lossLines = linesFor("loss")
         val drawingLines = linesFor("drawing")
@@ -205,7 +206,7 @@ object BalanceSheetBuilder {
             }
 
             rows += BalanceSheetRow.TotalLine(
-                "Total Equity", formatArParens(totalEquity), emphasized = true
+                "Total Equity", formatAr(totalEquity), emphasized = true
             )
         }
 

@@ -75,6 +75,34 @@ class BalanceSheetBuilderTest {
     }
 
     @Test
+    fun `income accounts are sorted by balance decreasing`() {
+        val result = BalanceSheetBuilder.build(
+            accounts = listOf(
+                account("acc1", "Small Client", "revenue"),
+                account("acc2", "Big Client", "revenue")
+            ),
+            balances = listOf(balance("acc1", 100), balance("acc2", 500))
+        )
+
+        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        assertEquals(listOf("Big Client", "Small Client"), accountLines.map { it.name })
+    }
+
+    @Test
+    fun `expense accounts are sorted by balance decreasing`() {
+        val result = BalanceSheetBuilder.build(
+            accounts = listOf(
+                account("acc1", "Coffee", "expense"),
+                account("acc2", "Rent", "expense")
+            ),
+            balances = listOf(balance("acc1", 50), balance("acc2", 800))
+        )
+
+        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        assertEquals(listOf("Rent", "Coffee"), accountLines.map { it.name })
+    }
+
+    @Test
     fun `all eight account types render in the expected order with correct formatting`() {
         val accounts = listOf(
             account("a", "Cash", "asset"),
@@ -130,7 +158,7 @@ class BalanceSheetBuilderTest {
                 BalanceSheetRow.AccountLine("Owner Drawing", "(60)"),
                 BalanceSheetRow.TotalLine("Total Drawing", "(Ar 60)"),
                 BalanceSheetRow.TotalLine("Total Changes in Equity", "(Ar 140)"),
-                BalanceSheetRow.TotalLine("Total Equity", "(Ar 640)", emphasized = true),
+                BalanceSheetRow.TotalLine("Total Equity", "Ar 640", emphasized = true),
                 BalanceSheetRow.DateLine("Balances at Jan 1, 1970")
             ),
             result
@@ -152,7 +180,7 @@ class BalanceSheetBuilderTest {
                 BalanceSheetRow.AccountLine("Stock Gain", "80"),
                 BalanceSheetRow.TotalLine("Total Gain", "Ar 80"),
                 BalanceSheetRow.TotalLine("Total Changes in Equity", "(Ar 80)"),
-                BalanceSheetRow.TotalLine("Total Equity", "(Ar 80)", emphasized = true),
+                BalanceSheetRow.TotalLine("Total Equity", "Ar 80", emphasized = true),
                 BalanceSheetRow.DateLine("Balances at Jan 1, 1970")
             ),
             result
@@ -160,14 +188,14 @@ class BalanceSheetBuilderTest {
     }
 
     @Test
-    fun `total equity renders in parens when negative`() {
+    fun `total equity renders as a signed amount when negative`() {
         val result = BalanceSheetBuilder.build(
             accounts = listOf(account("x", "Rent", "expense")),
             balances = listOf(balance("x", 500))
         )
 
         val totalEquity = result.filterIsInstance<BalanceSheetRow.TotalLine>().last { it.label == "Total Equity" }
-        assertEquals("(Ar 500)", totalEquity.amountText)
+        assertEquals("Ar -500", totalEquity.amountText)
     }
 
     @Test
