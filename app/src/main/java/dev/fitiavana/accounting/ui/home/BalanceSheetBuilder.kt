@@ -70,13 +70,13 @@ object BalanceSheetBuilder {
             mainAssetLines.forEach {
                 rows += BalanceSheetRow.AccountLine(
                     it.name,
-                    formatAr(it.balance)
+                    formatPlain(it.balance)
                 )
             }
             if (otherAssetLines.isNotEmpty()) {
                 rows += BalanceSheetRow.AccountLine(
                     "Other",
-                    formatAr(otherAssetLines.sumOf { it.balance })
+                    formatPlain(otherAssetLines.sumOf { it.balance })
                 )
             }
             rows += BalanceSheetRow.TotalLine("Total Assets", formatAr(totalAssets), emphasized = true)
@@ -84,7 +84,12 @@ object BalanceSheetBuilder {
 
         if (liabilityLines.isNotEmpty()) {
             rows += BalanceSheetRow.SectionHeader("Liabilities")
-            liabilityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, formatAr(it.balance)) }
+            liabilityLines.forEach {
+                rows += BalanceSheetRow.AccountLine(
+                    it.name,
+                    formatPlain(it.balance)
+                )
+            }
             rows += BalanceSheetRow.TotalLine("Total Liabilities", formatAr(totalLiabilities), emphasized = true)
         }
 
@@ -97,32 +102,62 @@ object BalanceSheetBuilder {
 
             if (equityLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Original Equity")
-                equityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, formatAr(it.balance)) }
+                equityLines.forEach {
+                    rows += BalanceSheetRow.AccountLine(
+                        it.name,
+                        formatPlain(it.balance)
+                    )
+                }
                 rows += BalanceSheetRow.TotalLine("Total Original Equity", formatAr(totalOriginalEquity))
             }
             if (incomeLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Income")
-                incomeLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, formatAr(it.balance)) }
+                incomeLines.forEach {
+                    rows += BalanceSheetRow.AccountLine(
+                        it.name,
+                        formatPlain(it.balance)
+                    )
+                }
                 rows += BalanceSheetRow.TotalLine("Total Income", formatAr(totalIncome))
             }
             if (expenseLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Expense")
-                expenseLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, formatArParens(it.balance)) }
+                expenseLines.forEach {
+                    rows += BalanceSheetRow.AccountLine(
+                        it.name,
+                        formatPlainParens(it.balance)
+                    )
+                }
                 rows += BalanceSheetRow.TotalLine("Total Expense", formatArParens(totalExpense))
             }
             if (gainLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Gain")
-                gainLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, formatAr(it.balance)) }
+                gainLines.forEach {
+                    rows += BalanceSheetRow.AccountLine(
+                        it.name,
+                        formatPlain(it.balance)
+                    )
+                }
                 rows += BalanceSheetRow.TotalLine("Total Gain", formatAr(totalGain))
             }
             if (lossLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Loss")
-                lossLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, formatArParens(it.balance)) }
+                lossLines.forEach {
+                    rows += BalanceSheetRow.AccountLine(
+                        it.name,
+                        formatPlainParens(it.balance)
+                    )
+                }
                 rows += BalanceSheetRow.TotalLine("Total Loss", formatArParens(totalLoss))
             }
             if (drawingLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Drawing")
-                drawingLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, formatArParens(it.balance)) }
+                drawingLines.forEach {
+                    rows += BalanceSheetRow.AccountLine(
+                        it.name,
+                        formatPlainParens(it.balance)
+                    )
+                }
                 rows += BalanceSheetRow.TotalLine("Total Drawing", formatArParens(totalDrawing))
             }
 
@@ -131,10 +166,15 @@ object BalanceSheetBuilder {
             ).any { it.isNotEmpty() }
             if (hasChangesInEquity) {
                 val totalChangesInEquity = totalIncome - totalExpense + totalGain - totalLoss - totalDrawing
-                rows += BalanceSheetRow.TotalLine("Total Changes in Equity", formatSignedAr(totalChangesInEquity))
+                rows += BalanceSheetRow.TotalLine(
+                    "Total Changes in Equity",
+                    formatArParens(totalChangesInEquity)
+                )
             }
 
-            rows += BalanceSheetRow.TotalLine("Total Equity", formatSignedAr(totalEquity), emphasized = true)
+            rows += BalanceSheetRow.TotalLine(
+                "Total Equity", formatArParens(totalEquity), emphasized = true
+            )
         }
 
         val balanceDate = includedBalances.maxOf { it.updatedAt }
@@ -144,10 +184,14 @@ object BalanceSheetBuilder {
         return rows
     }
 
+    private fun formatPlain(amount: Long): String =
+        TransactionDisplay.formatAmount(amount)
+
+    private fun formatPlainParens(amount: Long): String =
+        "(${TransactionDisplay.formatAmount(Math.abs(amount))})"
+
     private fun formatAr(amount: Long): String = "Ar ${TransactionDisplay.formatAmount(amount)}"
 
     private fun formatArParens(amount: Long): String = "(Ar ${TransactionDisplay.formatAmount(Math.abs(amount))})"
 
-    private fun formatSignedAr(amount: Long): String =
-        if (amount < 0) "-Ar ${TransactionDisplay.formatAmount(-amount)}" else formatAr(amount)
 }

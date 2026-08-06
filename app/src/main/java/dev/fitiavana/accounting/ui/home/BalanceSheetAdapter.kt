@@ -129,7 +129,7 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private fun setBold(bold: Boolean, textSizeSp: Float) {
             val style = if (bold) Typeface.BOLD else Typeface.NORMAL
             labelView.setTypeface(Typeface.DEFAULT, style)
-            amountView.setTypeface(Typeface.DEFAULT, style)
+            amountView.setTypeface(Typeface.MONOSPACE, style)
             labelView.textSize = textSizeSp
             amountView.textSize = textSizeSp
         }
