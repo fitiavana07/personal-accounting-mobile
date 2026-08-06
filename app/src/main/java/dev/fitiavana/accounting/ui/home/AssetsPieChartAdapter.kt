@@ -1,18 +1,25 @@
 package dev.fitiavana.accounting.ui.home
 
 import android.graphics.Color
+import android.graphics.Typeface
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
+import android.text.style.StyleSpan
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
-import com.github.mikephil.charting.formatter.PercentFormatter
+import com.github.mikephil.charting.formatter.ValueFormatter
 import dev.fitiavana.accounting.R
+import java.text.DecimalFormat
 
 /** Single-item header showing an asset allocation pie chart, hidden entirely when there are no asset slices. */
 class AssetsPieChartAdapter : RecyclerView.Adapter<AssetsPieChartAdapter.ViewHolder>() {
@@ -46,8 +53,6 @@ class AssetsPieChartAdapter : RecyclerView.Adapter<AssetsPieChartAdapter.ViewHol
             chart.legend.isEnabled = false
             chart.setHoleColor(Color.TRANSPARENT)
             chart.setEntryLabelColor(Color.WHITE)
-            chart.centerText = "Assets"
-            chart.setCenterTextColor(resolveTextColorPrimary(chart.context))
             chart.setCenterTextSize(16f)
             chart.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
                 override fun onGlobalLayout() {
@@ -63,19 +68,69 @@ class AssetsPieChartAdapter : RecyclerView.Adapter<AssetsPieChartAdapter.ViewHol
             val dataSet = PieDataSet(entries, "").apply {
                 colors = slices.indices.map { AssetPalette.colorFor(it) }
                 valueTextColor = Color.WHITE
-                valueFormatter = PercentFormatter(chart)
+                valueTextSize = 16f
+                valueFormatter = MinPercentFormatter(MIN_VISIBLE_PERCENT)
             }
             chart.data = PieData(dataSet)
+            chart.centerText = buildCenterText(slices)
             chart.invalidate()
+        }
+
+        private fun buildCenterText(slices: List<AssetSlice>): CharSequence {
+            val totalAssets = slices.sumOf { it.amount }
+            val subtitle = CompactNumberFormatter.format(totalAssets)
+            val text = "Assets\n$subtitle"
+            return SpannableStringBuilder(text).apply {
+                val subtitleStart = text.indexOf('\n') + 1
+                setSpan(
+                    ForegroundColorSpan(resolveTextColorPrimary(chart.context)),
+                    0,
+                    subtitleStart - 1,
+                    0
+                )
+                setSpan(
+                    ForegroundColorSpan(resolveTextColorSecondary(chart.context)),
+                    subtitleStart,
+                    text.length,
+                    0
+                )
+                setSpan(RelativeSizeSpan(2.5f), subtitleStart, text.length, 0)
+                setSpan(
+                    StyleSpan(Typeface.BOLD),
+                    subtitleStart,
+                    text.length,
+                    0
+                )
+            }
         }
     }
 
+    /** Percent value label formatter that hides labels for slices smaller than [minPercent]. */
+    private class MinPercentFormatter(private val minPercent: Float) :
+        ValueFormatter() {
+        private val decimalFormat = DecimalFormat("###,##0.0")
+
+        override fun getPieLabel(value: Float, pieEntry: PieEntry?): String =
+            if (value < minPercent) "" else "${decimalFormat.format(value)}%"
+    }
+
     companion object {
-        private fun resolveTextColorPrimary(context: android.content.Context): Int {
+        private const val MIN_VISIBLE_PERCENT = 5f
+
+        private fun resolveTextColorPrimary(context: android.content.Context): Int =
+            resolveThemeColor(context, android.R.attr.textColorPrimary)
+
+        private fun resolveTextColorSecondary(context: android.content.Context): Int =
+            resolveThemeColor(context, android.R.attr.textColorSecondary)
+
+        private fun resolveThemeColor(
+            context: android.content.Context,
+            attr: Int
+        ): Int {
             val typedValue = TypedValue()
-            context.theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+            context.theme.resolveAttribute(attr, typedValue, true)
             return if (typedValue.resourceId != 0) {
-                androidx.core.content.ContextCompat.getColor(context, typedValue.resourceId)
+                ContextCompat.getColor(context, typedValue.resourceId)
             } else {
                 typedValue.data
             }
