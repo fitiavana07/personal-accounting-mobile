@@ -25,6 +25,8 @@ data class HomeItem(
 )
 
 object HomeItemBuilder {
+    private const val MIN_BALANCE_AR = 10_000L
+
     fun build(
         balances: List<AccountBalance>,
         accounts: List<Account>,
@@ -35,6 +37,7 @@ object HomeItemBuilder {
         return balances.mapNotNull { balance ->
             val account = accountMap[balance.accountId] ?: return@mapNotNull null
             if (account.type != "asset") return@mapNotNull null
+            if (balance.balance < MIN_BALANCE_AR) return@mapNotNull null
 
             val instrument = account.instrumentCode?.let { instruments[it] } ?: return@mapNotNull null
             if (instrument.type != "cryptocurrency") return@mapNotNull null

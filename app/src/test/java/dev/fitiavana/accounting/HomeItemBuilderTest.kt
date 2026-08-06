@@ -22,7 +22,7 @@ class HomeItemBuilderTest {
 
     private fun balance(
         accountId: String,
-        balance: Long = 0,
+        balance: Long = 10_000,
         instrumentBalance: Long = 0,
         intermediaryBalance: Long = 0
     ) = AccountBalance(accountId = accountId, balance = balance, instrumentBalance = instrumentBalance, intermediaryBalance = intermediaryBalance, updatedAt = 0L, createdAt = 0L)
@@ -156,6 +156,28 @@ class HomeItemBuilderTest {
         assertEquals(300_000L, result[0].bookValueAr)
         assertEquals(325_000.0, result[0].currentValueAr!!, 0.0001)
         assertEquals(25_000.0, result[0].gainLossAr!!, 0.0001)
+    }
+
+    @Test
+    fun `account with balance below 10000 Ar is excluded`() {
+        val result = HomeItemBuilder.build(
+            balances = listOf(balance("acc1", balance = 9_999)),
+            accounts = listOf(account("acc1", "Crypto", instrumentCode = "BTC", intermediaryInstrumentCode = "USDT")),
+            instruments = mapOf("BTC" to btc, "USDT" to usdt),
+            rates = emptyMap()
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `account with balance at exactly 10000 Ar is included`() {
+        val result = HomeItemBuilder.build(
+            balances = listOf(balance("acc1", balance = 10_000)),
+            accounts = listOf(account("acc1", "Crypto", instrumentCode = "BTC", intermediaryInstrumentCode = "USDT")),
+            instruments = mapOf("BTC" to btc, "USDT" to usdt),
+            rates = emptyMap()
+        )
+        assertEquals(1, result.size)
     }
 
     @Test
