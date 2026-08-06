@@ -1,9 +1,11 @@
 package dev.fitiavana.accounting.ui.home
 
 import android.graphics.Color
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import androidx.recyclerview.widget.RecyclerView
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.PieData
@@ -44,6 +46,16 @@ class AssetsPieChartAdapter : RecyclerView.Adapter<AssetsPieChartAdapter.ViewHol
             chart.legend.isEnabled = false
             chart.setHoleColor(Color.TRANSPARENT)
             chart.setEntryLabelColor(Color.WHITE)
+            chart.centerText = "Assets"
+            chart.setCenterTextColor(resolveTextColorPrimary(chart.context))
+            chart.setCenterTextSize(16f)
+            chart.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    if (chart.width > 0 && chart.height != chart.width) {
+                        chart.layoutParams = chart.layoutParams.apply { height = chart.width }
+                    }
+                }
+            })
         }
 
         fun bind(slices: List<AssetSlice>) {
@@ -55,6 +67,18 @@ class AssetsPieChartAdapter : RecyclerView.Adapter<AssetsPieChartAdapter.ViewHol
             }
             chart.data = PieData(dataSet)
             chart.invalidate()
+        }
+    }
+
+    companion object {
+        private fun resolveTextColorPrimary(context: android.content.Context): Int {
+            val typedValue = TypedValue()
+            context.theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+            return if (typedValue.resourceId != 0) {
+                androidx.core.content.ContextCompat.getColor(context, typedValue.resourceId)
+            } else {
+                typedValue.data
+            }
         }
     }
 }
