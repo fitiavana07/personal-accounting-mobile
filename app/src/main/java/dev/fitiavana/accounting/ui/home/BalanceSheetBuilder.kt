@@ -34,7 +34,7 @@ object BalanceSheetBuilder {
      */
     fun assetSlices(accounts: List<Account>, balances: List<AccountBalance>): List<AssetSlice> {
         val accountMap = accounts.associateBy { it.id }
-        val assetLines = linesFor(accountMap, balances, "asset")
+        val assetLines = linesFor(accountMap, balances, "asset").sortedByDescending { it.balance }
         if (assetLines.isEmpty()) return emptyList()
 
         val (mainAssetLines, otherAssetLines) = assetLines.partition {
@@ -67,7 +67,7 @@ object BalanceSheetBuilder {
         fun linesFor(type: String): List<NamedBalance> =
             linesFor(accountMap, includedBalances, type)
 
-        val assetLines = linesFor("asset")
+        val assetLines = linesFor("asset").sortedByDescending { it.balance }
         val liabilityLines = linesFor("liability")
         val equityLines = linesFor("equity")
         val incomeLines = linesFor("revenue")

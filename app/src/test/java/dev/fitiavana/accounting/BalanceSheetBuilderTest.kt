@@ -47,7 +47,21 @@ class BalanceSheetBuilderTest {
     }
 
     @Test
-    fun `accounts within a type are sorted by name`() {
+    fun `accounts within a non-asset type are sorted by name`() {
+        val result = BalanceSheetBuilder.build(
+            accounts = listOf(
+                account("acc1", "Zebra Loan", "liability"),
+                account("acc2", "Alpha Loan", "liability")
+            ),
+            balances = listOf(balance("acc1", 10_000), balance("acc2", 20_000))
+        )
+
+        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        assertEquals(listOf("Alpha Loan", "Zebra Loan"), accountLines.map { it.name })
+    }
+
+    @Test
+    fun `asset accounts are sorted by balance decreasing`() {
         val result = BalanceSheetBuilder.build(
             accounts = listOf(
                 account("acc1", "Zebra Bank", "asset"),
@@ -305,7 +319,7 @@ class BalanceSheetBuilderTest {
         )
 
         assertEquals(
-            listOf(AssetSlice("Bank", 15_000), AssetSlice("Cash", 20_000)),
+            listOf(AssetSlice("Cash", 20_000), AssetSlice("Bank", 15_000)),
             result
         )
     }
