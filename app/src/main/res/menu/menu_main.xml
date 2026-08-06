@@ -12,4 +12,9 @@
         android:title="@string/action_restore"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/action_instruments"
+        android:title="@string/instruments"
+        app:showAsAction="never" />
+
 </menu>

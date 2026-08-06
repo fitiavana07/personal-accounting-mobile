@@ -19,7 +19,7 @@ import dev.fitiavana.accounting.ui.UiUtils
 import dev.fitiavana.accounting.ui.accounts.AccountsFragment
 import dev.fitiavana.accounting.ui.balances.BalancesFragment
 import dev.fitiavana.accounting.ui.home.HomeFragment
-import dev.fitiavana.accounting.ui.instruments.InstrumentsFragment
+import dev.fitiavana.accounting.ui.instruments.InstrumentsActivity
 import dev.fitiavana.accounting.ui.transactions.TransactionsFragment
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -81,7 +81,6 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_balances -> BalancesFragment()
                 R.id.nav_transactions -> TransactionsFragment()
                 R.id.nav_accounts -> AccountsFragment()
-                R.id.nav_instruments -> InstrumentsFragment()
                 else -> return@setOnItemSelectedListener false
             }
             supportFragmentManager.beginTransaction()
@@ -115,6 +114,10 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_restore -> {
                 openRestoreDocument.launch(arrayOf("*/*"))
+                return true
+            }
+            R.id.action_instruments -> {
+                startActivity(InstrumentsActivity.intent(this))
                 return true
             }
         }

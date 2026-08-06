@@ -39,6 +39,10 @@
             android:exported="false"
             android:parentActivityName=".MainActivity" />
         <activity
+            android:name=".ui.instruments.InstrumentsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+        <activity
             android:name=".ui.homedetail.HomeDetailActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
