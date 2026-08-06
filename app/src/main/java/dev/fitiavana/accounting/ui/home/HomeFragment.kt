@@ -26,6 +26,7 @@ class HomeFragment : Fragment() {
     private lateinit var adapter: HomeAdapter
     private lateinit var balanceSheetAdapter: BalanceSheetAdapter
     private lateinit var assetsPieChartAdapter: AssetsPieChartAdapter
+    private lateinit var noteAdapter: HomeNoteAdapter
     private lateinit var swipeRefresh: SwipeRefreshLayout
 
     override fun onCreateView(
@@ -51,9 +52,10 @@ class HomeFragment : Fragment() {
         }
         balanceSheetAdapter = BalanceSheetAdapter()
         assetsPieChartAdapter = AssetsPieChartAdapter()
+        noteAdapter = HomeNoteAdapter()
         val recycler = view.findViewById<RecyclerView>(R.id.recycler_home)
         recycler.layoutManager = LinearLayoutManager(requireContext())
-        recycler.adapter = ConcatAdapter(assetsPieChartAdapter, balanceSheetAdapter, adapter)
+        recycler.adapter = ConcatAdapter(assetsPieChartAdapter, balanceSheetAdapter, noteAdapter, adapter)
 
         val emptyView = view.findViewById<TextView>(R.id.text_empty_home)
         swipeRefresh = view.findViewById(R.id.swipe_refresh_home)
@@ -72,6 +74,7 @@ class HomeFragment : Fragment() {
 
         viewModel.homeItems.observe(viewLifecycleOwner) { items ->
             adapter.submitList(items)
+            noteAdapter.setVisible(items.any { it.instrument.type == "stock" })
             updateEmptyState()
         }
 

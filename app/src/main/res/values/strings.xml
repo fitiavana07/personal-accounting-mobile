@@ -72,6 +72,7 @@
     <string name="hint_decimal_places">Decimal places</string>
     <string name="hint_coingecko_id">CoinGecko ID (optional, e.g. bitcoin, ethereum, solana, tether, usd-coin)</string>
     <string name="hint_stock_api_symbol">Stock API symbol (optional, e.g. BRK-B, 1810.HK — defaults to code)</string>
+    <string name="note_stock_gain_loss_estimate">Stock gains/losses are estimates — spreads may cause slight differences from your broker\'s figures.</string>
     <string name="hint_instrument_code">Code</string>
     <string name="hint_note">Note (optional)</string>
     <string name="instruments">Instruments</string>
