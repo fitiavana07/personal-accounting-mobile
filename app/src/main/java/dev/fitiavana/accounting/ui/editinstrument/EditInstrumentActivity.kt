@@ -40,6 +40,7 @@ class EditInstrumentActivity : AppCompatActivity() {
     private lateinit var typeSpinner: Spinner
     private lateinit var decimalPlacesInput: EditText
     private lateinit var coingeckoIdInput: EditText
+    private lateinit var stockApiSymbolInput: EditText
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,6 +61,7 @@ class EditInstrumentActivity : AppCompatActivity() {
         typeSpinner = findViewById(R.id.spinner_instrument_type)
         decimalPlacesInput = findViewById(R.id.input_decimal_places)
         coingeckoIdInput = findViewById(R.id.input_coingecko_id)
+        stockApiSymbolInput = findViewById(R.id.input_stock_api_symbol)
         val saveButton: Button = findViewById(R.id.button_save)
 
         val typeDisplayNames =
@@ -90,6 +92,7 @@ class EditInstrumentActivity : AppCompatActivity() {
                         typeSpinner.setSelection(typeIndex)
                         decimalPlacesInput.setText(instrument.decimalPlaces.toString())
                         coingeckoIdInput.setText(instrument.coingeckoId ?: "")
+                        stockApiSymbolInput.setText(instrument.stockApiSymbol ?: "")
                     }
                 }
             }.start()
@@ -104,6 +107,7 @@ class EditInstrumentActivity : AppCompatActivity() {
                 decimalPlacesInput.text.toString().trim().toIntOrNull() ?: 0
             val selectedType = TYPE_VALUES[typeSpinner.selectedItemPosition]
             val coingeckoId = coingeckoIdInput.text.toString().trim().ifEmpty { null }
+            val stockApiSymbol = stockApiSymbolInput.text.toString().trim().ifEmpty { null }
 
             if (code.isNotEmpty()) {
                 Thread {
@@ -115,7 +119,8 @@ class EditInstrumentActivity : AppCompatActivity() {
                             note,
                             selectedType,
                             decimalPlaces,
-                            coingeckoId
+                            coingeckoId,
+                            stockApiSymbol
                         )
                     } else {
                         //we're updating
@@ -124,7 +129,8 @@ class EditInstrumentActivity : AppCompatActivity() {
                             note,
                             selectedType,
                             decimalPlaces,
-                            coingeckoId
+                            coingeckoId,
+                            stockApiSymbol
                         )
                     }
                     runOnUiThread { finish() }

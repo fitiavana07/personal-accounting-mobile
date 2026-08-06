@@ -136,6 +136,7 @@ class BackupRepository(
             put("type", type)
             put("decimalPlaces", decimalPlaces)
             if (coingeckoId != null) put("coingeckoId", coingeckoId)
+            if (stockApiSymbol != null) put("stockApiSymbol", stockApiSymbol)
         }
 
         private fun instrumentFromJson(json: JSONObject) = Instrument(
@@ -143,7 +144,8 @@ class BackupRepository(
             note = json.getString("note"),
             type = json.getString("type"),
             decimalPlaces = json.optInt("decimalPlaces", 0),
-            coingeckoId = json.optStringOrNull("coingeckoId")
+            coingeckoId = json.optStringOrNull("coingeckoId"),
+            stockApiSymbol = json.optStringOrNull("stockApiSymbol")
         )
 
         private fun Account.toJson() = JSONObject().apply {

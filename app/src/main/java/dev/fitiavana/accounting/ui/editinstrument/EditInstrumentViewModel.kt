@@ -13,7 +13,8 @@ class EditInstrumentViewModel(private val repository: InstrumentRepository) : Vi
         note: String,
         type: String,
         decimalPlaces: Int,
-        coingeckoId: String? = null
+        coingeckoId: String? = null,
+        stockApiSymbol: String? = null
     ) {
         repository.update(
             Instrument(
@@ -21,19 +22,28 @@ class EditInstrumentViewModel(private val repository: InstrumentRepository) : Vi
                 note = note.trim(),
                 type = type,
                 decimalPlaces = decimalPlaces,
-                coingeckoId = coingeckoId
+                coingeckoId = coingeckoId,
+                stockApiSymbol = stockApiSymbol
             )
         )
     }
 
-    fun saveNewInstrument(code: String, note: String, type: String, decimalPlaces: Int, coingeckoId: String? = null) {
+    fun saveNewInstrument(
+        code: String,
+        note: String,
+        type: String,
+        decimalPlaces: Int,
+        coingeckoId: String? = null,
+        stockApiSymbol: String? = null
+    ) {
         repository.insert(
             Instrument(
                 code = code.trim(),
                 note = note.trim(),
                 type = type,
                 decimalPlaces = decimalPlaces,
-                coingeckoId = coingeckoId
+                coingeckoId = coingeckoId,
+                stockApiSymbol = stockApiSymbol
             )
         )
     }

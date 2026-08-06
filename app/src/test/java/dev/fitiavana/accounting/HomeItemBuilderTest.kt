@@ -30,6 +30,7 @@ class HomeItemBuilderTest {
     private val nvda = Instrument(code = "NVDA", note = "", type = "stock", decimalPlaces = 0)
     private val btc = Instrument(code = "BTC", note = "", type = "cryptocurrency", decimalPlaces = 8, coingeckoId = "bitcoin")
     private val usdt = Instrument(code = "USDT", note = "", type = "currency", decimalPlaces = 2)
+    private val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
 
     @Test
     fun `qualifying account with crypto instrument and intermediary produces item`() {
@@ -69,14 +70,27 @@ class HomeItemBuilderTest {
     }
 
     @Test
-    fun `non-cryptocurrency instrument is excluded`() {
+    fun `currency instrument is excluded`() {
         val result = HomeItemBuilder.build(
             balances = listOf(balance("acc1")),
+            accounts = listOf(account("acc1", "Cash", instrumentCode = "USD", intermediaryInstrumentCode = "USDT")),
+            instruments = mapOf("USD" to usd, "USDT" to usdt),
+            rates = emptyMap()
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `qualifying account with stock instrument and intermediary produces item`() {
+        val result = HomeItemBuilder.build(
+            balances = listOf(balance("acc1", instrumentBalance = 1000, intermediaryBalance = 245_000)),
             accounts = listOf(account("acc1", "Stocks", instrumentCode = "NVDA", intermediaryInstrumentCode = "USDT")),
             instruments = mapOf("NVDA" to nvda, "USDT" to usdt),
             rates = emptyMap()
         )
-        assertTrue(result.isEmpty())
+        assertEquals(1, result.size)
+        assertEquals("acc1", result[0].accountId)
+        assertEquals(2450.0, result[0].bookValue, 0.0001)
     }
 
     @Test

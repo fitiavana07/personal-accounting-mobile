@@ -9,5 +9,6 @@ data class Instrument(
     val note: String,
     val type: String,
     val decimalPlaces: Int = 0,
-    val coingeckoId: String? = null
+    val coingeckoId: String? = null,
+    val stockApiSymbol: String? = null
 )

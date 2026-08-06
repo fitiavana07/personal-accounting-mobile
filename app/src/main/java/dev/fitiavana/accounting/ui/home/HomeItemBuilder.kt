@@ -40,7 +40,7 @@ object HomeItemBuilder {
             if (balance.balance < MIN_BALANCE_AR) return@mapNotNull null
 
             val instrument = account.instrumentCode?.let { instruments[it] } ?: return@mapNotNull null
-            if (instrument.type != "cryptocurrency") return@mapNotNull null
+            if (instrument.type != "cryptocurrency" && instrument.type != "stock") return@mapNotNull null
 
             val intermediaryInstrument = account.intermediaryInstrumentCode?.let { instruments[it] }
                 ?: return@mapNotNull null

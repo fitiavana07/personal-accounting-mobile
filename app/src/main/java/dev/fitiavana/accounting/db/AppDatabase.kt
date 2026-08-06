@@ -30,7 +30,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun exchangeRateCacheDao(): ExchangeRateCacheDao
 
     companion object {
-        const val SCHEMA_VERSION = 14
+        const val SCHEMA_VERSION = 15
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -236,6 +236,12 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `instruments` ADD COLUMN `stockApiSymbol` TEXT")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -256,7 +262,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_10_11,
                         MIGRATION_11_12,
                         MIGRATION_12_13,
-                        MIGRATION_13_14
+                        MIGRATION_13_14,
+                        MIGRATION_14_15
                     )
                     .build().also { instance = it }
             }
