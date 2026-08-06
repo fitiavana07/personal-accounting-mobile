@@ -25,6 +25,7 @@ class HomeFragment : Fragment() {
     private lateinit var viewModel: HomeViewModel
     private lateinit var adapter: HomeAdapter
     private lateinit var balanceSheetAdapter: BalanceSheetAdapter
+    private lateinit var assetsPieChartAdapter: AssetsPieChartAdapter
     private lateinit var swipeRefresh: SwipeRefreshLayout
 
     override fun onCreateView(
@@ -49,9 +50,10 @@ class HomeFragment : Fragment() {
             startActivity(HomeDetailActivity.intent(requireContext(), item.accountId))
         }
         balanceSheetAdapter = BalanceSheetAdapter()
+        assetsPieChartAdapter = AssetsPieChartAdapter()
         val recycler = view.findViewById<RecyclerView>(R.id.recycler_home)
         recycler.layoutManager = LinearLayoutManager(requireContext())
-        recycler.adapter = ConcatAdapter(balanceSheetAdapter, adapter)
+        recycler.adapter = ConcatAdapter(assetsPieChartAdapter, balanceSheetAdapter, adapter)
 
         val emptyView = view.findViewById<TextView>(R.id.text_empty_home)
         swipeRefresh = view.findViewById(R.id.swipe_refresh_home)
@@ -71,6 +73,10 @@ class HomeFragment : Fragment() {
         viewModel.homeItems.observe(viewLifecycleOwner) { items ->
             adapter.submitList(items)
             updateEmptyState()
+        }
+
+        viewModel.assetSlices.observe(viewLifecycleOwner) { slices ->
+            assetsPieChartAdapter.submitList(slices)
         }
 
         refreshRates()

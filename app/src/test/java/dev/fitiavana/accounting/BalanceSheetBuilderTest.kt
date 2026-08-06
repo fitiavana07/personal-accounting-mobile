@@ -2,6 +2,8 @@ package dev.fitiavana.accounting
 
 import dev.fitiavana.accounting.data.model.Account
 import dev.fitiavana.accounting.data.model.AccountBalance
+import dev.fitiavana.accounting.ui.home.AssetPalette
+import dev.fitiavana.accounting.ui.home.AssetSlice
 import dev.fitiavana.accounting.ui.home.BalanceSheetBuilder
 import dev.fitiavana.accounting.ui.home.BalanceSheetRow
 import org.junit.Assert.assertEquals
@@ -36,7 +38,7 @@ class BalanceSheetBuilderTest {
             listOf(
                 BalanceSheetRow.Title("Instant Balance Sheet"),
                 BalanceSheetRow.SectionHeader("Assets"),
-                BalanceSheetRow.AccountLine("Cash", "10,000"),
+                BalanceSheetRow.AccountLine("Cash", "10,000", AssetPalette.colorFor(0)),
                 BalanceSheetRow.TotalLine("Total Assets", "Ar 10,000", emphasized = true),
                 BalanceSheetRow.DateLine("Balances at Jan 1, 1970")
             ),
@@ -89,7 +91,7 @@ class BalanceSheetBuilderTest {
             listOf(
                 BalanceSheetRow.Title("Instant Balance Sheet"),
                 BalanceSheetRow.SectionHeader("Assets"),
-                BalanceSheetRow.AccountLine("Cash", "10,000"),
+                BalanceSheetRow.AccountLine("Cash", "10,000", AssetPalette.colorFor(0)),
                 BalanceSheetRow.TotalLine("Total Assets", "Ar 10,000", emphasized = true),
                 BalanceSheetRow.SectionHeader("Liabilities"),
                 BalanceSheetRow.AccountLine("Loan", "200"),
@@ -229,8 +231,8 @@ class BalanceSheetBuilderTest {
             listOf(
                 BalanceSheetRow.Title("Instant Balance Sheet"),
                 BalanceSheetRow.SectionHeader("Assets"),
-                BalanceSheetRow.AccountLine("Bank", "15,000"),
-                BalanceSheetRow.AccountLine("Other", "6,500"),
+                BalanceSheetRow.AccountLine("Bank", "15,000", AssetPalette.colorFor(0)),
+                BalanceSheetRow.AccountLine("Other", "6,500", AssetPalette.colorFor(1)),
                 BalanceSheetRow.TotalLine("Total Assets", "Ar 21,500", emphasized = true),
                 BalanceSheetRow.DateLine("Balances at Jan 1, 1970")
             ),
@@ -290,5 +292,82 @@ class BalanceSheetBuilderTest {
         assertEquals("Balances at Jan 1, 1970", dateLine.text)
         assertTrue(result.filterIsInstance<BalanceSheetRow.AccountLine>().none { it.name.isEmpty() })
         assertEquals(1, result.filterIsInstance<BalanceSheetRow.AccountLine>().size)
+    }
+
+    @Test
+    fun `assetSlices returns one slice per asset account when all are above the threshold`() {
+        val result = BalanceSheetBuilder.assetSlices(
+            accounts = listOf(
+                account("a", "Bank", "asset"),
+                account("b", "Cash", "asset")
+            ),
+            balances = listOf(balance("a", 15_000), balance("b", 20_000))
+        )
+
+        assertEquals(
+            listOf(AssetSlice("Bank", 15_000), AssetSlice("Cash", 20_000)),
+            result
+        )
+    }
+
+    @Test
+    fun `assetSlices groups accounts under 10000Ar into a single Other slice`() {
+        val result = BalanceSheetBuilder.assetSlices(
+            accounts = listOf(
+                account("a", "Bank", "asset"),
+                account("b", "Petty Cash", "asset"),
+                account("c", "Coin Jar", "asset")
+            ),
+            balances = listOf(balance("a", 15_000), balance("b", 4_000), balance("c", 2_500))
+        )
+
+        assertEquals(
+            listOf(AssetSlice("Bank", 15_000), AssetSlice("Other", 6_500)),
+            result
+        )
+    }
+
+    @Test
+    fun `assetSlices excludes non-asset accounts and zero balances`() {
+        val result = BalanceSheetBuilder.assetSlices(
+            accounts = listOf(
+                account("a", "Cash", "asset"),
+                account("b", "Empty Wallet", "asset"),
+                account("c", "Loan", "liability")
+            ),
+            balances = listOf(balance("a", 10_000), balance("b", 0), balance("c", 5_000))
+        )
+
+        assertEquals(listOf(AssetSlice("Cash", 10_000)), result)
+    }
+
+    @Test
+    fun `assetSlices returns empty list when there are no asset accounts`() {
+        val result = BalanceSheetBuilder.assetSlices(
+            accounts = listOf(account("a", "Loan", "liability")),
+            balances = listOf(balance("a", 5_000))
+        )
+
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `asset line colors follow the same order as the pie chart slices`() {
+        val accounts = listOf(
+            account("a", "Bank", "asset"),
+            account("b", "Petty Cash", "asset"),
+            account("c", "Coin Jar", "asset")
+        )
+        val balances = listOf(balance("a", 15_000), balance("b", 4_000), balance("c", 2_500))
+
+        val slices = BalanceSheetBuilder.assetSlices(accounts, balances)
+        val accountLines = BalanceSheetBuilder.build(accounts, balances)
+            .filterIsInstance<BalanceSheetRow.AccountLine>()
+
+        assertEquals(slices.map { it.name }, accountLines.map { it.name })
+        assertEquals(
+            slices.indices.map { AssetPalette.colorFor(it) },
+            accountLines.map { it.color }
+        )
     }
 }

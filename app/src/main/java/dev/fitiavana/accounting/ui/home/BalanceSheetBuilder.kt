@@ -7,11 +7,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+data class AssetSlice(val name: String, val amount: Long)
+
 sealed class BalanceSheetRow {
     data class Title(val text: String) : BalanceSheetRow()
     data class SectionHeader(val title: String) : BalanceSheetRow()
     data class SubsectionHeader(val title: String) : BalanceSheetRow()
-    data class AccountLine(val name: String, val amountText: String) : BalanceSheetRow()
+    data class AccountLine(val name: String, val amountText: String, val color: Int? = null) : BalanceSheetRow()
     data class TotalLine(
         val label: String,
         val amountText: String,
@@ -26,16 +28,44 @@ object BalanceSheetBuilder {
 
     private const val OTHER_ASSET_THRESHOLD = 10_000L
 
+    /**
+     * Asset lines grouped the same way as the "Assets" section of the balance sheet:
+     * accounts with |balance| below [OTHER_ASSET_THRESHOLD] are collapsed into "Other".
+     */
+    fun assetSlices(accounts: List<Account>, balances: List<AccountBalance>): List<AssetSlice> {
+        val accountMap = accounts.associateBy { it.id }
+        val assetLines = linesFor(accountMap, balances, "asset")
+        if (assetLines.isEmpty()) return emptyList()
+
+        val (mainAssetLines, otherAssetLines) = assetLines.partition {
+            Math.abs(it.balance) >= OTHER_ASSET_THRESHOLD
+        }
+
+        val slices = mainAssetLines.map { AssetSlice(it.name, it.balance) }.toMutableList()
+        if (otherAssetLines.isNotEmpty()) {
+            slices += AssetSlice("Other", otherAssetLines.sumOf { it.balance })
+        }
+        return slices
+    }
+
+    private fun linesFor(
+        accountMap: Map<String, Account>,
+        balances: List<AccountBalance>,
+        type: String
+    ): List<NamedBalance> = balances
+        .filter { accountMap.containsKey(it.accountId) }
+        .filter { accountMap.getValue(it.accountId).type == type }
+        .filter { it.balance != 0L }
+        .map { NamedBalance(accountMap.getValue(it.accountId).name, it.balance) }
+        .sortedBy { it.name }
+
     fun build(accounts: List<Account>, balances: List<AccountBalance>): List<BalanceSheetRow> {
         val accountMap = accounts.associateBy { it.id }
         val includedBalances = balances.filter { accountMap.containsKey(it.accountId) }
         if (includedBalances.isEmpty()) return emptyList()
 
-        fun linesFor(type: String): List<NamedBalance> = includedBalances
-            .filter { accountMap.getValue(it.accountId).type == type }
-            .filter { it.balance != 0L }
-            .map { NamedBalance(accountMap.getValue(it.accountId).name, it.balance) }
-            .sortedBy { it.name }
+        fun linesFor(type: String): List<NamedBalance> =
+            linesFor(accountMap, includedBalances, type)
 
         val assetLines = linesFor("asset")
         val liabilityLines = linesFor("liability")
@@ -67,16 +97,18 @@ object BalanceSheetBuilder {
             }
 
             rows += BalanceSheetRow.SectionHeader("Assets")
-            mainAssetLines.forEach {
+            mainAssetLines.forEachIndexed { index, line ->
                 rows += BalanceSheetRow.AccountLine(
-                    it.name,
-                    formatPlain(it.balance)
+                    line.name,
+                    formatPlain(line.balance),
+                    AssetPalette.colorFor(index)
                 )
             }
             if (otherAssetLines.isNotEmpty()) {
                 rows += BalanceSheetRow.AccountLine(
                     "Other",
-                    formatPlain(otherAssetLines.sumOf { it.balance })
+                    formatPlain(otherAssetLines.sumOf { it.balance }),
+                    AssetPalette.colorFor(mainAssetLines.size)
                 )
             }
             rows += BalanceSheetRow.TotalLine("Total Assets", formatAr(totalAssets), emphasized = true)

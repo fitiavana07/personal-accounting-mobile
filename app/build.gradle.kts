@@ -75,4 +75,5 @@ dependencies {
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.okhttp)
     implementation(libs.androidx.multidex)
+    implementation(libs.mpandroidchart)
 }

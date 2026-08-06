@@ -1,6 +1,9 @@
 package dev.fitiavana.accounting.ui.home
 
 import android.graphics.Typeface
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.shapes.OvalShape
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -80,6 +83,7 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             setContentVerticalPadding(10f)
             root.setBackgroundColor(ContextCompat.getColor(context, R.color.bs_section_header_bg))
             divider.visibility = View.GONE
+            setColorDot(null)
         }
 
         fun bindSubsectionHeader(row: BalanceSheetRow.SubsectionHeader) {
@@ -91,6 +95,7 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             setContentVerticalPadding(6f)
             root.setBackgroundColor(0)
             divider.visibility = View.GONE
+            setColorDot(null)
         }
 
         fun bindAccount(row: BalanceSheetRow.AccountLine) {
@@ -102,6 +107,22 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             setContentVerticalPadding(4f)
             root.setBackgroundColor(0)
             divider.visibility = View.GONE
+            setColorDot(row.color)
+        }
+
+        private fun setColorDot(color: Int?) {
+            val dot = color?.let { colorDotDrawable(it) }
+            labelView.setCompoundDrawablesRelativeWithIntrinsicBounds(dot, null, null, null)
+            labelView.compoundDrawablePadding = if (dot != null) dpToPx(8f) else 0
+        }
+
+        private fun colorDotDrawable(color: Int): Drawable {
+            val sizePx = dpToPx(10f)
+            return ShapeDrawable(OvalShape()).apply {
+                setIntrinsicWidth(sizePx)
+                setIntrinsicHeight(sizePx)
+                paint.color = color
+            }
         }
 
         fun bindTotal(row: BalanceSheetRow.TotalLine) {
@@ -115,6 +136,7 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 if (row.emphasized) ContextCompat.getColor(context, R.color.bs_grand_total_bg) else 0
             )
             divider.visibility = View.VISIBLE
+            setColorDot(null)
         }
 
         private fun setLabelIndent(startPadding: Int) {

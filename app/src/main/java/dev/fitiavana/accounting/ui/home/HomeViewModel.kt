@@ -71,6 +71,24 @@ class HomeViewModel(
         }
     }
 
+    val assetSlices = MediatorLiveData<List<AssetSlice>>().apply {
+        var latestBalances: List<AccountBalance> = emptyList()
+        var latestAccounts: List<Account> = emptyList()
+
+        fun update() {
+            value = BalanceSheetBuilder.assetSlices(latestAccounts, latestBalances)
+        }
+
+        addSource(balances) { b ->
+            latestBalances = b ?: emptyList()
+            update()
+        }
+        addSource(accounts) { a ->
+            latestAccounts = a ?: emptyList()
+            update()
+        }
+    }
+
     /** Synchronous — callers must invoke this off the main thread. */
     fun refreshRates(): RefreshResult {
         val items = HomeItemBuilder.build(

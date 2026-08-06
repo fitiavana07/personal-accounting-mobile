@@ -97,3 +97,9 @@ After every change:
 - generate a testing checklist
 - write unit tests (new or update existing ones) conforming to this
   checklist, for everything that is worth to be unit-tested 
+
+## When adding new libraries
+
+When adding a new library (in build.gradle.kts / libs.versions.toml),
+always verify the app can be built successfully before making changes to
+source code.
