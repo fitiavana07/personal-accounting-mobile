@@ -129,8 +129,13 @@ class AssetsPieChartAdapter : RecyclerView.Adapter<AssetsPieChartAdapter.ViewHol
         private fun resolveTextColorPrimary(context: android.content.Context): Int =
             resolveThemeColor(context, android.R.attr.textColorPrimary)
 
-        private fun resolveTextColorSecondary(context: android.content.Context): Int =
-            resolveThemeColor(context, android.R.attr.textColorSecondary)
+        /** Pure white in dark mode / pure black in light mode, for stronger contrast than the themed secondary text color. */
+        private fun resolveTextColorSecondary(context: android.content.Context): Int {
+            val isNightMode = (context.resources.configuration.uiMode and
+                    android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+                    android.content.res.Configuration.UI_MODE_NIGHT_YES
+            return if (isNightMode) Color.WHITE else Color.BLACK
+        }
 
         private fun resolveThemeColor(
             context: android.content.Context,
