@@ -43,6 +43,10 @@
             android:exported="false"
             android:parentActivityName=".MainActivity" />
         <activity
+            android:name=".ui.balances.BalancesActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+        <activity
             android:name=".ui.homedetail.HomeDetailActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />

@@ -17,7 +17,7 @@ import dev.fitiavana.accounting.data.repository.RestoreResult
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.UiUtils
 import dev.fitiavana.accounting.ui.accounts.AccountsFragment
-import dev.fitiavana.accounting.ui.balances.BalancesFragment
+import dev.fitiavana.accounting.ui.balances.BalancesActivity
 import dev.fitiavana.accounting.ui.home.HomeFragment
 import dev.fitiavana.accounting.ui.instruments.InstrumentsActivity
 import dev.fitiavana.accounting.ui.reports.ReportsFragment
@@ -80,7 +80,6 @@ class MainActivity : AppCompatActivity() {
             val fragment = when (item.itemId) {
                 R.id.nav_home -> HomeFragment()
                 R.id.nav_reports -> ReportsFragment()
-                R.id.nav_balances -> BalancesFragment()
                 R.id.nav_transactions -> TransactionsFragment()
                 R.id.nav_accounts -> AccountsFragment()
                 else -> return@setOnItemSelectedListener false
@@ -120,6 +119,10 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_instruments -> {
                 startActivity(InstrumentsActivity.intent(this))
+                return true
+            }
+            R.id.action_balances -> {
+                startActivity(BalancesActivity.intent(this))
                 return true
             }
         }

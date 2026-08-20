@@ -17,4 +17,9 @@
         android:title="@string/instruments"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/action_balances"
+        android:title="@string/nav_balances"
+        app:showAsAction="never" />
+
 </menu>
