@@ -69,10 +69,10 @@ class BalanceItemBuilderTest {
         assertEquals(0L, result[0].balance)
     }
 
-    // --- Sorting: highest balance first ---
+    // --- Sorting: alphabetical by account name ---
 
     @Test
-    fun `items sorted highest balance first`() {
+    fun `items sorted alphabetically by account name`() {
         val result = BalanceItemBuilder.build(
             balances = listOf(
                 balance("acc1", 1300),
@@ -86,11 +86,11 @@ class BalanceItemBuilderTest {
             ),
             instruments = emptyMap()
         )
-        assertEquals(listOf(10000L, 3000L, 1300L), result.map { it.balance })
+        assertEquals(listOf("Capital", "Cash", "Sales"), result.map { it.accountName })
     }
 
     @Test
-    fun `negative balance sorts after positive balances`() {
+    fun `account name sort is independent of balance sign`() {
         val result = BalanceItemBuilder.build(
             balances = listOf(
                 balance("acc1", -500),
@@ -104,7 +104,7 @@ class BalanceItemBuilderTest {
             ),
             instruments = emptyMap()
         )
-        assertEquals(listOf(1000L, 0L, -500L), result.map { it.balance })
+        assertEquals(listOf("Cash", "Overdraft", "Wash"), result.map { it.accountName })
     }
 
     // --- Multiple accounts, some without balances ---

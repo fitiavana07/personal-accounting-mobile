@@ -27,6 +27,6 @@ object BalanceItemBuilder {
                     updatedAt = balance.updatedAt
                 )
             }
-            .sortedByDescending { it.balance }
+            .sortedBy { it.accountName }
     }
 }
