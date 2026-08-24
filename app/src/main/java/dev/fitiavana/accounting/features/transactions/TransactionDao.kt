@@ -82,7 +82,11 @@ interface TransactionDao {
         WHERE te.accountId = :accountId AND t.transactionDatetime >= :startMs AND t.transactionDatetime <= :endMs
     """
     )
-    fun sumDebitsForAccountBetween(accountId: String, startMs: Long, endMs: Long): Long
+    fun sumDebitsForAccountBetween(
+        accountId: String,
+        startMs: Long,
+        endMs: Long
+    ): Long
 
     @Query(
         """
@@ -91,7 +95,11 @@ interface TransactionDao {
         WHERE te.accountId = :accountId AND t.transactionDatetime >= :startMs AND t.transactionDatetime <= :endMs
     """
     )
-    fun sumCreditsForAccountBetween(accountId: String, startMs: Long, endMs: Long): Long
+    fun sumCreditsForAccountBetween(
+        accountId: String,
+        startMs: Long,
+        endMs: Long
+    ): Long
 
     @Query("SELECT MIN(transactionDatetime) FROM transactions")
     fun getMinTransactionDatetime(): Long?
