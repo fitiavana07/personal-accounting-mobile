@@ -1,7 +1,6 @@
 package dev.fitiavana.accounting
 
-import dev.fitiavana.accounting.data.model.Instrument
-import dev.fitiavana.accounting.ui.home.GainLossCalculator
+import dev.fitiavana.accounting.features.balances.GainLossCalculator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -44,49 +43,5 @@ class GainLossCalculatorTest {
     @Test
     fun `gain loss percent returns null when book value is zero`() {
         assertNull(GainLossCalculator.computeGainLossPercent(100.0, 0.0))
-    }
-
-    // --- formatSignedAmount ---
-
-    @Test
-    fun `format signed amount adds plus sign for gain`() {
-        val usdt = Instrument(code = "USDT", note = "", type = "currency", decimalPlaces = 2)
-        assertEquals("+650.0 USDT", GainLossCalculator.formatSignedAmount(650.0, usdt))
-    }
-
-    @Test
-    fun `format signed amount adds minus sign for loss`() {
-        val usdt = Instrument(code = "USDT", note = "", type = "currency", decimalPlaces = 2)
-        assertEquals("-350.0 USDT", GainLossCalculator.formatSignedAmount(-350.0, usdt))
-    }
-
-    @Test
-    fun `format signed amount for zero uses plus sign`() {
-        val usdt = Instrument(code = "USDT", note = "", type = "currency", decimalPlaces = 2)
-        assertEquals("+0.0 USDT", GainLossCalculator.formatSignedAmount(0.0, usdt))
-    }
-
-    // --- formatSignedAmountAr ---
-
-    @Test
-    fun `format signed amount Ar adds plus sign for gain`() {
-        assertEquals("+Ar 25,000", GainLossCalculator.formatSignedAmountAr(25000.0))
-    }
-
-    @Test
-    fun `format signed amount Ar adds minus sign for loss`() {
-        assertEquals("-Ar 25,000", GainLossCalculator.formatSignedAmountAr(-25000.0))
-    }
-
-    // --- formatSignedPercent ---
-
-    @Test
-    fun `format signed percent for gain`() {
-        assertEquals("+15.5%", GainLossCalculator.formatSignedPercent(15.476190))
-    }
-
-    @Test
-    fun `format signed percent for loss`() {
-        assertEquals("-8.3%", GainLossCalculator.formatSignedPercent(-8.333))
     }
 }

@@ -44,7 +44,7 @@ class HomeAdapter(
 
             if (item.gainLoss != null) {
                 val color = if (item.gainLoss >= 0) R.color.gain else R.color.loss
-                gainLossAmountView.text = GainLossCalculator.formatSignedAmount(item.gainLoss, item.intermediaryInstrument)
+                gainLossAmountView.text = GainLossFormatter.formatSignedAmount(item.gainLoss, item.intermediaryInstrument)
                 gainLossAmountView.setTextColor(ContextCompat.getColor(context, color))
                 gainLossAmountView.visibility = View.VISIBLE
             } else {
@@ -53,7 +53,7 @@ class HomeAdapter(
 
             if (item.gainLossAr != null) {
                 val color = if (item.gainLossAr >= 0) R.color.gain else R.color.loss
-                gainLossArView.text = GainLossCalculator.formatSignedAmountAr(item.gainLossAr)
+                gainLossArView.text = GainLossFormatter.formatSignedAmountAr(item.gainLossAr)
                 gainLossArView.setTextColor(ContextCompat.getColor(context, color))
                 gainLossArView.visibility = View.VISIBLE
             } else {
@@ -62,7 +62,7 @@ class HomeAdapter(
 
             if (item.gainLossPercent != null) {
                 val color = if (item.gainLossPercent >= 0) R.color.gain else R.color.loss
-                gainLossPercentView.text = GainLossCalculator.formatSignedPercent(item.gainLossPercent)
+                gainLossPercentView.text = GainLossFormatter.formatSignedPercent(item.gainLossPercent)
                 gainLossPercentView.setTextColor(ContextCompat.getColor(context, color))
                 gainLossPercentView.visibility = View.VISIBLE
             } else {

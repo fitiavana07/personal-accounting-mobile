@@ -3,19 +3,7 @@ package dev.fitiavana.accounting.ui.home
 import dev.fitiavana.accounting.data.model.Instrument
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 
-object GainLossCalculator {
-
-    fun computeCurrentValue(instrumentBalance: Long, instrumentDecimalPlaces: Int, rate: Double): Double {
-        val factor = Math.pow(10.0, instrumentDecimalPlaces.toDouble())
-        return (instrumentBalance / factor) * rate
-    }
-
-    fun computeGainLoss(currentValue: Double, bookValue: Double): Double = currentValue - bookValue
-
-    fun computeGainLossPercent(gainLoss: Double, bookValue: Double): Double? {
-        if (bookValue == 0.0) return null
-        return (gainLoss / bookValue) * 100.0
-    }
+object GainLossFormatter {
 
     fun formatSignedAmount(value: Double, instrument: Instrument): String {
         val sign = if (value >= 0) "+" else "-"

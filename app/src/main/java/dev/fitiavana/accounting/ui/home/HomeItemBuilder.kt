@@ -4,6 +4,7 @@ import dev.fitiavana.accounting.data.model.Account
 import dev.fitiavana.accounting.data.model.AccountBalance
 import dev.fitiavana.accounting.data.model.ExchangeRateCache
 import dev.fitiavana.accounting.data.model.Instrument
+import dev.fitiavana.accounting.features.balances.GainLossCalculator
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 
 data class HomeItem(

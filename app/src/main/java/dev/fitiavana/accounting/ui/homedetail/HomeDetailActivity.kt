@@ -14,7 +14,7 @@ import dev.fitiavana.accounting.data.repository.ExchangeRateRepository
 import dev.fitiavana.accounting.data.repository.InstrumentRepository
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.UiUtils
-import dev.fitiavana.accounting.ui.home.GainLossCalculator
+import dev.fitiavana.accounting.ui.home.GainLossFormatter
 import dev.fitiavana.accounting.ui.home.HomeItem
 import dev.fitiavana.accounting.ui.home.HomeItemBuilder
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
@@ -99,17 +99,17 @@ class HomeDetailActivity : AppCompatActivity() {
         bindSignedText(
             R.id.text_detail_gain_loss_percent,
             item.gainLossPercent,
-            item.gainLossPercent?.let { GainLossCalculator.formatSignedPercent(it) }
+            item.gainLossPercent?.let { GainLossFormatter.formatSignedPercent(it) }
         )
         bindSignedText(
             R.id.text_detail_gain_loss_ar,
             item.gainLossAr,
-            item.gainLossAr?.let { GainLossCalculator.formatSignedAmountAr(it) }
+            item.gainLossAr?.let { GainLossFormatter.formatSignedAmountAr(it) }
         )
         bindSignedText(
             R.id.text_detail_gain_loss_amount,
             item.gainLoss,
-            item.gainLoss?.let { GainLossCalculator.formatSignedAmount(it, item.intermediaryInstrument) }
+            item.gainLoss?.let { GainLossFormatter.formatSignedAmount(it, item.intermediaryInstrument) }
         )
     }
 
