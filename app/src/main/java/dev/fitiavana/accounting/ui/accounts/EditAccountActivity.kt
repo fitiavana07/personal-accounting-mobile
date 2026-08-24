@@ -12,12 +12,9 @@ import android.widget.Spinner
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.instruments.Instrument
-import dev.fitiavana.accounting.features.accounts.AccountRepository
-import dev.fitiavana.accounting.features.balances.BalanceRepository
-import dev.fitiavana.accounting.features.instruments.InstrumentRepository
-import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.UiUtils
 
 class EditAccountActivity : AppCompatActivity() {
@@ -54,10 +51,9 @@ class EditAccountActivity : AppCompatActivity() {
 
         UiUtils.setupActionBar(this)
 
-        val db = AppDatabase.getInstance(this)
-        val repository = AccountRepository(db.accountDao())
-        val instrumentRepository =
-            InstrumentRepository(db.instrumentDao(), db.accountDao())
+        val container = AppContainer.getInstance(this)
+        val repository = container.accountRepository
+        val instrumentRepository = container.instrumentRepository
         viewModel = ViewModelProvider(
             this,
             EditAccountViewModelFactory(repository, instrumentRepository)
@@ -148,12 +144,7 @@ class EditAccountActivity : AppCompatActivity() {
             title = getString(R.string.title_edit_account)
             Thread {
                 val account = viewModel.getAccount(accountId!!)
-                val balanceRepo = BalanceRepository(
-                    db.accountDao(),
-                    db.accountBalanceDao(),
-                    db.transactionDao()
-                )
-                val locked = balanceRepo.hasTransactions(accountId!!)
+                val locked = container.balanceRepository.hasTransactions(accountId!!)
                 runOnUiThread {
                     if (account != null) {
                         nameInput.setText(account.name)
@@ -215,14 +206,8 @@ class EditAccountActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.action_delete_account -> {
                 Thread {
-                    val db = AppDatabase.getInstance(this)
-                    val balanceRepo = BalanceRepository(
-                        db.accountDao(),
-                        db.accountBalanceDao(),
-                        db.transactionDao()
-                    )
                     val hasTransactions =
-                        balanceRepo.hasTransactions(accountId!!)
+                        AppContainer.getInstance(this).balanceRepository.hasTransactions(accountId!!)
                     runOnUiThread {
                         if (hasTransactions) {
                             AlertDialog.Builder(this)

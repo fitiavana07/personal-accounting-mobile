@@ -23,6 +23,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.widget.ImageViewCompat
+import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.instruments.Instrument
@@ -32,7 +33,6 @@ import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
-import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.UiUtils
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import kotlin.math.pow
@@ -102,16 +102,11 @@ class AddTransactionActivity : AppCompatActivity() {
         UiUtils.setupActionBar(this)
         title = getString(R.string.title_new_transaction)
 
-        val db = AppDatabase.getInstance(this)
-        transactionRepo = TransactionRepository(db.transactionDao())
-        accountRepo = AccountRepository(db.accountDao())
-        balanceRepo = BalanceRepository(
-            db.accountDao(),
-            db.accountBalanceDao(),
-            db.transactionDao()
-        )
-        instrumentRepo =
-            InstrumentRepository(db.instrumentDao(), db.accountDao())
+        val container = AppContainer.getInstance(this)
+        transactionRepo = container.transactionRepository
+        accountRepo = container.accountRepository
+        balanceRepo = container.balanceRepository
+        instrumentRepo = container.instrumentRepository
 
         textDatetime = findViewById(R.id.text_datetime)
         editNote = findViewById(R.id.edit_note)

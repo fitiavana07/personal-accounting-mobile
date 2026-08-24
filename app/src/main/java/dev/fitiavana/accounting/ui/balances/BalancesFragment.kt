@@ -13,11 +13,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.features.accounts.AccountRepository
-import dev.fitiavana.accounting.features.balances.BalanceRepository
-import dev.fitiavana.accounting.features.instruments.InstrumentRepository
-import dev.fitiavana.accounting.db.AppDatabase
 
 class BalancesFragment : Fragment() {
 
@@ -36,10 +33,10 @@ class BalancesFragment : Fragment() {
     ): View? = inflater.inflate(R.layout.fragment_balances, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val db = AppDatabase.getInstance(requireContext())
-        val balanceRepo = BalanceRepository(db.accountDao(), db.accountBalanceDao(), db.transactionDao())
-        val accountRepo = AccountRepository(db.accountDao())
-        val instrumentRepo = InstrumentRepository(db.instrumentDao(), db.accountDao())
+        val container = AppContainer.getInstance(requireContext())
+        val balanceRepo = container.balanceRepository
+        val accountRepo = container.accountRepository
+        val instrumentRepo = container.instrumentRepository
 
         viewModel = ViewModelProvider(this, BalancesViewModelFactory(balanceRepo, accountRepo, instrumentRepo))
             .get(BalancesViewModel::class.java)

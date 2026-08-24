@@ -12,12 +12,8 @@ import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.features.accounts.AccountRepository
-import dev.fitiavana.accounting.features.balances.BalanceRepository
-import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
-import dev.fitiavana.accounting.features.instruments.InstrumentRepository
-import dev.fitiavana.accounting.db.AppDatabase
 
 class HomeFragment : Fragment() {
 
@@ -35,11 +31,11 @@ class HomeFragment : Fragment() {
     ): View = inflater.inflate(R.layout.fragment_home, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val db = AppDatabase.getInstance(requireContext())
-        val balanceRepo = BalanceRepository(db.accountDao(), db.accountBalanceDao(), db.transactionDao())
-        val accountRepo = AccountRepository(db.accountDao())
-        val instrumentRepo = InstrumentRepository(db.instrumentDao(), db.accountDao())
-        val exchangeRateRepo = ExchangeRateRepository(db.exchangeRateCacheDao())
+        val container = AppContainer.getInstance(requireContext())
+        val balanceRepo = container.balanceRepository
+        val accountRepo = container.accountRepository
+        val instrumentRepo = container.instrumentRepository
+        val exchangeRateRepo = container.exchangeRateRepository
 
         viewModel = ViewModelProvider(
             this,

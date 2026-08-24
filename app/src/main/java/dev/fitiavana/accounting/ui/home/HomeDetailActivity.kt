@@ -7,12 +7,8 @@ import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.features.accounts.AccountRepository
-import dev.fitiavana.accounting.features.balances.BalanceRepository
-import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
-import dev.fitiavana.accounting.features.instruments.InstrumentRepository
-import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.UiUtils
 import dev.fitiavana.accounting.ui.home.GainLossFormatter
 import dev.fitiavana.accounting.ui.home.HomeItem
@@ -35,11 +31,11 @@ class HomeDetailActivity : AppCompatActivity() {
 
         val accountId = intent.getStringExtra(EXTRA_ACCOUNT_ID) ?: run { finish(); return }
 
-        val db = AppDatabase.getInstance(this)
-        val balanceRepo = BalanceRepository(db.accountDao(), db.accountBalanceDao(), db.transactionDao())
-        val accountRepo = AccountRepository(db.accountDao())
-        val instrumentRepo = InstrumentRepository(db.instrumentDao(), db.accountDao())
-        val exchangeRateRepo = ExchangeRateRepository(db.exchangeRateCacheDao())
+        val container = AppContainer.getInstance(this)
+        val balanceRepo = container.balanceRepository
+        val accountRepo = container.accountRepository
+        val instrumentRepo = container.instrumentRepository
+        val exchangeRateRepo = container.exchangeRateRepository
 
         Thread {
             val items = HomeItemBuilder.build(

@@ -21,12 +21,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.BuildConfig
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
-import dev.fitiavana.accounting.features.accounts.AccountRepository
-import dev.fitiavana.accounting.features.transactions.TransactionRepository
-import dev.fitiavana.accounting.db.AppDatabase
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -69,9 +67,9 @@ class TransactionsFragment : Fragment() {
         inflater.inflate(R.layout.fragment_transactions, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val db = AppDatabase.getInstance(requireContext())
-        val transactionRepo = TransactionRepository(db.transactionDao())
-        val accountRepo = AccountRepository(db.accountDao())
+        val container = AppContainer.getInstance(requireContext())
+        val transactionRepo = container.transactionRepository
+        val accountRepo = container.accountRepository
         viewModel = ViewModelProvider(
             this,
             TransactionsViewModelFactory(transactionRepo, accountRepo)

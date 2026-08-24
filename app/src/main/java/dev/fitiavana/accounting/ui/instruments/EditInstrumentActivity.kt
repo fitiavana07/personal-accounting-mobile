@@ -12,9 +12,8 @@ import android.widget.Spinner
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.features.instruments.InstrumentRepository
-import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.UiUtils
 
 class EditInstrumentActivity : AppCompatActivity() {
@@ -49,9 +48,7 @@ class EditInstrumentActivity : AppCompatActivity() {
 
         UiUtils.setupActionBar(this)
 
-        val db = AppDatabase.getInstance(this)
-        val repository =
-            InstrumentRepository(db.instrumentDao(), db.accountDao())
+        val repository = AppContainer.getInstance(this).instrumentRepository
         viewModel =
             ViewModelProvider(this, EditInstrumentViewModelFactory(repository))
                 .get(EditInstrumentViewModel::class.java)

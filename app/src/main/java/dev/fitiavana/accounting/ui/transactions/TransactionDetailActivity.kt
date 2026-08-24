@@ -9,16 +9,13 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.transactions.TransactionEntry
 import dev.fitiavana.accounting.features.transactions.TransactionWithEntries
-import dev.fitiavana.accounting.features.accounts.AccountRepository
-import dev.fitiavana.accounting.features.instruments.InstrumentRepository
-import dev.fitiavana.accounting.features.transactions.TransactionRepository
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
-import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.UiUtils
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -37,10 +34,10 @@ class TransactionDetailActivity : AppCompatActivity() {
 
         val transactionId = intent.getStringExtra(EXTRA_TRANSACTION_ID) ?: run { finish(); return }
 
-        val db = AppDatabase.getInstance(this)
-        val transactionRepo = TransactionRepository(db.transactionDao())
-        val accountRepo = AccountRepository(db.accountDao())
-        val instrumentRepo = InstrumentRepository(db.instrumentDao(), db.accountDao())
+        val container = AppContainer.getInstance(this)
+        val transactionRepo = container.transactionRepository
+        val accountRepo = container.accountRepository
+        val instrumentRepo = container.instrumentRepository
 
         Thread {
             val twe = transactionRepo.getWithEntries(transactionId)
