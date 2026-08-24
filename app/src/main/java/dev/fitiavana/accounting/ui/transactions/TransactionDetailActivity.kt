@@ -42,7 +42,7 @@ class TransactionDetailActivity : AppCompatActivity() {
 
         Thread {
             val twe = transactionRepo.getWithEntries(transactionId)
-            val accounts = accountRepo.getAll().value ?: db.accountDao().getAllSync()
+            val accounts = accountRepo.getAll().value ?: accountRepo.getAllSync()
             val instruments = db.instrumentDao().getAllSync().associateBy { it.code }
             val accountsMap = accounts.associate { it.id to it }
             runOnUiThread {

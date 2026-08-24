@@ -121,7 +121,7 @@ class AddTransactionActivity : AppCompatActivity() {
         textDatetime.setOnClickListener { pickDate() }
 
         Thread {
-            accounts = db.accountDao().getAllSync()
+            accounts = accountRepo.getAllSync()
             instrumentsMap = db.instrumentDao().getAllSync().associateBy { it.code }
             runOnUiThread {
                 addEntryRow()
