@@ -15,11 +15,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.data.dao.AccountDao
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.db.AppDatabase
-import dev.fitiavana.accounting.ui.editaccount.EditAccountActivity
 
 class AccountsFragment : Fragment() {
 
@@ -48,9 +45,7 @@ class AccountsFragment : Fragment() {
     ): View = inflater.inflate(R.layout.fragment_accounts, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val dao: AccountDao =
-            AppDatabase.getInstance(requireContext()).accountDao()
-        val repository = AccountRepository(dao)
+        val repository = AppContainer.getInstance(requireContext()).accountRepository
         viewModel =
             ViewModelProvider(this, AccountsViewModelFactory(repository))
                 .get(AccountsViewModel::class.java)

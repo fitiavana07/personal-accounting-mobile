@@ -12,9 +12,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import dev.fitiavana.accounting.data.repository.BackupRepository
-import dev.fitiavana.accounting.data.repository.RestoreResult
-import dev.fitiavana.accounting.db.AppDatabase
+import dev.fitiavana.accounting.features.backup.BackupRepository
+import dev.fitiavana.accounting.features.backup.RestoreResult
 import dev.fitiavana.accounting.ui.UiUtils
 import dev.fitiavana.accounting.ui.accounts.AccountsFragment
 import dev.fitiavana.accounting.ui.balances.BalancesActivity
@@ -46,15 +45,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val db = AppDatabase.getInstance(this)
-        backupRepository = BackupRepository(
-            db,
-            db.accountDao(),
-            db.instrumentDao(),
-            db.transactionDao(),
-            db.accountBalanceDao(),
-            db.exchangeRateCacheDao()
-        )
+        backupRepository = AppContainer.getInstance(this).backupRepository
 
         UiUtils.setupActionBar(this, displayHomeAsUp = false)
         supportActionBar?.title = getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME)

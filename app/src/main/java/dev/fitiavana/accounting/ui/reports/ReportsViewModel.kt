@@ -3,11 +3,13 @@ package dev.fitiavana.accounting.ui.reports
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.BalanceRepository
-import dev.fitiavana.accounting.ui.home.BalanceSheetBuilder
-import dev.fitiavana.accounting.ui.home.BalanceSheetRow
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.balances.BalanceRepository
+import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
+import dev.fitiavana.accounting.features.reports.IncomeStatementBuilder
+import dev.fitiavana.accounting.ui.common.ReportPresenter
+import dev.fitiavana.accounting.ui.common.ReportDisplayRow
 
 class ReportsViewModel(
     private val accountRepository: AccountRepository,
@@ -20,6 +22,9 @@ class ReportsViewModel(
     private var lastBalances: Map<String, Long> = emptyMap()
     private var lastPeriodBalances: Map<String, Long> = emptyMap()
     private var lastAsOfMs = 0L
+    private var lastStartMs = 0L
+    private var lastReportYear = 0
+    private var lastReportMonth = 0
 
     val reportTypes: List<ReportType> = ReportType.values().toList()
 
@@ -44,8 +49,8 @@ class ReportsViewModel(
     private val _asOfDateText = MutableLiveData<String>()
     val asOfDateText: LiveData<String> = _asOfDateText
 
-    private val _balanceSheetRows = MutableLiveData<List<BalanceSheetRow>>(emptyList())
-    val balanceSheetRows: LiveData<List<BalanceSheetRow>> = _balanceSheetRows
+    private val _balanceSheetRows = MutableLiveData<List<ReportDisplayRow>>(emptyList())
+    val balanceSheetRows: LiveData<List<ReportDisplayRow>> = _balanceSheetRows
 
     /** Kicks off the initial background load. Safe to call from every onViewCreated — a no-op after the first call. */
     fun start() {
@@ -109,8 +114,11 @@ class ReportsViewModel(
 
     private fun recomputeSync(year: Int, month: Int) {
         val startMs = ReportPeriodSelector.startOfMonthMillis(year, month)
-        val asOfMs = ReportPeriodSelector.endOfMonthMillis(year, month)
+        val asOfMs = ReportPeriodSelector.asOfMillis(year, month)
         lastAsOfMs = asOfMs
+        lastStartMs = startMs
+        lastReportYear = year
+        lastReportMonth = month
         lastAccounts = accountRepository.getAllSync()
         lastBalances = balanceRepository.computeBalancesAsOf(asOfMs)
         lastPeriodBalances = balanceRepository.computeBalancesBetween(startMs, asOfMs)
@@ -121,14 +129,20 @@ class ReportsViewModel(
         _asOfDateText.postValue(
             when (type) {
                 ReportType.BALANCE_SHEET -> ReportPeriodSelector.formatAsOfDate(lastAsOfMs)
-                ReportType.INCOME_STATEMENT -> ReportPeriodSelector.formatMonthEnded(lastAsOfMs)
+                ReportType.INCOME_STATEMENT -> ReportPeriodSelector.formatIncomeStatementPeriod(
+                    lastStartMs,
+                    lastAsOfMs,
+                    ReportPeriodSelector.endOfMonthMillis(lastReportYear, lastReportMonth)
+                )
                 ReportType.CHANGES_IN_EQUITY -> ""
             }
         )
         _balanceSheetRows.postValue(
             when (type) {
-                ReportType.BALANCE_SHEET -> BalanceSheetBuilder.buildMonthly(lastAccounts, lastBalances)
-                ReportType.INCOME_STATEMENT -> BalanceSheetBuilder.buildIncomeStatement(lastAccounts, lastPeriodBalances)
+                ReportType.BALANCE_SHEET ->
+                    ReportPresenter.present(BalanceSheetBuilder.buildMonthly(lastAccounts, lastBalances))
+                ReportType.INCOME_STATEMENT ->
+                    ReportPresenter.present(IncomeStatementBuilder.build(lastAccounts, lastPeriodBalances))
                 ReportType.CHANGES_IN_EQUITY -> emptyList()
             }
         )

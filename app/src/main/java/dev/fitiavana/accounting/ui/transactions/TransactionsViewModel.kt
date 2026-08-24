@@ -5,10 +5,10 @@ import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.switchMap
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.model.TransactionWithEntries
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.TransactionRepository
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.transactions.TransactionWithEntries
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.transactions.TransactionRepository
 import java.util.Calendar
 
 data class TransactionFilter(

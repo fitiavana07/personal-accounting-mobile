@@ -3,15 +3,18 @@ package dev.fitiavana.accounting.ui.home
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.ViewModel
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.model.AccountBalance
-import dev.fitiavana.accounting.data.model.ExchangeRateCache
-import dev.fitiavana.accounting.data.model.Instrument
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.BalanceRepository
-import dev.fitiavana.accounting.data.repository.ExchangeRateRepository
-import dev.fitiavana.accounting.data.repository.InstrumentRepository
-import dev.fitiavana.accounting.data.repository.RefreshResult
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.balances.AccountBalance
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
+import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.balances.BalanceRepository
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
+import dev.fitiavana.accounting.features.exchangerates.RefreshResult
+import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
+import dev.fitiavana.accounting.ui.common.ReportDisplayRow
+import dev.fitiavana.accounting.ui.common.ReportPresenter
 
 class HomeViewModel(
     private val balanceRepository: BalanceRepository,
@@ -53,12 +56,12 @@ class HomeViewModel(
         }
     }
 
-    val balanceSheetRows = MediatorLiveData<List<BalanceSheetRow>>().apply {
+    val balanceSheetRows = MediatorLiveData<List<ReportDisplayRow>>().apply {
         var latestBalances: List<AccountBalance> = emptyList()
         var latestAccounts: List<Account> = emptyList()
 
         fun update() {
-            value = BalanceSheetBuilder.build(latestAccounts, latestBalances)
+            value = ReportPresenter.present(BalanceSheetBuilder.build(latestAccounts, latestBalances))
         }
 
         addSource(balances) { b ->
@@ -76,7 +79,7 @@ class HomeViewModel(
         var latestAccounts: List<Account> = emptyList()
 
         fun update() {
-            value = BalanceSheetBuilder.assetSlices(latestAccounts, latestBalances)
+            value = AssetSliceBuilder.assetSlices(latestAccounts, latestBalances)
         }
 
         addSource(balances) { b ->

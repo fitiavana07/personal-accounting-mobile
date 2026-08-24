@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.data.model.Account
+import dev.fitiavana.accounting.features.accounts.Account
 
 class AccountsAdapter(
     private val onItemClick: (Account) -> Unit

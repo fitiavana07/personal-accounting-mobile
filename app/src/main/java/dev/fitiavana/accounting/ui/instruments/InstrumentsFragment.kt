@@ -11,10 +11,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.data.repository.InstrumentRepository
-import dev.fitiavana.accounting.db.AppDatabase
-import dev.fitiavana.accounting.ui.editinstrument.EditInstrumentActivity
 
 class InstrumentsFragment : Fragment() {
 
@@ -32,8 +30,7 @@ class InstrumentsFragment : Fragment() {
     ): View = inflater.inflate(R.layout.fragment_instruments, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val db = AppDatabase.getInstance(requireContext())
-        val repository = InstrumentRepository(db.instrumentDao(), db.accountDao())
+        val repository = AppContainer.getInstance(requireContext()).instrumentRepository
         viewModel = ViewModelProvider(this, InstrumentsViewModelFactory(repository))
             .get(InstrumentsViewModel::class.java)
 

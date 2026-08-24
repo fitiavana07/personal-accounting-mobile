@@ -6,20 +6,21 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import dev.fitiavana.accounting.data.dao.AccountBalanceDao
-import dev.fitiavana.accounting.data.dao.AccountDao
-import dev.fitiavana.accounting.data.dao.ExchangeRateCacheDao
-import dev.fitiavana.accounting.data.dao.InstrumentDao
-import dev.fitiavana.accounting.data.dao.TransactionDao
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.model.AccountBalance
-import dev.fitiavana.accounting.data.model.ExchangeRateCache
-import dev.fitiavana.accounting.data.model.Instrument
-import dev.fitiavana.accounting.data.model.Transaction
-import dev.fitiavana.accounting.data.model.TransactionEntry
+import dev.fitiavana.accounting.features.balances.AccountBalanceDao
+import dev.fitiavana.accounting.features.accounts.AccountDao
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
+import dev.fitiavana.accounting.features.instruments.InstrumentDao
+import dev.fitiavana.accounting.features.transactions.TransactionDao
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.balances.AccountBalance
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
+import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.transactions.Transaction
+import dev.fitiavana.accounting.features.transactions.TransactionEntry
 
 @Database(
-    entities = [Account::class, Transaction::class, TransactionEntry::class, AccountBalance::class, Instrument::class, ExchangeRateCache::class],
+    entities = [Account::class, Transaction::class, TransactionEntry::class,
+        AccountBalance::class, Instrument::class, ExchangeRateCache::class],
     version = AppDatabase.SCHEMA_VERSION
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -36,15 +37,15 @@ abstract class AppDatabase : RoomDatabase() {
         private var instance: AppDatabase? = null
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `transactions` (" +
                             "`id` TEXT NOT NULL PRIMARY KEY, " +
                             "`creationTimestamp` INTEGER NOT NULL, " +
                             "`transactionDatetime` INTEGER NOT NULL, " +
                             "`note` TEXT NOT NULL)"
                 )
-                database.execSQL(
+                db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `transaction_entries` (" +
                             "`id` TEXT NOT NULL PRIMARY KEY, " +
                             "`transactionId` TEXT NOT NULL, " +
@@ -54,14 +55,14 @@ abstract class AppDatabase : RoomDatabase() {
                             "FOREIGN KEY(`transactionId`) REFERENCES `transactions`(`id`) ON DELETE CASCADE, " +
                             "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON DELETE RESTRICT)"
                 )
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_transactionId` ON `transaction_entries` (`transactionId`)")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_accountId` ON `transaction_entries` (`accountId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_transactionId` ON `transaction_entries` (`transactionId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_accountId` ON `transaction_entries` (`accountId`)")
             }
         }
 
         private val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `transaction_entries_new` (" +
                             "`id` TEXT NOT NULL PRIMARY KEY, " +
                             "`transactionId` TEXT NOT NULL, " +
@@ -71,21 +72,21 @@ abstract class AppDatabase : RoomDatabase() {
                             "FOREIGN KEY(`transactionId`) REFERENCES `transactions`(`id`) ON DELETE CASCADE, " +
                             "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON DELETE RESTRICT)"
                 )
-                database.execSQL(
+                db.execSQL(
                     "INSERT INTO `transaction_entries_new` SELECT `id`, `transactionId`, `accountId`, " +
                             "CAST(`debitAmount` AS INTEGER), CAST(`creditAmount` AS INTEGER) FROM `transaction_entries`"
                 )
-                database.execSQL("DROP TABLE `transaction_entries`")
-                database.execSQL("ALTER TABLE `transaction_entries_new` RENAME TO `transaction_entries`")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_transactionId` ON `transaction_entries` (`transactionId`)")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_accountId` ON `transaction_entries` (`accountId`)")
+                db.execSQL("DROP TABLE `transaction_entries`")
+                db.execSQL("ALTER TABLE `transaction_entries_new` RENAME TO `transaction_entries`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_transactionId` ON `transaction_entries` (`transactionId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_accountId` ON `transaction_entries` (`accountId`)")
             }
         }
 
         private val MIGRATION_3_4 = object : Migration(3, 4) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `accounts` ADD COLUMN `type` TEXT NOT NULL DEFAULT 'asset'")
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `accounts` ADD COLUMN `type` TEXT NOT NULL DEFAULT 'asset'")
+                db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `account_balances` (" +
                             "`accountId` TEXT NOT NULL PRIMARY KEY, " +
                             "`balance` INTEGER NOT NULL, " +
@@ -97,8 +98,8 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         private val MIGRATION_4_5 = object : Migration(4, 5) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `instruments` (" +
                             "`code` TEXT NOT NULL PRIMARY KEY, " +
                             "`note` TEXT NOT NULL, " +
@@ -108,22 +109,22 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         private val MIGRATION_5_6 = object : Migration(5, 6) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `accounts` ADD COLUMN `instrument_code` TEXT REFERENCES `instruments`(`code`) ON DELETE SET NULL")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_instrument_code` ON `accounts` (`instrument_code`)")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `accounts` ADD COLUMN `instrument_code` TEXT REFERENCES `instruments`(`code`) ON DELETE SET NULL")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_instrument_code` ON `accounts` (`instrument_code`)")
             }
         }
 
         private val MIGRATION_6_7 = object : Migration(6, 7) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `instruments` ADD COLUMN `decimalPlaces` INTEGER NOT NULL DEFAULT 0")
-                database.execSQL("ALTER TABLE `transaction_entries` ADD COLUMN `instrumentAmount` INTEGER")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `instruments` ADD COLUMN `decimalPlaces` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `transaction_entries` ADD COLUMN `instrumentAmount` INTEGER")
             }
         }
 
         private val MIGRATION_7_8 = object : Migration(7, 8) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `transaction_entries_new` (" +
                             "`id` TEXT NOT NULL PRIMARY KEY, " +
                             "`transactionId` TEXT NOT NULL, " +
@@ -135,74 +136,74 @@ abstract class AppDatabase : RoomDatabase() {
                             "FOREIGN KEY(`transactionId`) REFERENCES `transactions`(`id`) ON DELETE CASCADE, " +
                             "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON DELETE RESTRICT)"
                 )
-                database.execSQL(
+                db.execSQL(
                     "INSERT INTO `transaction_entries_new` SELECT `id`, `transactionId`, `accountId`, " +
                             "`debitAmount`, `creditAmount`, NULL, NULL FROM `transaction_entries`"
                 )
-                database.execSQL("DROP TABLE `transaction_entries`")
-                database.execSQL("ALTER TABLE `transaction_entries_new` RENAME TO `transaction_entries`")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_transactionId` ON `transaction_entries` (`transactionId`)")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_accountId` ON `transaction_entries` (`accountId`)")
+                db.execSQL("DROP TABLE `transaction_entries`")
+                db.execSQL("ALTER TABLE `transaction_entries_new` RENAME TO `transaction_entries`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_transactionId` ON `transaction_entries` (`transactionId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_entries_accountId` ON `transaction_entries` (`accountId`)")
             }
         }
 
         private val MIGRATION_8_9 = object : Migration(8, 9) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `account_balances` ADD COLUMN `instrumentBalance` INTEGER NOT NULL DEFAULT 0")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `account_balances` ADD COLUMN `instrumentBalance` INTEGER NOT NULL DEFAULT 0")
             }
         }
 
         private val MIGRATION_9_10 = object : Migration(9, 10) {
-            override fun migrate(database: SupportSQLiteDatabase) {
+            override fun migrate(db: SupportSQLiteDatabase) {
                 // Rename instrument_code -> instrumentCode (SQLite <3.25 has no RENAME COLUMN)
-                database.execSQL(
+                db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `accounts_new` (" +
                             "`id` TEXT NOT NULL PRIMARY KEY, " +
                             "`name` TEXT NOT NULL, " +
                             "`type` TEXT NOT NULL, " +
                             "`instrumentCode` TEXT REFERENCES `instruments`(`code`) ON DELETE SET NULL)"
                 )
-                database.execSQL(
+                db.execSQL(
                     "INSERT INTO `accounts_new` SELECT `id`, `name`, `type`, `instrument_code` FROM `accounts`"
                 )
-                database.execSQL("DROP TABLE `accounts`")
-                database.execSQL("ALTER TABLE `accounts_new` RENAME TO `accounts`")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_instrumentCode` ON `accounts` (`instrumentCode`)")
+                db.execSQL("DROP TABLE `accounts`")
+                db.execSQL("ALTER TABLE `accounts_new` RENAME TO `accounts`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_instrumentCode` ON `accounts` (`instrumentCode`)")
             }
         }
 
         private val MIGRATION_10_11 = object : Migration(10, 11) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `accounts` ADD COLUMN `intermediaryInstrumentCode` TEXT REFERENCES `instruments`(`code`) ON DELETE SET NULL")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_intermediaryInstrumentCode` ON `accounts` (`intermediaryInstrumentCode`)")
-                database.execSQL("ALTER TABLE `transaction_entries` ADD COLUMN `intermediaryDebitAmount` INTEGER")
-                database.execSQL("ALTER TABLE `transaction_entries` ADD COLUMN `intermediaryCreditAmount` INTEGER")
-                database.execSQL("ALTER TABLE `account_balances` ADD COLUMN `intermediaryBalance` INTEGER NOT NULL DEFAULT 0")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `accounts` ADD COLUMN `intermediaryInstrumentCode` TEXT REFERENCES `instruments`(`code`) ON DELETE SET NULL")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_intermediaryInstrumentCode` ON `accounts` (`intermediaryInstrumentCode`)")
+                db.execSQL("ALTER TABLE `transaction_entries` ADD COLUMN `intermediaryDebitAmount` INTEGER")
+                db.execSQL("ALTER TABLE `transaction_entries` ADD COLUMN `intermediaryCreditAmount` INTEGER")
+                db.execSQL("ALTER TABLE `account_balances` ADD COLUMN `intermediaryBalance` INTEGER NOT NULL DEFAULT 0")
             }
         }
 
         private val MIGRATION_11_12 = object : Migration(11, 12) {
-            override fun migrate(database: SupportSQLiteDatabase) {
+            override fun migrate(db: SupportSQLiteDatabase) {
                 // SQLite <3.25 has no RENAME COLUMN — recreate table
-                database.execSQL(
+                db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `transactions_new` (" +
                             "`id` TEXT NOT NULL PRIMARY KEY, " +
                             "`createdAt` INTEGER NOT NULL, " +
                             "`transactionDatetime` INTEGER NOT NULL, " +
                             "`note` TEXT NOT NULL)"
                 )
-                database.execSQL(
+                db.execSQL(
                     "INSERT INTO `transactions_new` SELECT `id`, `creationTimestamp`, `transactionDatetime`, `note` FROM `transactions`"
                 )
-                database.execSQL("DROP TABLE `transactions`")
-                database.execSQL("ALTER TABLE `transactions_new` RENAME TO `transactions`")
+                db.execSQL("DROP TABLE `transactions`")
+                db.execSQL("ALTER TABLE `transactions_new` RENAME TO `transactions`")
             }
         }
 
         private val MIGRATION_12_13 = object : Migration(12, 13) {
-            override fun migrate(database: SupportSQLiteDatabase) {
+            override fun migrate(db: SupportSQLiteDatabase) {
                 // Fix accounts FK constraints: SET NULL → RESTRICT, and add missing indices
-                database.execSQL(
+                db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `accounts_new` (" +
                             "`id` TEXT NOT NULL PRIMARY KEY, " +
                             "`name` TEXT NOT NULL, " +
@@ -212,20 +213,20 @@ abstract class AppDatabase : RoomDatabase() {
                             "FOREIGN KEY(`instrumentCode`) REFERENCES `instruments`(`code`) ON DELETE RESTRICT, " +
                             "FOREIGN KEY(`intermediaryInstrumentCode`) REFERENCES `instruments`(`code`) ON DELETE RESTRICT)"
                 )
-                database.execSQL(
+                db.execSQL(
                     "INSERT INTO `accounts_new` SELECT `id`, `name`, `type`, `instrumentCode`, `intermediaryInstrumentCode` FROM `accounts`"
                 )
-                database.execSQL("DROP TABLE `accounts`")
-                database.execSQL("ALTER TABLE `accounts_new` RENAME TO `accounts`")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_instrumentCode` ON `accounts` (`instrumentCode`)")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_intermediaryInstrumentCode` ON `accounts` (`intermediaryInstrumentCode`)")
+                db.execSQL("DROP TABLE `accounts`")
+                db.execSQL("ALTER TABLE `accounts_new` RENAME TO `accounts`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_instrumentCode` ON `accounts` (`instrumentCode`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_accounts_intermediaryInstrumentCode` ON `accounts` (`intermediaryInstrumentCode`)")
             }
         }
 
         private val MIGRATION_13_14 = object : Migration(13, 14) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `instruments` ADD COLUMN `coingeckoId` TEXT")
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `instruments` ADD COLUMN `coingeckoId` TEXT")
+                db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `exchange_rate_cache` (" +
                             "`pairKey` TEXT NOT NULL PRIMARY KEY, " +
                             "`instrumentCode` TEXT NOT NULL, " +
@@ -237,8 +238,8 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         private val MIGRATION_14_15 = object : Migration(14, 15) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `instruments` ADD COLUMN `stockApiSymbol` TEXT")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `instruments` ADD COLUMN `stockApiSymbol` TEXT")
             }
         }
 

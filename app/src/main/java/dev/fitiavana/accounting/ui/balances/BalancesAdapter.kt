@@ -6,8 +6,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.data.model.Instrument
-import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
+import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

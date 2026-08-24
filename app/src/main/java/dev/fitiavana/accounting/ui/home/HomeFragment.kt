@@ -12,19 +12,15 @@ import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.BalanceRepository
-import dev.fitiavana.accounting.data.repository.ExchangeRateRepository
-import dev.fitiavana.accounting.data.repository.InstrumentRepository
-import dev.fitiavana.accounting.db.AppDatabase
-import dev.fitiavana.accounting.ui.homedetail.HomeDetailActivity
+import dev.fitiavana.accounting.ui.common.ReportAdapter
 
 class HomeFragment : Fragment() {
 
     private lateinit var viewModel: HomeViewModel
     private lateinit var adapter: HomeAdapter
-    private lateinit var balanceSheetAdapter: BalanceSheetAdapter
+    private lateinit var balanceSheetAdapter: ReportAdapter
     private lateinit var assetsPieChartAdapter: AssetsPieChartAdapter
     private lateinit var noteAdapter: HomeNoteAdapter
     private lateinit var swipeRefresh: SwipeRefreshLayout
@@ -36,11 +32,11 @@ class HomeFragment : Fragment() {
     ): View = inflater.inflate(R.layout.fragment_home, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val db = AppDatabase.getInstance(requireContext())
-        val balanceRepo = BalanceRepository(db.accountDao(), db.accountBalanceDao(), db.transactionDao())
-        val accountRepo = AccountRepository(db.accountDao())
-        val instrumentRepo = InstrumentRepository(db.instrumentDao(), db.accountDao())
-        val exchangeRateRepo = ExchangeRateRepository(db.exchangeRateCacheDao())
+        val container = AppContainer.getInstance(requireContext())
+        val balanceRepo = container.balanceRepository
+        val accountRepo = container.accountRepository
+        val instrumentRepo = container.instrumentRepository
+        val exchangeRateRepo = container.exchangeRateRepository
 
         viewModel = ViewModelProvider(
             this,
@@ -50,7 +46,7 @@ class HomeFragment : Fragment() {
         adapter = HomeAdapter { item ->
             startActivity(HomeDetailActivity.intent(requireContext(), item.accountId))
         }
-        balanceSheetAdapter = BalanceSheetAdapter()
+        balanceSheetAdapter = ReportAdapter()
         assetsPieChartAdapter = AssetsPieChartAdapter()
         noteAdapter = HomeNoteAdapter()
         val recycler = view.findViewById<RecyclerView>(R.id.recycler_home)

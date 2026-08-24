@@ -23,19 +23,19 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.editaccount.EditAccountActivity"
+            android:name=".ui.accounts.EditAccountActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
         <activity
-            android:name=".ui.addtransaction.AddTransactionActivity"
+            android:name=".ui.transactions.AddTransactionActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
         <activity
-            android:name=".ui.transactiondetail.TransactionDetailActivity"
+            android:name=".ui.transactions.TransactionDetailActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
         <activity
-            android:name=".ui.editinstrument.EditInstrumentActivity"
+            android:name=".ui.instruments.EditInstrumentActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
         <activity
@@ -47,7 +47,7 @@
             android:exported="false"
             android:parentActivityName=".MainActivity" />
         <activity
-            android:name=".ui.homedetail.HomeDetailActivity"
+            android:name=".ui.home.HomeDetailActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
     </application>
