@@ -1,11 +1,8 @@
 package dev.fitiavana.accounting.features.balances
 
 import androidx.lifecycle.LiveData
-import dev.fitiavana.accounting.features.balances.AccountBalanceDao
 import dev.fitiavana.accounting.features.accounts.AccountDao
 import dev.fitiavana.accounting.features.transactions.TransactionDao
-import dev.fitiavana.accounting.features.balances.AccountBalance
-import dev.fitiavana.accounting.features.balances.BalanceCalculator
 
 class BalanceRepository(
     private val accountDao: AccountDao,
@@ -13,8 +10,11 @@ class BalanceRepository(
     private val transactionDao: TransactionDao
 ) {
     fun getAll(): LiveData<List<AccountBalance>> = balanceDao.getAll()
+
     fun getAllSync(): List<AccountBalance> = balanceDao.getAllSync()
-    fun getByAccountId(accountId: String): AccountBalance? = balanceDao.getByAccountId(accountId)
+
+    fun getByAccountId(accountId: String): AccountBalance? =
+        balanceDao.getByAccountId(accountId)
 
     fun recalculateForAccount(accountId: String, accountType: String) {
         val totalDebits = transactionDao.sumDebitsForAccount(accountId)
@@ -32,9 +32,15 @@ class BalanceRepository(
             totalInstrumentCredits
         )
 
-        val totalIntermediaryDebits = transactionDao.sumIntermediaryDebitsForAccount(accountId)
-        val totalIntermediaryCredits = transactionDao.sumIntermediaryCreditsForAccount(accountId)
-        val intermediaryBalance = BalanceCalculator.compute(accountType, totalIntermediaryDebits, totalIntermediaryCredits)
+        val totalIntermediaryDebits =
+            transactionDao.sumIntermediaryDebitsForAccount(accountId)
+        val totalIntermediaryCredits =
+            transactionDao.sumIntermediaryCreditsForAccount(accountId)
+        val intermediaryBalance = BalanceCalculator.compute(
+            accountType,
+            totalIntermediaryDebits,
+            totalIntermediaryCredits
+        )
 
         val now = System.currentTimeMillis()
         val existing = balanceDao.getByAccountId(accountId)
@@ -64,18 +70,36 @@ class BalanceRepository(
     fun computeBalancesAsOf(asOfMs: Long): Map<String, Long> {
         val accounts = accountDao.getAllSync()
         return accounts.associate { account ->
-            val debits = transactionDao.sumDebitsForAccountUpTo(account.id, asOfMs)
-            val credits = transactionDao.sumCreditsForAccountUpTo(account.id, asOfMs)
-            account.id to BalanceCalculator.compute(account.type, debits, credits)
+            val debits =
+                transactionDao.sumDebitsForAccountUpTo(account.id, asOfMs)
+            val credits =
+                transactionDao.sumCreditsForAccountUpTo(account.id, asOfMs)
+            account.id to BalanceCalculator.compute(
+                account.type,
+                debits,
+                credits
+            )
         }
     }
 
     fun computeBalancesBetween(startMs: Long, endMs: Long): Map<String, Long> {
         val accounts = accountDao.getAllSync()
         return accounts.associate { account ->
-            val debits = transactionDao.sumDebitsForAccountBetween(account.id, startMs, endMs)
-            val credits = transactionDao.sumCreditsForAccountBetween(account.id, startMs, endMs)
-            account.id to BalanceCalculator.compute(account.type, debits, credits)
+            val debits = transactionDao.sumDebitsForAccountBetween(
+                account.id,
+                startMs,
+                endMs
+            )
+            val credits = transactionDao.sumCreditsForAccountBetween(
+                account.id,
+                startMs,
+                endMs
+            )
+            account.id to BalanceCalculator.compute(
+                account.type,
+                debits,
+                credits
+            )
         }
     }
 
