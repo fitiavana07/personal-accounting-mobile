@@ -9,7 +9,11 @@ internal fun linesFor(
     accountMap: Map<String, Account>,
     balances: List<AccountBalance>,
     type: String
-): List<NamedBalance> = linesFor(accountMap, balances.associate { it.accountId to it.balance }, type)
+): List<NamedBalance> = linesFor(
+    accountMap,
+    balances.associate { it.accountId to it.balance },
+    type
+)
 
 internal fun linesFor(
     accountMap: Map<String, Account>,
