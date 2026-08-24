@@ -12,26 +12,26 @@ object BalanceSheetBuilder {
         val includedBalances = balances.filter { accountMap.containsKey(it.accountId) }
         if (includedBalances.isEmpty()) return emptyList()
 
-        fun linesFor(type: String): List<NamedBalance> =
+        fun linesFor(type: String): List<NamedAmount> =
             linesFor(accountMap, includedBalances, type)
 
-        val assetLines = linesFor("asset").sortedByDescending { it.balance }
+        val assetLines = linesFor("asset").sortedByDescending { it.amount }
         val liabilityLines = linesFor("liability")
         val equityLines = linesFor("equity")
-        val incomeLines = linesFor("revenue").sortedByDescending { it.balance }
-        val expenseLines = linesFor("expense").sortedByDescending { it.balance }
+        val incomeLines = linesFor("revenue").sortedByDescending { it.amount }
+        val expenseLines = linesFor("expense").sortedByDescending { it.amount }
         val gainLines = linesFor("gain")
         val lossLines = linesFor("loss")
         val drawingLines = linesFor("drawing")
 
-        val totalAssets = assetLines.sumOf { it.balance }
-        val totalLiabilities = liabilityLines.sumOf { it.balance }
-        val totalOriginalEquity = equityLines.sumOf { it.balance }
-        val totalIncome = incomeLines.sumOf { it.balance }
-        val totalExpense = expenseLines.sumOf { it.balance }
-        val totalGain = gainLines.sumOf { it.balance }
-        val totalLoss = lossLines.sumOf { it.balance }
-        val totalDrawing = drawingLines.sumOf { it.balance }
+        val totalAssets = assetLines.sumOf { it.amount }
+        val totalLiabilities = liabilityLines.sumOf { it.amount }
+        val totalOriginalEquity = equityLines.sumOf { it.amount }
+        val totalIncome = incomeLines.sumOf { it.amount }
+        val totalExpense = expenseLines.sumOf { it.amount }
+        val totalGain = gainLines.sumOf { it.amount }
+        val totalLoss = lossLines.sumOf { it.amount }
+        val totalDrawing = drawingLines.sumOf { it.amount }
         val totalEquity = totalOriginalEquity + totalIncome - totalExpense + totalGain - totalLoss - totalDrawing
 
         val rows = mutableListOf<BalanceSheetRow>()
@@ -39,17 +39,17 @@ object BalanceSheetBuilder {
 
         if (assetLines.isNotEmpty()) {
             val (mainAssetLines, otherAssetLines) = assetLines.partition {
-                Math.abs(it.balance) >= OTHER_ASSET_THRESHOLD
+                Math.abs(it.amount) >= OTHER_ASSET_THRESHOLD
             }
 
             rows += BalanceSheetRow.SectionHeader("Assets")
             mainAssetLines.forEachIndexed { index, line ->
-                rows += BalanceSheetRow.AccountLine(line.name, line.balance, assetIndex = index)
+                rows += BalanceSheetRow.AccountLine(line.name, line.amount, assetIndex = index)
             }
             if (otherAssetLines.isNotEmpty()) {
                 rows += BalanceSheetRow.AccountLine(
                     "Other",
-                    otherAssetLines.sumOf { it.balance },
+                    otherAssetLines.sumOf { it.amount },
                     assetIndex = mainAssetLines.size
                 )
             }
@@ -58,7 +58,7 @@ object BalanceSheetBuilder {
 
         if (liabilityLines.isNotEmpty()) {
             rows += BalanceSheetRow.SectionHeader("Liabilities")
-            liabilityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.balance) }
+            liabilityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
             rows += BalanceSheetRow.TotalLine("Total Liabilities", totalLiabilities, emphasized = true)
         }
 
@@ -71,32 +71,32 @@ object BalanceSheetBuilder {
 
             if (equityLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Original Equity")
-                equityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.balance) }
+                equityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
                 rows += BalanceSheetRow.TotalLine("Total Original Equity", totalOriginalEquity)
             }
             if (incomeLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Income")
-                incomeLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.balance) }
+                incomeLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
                 rows += BalanceSheetRow.TotalLine("Total Income", totalIncome)
             }
             if (expenseLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Expense")
-                expenseLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.balance, contra = true) }
+                expenseLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount, contra = true) }
                 rows += BalanceSheetRow.TotalLine("Total Expense", totalExpense, contra = true)
             }
             if (gainLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Gain")
-                gainLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.balance) }
+                gainLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
                 rows += BalanceSheetRow.TotalLine("Total Gain", totalGain)
             }
             if (lossLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Loss")
-                lossLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.balance, contra = true) }
+                lossLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount, contra = true) }
                 rows += BalanceSheetRow.TotalLine("Total Loss", totalLoss, contra = true)
             }
             if (drawingLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Drawing")
-                drawingLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.balance, contra = true) }
+                drawingLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount, contra = true) }
                 rows += BalanceSheetRow.TotalLine("Total Drawing", totalDrawing, contra = true)
             }
 
@@ -133,48 +133,48 @@ object BalanceSheetBuilder {
     fun buildMonthly(accounts: List<Account>, balancesByAccountId: Map<String, Long>): List<BalanceSheetRow> {
         val accountMap = accounts.associateBy { it.id }
 
-        fun linesFor(type: String): List<NamedBalance> =
+        fun linesFor(type: String): List<NamedAmount> =
             linesFor(accountMap, balancesByAccountId, type)
 
-        val assetLines = linesFor("asset").sortedByDescending { it.balance }
+        val assetLines = linesFor("asset").sortedByDescending { it.amount }
         val liabilityLines = linesFor("liability")
         val equityLines = linesFor("equity")
-        val incomeLines = linesFor("revenue").sortedByDescending { it.balance }
-        val expenseLines = linesFor("expense").sortedByDescending { it.balance }
+        val incomeLines = linesFor("revenue").sortedByDescending { it.amount }
+        val expenseLines = linesFor("expense").sortedByDescending { it.amount }
         val gainLines = linesFor("gain")
         val lossLines = linesFor("loss")
         val drawingLines = linesFor("drawing")
 
-        val totalAssets = assetLines.sumOf { it.balance }
-        val totalLiabilities = liabilityLines.sumOf { it.balance }
-        val totalOriginalEquity = equityLines.sumOf { it.balance }
-        val totalIncome = incomeLines.sumOf { it.balance }
-        val totalExpense = expenseLines.sumOf { it.balance }
-        val totalGain = gainLines.sumOf { it.balance }
-        val totalLoss = lossLines.sumOf { it.balance }
-        val totalDrawing = drawingLines.sumOf { it.balance }
+        val totalAssets = assetLines.sumOf { it.amount }
+        val totalLiabilities = liabilityLines.sumOf { it.amount }
+        val totalOriginalEquity = equityLines.sumOf { it.amount }
+        val totalIncome = incomeLines.sumOf { it.amount }
+        val totalExpense = expenseLines.sumOf { it.amount }
+        val totalGain = gainLines.sumOf { it.amount }
+        val totalLoss = lossLines.sumOf { it.amount }
+        val totalDrawing = drawingLines.sumOf { it.amount }
         val totalEquity = totalOriginalEquity + totalIncome - totalExpense + totalGain - totalLoss - totalDrawing
 
         val rows = mutableListOf<BalanceSheetRow>()
 
         if (assetLines.isNotEmpty()) {
             val (mainAssetLines, otherAssetLines) = assetLines.partition {
-                Math.abs(it.balance) >= OTHER_ASSET_THRESHOLD
+                Math.abs(it.amount) >= OTHER_ASSET_THRESHOLD
             }
 
             rows += BalanceSheetRow.SectionHeader("Assets")
             mainAssetLines.forEach { line ->
-                rows += BalanceSheetRow.AccountLine(line.name, line.balance)
+                rows += BalanceSheetRow.AccountLine(line.name, line.amount)
             }
             if (otherAssetLines.isNotEmpty()) {
-                rows += BalanceSheetRow.AccountLine("Other", otherAssetLines.sumOf { it.balance })
+                rows += BalanceSheetRow.AccountLine("Other", otherAssetLines.sumOf { it.amount })
             }
             rows += BalanceSheetRow.TotalLine("Total Assets", totalAssets, emphasized = true)
         }
 
         if (liabilityLines.isNotEmpty()) {
             rows += BalanceSheetRow.SectionHeader("Liabilities")
-            liabilityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.balance) }
+            liabilityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
             rows += BalanceSheetRow.TotalLine("Total Liabilities", totalLiabilities, emphasized = true)
         }
 
@@ -186,7 +186,7 @@ object BalanceSheetBuilder {
 
             if (equityLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Original Equity")
-                equityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.balance) }
+                equityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
                 rows += BalanceSheetRow.TotalLine("Total Original Equity", totalOriginalEquity)
             }
 
@@ -212,7 +212,7 @@ object BalanceSheetBuilder {
 
             if (drawingLines.isNotEmpty()) {
                 rows += BalanceSheetRow.SubsectionHeader("Drawing")
-                drawingLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.balance, contra = true) }
+                drawingLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount, contra = true) }
                 rows += BalanceSheetRow.TotalLine("Total Drawing", totalDrawing, contra = true)
             }
 
