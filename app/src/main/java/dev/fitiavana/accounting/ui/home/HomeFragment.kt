@@ -14,12 +14,13 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.ui.common.ReportAdapter
 
 class HomeFragment : Fragment() {
 
     private lateinit var viewModel: HomeViewModel
     private lateinit var adapter: HomeAdapter
-    private lateinit var balanceSheetAdapter: BalanceSheetAdapter
+    private lateinit var balanceSheetAdapter: ReportAdapter
     private lateinit var assetsPieChartAdapter: AssetsPieChartAdapter
     private lateinit var noteAdapter: HomeNoteAdapter
     private lateinit var swipeRefresh: SwipeRefreshLayout
@@ -45,7 +46,7 @@ class HomeFragment : Fragment() {
         adapter = HomeAdapter { item ->
             startActivity(HomeDetailActivity.intent(requireContext(), item.accountId))
         }
-        balanceSheetAdapter = BalanceSheetAdapter()
+        balanceSheetAdapter = ReportAdapter()
         assetsPieChartAdapter = AssetsPieChartAdapter()
         noteAdapter = HomeNoteAdapter()
         val recycler = view.findViewById<RecyclerView>(R.id.recycler_home)

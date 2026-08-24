@@ -13,6 +13,8 @@ import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.exchangerates.RefreshResult
 import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
+import dev.fitiavana.accounting.ui.common.ReportDisplayRow
+import dev.fitiavana.accounting.ui.common.ReportPresenter
 
 class HomeViewModel(
     private val balanceRepository: BalanceRepository,
@@ -54,12 +56,12 @@ class HomeViewModel(
         }
     }
 
-    val balanceSheetRows = MediatorLiveData<List<BalanceSheetRow>>().apply {
+    val balanceSheetRows = MediatorLiveData<List<ReportDisplayRow>>().apply {
         var latestBalances: List<AccountBalance> = emptyList()
         var latestAccounts: List<Account> = emptyList()
 
         fun update() {
-            value = BalanceSheetPresenter.present(BalanceSheetBuilder.build(latestAccounts, latestBalances))
+            value = ReportPresenter.present(BalanceSheetBuilder.build(latestAccounts, latestBalances))
         }
 
         addSource(balances) { b ->

@@ -7,7 +7,7 @@ object BalanceSheetBuilder {
 
     private const val OTHER_ASSET_THRESHOLD = 10_000L
 
-    fun build(accounts: List<Account>, balances: List<AccountBalance>): List<BalanceSheetRow> {
+    fun build(accounts: List<Account>, balances: List<AccountBalance>): List<ReportRow> {
         val accountMap = accounts.associateBy { it.id }
         val includedBalances = balances.filter { accountMap.containsKey(it.accountId) }
         if (includedBalances.isEmpty()) return emptyList()
@@ -34,32 +34,32 @@ object BalanceSheetBuilder {
         val totalDrawing = drawingLines.sumOf { it.amount }
         val totalEquity = totalOriginalEquity + totalIncome - totalExpense + totalGain - totalLoss - totalDrawing
 
-        val rows = mutableListOf<BalanceSheetRow>()
-        rows += BalanceSheetRow.Title("Instant Balance Sheet")
+        val rows = mutableListOf<ReportRow>()
+        rows += ReportRow.Title("Instant Balance Sheet")
 
         if (assetLines.isNotEmpty()) {
             val (mainAssetLines, otherAssetLines) = assetLines.partition {
                 Math.abs(it.amount) >= OTHER_ASSET_THRESHOLD
             }
 
-            rows += BalanceSheetRow.SectionHeader("Assets")
+            rows += ReportRow.SectionHeader("Assets")
             mainAssetLines.forEachIndexed { index, line ->
-                rows += BalanceSheetRow.AccountLine(line.name, line.amount, assetIndex = index)
+                rows += ReportRow.AccountLine(line.name, line.amount, assetIndex = index)
             }
             if (otherAssetLines.isNotEmpty()) {
-                rows += BalanceSheetRow.AccountLine(
+                rows += ReportRow.AccountLine(
                     "Other",
                     otherAssetLines.sumOf { it.amount },
                     assetIndex = mainAssetLines.size
                 )
             }
-            rows += BalanceSheetRow.TotalLine("Total Assets", totalAssets, emphasized = true)
+            rows += ReportRow.TotalLine("Total Assets", totalAssets, emphasized = true)
         }
 
         if (liabilityLines.isNotEmpty()) {
-            rows += BalanceSheetRow.SectionHeader("Liabilities")
-            liabilityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
-            rows += BalanceSheetRow.TotalLine("Total Liabilities", totalLiabilities, emphasized = true)
+            rows += ReportRow.SectionHeader("Liabilities")
+            liabilityLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount) }
+            rows += ReportRow.TotalLine("Total Liabilities", totalLiabilities, emphasized = true)
         }
 
         val hasEquitySection = listOf(
@@ -67,37 +67,37 @@ object BalanceSheetBuilder {
         ).any { it.isNotEmpty() }
 
         if (hasEquitySection) {
-            rows += BalanceSheetRow.SectionHeader("Equity")
+            rows += ReportRow.SectionHeader("Equity")
 
             if (equityLines.isNotEmpty()) {
-                rows += BalanceSheetRow.SubsectionHeader("Original Equity")
-                equityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
-                rows += BalanceSheetRow.TotalLine("Total Original Equity", totalOriginalEquity)
+                rows += ReportRow.SubsectionHeader("Original Equity")
+                equityLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount) }
+                rows += ReportRow.TotalLine("Total Original Equity", totalOriginalEquity)
             }
             if (incomeLines.isNotEmpty()) {
-                rows += BalanceSheetRow.SubsectionHeader("Income")
-                incomeLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
-                rows += BalanceSheetRow.TotalLine("Total Income", totalIncome)
+                rows += ReportRow.SubsectionHeader("Income")
+                incomeLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount) }
+                rows += ReportRow.TotalLine("Total Income", totalIncome)
             }
             if (expenseLines.isNotEmpty()) {
-                rows += BalanceSheetRow.SubsectionHeader("Expense")
-                expenseLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount, contra = true) }
-                rows += BalanceSheetRow.TotalLine("Total Expense", totalExpense, contra = true)
+                rows += ReportRow.SubsectionHeader("Expense")
+                expenseLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount, contra = true) }
+                rows += ReportRow.TotalLine("Total Expense", totalExpense, contra = true)
             }
             if (gainLines.isNotEmpty()) {
-                rows += BalanceSheetRow.SubsectionHeader("Gain")
-                gainLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
-                rows += BalanceSheetRow.TotalLine("Total Gain", totalGain)
+                rows += ReportRow.SubsectionHeader("Gain")
+                gainLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount) }
+                rows += ReportRow.TotalLine("Total Gain", totalGain)
             }
             if (lossLines.isNotEmpty()) {
-                rows += BalanceSheetRow.SubsectionHeader("Loss")
-                lossLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount, contra = true) }
-                rows += BalanceSheetRow.TotalLine("Total Loss", totalLoss, contra = true)
+                rows += ReportRow.SubsectionHeader("Loss")
+                lossLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount, contra = true) }
+                rows += ReportRow.TotalLine("Total Loss", totalLoss, contra = true)
             }
             if (drawingLines.isNotEmpty()) {
-                rows += BalanceSheetRow.SubsectionHeader("Drawing")
-                drawingLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount, contra = true) }
-                rows += BalanceSheetRow.TotalLine("Total Drawing", totalDrawing, contra = true)
+                rows += ReportRow.SubsectionHeader("Drawing")
+                drawingLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount, contra = true) }
+                rows += ReportRow.TotalLine("Total Drawing", totalDrawing, contra = true)
             }
 
             val hasChangesInEquity = listOf(
@@ -105,18 +105,18 @@ object BalanceSheetBuilder {
             ).any { it.isNotEmpty() }
             if (hasChangesInEquity) {
                 val totalChangesInEquity = totalIncome - totalExpense + totalGain - totalLoss - totalDrawing
-                rows += BalanceSheetRow.TotalLine(
+                rows += ReportRow.TotalLine(
                     "Total Changes in Equity",
                     totalChangesInEquity,
                     contra = true
                 )
             }
 
-            rows += BalanceSheetRow.TotalLine("Total Equity", totalEquity, emphasized = true)
+            rows += ReportRow.TotalLine("Total Equity", totalEquity, emphasized = true)
         }
 
         val balanceDate = includedBalances.maxOf { it.updatedAt }
-        rows += BalanceSheetRow.DateLine(balanceDate)
+        rows += ReportRow.DateLine(balanceDate)
 
         return rows
     }
@@ -130,7 +130,7 @@ object BalanceSheetBuilder {
      * Total Assets = Total Liabilities + Total Equity holds; only the intermediate
      * "Total Changes in Equity" line is omitted.
      */
-    fun buildMonthly(accounts: List<Account>, balancesByAccountId: Map<String, Long>): List<BalanceSheetRow> {
+    fun buildMonthly(accounts: List<Account>, balancesByAccountId: Map<String, Long>): List<ReportRow> {
         val accountMap = accounts.associateBy { it.id }
 
         fun linesFor(type: String): List<NamedAmount> =
@@ -155,68 +155,68 @@ object BalanceSheetBuilder {
         val totalDrawing = drawingLines.sumOf { it.amount }
         val totalEquity = totalOriginalEquity + totalIncome - totalExpense + totalGain - totalLoss - totalDrawing
 
-        val rows = mutableListOf<BalanceSheetRow>()
+        val rows = mutableListOf<ReportRow>()
 
         if (assetLines.isNotEmpty()) {
             val (mainAssetLines, otherAssetLines) = assetLines.partition {
                 Math.abs(it.amount) >= OTHER_ASSET_THRESHOLD
             }
 
-            rows += BalanceSheetRow.SectionHeader("Assets")
+            rows += ReportRow.SectionHeader("Assets")
             mainAssetLines.forEach { line ->
-                rows += BalanceSheetRow.AccountLine(line.name, line.amount)
+                rows += ReportRow.AccountLine(line.name, line.amount)
             }
             if (otherAssetLines.isNotEmpty()) {
-                rows += BalanceSheetRow.AccountLine("Other", otherAssetLines.sumOf { it.amount })
+                rows += ReportRow.AccountLine("Other", otherAssetLines.sumOf { it.amount })
             }
-            rows += BalanceSheetRow.TotalLine("Total Assets", totalAssets, emphasized = true)
+            rows += ReportRow.TotalLine("Total Assets", totalAssets, emphasized = true)
         }
 
         if (liabilityLines.isNotEmpty()) {
-            rows += BalanceSheetRow.SectionHeader("Liabilities")
-            liabilityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
-            rows += BalanceSheetRow.TotalLine("Total Liabilities", totalLiabilities, emphasized = true)
+            rows += ReportRow.SectionHeader("Liabilities")
+            liabilityLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount) }
+            rows += ReportRow.TotalLine("Total Liabilities", totalLiabilities, emphasized = true)
         }
 
         val hasUnclosedIsAccounts = listOf(incomeLines, expenseLines, gainLines, lossLines).any { it.isNotEmpty() }
         val hasEquitySection = listOf(equityLines, drawingLines).any { it.isNotEmpty() } || hasUnclosedIsAccounts
 
         if (hasEquitySection) {
-            rows += BalanceSheetRow.SectionHeader("Equity")
+            rows += ReportRow.SectionHeader("Equity")
 
             if (equityLines.isNotEmpty()) {
-                rows += BalanceSheetRow.SubsectionHeader("Original Equity")
-                equityLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
-                rows += BalanceSheetRow.TotalLine("Total Original Equity", totalOriginalEquity)
+                rows += ReportRow.SubsectionHeader("Original Equity")
+                equityLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount) }
+                rows += ReportRow.TotalLine("Total Original Equity", totalOriginalEquity)
             }
 
             if (hasUnclosedIsAccounts) {
-                rows += BalanceSheetRow.SubsectionHeader("Unclosed Income Statement accounts")
+                rows += ReportRow.SubsectionHeader("Unclosed Income Statement accounts")
                 if (incomeLines.isNotEmpty()) {
-                    rows += BalanceSheetRow.AccountLine("Income", totalIncome, arPrefixed = true)
+                    rows += ReportRow.AccountLine("Income", totalIncome, arPrefixed = true)
                 }
                 if (expenseLines.isNotEmpty()) {
-                    rows += BalanceSheetRow.AccountLine("Expense", totalExpense, contra = true, arPrefixed = true)
+                    rows += ReportRow.AccountLine("Expense", totalExpense, contra = true, arPrefixed = true)
                 }
                 if (gainLines.isNotEmpty()) {
-                    rows += BalanceSheetRow.AccountLine("Gain", totalGain, arPrefixed = true)
+                    rows += ReportRow.AccountLine("Gain", totalGain, arPrefixed = true)
                 }
                 if (lossLines.isNotEmpty()) {
-                    rows += BalanceSheetRow.AccountLine("Loss", totalLoss, contra = true, arPrefixed = true)
+                    rows += ReportRow.AccountLine("Loss", totalLoss, contra = true, arPrefixed = true)
                 }
-                rows += BalanceSheetRow.TotalLine(
+                rows += ReportRow.TotalLine(
                     "Total Unclosed IS accounts",
                     totalIncome - totalExpense + totalGain - totalLoss
                 )
             }
 
             if (drawingLines.isNotEmpty()) {
-                rows += BalanceSheetRow.SubsectionHeader("Drawing")
-                drawingLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount, contra = true) }
-                rows += BalanceSheetRow.TotalLine("Total Drawing", totalDrawing, contra = true)
+                rows += ReportRow.SubsectionHeader("Drawing")
+                drawingLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount, contra = true) }
+                rows += ReportRow.TotalLine("Total Drawing", totalDrawing, contra = true)
             }
 
-            rows += BalanceSheetRow.TotalLine("Total Equity", totalEquity, emphasized = true)
+            rows += ReportRow.TotalLine("Total Equity", totalEquity, emphasized = true)
         }
 
         return rows

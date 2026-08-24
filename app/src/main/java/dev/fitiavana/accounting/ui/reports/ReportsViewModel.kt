@@ -8,8 +8,8 @@ import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
 import dev.fitiavana.accounting.features.reports.IncomeStatementBuilder
-import dev.fitiavana.accounting.ui.home.BalanceSheetPresenter
-import dev.fitiavana.accounting.ui.home.BalanceSheetRow
+import dev.fitiavana.accounting.ui.common.ReportPresenter
+import dev.fitiavana.accounting.ui.common.ReportDisplayRow
 
 class ReportsViewModel(
     private val accountRepository: AccountRepository,
@@ -46,8 +46,8 @@ class ReportsViewModel(
     private val _asOfDateText = MutableLiveData<String>()
     val asOfDateText: LiveData<String> = _asOfDateText
 
-    private val _balanceSheetRows = MutableLiveData<List<BalanceSheetRow>>(emptyList())
-    val balanceSheetRows: LiveData<List<BalanceSheetRow>> = _balanceSheetRows
+    private val _balanceSheetRows = MutableLiveData<List<ReportDisplayRow>>(emptyList())
+    val balanceSheetRows: LiveData<List<ReportDisplayRow>> = _balanceSheetRows
 
     /** Kicks off the initial background load. Safe to call from every onViewCreated — a no-op after the first call. */
     fun start() {
@@ -130,9 +130,9 @@ class ReportsViewModel(
         _balanceSheetRows.postValue(
             when (type) {
                 ReportType.BALANCE_SHEET ->
-                    BalanceSheetPresenter.present(BalanceSheetBuilder.buildMonthly(lastAccounts, lastBalances))
+                    ReportPresenter.present(BalanceSheetBuilder.buildMonthly(lastAccounts, lastBalances))
                 ReportType.INCOME_STATEMENT ->
-                    BalanceSheetPresenter.present(IncomeStatementBuilder.build(lastAccounts, lastPeriodBalances))
+                    ReportPresenter.present(IncomeStatementBuilder.build(lastAccounts, lastPeriodBalances))
                 ReportType.CHANGES_IN_EQUITY -> emptyList()
             }
         )

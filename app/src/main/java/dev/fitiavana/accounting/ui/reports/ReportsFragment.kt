@@ -11,12 +11,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.ui.home.BalanceSheetAdapter
+import dev.fitiavana.accounting.ui.common.ReportAdapter
 
 class ReportsFragment : Fragment() {
 
     private lateinit var viewModel: ReportsViewModel
-    private lateinit var contentAdapter: BalanceSheetAdapter
+    private lateinit var contentAdapter: ReportAdapter
     private lateinit var yearsAdapter: PeriodSelectorAdapter<Int>
     private lateinit var monthsAdapter: PeriodSelectorAdapter<Int>
     private lateinit var reportTypeAdapter: PeriodSelectorAdapter<ReportType>
@@ -38,7 +38,7 @@ class ReportsFragment : Fragment() {
         yearsAdapter = PeriodSelectorAdapter(labelFor = { it.toString() }, onSelected = { viewModel.selectYear(it) })
         monthsAdapter = PeriodSelectorAdapter(labelFor = { ReportPeriodSelector.monthName(it) }, onSelected = { viewModel.selectMonth(it) })
         reportTypeAdapter = PeriodSelectorAdapter(labelFor = { it.label }, onSelected = { viewModel.selectReportType(it) })
-        contentAdapter = BalanceSheetAdapter()
+        contentAdapter = ReportAdapter()
 
         view.findViewById<RecyclerView>(R.id.recycler_reports_years).apply {
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)

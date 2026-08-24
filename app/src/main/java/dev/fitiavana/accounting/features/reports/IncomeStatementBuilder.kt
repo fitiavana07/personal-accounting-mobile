@@ -9,7 +9,7 @@ import dev.fitiavana.accounting.features.accounts.Account
  */
 object IncomeStatementBuilder {
 
-    fun build(accounts: List<Account>, balancesByAccountId: Map<String, Long>): List<BalanceSheetRow> {
+    fun build(accounts: List<Account>, balancesByAccountId: Map<String, Long>): List<ReportRow> {
         val accountMap = accounts.associateBy { it.id }
 
         fun linesFor(type: String): List<NamedAmount> =
@@ -26,31 +26,31 @@ object IncomeStatementBuilder {
         val totalLoss = lossLines.sumOf { it.amount }
         val netIncome = totalIncome - totalExpense + totalGain - totalLoss
 
-        val rows = mutableListOf<BalanceSheetRow>()
+        val rows = mutableListOf<ReportRow>()
 
         if (incomeLines.isNotEmpty()) {
-            rows += BalanceSheetRow.SectionHeader("Income")
-            incomeLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
-            rows += BalanceSheetRow.TotalLine("Total Income", totalIncome, emphasized = true)
+            rows += ReportRow.SectionHeader("Income")
+            incomeLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount) }
+            rows += ReportRow.TotalLine("Total Income", totalIncome, emphasized = true)
         }
         if (expenseLines.isNotEmpty()) {
-            rows += BalanceSheetRow.SectionHeader("Expense")
-            expenseLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount, contra = true) }
-            rows += BalanceSheetRow.TotalLine("Total Expense", totalExpense, emphasized = true, contra = true)
+            rows += ReportRow.SectionHeader("Expense")
+            expenseLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount, contra = true) }
+            rows += ReportRow.TotalLine("Total Expense", totalExpense, emphasized = true, contra = true)
         }
         if (gainLines.isNotEmpty()) {
-            rows += BalanceSheetRow.SectionHeader("Gain")
-            gainLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount) }
-            rows += BalanceSheetRow.TotalLine("Total Gain", totalGain, emphasized = true)
+            rows += ReportRow.SectionHeader("Gain")
+            gainLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount) }
+            rows += ReportRow.TotalLine("Total Gain", totalGain, emphasized = true)
         }
         if (lossLines.isNotEmpty()) {
-            rows += BalanceSheetRow.SectionHeader("Loss")
-            lossLines.forEach { rows += BalanceSheetRow.AccountLine(it.name, it.amount, contra = true) }
-            rows += BalanceSheetRow.TotalLine("Total Loss", totalLoss, emphasized = true, contra = true)
+            rows += ReportRow.SectionHeader("Loss")
+            lossLines.forEach { rows += ReportRow.AccountLine(it.name, it.amount, contra = true) }
+            rows += ReportRow.TotalLine("Total Loss", totalLoss, emphasized = true, contra = true)
         }
 
         if (rows.isNotEmpty()) {
-            rows += BalanceSheetRow.TotalLine("Net Income", netIncome, emphasized = true)
+            rows += ReportRow.TotalLine("Net Income", netIncome, emphasized = true)
         }
 
         return rows

@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting.ui.home
+package dev.fitiavana.accounting.ui.common
 
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
@@ -13,11 +13,11 @@ import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
 import java.util.Locale
 
-class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class ReportAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private var rows: List<BalanceSheetRow> = emptyList()
+    private var rows: List<ReportDisplayRow> = emptyList()
 
-    fun submitList(list: List<BalanceSheetRow>) {
+    fun submitList(list: List<ReportDisplayRow>) {
         rows = list
         notifyDataSetChanged()
     }
@@ -25,8 +25,8 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun getItemCount() = rows.size
 
     override fun getItemViewType(position: Int): Int = when (rows[position]) {
-        is BalanceSheetRow.Title -> VIEW_TYPE_TITLE
-        is BalanceSheetRow.DateLine -> VIEW_TYPE_DATE
+        is ReportDisplayRow.Title -> VIEW_TYPE_TITLE
+        is ReportDisplayRow.DateLine -> VIEW_TYPE_DATE
         else -> VIEW_TYPE_ROW
     }
 
@@ -41,25 +41,25 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val row = rows[position]) {
-            is BalanceSheetRow.Title -> (holder as TitleViewHolder).bind(row)
-            is BalanceSheetRow.DateLine -> (holder as DateViewHolder).bind(row)
-            is BalanceSheetRow.SectionHeader -> (holder as RowViewHolder).bindHeader(row)
-            is BalanceSheetRow.SubsectionHeader -> (holder as RowViewHolder).bindSubsectionHeader(row)
-            is BalanceSheetRow.AccountLine -> (holder as RowViewHolder).bindAccount(row)
-            is BalanceSheetRow.TotalLine -> (holder as RowViewHolder).bindTotal(row)
+            is ReportDisplayRow.Title -> (holder as TitleViewHolder).bind(row)
+            is ReportDisplayRow.DateLine -> (holder as DateViewHolder).bind(row)
+            is ReportDisplayRow.SectionHeader -> (holder as RowViewHolder).bindHeader(row)
+            is ReportDisplayRow.SubsectionHeader -> (holder as RowViewHolder).bindSubsectionHeader(row)
+            is ReportDisplayRow.AccountLine -> (holder as RowViewHolder).bindAccount(row)
+            is ReportDisplayRow.TotalLine -> (holder as RowViewHolder).bindTotal(row)
         }
     }
 
     class TitleViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val titleView: TextView = view.findViewById(R.id.text_balance_sheet_title)
-        fun bind(row: BalanceSheetRow.Title) {
+        fun bind(row: ReportDisplayRow.Title) {
             titleView.text = row.text
         }
     }
 
     class DateViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val dateView: TextView = view.findViewById(R.id.text_balance_sheet_date)
-        fun bind(row: BalanceSheetRow.DateLine) {
+        fun bind(row: ReportDisplayRow.DateLine) {
             dateView.text = row.text
         }
     }
@@ -74,7 +74,7 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val labelStartPadding = content.paddingStart
         private val labelIndentPadding = labelStartPadding + dpToPx(16f)
 
-        fun bindHeader(row: BalanceSheetRow.SectionHeader) {
+        fun bindHeader(row: ReportDisplayRow.SectionHeader) {
             labelView.text = row.title.uppercase(Locale.getDefault())
             amountView.text = ""
             setBold(true, 14f)
@@ -86,7 +86,7 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             setColorDot(null)
         }
 
-        fun bindSubsectionHeader(row: BalanceSheetRow.SubsectionHeader) {
+        fun bindSubsectionHeader(row: ReportDisplayRow.SubsectionHeader) {
             labelView.text = row.title
             amountView.text = ""
             setBold(true, 14f)
@@ -98,7 +98,7 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             setColorDot(null)
         }
 
-        fun bindAccount(row: BalanceSheetRow.AccountLine) {
+        fun bindAccount(row: ReportDisplayRow.AccountLine) {
             labelView.text = row.name
             amountView.text = row.amountText
             setBold(false, 15f)
@@ -125,7 +125,7 @@ class BalanceSheetAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             }
         }
 
-        fun bindTotal(row: BalanceSheetRow.TotalLine) {
+        fun bindTotal(row: ReportDisplayRow.TotalLine) {
             labelView.text = row.label
             amountView.text = row.amountText
             setBold(true, if (row.emphasized) 16f else 15f)

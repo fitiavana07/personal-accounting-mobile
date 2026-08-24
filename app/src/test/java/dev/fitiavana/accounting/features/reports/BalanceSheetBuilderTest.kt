@@ -3,7 +3,7 @@ package dev.fitiavana.accounting.features.reports
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
-import dev.fitiavana.accounting.features.reports.BalanceSheetRow
+import dev.fitiavana.accounting.features.reports.ReportRow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -34,11 +34,11 @@ class BalanceSheetBuilderTest {
 
         assertEquals(
             listOf(
-                BalanceSheetRow.Title("Instant Balance Sheet"),
-                BalanceSheetRow.SectionHeader("Assets"),
-                BalanceSheetRow.AccountLine("Cash", 10_000, assetIndex = 0),
-                BalanceSheetRow.TotalLine("Total Assets", 10_000, emphasized = true),
-                BalanceSheetRow.DateLine(0L)
+                ReportRow.Title("Instant Balance Sheet"),
+                ReportRow.SectionHeader("Assets"),
+                ReportRow.AccountLine("Cash", 10_000, assetIndex = 0),
+                ReportRow.TotalLine("Total Assets", 10_000, emphasized = true),
+                ReportRow.DateLine(0L)
             ),
             result
         )
@@ -54,7 +54,7 @@ class BalanceSheetBuilderTest {
             balances = listOf(balance("acc1", 10_000), balance("acc2", 20_000))
         )
 
-        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
         assertEquals(listOf("Alpha Loan", "Zebra Loan"), accountLines.map { it.name })
     }
 
@@ -68,7 +68,7 @@ class BalanceSheetBuilderTest {
             balances = listOf(balance("acc1", 10_000), balance("acc2", 20_000))
         )
 
-        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
         assertEquals(listOf("Alpha Bank", "Zebra Bank"), accountLines.map { it.name })
     }
 
@@ -82,7 +82,7 @@ class BalanceSheetBuilderTest {
             balances = listOf(balance("acc1", 100), balance("acc2", 500))
         )
 
-        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
         assertEquals(listOf("Big Client", "Small Client"), accountLines.map { it.name })
     }
 
@@ -96,7 +96,7 @@ class BalanceSheetBuilderTest {
             balances = listOf(balance("acc1", 50), balance("acc2", 800))
         )
 
-        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
         assertEquals(listOf("Rent", "Coffee"), accountLines.map { it.name })
     }
 
@@ -129,35 +129,35 @@ class BalanceSheetBuilderTest {
         // Total Equity = 500 + 140 = 640
         assertEquals(
             listOf(
-                BalanceSheetRow.Title("Instant Balance Sheet"),
-                BalanceSheetRow.SectionHeader("Assets"),
-                BalanceSheetRow.AccountLine("Cash", 10_000, assetIndex = 0),
-                BalanceSheetRow.TotalLine("Total Assets", 10_000, emphasized = true),
-                BalanceSheetRow.SectionHeader("Liabilities"),
-                BalanceSheetRow.AccountLine("Loan", 200),
-                BalanceSheetRow.TotalLine("Total Liabilities", 200, emphasized = true),
-                BalanceSheetRow.SectionHeader("Equity"),
-                BalanceSheetRow.SubsectionHeader("Original Equity"),
-                BalanceSheetRow.AccountLine("Owner Capital", 500),
-                BalanceSheetRow.TotalLine("Total Original Equity", 500),
-                BalanceSheetRow.SubsectionHeader("Income"),
-                BalanceSheetRow.AccountLine("Salary", 300),
-                BalanceSheetRow.TotalLine("Total Income", 300),
-                BalanceSheetRow.SubsectionHeader("Expense"),
-                BalanceSheetRow.AccountLine("Rent", 150, contra = true),
-                BalanceSheetRow.TotalLine("Total Expense", 150, contra = true),
-                BalanceSheetRow.SubsectionHeader("Gain"),
-                BalanceSheetRow.AccountLine("Stock Gain", 80),
-                BalanceSheetRow.TotalLine("Total Gain", 80),
-                BalanceSheetRow.SubsectionHeader("Loss"),
-                BalanceSheetRow.AccountLine("Stock Loss", 30, contra = true),
-                BalanceSheetRow.TotalLine("Total Loss", 30, contra = true),
-                BalanceSheetRow.SubsectionHeader("Drawing"),
-                BalanceSheetRow.AccountLine("Owner Drawing", 60, contra = true),
-                BalanceSheetRow.TotalLine("Total Drawing", 60, contra = true),
-                BalanceSheetRow.TotalLine("Total Changes in Equity", 140, contra = true),
-                BalanceSheetRow.TotalLine("Total Equity", 640, emphasized = true),
-                BalanceSheetRow.DateLine(300L)
+                ReportRow.Title("Instant Balance Sheet"),
+                ReportRow.SectionHeader("Assets"),
+                ReportRow.AccountLine("Cash", 10_000, assetIndex = 0),
+                ReportRow.TotalLine("Total Assets", 10_000, emphasized = true),
+                ReportRow.SectionHeader("Liabilities"),
+                ReportRow.AccountLine("Loan", 200),
+                ReportRow.TotalLine("Total Liabilities", 200, emphasized = true),
+                ReportRow.SectionHeader("Equity"),
+                ReportRow.SubsectionHeader("Original Equity"),
+                ReportRow.AccountLine("Owner Capital", 500),
+                ReportRow.TotalLine("Total Original Equity", 500),
+                ReportRow.SubsectionHeader("Income"),
+                ReportRow.AccountLine("Salary", 300),
+                ReportRow.TotalLine("Total Income", 300),
+                ReportRow.SubsectionHeader("Expense"),
+                ReportRow.AccountLine("Rent", 150, contra = true),
+                ReportRow.TotalLine("Total Expense", 150, contra = true),
+                ReportRow.SubsectionHeader("Gain"),
+                ReportRow.AccountLine("Stock Gain", 80),
+                ReportRow.TotalLine("Total Gain", 80),
+                ReportRow.SubsectionHeader("Loss"),
+                ReportRow.AccountLine("Stock Loss", 30, contra = true),
+                ReportRow.TotalLine("Total Loss", 30, contra = true),
+                ReportRow.SubsectionHeader("Drawing"),
+                ReportRow.AccountLine("Owner Drawing", 60, contra = true),
+                ReportRow.TotalLine("Total Drawing", 60, contra = true),
+                ReportRow.TotalLine("Total Changes in Equity", 140, contra = true),
+                ReportRow.TotalLine("Total Equity", 640, emphasized = true),
+                ReportRow.DateLine(300L)
             ),
             result
         )
@@ -172,14 +172,14 @@ class BalanceSheetBuilderTest {
 
         assertEquals(
             listOf(
-                BalanceSheetRow.Title("Instant Balance Sheet"),
-                BalanceSheetRow.SectionHeader("Equity"),
-                BalanceSheetRow.SubsectionHeader("Gain"),
-                BalanceSheetRow.AccountLine("Stock Gain", 80),
-                BalanceSheetRow.TotalLine("Total Gain", 80),
-                BalanceSheetRow.TotalLine("Total Changes in Equity", 80, contra = true),
-                BalanceSheetRow.TotalLine("Total Equity", 80, emphasized = true),
-                BalanceSheetRow.DateLine(0L)
+                ReportRow.Title("Instant Balance Sheet"),
+                ReportRow.SectionHeader("Equity"),
+                ReportRow.SubsectionHeader("Gain"),
+                ReportRow.AccountLine("Stock Gain", 80),
+                ReportRow.TotalLine("Total Gain", 80),
+                ReportRow.TotalLine("Total Changes in Equity", 80, contra = true),
+                ReportRow.TotalLine("Total Equity", 80, emphasized = true),
+                ReportRow.DateLine(0L)
             ),
             result
         )
@@ -192,7 +192,7 @@ class BalanceSheetBuilderTest {
             balances = listOf(balance("x", 500))
         )
 
-        val totalEquity = result.filterIsInstance<BalanceSheetRow.TotalLine>().last { it.label == "Total Equity" }
+        val totalEquity = result.filterIsInstance<ReportRow.TotalLine>().last { it.label == "Total Equity" }
         assertEquals(-500L, totalEquity.amount)
         assertEquals(false, totalEquity.contra)
     }
@@ -207,7 +207,7 @@ class BalanceSheetBuilderTest {
         val balances = listOf(balance("r", 300), balance("x", 900), balance("d", 60))
 
         val result = BalanceSheetBuilder.build(accounts, balances)
-        val totals = result.filterIsInstance<BalanceSheetRow.TotalLine>()
+        val totals = result.filterIsInstance<ReportRow.TotalLine>()
 
         // 300 - 900 - 60 = -660
         val changesInEquity = totals.single { it.label == "Total Changes in Equity" }
@@ -215,9 +215,9 @@ class BalanceSheetBuilderTest {
         assertEquals(true, changesInEquity.contra)
         assertEquals(false, changesInEquity.emphasized)
 
-        val drawingIndex = result.indexOfFirst { it is BalanceSheetRow.TotalLine && it.label == "Total Drawing" }
-        val changesIndex = result.indexOfFirst { it is BalanceSheetRow.TotalLine && it.label == "Total Changes in Equity" }
-        val totalEquityIndex = result.indexOfFirst { it is BalanceSheetRow.TotalLine && it.label == "Total Equity" }
+        val drawingIndex = result.indexOfFirst { it is ReportRow.TotalLine && it.label == "Total Drawing" }
+        val changesIndex = result.indexOfFirst { it is ReportRow.TotalLine && it.label == "Total Changes in Equity" }
+        val totalEquityIndex = result.indexOfFirst { it is ReportRow.TotalLine && it.label == "Total Equity" }
         assertTrue(drawingIndex < changesIndex)
         assertTrue(changesIndex < totalEquityIndex)
     }
@@ -229,7 +229,7 @@ class BalanceSheetBuilderTest {
             balances = listOf(balance("e", 800))
         )
 
-        assertTrue(result.none { it is BalanceSheetRow.TotalLine && it.label == "Total Changes in Equity" })
+        assertTrue(result.none { it is ReportRow.TotalLine && it.label == "Total Changes in Equity" })
     }
 
     @Test
@@ -246,7 +246,7 @@ class BalanceSheetBuilderTest {
         )
 
         val totals = BalanceSheetBuilder.build(accounts, balances)
-            .filterIsInstance<BalanceSheetRow.TotalLine>()
+            .filterIsInstance<ReportRow.TotalLine>()
 
         assertEquals(
             listOf("Total Assets", "Total Liabilities", "Total Equity"),
@@ -271,12 +271,12 @@ class BalanceSheetBuilderTest {
 
         assertEquals(
             listOf(
-                BalanceSheetRow.Title("Instant Balance Sheet"),
-                BalanceSheetRow.SectionHeader("Assets"),
-                BalanceSheetRow.AccountLine("Bank", 15_000, assetIndex = 0),
-                BalanceSheetRow.AccountLine("Other", 6_500, assetIndex = 1),
-                BalanceSheetRow.TotalLine("Total Assets", 21_500, emphasized = true),
-                BalanceSheetRow.DateLine(0L)
+                ReportRow.Title("Instant Balance Sheet"),
+                ReportRow.SectionHeader("Assets"),
+                ReportRow.AccountLine("Bank", 15_000, assetIndex = 0),
+                ReportRow.AccountLine("Other", 6_500, assetIndex = 1),
+                ReportRow.TotalLine("Total Assets", 21_500, emphasized = true),
+                ReportRow.DateLine(0L)
             ),
             result
         )
@@ -289,7 +289,7 @@ class BalanceSheetBuilderTest {
             balances = listOf(balance("a", 10_000))
         )
 
-        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
         assertEquals(listOf("Bank"), accountLines.map { it.name })
     }
 
@@ -303,10 +303,10 @@ class BalanceSheetBuilderTest {
             balances = listOf(balance("a", 10_000), balance("z", 0))
         )
 
-        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
         assertEquals(listOf("Cash"), accountLines.map { it.name })
 
-        val totalAssets = result.filterIsInstance<BalanceSheetRow.TotalLine>().single { it.label == "Total Assets" }
+        val totalAssets = result.filterIsInstance<ReportRow.TotalLine>().single { it.label == "Total Assets" }
         assertEquals(10_000L, totalAssets.amount)
     }
 
@@ -317,7 +317,7 @@ class BalanceSheetBuilderTest {
             balances = listOf(balance("l", 0))
         )
 
-        assertTrue(result.none { it is BalanceSheetRow.SectionHeader && it.title == "Liabilities" })
+        assertTrue(result.none { it is ReportRow.SectionHeader && it.title == "Liabilities" })
     }
 
     @Test
@@ -330,10 +330,10 @@ class BalanceSheetBuilderTest {
             )
         )
 
-        val dateLine = result.filterIsInstance<BalanceSheetRow.DateLine>().single()
+        val dateLine = result.filterIsInstance<ReportRow.DateLine>().single()
         assertEquals(10L, dateLine.timestampMs)
-        assertTrue(result.filterIsInstance<BalanceSheetRow.AccountLine>().none { it.name.isEmpty() })
-        assertEquals(1, result.filterIsInstance<BalanceSheetRow.AccountLine>().size)
+        assertTrue(result.filterIsInstance<ReportRow.AccountLine>().none { it.name.isEmpty() })
+        assertEquals(1, result.filterIsInstance<ReportRow.AccountLine>().size)
     }
 
     // --- buildMonthly ---
@@ -353,7 +353,7 @@ class BalanceSheetBuilderTest {
             accounts = listOf(account("acc1", "Cash", "asset")),
             balancesByAccountId = mapOf("acc1" to 10_000L)
         )
-        assertTrue(result.none { it is BalanceSheetRow.Title || it is BalanceSheetRow.DateLine })
+        assertTrue(result.none { it is ReportRow.Title || it is ReportRow.DateLine })
     }
 
     @Test
@@ -362,7 +362,7 @@ class BalanceSheetBuilderTest {
             accounts = listOf(account("acc1", "Cash", "asset")),
             balancesByAccountId = mapOf("acc1" to 10_000L)
         )
-        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
         assertEquals(listOf<Int?>(null), accountLines.map { it.assetIndex })
     }
 
@@ -389,26 +389,26 @@ class BalanceSheetBuilderTest {
         // Total Equity = 500 + 200 - 60 = 640
         assertEquals(
             listOf(
-                BalanceSheetRow.SectionHeader("Assets"),
-                BalanceSheetRow.AccountLine("Cash", 10_000),
-                BalanceSheetRow.TotalLine("Total Assets", 10_000, emphasized = true),
-                BalanceSheetRow.SectionHeader("Liabilities"),
-                BalanceSheetRow.AccountLine("Loan", 200),
-                BalanceSheetRow.TotalLine("Total Liabilities", 200, emphasized = true),
-                BalanceSheetRow.SectionHeader("Equity"),
-                BalanceSheetRow.SubsectionHeader("Original Equity"),
-                BalanceSheetRow.AccountLine("Owner Capital", 500),
-                BalanceSheetRow.TotalLine("Total Original Equity", 500),
-                BalanceSheetRow.SubsectionHeader("Unclosed Income Statement accounts"),
-                BalanceSheetRow.AccountLine("Income", 300, arPrefixed = true),
-                BalanceSheetRow.AccountLine("Expense", 150, contra = true, arPrefixed = true),
-                BalanceSheetRow.AccountLine("Gain", 80, arPrefixed = true),
-                BalanceSheetRow.AccountLine("Loss", 30, contra = true, arPrefixed = true),
-                BalanceSheetRow.TotalLine("Total Unclosed IS accounts", 200),
-                BalanceSheetRow.SubsectionHeader("Drawing"),
-                BalanceSheetRow.AccountLine("Owner Drawing", 60, contra = true),
-                BalanceSheetRow.TotalLine("Total Drawing", 60, contra = true),
-                BalanceSheetRow.TotalLine("Total Equity", 640, emphasized = true)
+                ReportRow.SectionHeader("Assets"),
+                ReportRow.AccountLine("Cash", 10_000),
+                ReportRow.TotalLine("Total Assets", 10_000, emphasized = true),
+                ReportRow.SectionHeader("Liabilities"),
+                ReportRow.AccountLine("Loan", 200),
+                ReportRow.TotalLine("Total Liabilities", 200, emphasized = true),
+                ReportRow.SectionHeader("Equity"),
+                ReportRow.SubsectionHeader("Original Equity"),
+                ReportRow.AccountLine("Owner Capital", 500),
+                ReportRow.TotalLine("Total Original Equity", 500),
+                ReportRow.SubsectionHeader("Unclosed Income Statement accounts"),
+                ReportRow.AccountLine("Income", 300, arPrefixed = true),
+                ReportRow.AccountLine("Expense", 150, contra = true, arPrefixed = true),
+                ReportRow.AccountLine("Gain", 80, arPrefixed = true),
+                ReportRow.AccountLine("Loss", 30, contra = true, arPrefixed = true),
+                ReportRow.TotalLine("Total Unclosed IS accounts", 200),
+                ReportRow.SubsectionHeader("Drawing"),
+                ReportRow.AccountLine("Owner Drawing", 60, contra = true),
+                ReportRow.TotalLine("Total Drawing", 60, contra = true),
+                ReportRow.TotalLine("Total Equity", 640, emphasized = true)
             ),
             result
         )
@@ -424,7 +424,7 @@ class BalanceSheetBuilderTest {
 
         val result = BalanceSheetBuilder.buildMonthly(accounts, balances)
 
-        assertTrue(result.none { it is BalanceSheetRow.TotalLine && it.label == "Total Changes in Equity" })
+        assertTrue(result.none { it is ReportRow.TotalLine && it.label == "Total Changes in Equity" })
     }
 
     @Test
@@ -434,7 +434,7 @@ class BalanceSheetBuilderTest {
             balancesByAccountId = mapOf("e" to 500L)
         )
 
-        assertTrue(result.none { it is BalanceSheetRow.SubsectionHeader && it.title == "Unclosed Income Statement accounts" })
+        assertTrue(result.none { it is ReportRow.SubsectionHeader && it.title == "Unclosed Income Statement accounts" })
     }
 
     @Test
@@ -444,8 +444,8 @@ class BalanceSheetBuilderTest {
             balancesByAccountId = mapOf("d" to 60L)
         )
 
-        assertTrue(result.any { it is BalanceSheetRow.SectionHeader && it.title == "Equity" })
-        val totalEquity = result.filterIsInstance<BalanceSheetRow.TotalLine>().single { it.label == "Total Equity" }
+        assertTrue(result.any { it is ReportRow.SectionHeader && it.title == "Equity" })
+        val totalEquity = result.filterIsInstance<ReportRow.TotalLine>().single { it.label == "Total Equity" }
         assertEquals(-60L, totalEquity.amount)
     }
 
@@ -462,10 +462,10 @@ class BalanceSheetBuilderTest {
 
         assertEquals(
             listOf(
-                BalanceSheetRow.SectionHeader("Assets"),
-                BalanceSheetRow.AccountLine("Bank", 15_000),
-                BalanceSheetRow.AccountLine("Other", 6_500),
-                BalanceSheetRow.TotalLine("Total Assets", 21_500, emphasized = true)
+                ReportRow.SectionHeader("Assets"),
+                ReportRow.AccountLine("Bank", 15_000),
+                ReportRow.AccountLine("Other", 6_500),
+                ReportRow.TotalLine("Total Assets", 21_500, emphasized = true)
             ),
             result
         )

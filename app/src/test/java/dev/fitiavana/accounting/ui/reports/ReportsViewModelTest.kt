@@ -4,7 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
-import dev.fitiavana.accounting.ui.home.BalanceSheetRow
+import dev.fitiavana.accounting.ui.common.ReportDisplayRow
 import dev.fitiavana.accounting.ui.reports.ReportPeriodSelector
 import dev.fitiavana.accounting.ui.reports.ReportType
 import dev.fitiavana.accounting.ui.reports.ReportsViewModel
@@ -84,7 +84,7 @@ class ReportsViewModelTest {
 
         assertEquals("At March 31, 2026", viewModel.asOfDateText.value)
         val rows = viewModel.balanceSheetRows.value ?: emptyList()
-        assertTrue(rows.any { it is BalanceSheetRow.AccountLine && it.name == "Cash" })
+        assertTrue(rows.any { it is ReportDisplayRow.AccountLine && it.name == "Cash" })
     }
 
     @Test
@@ -147,7 +147,7 @@ class ReportsViewModelTest {
         assertEquals(ReportType.INCOME_STATEMENT, viewModel.selectedReportType.value)
         assertEquals("Month ended March 31, 2026", viewModel.asOfDateText.value)
         val rows = viewModel.balanceSheetRows.value ?: emptyList()
-        assertTrue(rows.any { it is BalanceSheetRow.TotalLine && it.label == "Net Income" })
+        assertTrue(rows.any { it is ReportDisplayRow.TotalLine && it.label == "Net Income" })
         verify(accountRepository, times(1)).getAllSync()
     }
 
@@ -173,7 +173,7 @@ class ReportsViewModelTest {
 
         viewModel.selectReportType(ReportType.CHANGES_IN_EQUITY)
 
-        assertEquals(emptyList<BalanceSheetRow>(), viewModel.balanceSheetRows.value)
+        assertEquals(emptyList<ReportDisplayRow>(), viewModel.balanceSheetRows.value)
     }
 
     @Test

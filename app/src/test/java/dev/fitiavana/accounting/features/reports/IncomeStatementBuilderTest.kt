@@ -1,7 +1,7 @@
 package dev.fitiavana.accounting.features.reports
 
 import dev.fitiavana.accounting.features.accounts.Account
-import dev.fitiavana.accounting.features.reports.BalanceSheetRow
+import dev.fitiavana.accounting.features.reports.ReportRow
 import dev.fitiavana.accounting.features.reports.IncomeStatementBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -37,23 +37,23 @@ class IncomeStatementBuilderTest {
         // Net Income = 300 - 150 + 80 - 30 = 200
         assertEquals(
             listOf(
-                BalanceSheetRow.SectionHeader("Income"),
-                BalanceSheetRow.AccountLine("Salary", 300),
-                BalanceSheetRow.TotalLine("Total Income", 300, emphasized = true),
-                BalanceSheetRow.SectionHeader("Expense"),
-                BalanceSheetRow.AccountLine("Rent", 150, contra = true),
-                BalanceSheetRow.TotalLine("Total Expense", 150, emphasized = true, contra = true),
-                BalanceSheetRow.SectionHeader("Gain"),
-                BalanceSheetRow.AccountLine("Stock Gain", 80),
-                BalanceSheetRow.TotalLine("Total Gain", 80, emphasized = true),
-                BalanceSheetRow.SectionHeader("Loss"),
-                BalanceSheetRow.AccountLine("Stock Loss", 30, contra = true),
-                BalanceSheetRow.TotalLine("Total Loss", 30, emphasized = true, contra = true),
-                BalanceSheetRow.TotalLine("Net Income", 200, emphasized = true)
+                ReportRow.SectionHeader("Income"),
+                ReportRow.AccountLine("Salary", 300),
+                ReportRow.TotalLine("Total Income", 300, emphasized = true),
+                ReportRow.SectionHeader("Expense"),
+                ReportRow.AccountLine("Rent", 150, contra = true),
+                ReportRow.TotalLine("Total Expense", 150, emphasized = true, contra = true),
+                ReportRow.SectionHeader("Gain"),
+                ReportRow.AccountLine("Stock Gain", 80),
+                ReportRow.TotalLine("Total Gain", 80, emphasized = true),
+                ReportRow.SectionHeader("Loss"),
+                ReportRow.AccountLine("Stock Loss", 30, contra = true),
+                ReportRow.TotalLine("Total Loss", 30, emphasized = true, contra = true),
+                ReportRow.TotalLine("Net Income", 200, emphasized = true)
             ),
             result
         )
-        assertTrue(result.none { it is BalanceSheetRow.SectionHeader && it.title in listOf("Assets", "Liabilities", "Equity") })
+        assertTrue(result.none { it is ReportRow.SectionHeader && it.title in listOf("Assets", "Liabilities", "Equity") })
     }
 
     @Test
@@ -63,8 +63,8 @@ class IncomeStatementBuilderTest {
             balancesByAccountId = mapOf("r" to 300L)
         )
 
-        assertTrue(result.none { it is BalanceSheetRow.SectionHeader && it.title in listOf("Expense", "Gain", "Loss") })
-        val netIncome = result.filterIsInstance<BalanceSheetRow.TotalLine>().single { it.label == "Net Income" }
+        assertTrue(result.none { it is ReportRow.SectionHeader && it.title in listOf("Expense", "Gain", "Loss") })
+        val netIncome = result.filterIsInstance<ReportRow.TotalLine>().single { it.label == "Net Income" }
         assertEquals(300L, netIncome.amount)
     }
 
@@ -75,7 +75,7 @@ class IncomeStatementBuilderTest {
             balancesByAccountId = mapOf("x" to 500L)
         )
 
-        val netIncome = result.filterIsInstance<BalanceSheetRow.TotalLine>().single { it.label == "Net Income" }
+        val netIncome = result.filterIsInstance<ReportRow.TotalLine>().single { it.label == "Net Income" }
         assertEquals(-500L, netIncome.amount)
         assertEquals(false, netIncome.contra)
     }
@@ -90,7 +90,7 @@ class IncomeStatementBuilderTest {
             balancesByAccountId = mapOf("r1" to 100L, "r2" to 500L)
         )
 
-        val accountLines = result.filterIsInstance<BalanceSheetRow.AccountLine>()
+        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
         assertEquals(listOf("Big Client", "Small Client"), accountLines.map { it.name })
     }
 }
