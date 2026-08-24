@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting
+package dev.fitiavana.accounting.ui.reports
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import dev.fitiavana.accounting.features.accounts.Account

@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting
+package dev.fitiavana.accounting.data.network
 
 import dev.fitiavana.accounting.data.network.CoinGeckoResponseParser
 import org.junit.Assert.assertEquals

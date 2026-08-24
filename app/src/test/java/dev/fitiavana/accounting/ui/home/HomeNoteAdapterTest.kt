@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting
+package dev.fitiavana.accounting.ui.home
 
 import dev.fitiavana.accounting.ui.home.HomeNoteAdapter
 import org.junit.Assert.assertEquals

@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting
+package dev.fitiavana.accounting.ui.editaccount
 
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository

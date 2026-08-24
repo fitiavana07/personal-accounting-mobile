@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting
+package dev.fitiavana.accounting.ui.transactions
 
 import dev.fitiavana.accounting.ui.transactions.TransactionValidator
 import dev.fitiavana.accounting.ui.transactions.TransactionValidator.EntryData

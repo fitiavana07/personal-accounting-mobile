@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting
+package dev.fitiavana.accounting.features.backup
 
 import dev.fitiavana.accounting.features.balances.AccountBalanceDao
 import dev.fitiavana.accounting.features.accounts.AccountDao

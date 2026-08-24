@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting
+package dev.fitiavana.accounting.ui.reports
 
 import dev.fitiavana.accounting.ui.reports.ReportPeriodSelector
 import dev.fitiavana.accounting.ui.reports.YearMonth

@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting
+package dev.fitiavana.accounting.ui.common
 
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.ui.common.TransactionDisplay

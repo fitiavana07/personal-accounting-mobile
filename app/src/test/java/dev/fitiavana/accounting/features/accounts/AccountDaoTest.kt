@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting
+package dev.fitiavana.accounting.features.accounts
 
 import android.content.Context
 import androidx.room.Room

@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting
+package dev.fitiavana.accounting.features.exchangerates
 
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache

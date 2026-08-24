@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting
+package dev.fitiavana.accounting.features.balances
 
 import dev.fitiavana.accounting.features.balances.BalanceCalculator
 import org.junit.Assert.assertEquals
