@@ -7,7 +7,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import dev.fitiavana.accounting.features.instruments.Instrument
 
 @Dao
 interface InstrumentDao {

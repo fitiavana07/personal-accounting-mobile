@@ -12,6 +12,7 @@ data class ExchangeRateCache(
     val fetchedAt: Long
 ) {
     companion object {
-        fun pairKey(instrumentCode: String, intermediaryCode: String) = "$instrumentCode:$intermediaryCode"
+        fun pairKey(instrumentCode: String, intermediaryCode: String) =
+            "$instrumentCode:$intermediaryCode"
     }
 }

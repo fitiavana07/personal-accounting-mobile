@@ -2,8 +2,6 @@ package dev.fitiavana.accounting.features.exchangerates
 
 import android.util.Log
 import androidx.lifecycle.LiveData
-import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
-import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.network.CoinGeckoClient
 import dev.fitiavana.accounting.network.ExchangeRateFetcher
@@ -45,18 +43,23 @@ class ExchangeRateRepository(
 
     /**
      * Rates come from CoinGecko's `/coins/{id}/tickers` endpoint, which returns the
-     * actual exchange-quoted price for a coin against every currency it's traded
-     * against on that exchange (e.g. Binance's live BTC/USDT price) — this is the real
-     * traded pair, not a synthetic rate derived via an intermediate reference currency.
+     * exchange-quoted price for a coin against every currency it's traded
+     * against on that exchange (e.g. Binance's live BTC/USDT price).
      * One request is made per distinct instrument (its tickers cover every intermediary
      * that instrument is paired with).
      */
     private fun refreshCrypto(pairs: List<Pair<Instrument, Instrument>>): RefreshResult {
         val eligible = pairs.filter { it.first.coingeckoId != null }
-        val ineligible = pairs.filter { it.first.coingeckoId == null }.map { it.first.code }
+        val ineligible =
+            pairs.filter { it.first.coingeckoId == null }.map { it.first.code }
 
         if (ineligible.isNotEmpty()) {
-            Log.w(TAG, "Skipping rate fetch, no coingeckoId set for: ${ineligible.joinToString(", ")}")
+            Log.w(
+                TAG,
+                "Skipping rate fetch, no coingeckoId set for: ${
+                    ineligible.joinToString(", ")
+                }"
+            )
         }
 
         val succeeded = mutableListOf<String>()
@@ -68,7 +71,11 @@ class ExchangeRateRepository(
             val tickers = try {
                 fetcher.fetchTickers(coinId, EXCHANGE_ID)
             } catch (e: IOException) {
-                Log.e(TAG, "Failed to fetch tickers for $coinId on $EXCHANGE_ID", e)
+                Log.e(
+                    TAG,
+                    "Failed to fetch tickers for $coinId on $EXCHANGE_ID",
+                    e
+                )
                 error = e.message
                 failed.addAll(pairsForCoin.map { it.first.code })
                 continue
@@ -109,7 +116,9 @@ class ExchangeRateRepository(
         val now = System.currentTimeMillis()
         val fxRates = mutableMapOf<Pair<String, String>, Double>()
 
-        for ((apiSymbol, pairsForSymbol) in pairs.groupBy { it.first.stockApiSymbol ?: it.first.code }) {
+        for ((apiSymbol, pairsForSymbol) in pairs.groupBy {
+            it.first.stockApiSymbol ?: it.first.code
+        }) {
             val quote = try {
                 stockFetcher.fetchQuote(apiSymbol)
             } catch (e: IOException) {
@@ -121,9 +130,18 @@ class ExchangeRateRepository(
 
             for ((instrument, intermediary) in pairsForSymbol) {
                 val priceInIntermediary = try {
-                    convert(quote.price, quote.currency, intermediary.code, fxRates)
+                    convert(
+                        quote.price,
+                        quote.currency,
+                        intermediary.code,
+                        fxRates
+                    )
                 } catch (e: IOException) {
-                    Log.e(TAG, "Failed to fetch FX rate ${quote.currency}->${intermediary.code} for ${instrument.code}", e)
+                    Log.e(
+                        TAG,
+                        "Failed to fetch FX rate ${quote.currency}->${intermediary.code} for ${instrument.code}",
+                        e
+                    )
                     error = e.message
                     failed.add(instrument.code)
                     continue
@@ -151,10 +169,18 @@ class ExchangeRateRepository(
         return price * rate
     }
 
-    private fun upsert(instrument: Instrument, intermediary: Instrument, rate: Double, fetchedAt: Long) {
+    private fun upsert(
+        instrument: Instrument,
+        intermediary: Instrument,
+        rate: Double,
+        fetchedAt: Long
+    ) {
         cacheDao.upsert(
             ExchangeRateCache(
-                pairKey = ExchangeRateCache.pairKey(instrument.code, intermediary.code),
+                pairKey = ExchangeRateCache.pairKey(
+                    instrument.code,
+                    intermediary.code
+                ),
                 instrumentCode = instrument.code,
                 intermediaryCode = intermediary.code,
                 rate = rate,

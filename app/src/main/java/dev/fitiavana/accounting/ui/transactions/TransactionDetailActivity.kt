@@ -15,6 +15,7 @@ import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.transactions.TransactionEntry
 import dev.fitiavana.accounting.features.transactions.TransactionWithEntries
 import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import dev.fitiavana.accounting.db.AppDatabase
@@ -39,11 +40,12 @@ class TransactionDetailActivity : AppCompatActivity() {
         val db = AppDatabase.getInstance(this)
         val transactionRepo = TransactionRepository(db.transactionDao())
         val accountRepo = AccountRepository(db.accountDao())
+        val instrumentRepo = InstrumentRepository(db.instrumentDao(), db.accountDao())
 
         Thread {
             val twe = transactionRepo.getWithEntries(transactionId)
             val accounts = accountRepo.getAll().value ?: accountRepo.getAllSync()
-            val instruments = db.instrumentDao().getAllSync().associateBy { it.code }
+            val instruments = instrumentRepo.getAllSync().associateBy { it.code }
             val accountsMap = accounts.associate { it.id to it }
             runOnUiThread {
                 if (twe != null) bindData(twe, accountsMap, instruments)
