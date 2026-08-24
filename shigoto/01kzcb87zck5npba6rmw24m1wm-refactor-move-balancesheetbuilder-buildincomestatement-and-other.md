@@ -109,7 +109,8 @@ move, running `./gradlew assembleDebug testDebugUnitTest` after each step:
    `build`/`buildMonthly`/`buildIncomeStatement` return raw amounts with no `ui/` dependency; add the
    `ui/`-side formatting/coloring step in `ui/home/` and `ui/reports/`. Move the resulting pure builders
    to `features/reports/`.
-4. Move the remaining `*Dao`/model/`*Repository`/calculator files into their `features/<name>/`
-   directories one feature at a time (accounts, instruments, balances, exchangerates, backup,
-   transactions), updating imports (including in `db/AppDatabase.kt`) as each feature moves.
+4. **Done.** Moved the remaining `*Dao`/model/`*Repository`/calculator files into their
+   `features/<name>/` directories (accounts, instruments, balances, exchangerates, backup,
+   transactions), updating imports (including in `db/AppDatabase.kt`) as each feature moved.
+   `data/network` was left as-is per the plan.
 5. Reorganize test sources to mirror the new `features/*`/`ui/*` layout, matching each move above.
