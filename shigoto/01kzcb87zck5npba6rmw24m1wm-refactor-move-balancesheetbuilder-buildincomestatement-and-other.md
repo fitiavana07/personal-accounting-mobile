@@ -1,6 +1,6 @@
 ---
 title: 'refactor: re-organize directories'
-status: todo
+status: done
 order: k
 ---
 
@@ -113,4 +113,6 @@ move, running `./gradlew assembleDebug testDebugUnitTest` after each step:
    `features/<name>/` directories (accounts, instruments, balances, exchangerates, backup,
    transactions), updating imports (including in `db/AppDatabase.kt`) as each feature moved.
    `data/network` was left as-is per the plan.
-5. Reorganize test sources to mirror the new `features/*`/`ui/*` layout, matching each move above.
+5. **Done.** Reorganized test sources under `app/src/test/java/dev/fitiavana/accounting/` to mirror the
+   new `features/*`/`ui/*` layout, moving each test file into the test package matching the package of
+   its class under test and updating the `package` declaration accordingly.
