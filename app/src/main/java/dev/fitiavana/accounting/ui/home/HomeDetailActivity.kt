@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting.ui.homedetail
+package dev.fitiavana.accounting.ui.home
 
 import android.content.Context
 import android.content.Intent

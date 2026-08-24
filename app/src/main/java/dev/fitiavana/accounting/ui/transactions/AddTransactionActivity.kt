@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting.ui.addtransaction
+package dev.fitiavana.accounting.ui.transactions
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog

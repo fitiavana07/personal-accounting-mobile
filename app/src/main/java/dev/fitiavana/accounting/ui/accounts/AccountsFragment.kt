@@ -19,7 +19,6 @@ import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.AccountDao
 import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.db.AppDatabase
-import dev.fitiavana.accounting.ui.editaccount.EditAccountActivity
 
 class AccountsFragment : Fragment() {
 

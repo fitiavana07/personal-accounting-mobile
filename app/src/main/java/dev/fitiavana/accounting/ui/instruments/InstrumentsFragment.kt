@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.db.AppDatabase
-import dev.fitiavana.accounting.ui.editinstrument.EditInstrumentActivity
 
 class InstrumentsFragment : Fragment() {
 

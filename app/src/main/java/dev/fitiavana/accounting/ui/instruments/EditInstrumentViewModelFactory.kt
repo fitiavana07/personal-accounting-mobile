@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting.ui.editinstrument
+package dev.fitiavana.accounting.ui.instruments
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

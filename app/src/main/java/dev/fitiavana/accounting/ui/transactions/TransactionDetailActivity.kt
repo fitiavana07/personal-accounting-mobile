@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting.ui.transactiondetail
+package dev.fitiavana.accounting.ui.transactions
 
 import android.content.Context
 import android.content.Intent

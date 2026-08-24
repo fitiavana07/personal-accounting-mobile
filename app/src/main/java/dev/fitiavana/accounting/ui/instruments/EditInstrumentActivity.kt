@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting.ui.editinstrument
+package dev.fitiavana.accounting.ui.instruments
 
 import android.content.Context
 import android.content.Intent

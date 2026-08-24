@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting.ui.editaccount
+package dev.fitiavana.accounting.ui.accounts
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel

@@ -18,7 +18,6 @@ import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.db.AppDatabase
-import dev.fitiavana.accounting.ui.homedetail.HomeDetailActivity
 
 class HomeFragment : Fragment() {
 
