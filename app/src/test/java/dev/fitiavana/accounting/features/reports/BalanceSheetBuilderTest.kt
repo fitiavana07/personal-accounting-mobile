@@ -26,7 +26,7 @@ class BalanceSheetBuilderTest {
     }
 
     @Test
-    fun `single asset account produces title, assets section and no other sections`() {
+    fun `single asset account produces title, account line, total and date`() {
         val result = BalanceSheetBuilder.build(
             accounts = listOf(account("acc1", "Cash", "asset")),
             balances = listOf(balance("acc1", 10_000))
@@ -34,8 +34,7 @@ class BalanceSheetBuilderTest {
 
         assertEquals(
             listOf(
-                ReportRow.Title("Instant Balance Sheet"),
-                ReportRow.SectionHeader("Assets"),
+                ReportRow.Title("ASSETS"),
                 ReportRow.AccountLine("Cash", 10_000, assetIndex = 0),
                 ReportRow.TotalLine("Total Assets", 10_000, emphasized = true),
                 ReportRow.DateLine(0L)
@@ -45,17 +44,17 @@ class BalanceSheetBuilderTest {
     }
 
     @Test
-    fun `accounts within a non-asset type are sorted by name`() {
+    fun `non-asset accounts produce no account lines`() {
         val result = BalanceSheetBuilder.build(
             accounts = listOf(
-                account("acc1", "Zebra Loan", "liability"),
-                account("acc2", "Alpha Loan", "liability")
+                account("acc1", "Loan", "liability"),
+                account("acc2", "Owner Capital", "equity")
             ),
             balances = listOf(balance("acc1", 10_000), balance("acc2", 20_000))
         )
 
-        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
-        assertEquals(listOf("Alpha Loan", "Zebra Loan"), accountLines.map { it.name })
+        assertTrue(result.filterIsInstance<ReportRow.AccountLine>().isEmpty())
+        assertTrue(result.filterIsInstance<ReportRow.TotalLine>().isEmpty())
     }
 
     @Test
@@ -73,189 +72,14 @@ class BalanceSheetBuilderTest {
     }
 
     @Test
-    fun `income accounts are sorted by balance decreasing`() {
+    fun `only Total Assets is emphasized`() {
         val result = BalanceSheetBuilder.build(
-            accounts = listOf(
-                account("acc1", "Small Client", "revenue"),
-                account("acc2", "Big Client", "revenue")
-            ),
-            balances = listOf(balance("acc1", 100), balance("acc2", 500))
+            accounts = listOf(account("a", "Cash", "asset")),
+            balances = listOf(balance("a", 1000))
         )
 
-        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
-        assertEquals(listOf("Big Client", "Small Client"), accountLines.map { it.name })
-    }
-
-    @Test
-    fun `expense accounts are sorted by balance decreasing`() {
-        val result = BalanceSheetBuilder.build(
-            accounts = listOf(
-                account("acc1", "Coffee", "expense"),
-                account("acc2", "Rent", "expense")
-            ),
-            balances = listOf(balance("acc1", 50), balance("acc2", 800))
-        )
-
-        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
-        assertEquals(listOf("Rent", "Coffee"), accountLines.map { it.name })
-    }
-
-    @Test
-    fun `all eight account types render in the expected order with correct raw amounts`() {
-        val accounts = listOf(
-            account("a", "Cash", "asset"),
-            account("l", "Loan", "liability"),
-            account("e", "Owner Capital", "equity"),
-            account("r", "Salary", "revenue"),
-            account("x", "Rent", "expense"),
-            account("g", "Stock Gain", "gain"),
-            account("o", "Stock Loss", "loss"),
-            account("d", "Owner Drawing", "drawing")
-        )
-        val balances = listOf(
-            balance("a", 10_000, updatedAt = 100),
-            balance("l", 200, updatedAt = 200),
-            balance("e", 500, updatedAt = 50),
-            balance("r", 300, updatedAt = 300),
-            balance("x", 150, updatedAt = 10),
-            balance("g", 80, updatedAt = 20),
-            balance("o", 30, updatedAt = 30),
-            balance("d", 60, updatedAt = 40)
-        )
-
-        val result = BalanceSheetBuilder.build(accounts, balances)
-
-        // Total Changes in Equity = 300 - 150 + 80 - 30 - 60 = 140
-        // Total Equity = 500 + 140 = 640
-        assertEquals(
-            listOf(
-                ReportRow.Title("Instant Balance Sheet"),
-                ReportRow.SectionHeader("Assets"),
-                ReportRow.AccountLine("Cash", 10_000, assetIndex = 0),
-                ReportRow.TotalLine("Total Assets", 10_000, emphasized = true),
-                ReportRow.SectionHeader("Liabilities"),
-                ReportRow.AccountLine("Loan", 200),
-                ReportRow.TotalLine("Total Liabilities", 200, emphasized = true),
-                ReportRow.SectionHeader("Equity"),
-                ReportRow.SubsectionHeader("Original Equity"),
-                ReportRow.AccountLine("Owner Capital", 500),
-                ReportRow.TotalLine("Total Original Equity", 500),
-                ReportRow.SubsectionHeader("Income"),
-                ReportRow.AccountLine("Salary", 300),
-                ReportRow.TotalLine("Total Income", 300),
-                ReportRow.SubsectionHeader("Expense"),
-                ReportRow.AccountLine("Rent", 150, contra = true),
-                ReportRow.TotalLine("Total Expense", 150, contra = true),
-                ReportRow.SubsectionHeader("Gain"),
-                ReportRow.AccountLine("Stock Gain", 80),
-                ReportRow.TotalLine("Total Gain", 80),
-                ReportRow.SubsectionHeader("Loss"),
-                ReportRow.AccountLine("Stock Loss", 30, contra = true),
-                ReportRow.TotalLine("Total Loss", 30, contra = true),
-                ReportRow.SubsectionHeader("Drawing"),
-                ReportRow.AccountLine("Owner Drawing", 60, contra = true),
-                ReportRow.TotalLine("Total Drawing", 60, contra = true),
-                ReportRow.TotalLine("Total Changes in Equity", 140, contra = true),
-                ReportRow.TotalLine("Total Equity", 640, emphasized = true),
-                ReportRow.DateLine(300L)
-            ),
-            result
-        )
-    }
-
-    @Test
-    fun `equity section renders with only a populated subsection when others are empty`() {
-        val result = BalanceSheetBuilder.build(
-            accounts = listOf(account("g", "Stock Gain", "gain")),
-            balances = listOf(balance("g", 80))
-        )
-
-        assertEquals(
-            listOf(
-                ReportRow.Title("Instant Balance Sheet"),
-                ReportRow.SectionHeader("Equity"),
-                ReportRow.SubsectionHeader("Gain"),
-                ReportRow.AccountLine("Stock Gain", 80),
-                ReportRow.TotalLine("Total Gain", 80),
-                ReportRow.TotalLine("Total Changes in Equity", 80, contra = true),
-                ReportRow.TotalLine("Total Equity", 80, emphasized = true),
-                ReportRow.DateLine(0L)
-            ),
-            result
-        )
-    }
-
-    @Test
-    fun `total equity carries a negative raw amount when equity is negative`() {
-        val result = BalanceSheetBuilder.build(
-            accounts = listOf(account("x", "Rent", "expense")),
-            balances = listOf(balance("x", 500))
-        )
-
-        val totalEquity = result.filterIsInstance<ReportRow.TotalLine>().last { it.label == "Total Equity" }
-        assertEquals(-500L, totalEquity.amount)
-        assertEquals(false, totalEquity.contra)
-    }
-
-    @Test
-    fun `total changes in equity sums income, expense, gain, loss and drawing`() {
-        val accounts = listOf(
-            account("r", "Salary", "revenue"),
-            account("x", "Rent", "expense"),
-            account("d", "Owner Drawing", "drawing")
-        )
-        val balances = listOf(balance("r", 300), balance("x", 900), balance("d", 60))
-
-        val result = BalanceSheetBuilder.build(accounts, balances)
         val totals = result.filterIsInstance<ReportRow.TotalLine>()
-
-        // 300 - 900 - 60 = -660
-        val changesInEquity = totals.single { it.label == "Total Changes in Equity" }
-        assertEquals(-660L, changesInEquity.amount)
-        assertEquals(true, changesInEquity.contra)
-        assertEquals(false, changesInEquity.emphasized)
-
-        val drawingIndex = result.indexOfFirst { it is ReportRow.TotalLine && it.label == "Total Drawing" }
-        val changesIndex = result.indexOfFirst { it is ReportRow.TotalLine && it.label == "Total Changes in Equity" }
-        val totalEquityIndex = result.indexOfFirst { it is ReportRow.TotalLine && it.label == "Total Equity" }
-        assertTrue(drawingIndex < changesIndex)
-        assertTrue(changesIndex < totalEquityIndex)
-    }
-
-    @Test
-    fun `total changes in equity is omitted when there is no equity activity`() {
-        val result = BalanceSheetBuilder.build(
-            accounts = listOf(account("e", "Owner Capital", "equity")),
-            balances = listOf(balance("e", 800))
-        )
-
-        assertTrue(result.none { it is ReportRow.TotalLine && it.label == "Total Changes in Equity" })
-    }
-
-    @Test
-    fun `only the three top-level totals are emphasized`() {
-        val accounts = listOf(
-            account("a", "Cash", "asset"),
-            account("l", "Loan", "liability"),
-            account("e", "Owner Capital", "equity")
-        )
-        val balances = listOf(
-            balance("a", 1000),
-            balance("l", 200),
-            balance("e", 800)
-        )
-
-        val totals = BalanceSheetBuilder.build(accounts, balances)
-            .filterIsInstance<ReportRow.TotalLine>()
-
-        assertEquals(
-            listOf("Total Assets", "Total Liabilities", "Total Equity"),
-            totals.filter { it.emphasized }.map { it.label }
-        )
-        assertEquals(
-            listOf("Total Original Equity"),
-            totals.filter { !it.emphasized }.map { it.label }
-        )
+        assertEquals(listOf("Total Assets"), totals.filter { it.emphasized }.map { it.label })
     }
 
     @Test
@@ -271,8 +95,7 @@ class BalanceSheetBuilderTest {
 
         assertEquals(
             listOf(
-                ReportRow.Title("Instant Balance Sheet"),
-                ReportRow.SectionHeader("Assets"),
+                ReportRow.Title("ASSETS"),
                 ReportRow.AccountLine("Bank", 15_000, assetIndex = 0),
                 ReportRow.AccountLine("Other", 6_500, assetIndex = 1),
                 ReportRow.TotalLine("Total Assets", 21_500, emphasized = true),
@@ -311,13 +134,13 @@ class BalanceSheetBuilderTest {
     }
 
     @Test
-    fun `section is omitted entirely when all its accounts have zero balance`() {
+    fun `no account line or total is emitted when all asset accounts have zero balance`() {
         val result = BalanceSheetBuilder.build(
-            accounts = listOf(account("l", "Zero Loan", "liability")),
-            balances = listOf(balance("l", 0))
+            accounts = listOf(account("a", "Empty Wallet", "asset")),
+            balances = listOf(balance("a", 0))
         )
 
-        assertTrue(result.none { it is ReportRow.SectionHeader && it.title == "Liabilities" })
+        assertTrue(result.none { it is ReportRow.AccountLine || it is ReportRow.TotalLine })
     }
 
     @Test
