@@ -7,8 +7,7 @@ import androidx.lifecycle.ViewModel
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
 
-class AccountsViewModel(private val repository: AccountRepository) :
-    ViewModel() {
+class AccountsViewModel(repository: AccountRepository) : ViewModel() {
 
     private val allAccounts: LiveData<List<Account>> = repository.getAll()
     val typeFilter = MutableLiveData<String?>(null)

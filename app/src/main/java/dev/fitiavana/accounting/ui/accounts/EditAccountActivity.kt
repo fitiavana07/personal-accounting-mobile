@@ -23,7 +23,16 @@ class EditAccountActivity : AppCompatActivity() {
         const val EXTRA_ACCOUNT_ID = "account_id"
 
         private val TYPE_VALUES =
-            listOf("asset", "liability", "equity", "revenue", "expense", "drawing", "gain", "loss")
+            listOf(
+                "asset",
+                "liability",
+                "equity",
+                "revenue",
+                "expense",
+                "drawing",
+                "gain",
+                "loss"
+            )
 
         fun addIntent(context: Context): Intent =
             Intent(context, EditAccountActivity::class.java)
@@ -54,6 +63,7 @@ class EditAccountActivity : AppCompatActivity() {
         val container = AppContainer.getInstance(this)
         val repository = container.accountRepository
         val instrumentRepository = container.instrumentRepository
+
         viewModel = ViewModelProvider(
             this,
             EditAccountViewModelFactory(repository, instrumentRepository)
@@ -110,8 +120,10 @@ class EditAccountActivity : AppCompatActivity() {
                             val interIndex =
                                 list.indexOfFirst { it.code == account.intermediaryInstrumentCode }
                             intermediaryInstrumentSpinner.setSelection(if (interIndex >= 0) interIndex + 1 else 0)
-                            instrumentInitiallyUnset = account.instrumentCode == null
-                            intermediaryInitiallyUnset = account.intermediaryInstrumentCode == null
+                            instrumentInitiallyUnset =
+                                account.instrumentCode == null
+                            intermediaryInitiallyUnset =
+                                account.intermediaryInstrumentCode == null
                         }
                         updateIntermediarySpinnerEnabled()
                     }
@@ -144,7 +156,8 @@ class EditAccountActivity : AppCompatActivity() {
             title = getString(R.string.title_edit_account)
             Thread {
                 val account = viewModel.getAccount(accountId!!)
-                val locked = container.balanceRepository.hasTransactions(accountId!!)
+                val locked =
+                    container.balanceRepository.hasTransactions(accountId!!)
                 runOnUiThread {
                     if (account != null) {
                         nameInput.setText(account.name)
@@ -155,7 +168,8 @@ class EditAccountActivity : AppCompatActivity() {
                     }
                     isLocked = locked
                     typeSpinner.isEnabled = !locked
-                    instrumentSpinner.isEnabled = !locked || instrumentInitiallyUnset
+                    instrumentSpinner.isEnabled =
+                        !locked || instrumentInitiallyUnset
                     updateIntermediarySpinnerEnabled()
                 }
             }.start()
@@ -207,7 +221,9 @@ class EditAccountActivity : AppCompatActivity() {
             R.id.action_delete_account -> {
                 Thread {
                     val hasTransactions =
-                        AppContainer.getInstance(this).balanceRepository.hasTransactions(accountId!!)
+                        AppContainer.getInstance(this).balanceRepository.hasTransactions(
+                            accountId!!
+                        )
                     runOnUiThread {
                         if (hasTransactions) {
                             AlertDialog.Builder(this)

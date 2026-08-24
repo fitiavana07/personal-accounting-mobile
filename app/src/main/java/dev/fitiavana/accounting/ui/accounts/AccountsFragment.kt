@@ -45,7 +45,8 @@ class AccountsFragment : Fragment() {
     ): View = inflater.inflate(R.layout.fragment_accounts, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val repository = AppContainer.getInstance(requireContext()).accountRepository
+        val repository =
+            AppContainer.getInstance(requireContext()).accountRepository
         viewModel =
             ViewModelProvider(this, AccountsViewModelFactory(repository))
                 .get(AccountsViewModel::class.java)

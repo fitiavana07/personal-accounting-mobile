@@ -19,7 +19,10 @@ class AccountsAdapter(
         notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_account, parent, false)
         return ViewHolder(view)
@@ -32,8 +35,10 @@ class AccountsAdapter(
     override fun getItemCount() = items.size
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        private val nameView: TextView = view.findViewById(R.id.text_account_name)
-        private val typeView: TextView = view.findViewById(R.id.text_account_type)
+        private val nameView: TextView =
+            view.findViewById(R.id.text_account_name)
+        private val typeView: TextView =
+            view.findViewById(R.id.text_account_type)
 
         fun bind(account: Account, onClick: (Account) -> Unit) {
             nameView.text = account.name
@@ -43,7 +48,8 @@ class AccountsAdapter(
                 account.instrumentCode != null -> account.instrumentCode
                 else -> null
             }
-            typeView.text = if (instrumentDisplay != null) "$typeLabel · $instrumentDisplay" else typeLabel
+            typeView.text =
+                if (instrumentDisplay != null) "$typeLabel · $instrumentDisplay" else typeLabel
             itemView.setOnClickListener { onClick(account) }
         }
     }
