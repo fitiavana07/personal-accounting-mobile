@@ -82,6 +82,65 @@ class ReportPeriodSelectorTest {
         assertEquals(28, cal.get(Calendar.DAY_OF_MONTH))
     }
 
+    // --- asOfMillis ---
+
+    @Test
+    fun `asOfMillis returns now for the current month when it hasn't ended yet`() {
+        val now = Calendar.getInstance()
+
+        val result = ReportPeriodSelector.asOfMillis(now.get(Calendar.YEAR), now.get(Calendar.MONTH))
+
+        assertEquals(now.get(Calendar.YEAR), Calendar.getInstance().apply { timeInMillis = result }
+            .get(Calendar.YEAR))
+        assert(result <= System.currentTimeMillis())
+        assert(result >= now.timeInMillis - 1000)
+    }
+
+    @Test
+    fun `asOfMillis returns end of month for a past month`() {
+        val cal = Calendar.getInstance().apply { add(Calendar.MONTH, -1) }
+        val year = cal.get(Calendar.YEAR)
+        val month = cal.get(Calendar.MONTH)
+
+        val result = ReportPeriodSelector.asOfMillis(year, month)
+
+        assertEquals(ReportPeriodSelector.endOfMonthMillis(year, month), result)
+    }
+
+    @Test
+    fun `asOfMillis returns end of month for a future month`() {
+        val cal = Calendar.getInstance().apply { add(Calendar.MONTH, 1) }
+        val year = cal.get(Calendar.YEAR)
+        val month = cal.get(Calendar.MONTH)
+
+        val result = ReportPeriodSelector.asOfMillis(year, month)
+
+        assertEquals(ReportPeriodSelector.endOfMonthMillis(year, month), result)
+    }
+
+    // --- formatIncomeStatementPeriod ---
+
+    @Test
+    fun `formatIncomeStatementPeriod shows Month ended once the month has fully elapsed`() {
+        val startMs = ReportPeriodSelector.startOfMonthMillis(2026, Calendar.MARCH)
+        val endMs = ReportPeriodSelector.endOfMonthMillis(2026, Calendar.MARCH)
+
+        val result = ReportPeriodSelector.formatIncomeStatementPeriod(startMs, endMs, endMs)
+
+        assertEquals("Month ended March 31, 2026", result)
+    }
+
+    @Test
+    fun `formatIncomeStatementPeriod shows a date range for a month still in progress`() {
+        val startMs = ReportPeriodSelector.startOfMonthMillis(2026, Calendar.MARCH)
+        val endMs = ReportPeriodSelector.endOfMonthMillis(2026, Calendar.MARCH)
+        val asOfMs = millisFor(2026, Calendar.MARCH, 15)
+
+        val result = ReportPeriodSelector.formatIncomeStatementPeriod(startMs, asOfMs, endMs)
+
+        assertEquals("March 1, 2026 to March 15, 2026", result)
+    }
+
     // --- formatAsOfDate ---
 
     @Test

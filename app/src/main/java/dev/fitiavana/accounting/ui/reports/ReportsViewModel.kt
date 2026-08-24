@@ -22,6 +22,9 @@ class ReportsViewModel(
     private var lastBalances: Map<String, Long> = emptyMap()
     private var lastPeriodBalances: Map<String, Long> = emptyMap()
     private var lastAsOfMs = 0L
+    private var lastStartMs = 0L
+    private var lastReportYear = 0
+    private var lastReportMonth = 0
 
     val reportTypes: List<ReportType> = ReportType.values().toList()
 
@@ -111,8 +114,11 @@ class ReportsViewModel(
 
     private fun recomputeSync(year: Int, month: Int) {
         val startMs = ReportPeriodSelector.startOfMonthMillis(year, month)
-        val asOfMs = ReportPeriodSelector.endOfMonthMillis(year, month)
+        val asOfMs = ReportPeriodSelector.asOfMillis(year, month)
         lastAsOfMs = asOfMs
+        lastStartMs = startMs
+        lastReportYear = year
+        lastReportMonth = month
         lastAccounts = accountRepository.getAllSync()
         lastBalances = balanceRepository.computeBalancesAsOf(asOfMs)
         lastPeriodBalances = balanceRepository.computeBalancesBetween(startMs, asOfMs)
@@ -123,7 +129,11 @@ class ReportsViewModel(
         _asOfDateText.postValue(
             when (type) {
                 ReportType.BALANCE_SHEET -> ReportPeriodSelector.formatAsOfDate(lastAsOfMs)
-                ReportType.INCOME_STATEMENT -> ReportPeriodSelector.formatMonthEnded(lastAsOfMs)
+                ReportType.INCOME_STATEMENT -> ReportPeriodSelector.formatIncomeStatementPeriod(
+                    lastStartMs,
+                    lastAsOfMs,
+                    ReportPeriodSelector.endOfMonthMillis(lastReportYear, lastReportMonth)
+                )
                 ReportType.CHANGES_IN_EQUITY -> ""
             }
         )

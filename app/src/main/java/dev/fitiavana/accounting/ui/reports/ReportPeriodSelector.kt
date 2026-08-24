@@ -54,12 +54,37 @@ object ReportPeriodSelector {
         return cal.timeInMillis
     }
 
+    /**
+     * The as-of instant for [year]/[month]: "now" for the current calendar month (since it hasn't
+     * ended yet), otherwise the last millisecond of that month.
+     */
+    fun asOfMillis(year: Int, month: Int): Long {
+        val now = Calendar.getInstance()
+        return if (year == now.get(Calendar.YEAR) && month == now.get(Calendar.MONTH)) {
+            now.timeInMillis
+        } else {
+            endOfMonthMillis(year, month)
+        }
+    }
+
     private val dateFormat = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
     private val monthNameFormat = SimpleDateFormat("MMMM", Locale.getDefault())
 
     fun formatAsOfDate(asOfMs: Long): String = "At ${dateFormat.format(Date(asOfMs))}"
 
     fun formatMonthEnded(asOfMs: Long): String = "Month ended ${dateFormat.format(Date(asOfMs))}"
+
+    /**
+     * Income statement period text: "Month ended {end}" once the month has fully elapsed
+     * ([asOfMs] reached [endOfMonthMs]), otherwise "{start} to {asOfMs}" for a month still in
+     * progress (see [ReportPeriodSelector.asOfMillis]).
+     */
+    fun formatIncomeStatementPeriod(startMs: Long, asOfMs: Long, endOfMonthMs: Long): String =
+        if (asOfMs >= endOfMonthMs) {
+            formatMonthEnded(asOfMs)
+        } else {
+            "${dateFormat.format(Date(startMs))} to ${dateFormat.format(Date(asOfMs))}"
+        }
 
     fun monthName(month: Int): String {
         val cal = Calendar.getInstance().apply { set(Calendar.MONTH, month) }
