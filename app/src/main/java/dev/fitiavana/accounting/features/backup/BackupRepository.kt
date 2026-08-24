@@ -18,7 +18,11 @@ import org.json.JSONObject
 
 sealed class RestoreResult {
     object Success : RestoreResult()
-    data class SchemaMismatch(val backupVersion: Int, val currentVersion: Int) : RestoreResult()
+    data class SchemaMismatch(
+        val backupVersion: Int,
+        val currentVersion: Int
+    ) : RestoreResult()
+
     data class Error(val message: String) : RestoreResult()
 }
 
@@ -40,12 +44,25 @@ class BackupRepository(
         val root = JSONObject()
         root.put(KEY_SCHEMA_VERSION, AppDatabase.SCHEMA_VERSION)
         root.put(KEY_EXPORTED_AT, System.currentTimeMillis())
-        root.put(KEY_INSTRUMENTS, instrumentDao.getAllSync().toJsonArray { it.toJson() })
-        root.put(KEY_ACCOUNTS, accountDao.getAllSync().toJsonArray { it.toJson() })
-        root.put(KEY_TRANSACTIONS, transactionDao.getAllTransactionsSync().toJsonArray { it.toJson() })
-        root.put(KEY_TRANSACTION_ENTRIES, transactionDao.getAllEntriesSync().toJsonArray { it.toJson() })
-        root.put(KEY_ACCOUNT_BALANCES, balanceDao.getAllSync().toJsonArray { it.toJson() })
-        root.put(KEY_EXCHANGE_RATE_CACHE, exchangeRateCacheDao.getAllSync().toJsonArray { it.toJson() })
+        root.put(
+            KEY_INSTRUMENTS,
+            instrumentDao.getAllSync().toJsonArray { it.toJson() })
+        root.put(
+            KEY_ACCOUNTS,
+            accountDao.getAllSync().toJsonArray { it.toJson() })
+        root.put(
+            KEY_TRANSACTIONS,
+            transactionDao.getAllTransactionsSync()
+                .toJsonArray { it.toJson() })
+        root.put(
+            KEY_TRANSACTION_ENTRIES,
+            transactionDao.getAllEntriesSync().toJsonArray { it.toJson() })
+        root.put(
+            KEY_ACCOUNT_BALANCES,
+            balanceDao.getAllSync().toJsonArray { it.toJson() })
+        root.put(
+            KEY_EXCHANGE_RATE_CACHE,
+            exchangeRateCacheDao.getAllSync().toJsonArray { it.toJson() })
         return root.toString(2)
     }
 
@@ -64,7 +81,10 @@ class BackupRepository(
             return RestoreResult.Error("Backup file is missing a schema version")
         }
         if (backupVersion != AppDatabase.SCHEMA_VERSION) {
-            return RestoreResult.SchemaMismatch(backupVersion, AppDatabase.SCHEMA_VERSION)
+            return RestoreResult.SchemaMismatch(
+                backupVersion,
+                AppDatabase.SCHEMA_VERSION
+            )
         }
 
         val instruments: List<Instrument>
@@ -74,12 +94,18 @@ class BackupRepository(
         val balances: List<AccountBalance>
         val rates: List<ExchangeRateCache>
         try {
-            instruments = root.getJSONArray(KEY_INSTRUMENTS).toList { instrumentFromJson(it) }
-            accounts = root.getJSONArray(KEY_ACCOUNTS).toList { accountFromJson(it) }
-            transactions = root.getJSONArray(KEY_TRANSACTIONS).toList { transactionFromJson(it) }
-            entries = root.getJSONArray(KEY_TRANSACTION_ENTRIES).toList { transactionEntryFromJson(it) }
-            balances = root.getJSONArray(KEY_ACCOUNT_BALANCES).toList { accountBalanceFromJson(it) }
-            rates = root.getJSONArray(KEY_EXCHANGE_RATE_CACHE).toList { exchangeRateCacheFromJson(it) }
+            instruments = root.getJSONArray(KEY_INSTRUMENTS)
+                .toList { instrumentFromJson(it) }
+            accounts =
+                root.getJSONArray(KEY_ACCOUNTS).toList { accountFromJson(it) }
+            transactions = root.getJSONArray(KEY_TRANSACTIONS)
+                .toList { transactionFromJson(it) }
+            entries = root.getJSONArray(KEY_TRANSACTION_ENTRIES)
+                .toList { transactionEntryFromJson(it) }
+            balances = root.getJSONArray(KEY_ACCOUNT_BALANCES)
+                .toList { accountBalanceFromJson(it) }
+            rates = root.getJSONArray(KEY_EXCHANGE_RATE_CACHE)
+                .toList { exchangeRateCacheFromJson(it) }
         } catch (e: JSONException) {
             return RestoreResult.Error("Backup file is malformed: ${e.message}")
         }
@@ -153,7 +179,10 @@ class BackupRepository(
             put("name", name)
             put("type", type)
             if (instrumentCode != null) put("instrumentCode", instrumentCode)
-            if (intermediaryInstrumentCode != null) put("intermediaryInstrumentCode", intermediaryInstrumentCode)
+            if (intermediaryInstrumentCode != null) put(
+                "intermediaryInstrumentCode",
+                intermediaryInstrumentCode
+            )
         }
 
         private fun accountFromJson(json: JSONObject) = Account(
@@ -184,23 +213,36 @@ class BackupRepository(
             put("accountId", accountId)
             if (debitAmount != null) put("debitAmount", debitAmount)
             if (creditAmount != null) put("creditAmount", creditAmount)
-            if (instrumentDebitAmount != null) put("instrumentDebitAmount", instrumentDebitAmount)
-            if (instrumentCreditAmount != null) put("instrumentCreditAmount", instrumentCreditAmount)
-            if (intermediaryDebitAmount != null) put("intermediaryDebitAmount", intermediaryDebitAmount)
-            if (intermediaryCreditAmount != null) put("intermediaryCreditAmount", intermediaryCreditAmount)
+            if (instrumentDebitAmount != null) put(
+                "instrumentDebitAmount",
+                instrumentDebitAmount
+            )
+            if (instrumentCreditAmount != null) put(
+                "instrumentCreditAmount",
+                instrumentCreditAmount
+            )
+            if (intermediaryDebitAmount != null) put(
+                "intermediaryDebitAmount",
+                intermediaryDebitAmount
+            )
+            if (intermediaryCreditAmount != null) put(
+                "intermediaryCreditAmount",
+                intermediaryCreditAmount
+            )
         }
 
-        private fun transactionEntryFromJson(json: JSONObject) = TransactionEntry(
-            id = json.getString("id"),
-            transactionId = json.getString("transactionId"),
-            accountId = json.getString("accountId"),
-            debitAmount = json.optLongOrNull("debitAmount"),
-            creditAmount = json.optLongOrNull("creditAmount"),
-            instrumentDebitAmount = json.optLongOrNull("instrumentDebitAmount"),
-            instrumentCreditAmount = json.optLongOrNull("instrumentCreditAmount"),
-            intermediaryDebitAmount = json.optLongOrNull("intermediaryDebitAmount"),
-            intermediaryCreditAmount = json.optLongOrNull("intermediaryCreditAmount")
-        )
+        private fun transactionEntryFromJson(json: JSONObject) =
+            TransactionEntry(
+                id = json.getString("id"),
+                transactionId = json.getString("transactionId"),
+                accountId = json.getString("accountId"),
+                debitAmount = json.optLongOrNull("debitAmount"),
+                creditAmount = json.optLongOrNull("creditAmount"),
+                instrumentDebitAmount = json.optLongOrNull("instrumentDebitAmount"),
+                instrumentCreditAmount = json.optLongOrNull("instrumentCreditAmount"),
+                intermediaryDebitAmount = json.optLongOrNull("intermediaryDebitAmount"),
+                intermediaryCreditAmount = json.optLongOrNull("intermediaryCreditAmount")
+            )
 
         private fun AccountBalance.toJson() = JSONObject().apply {
             put("accountId", accountId)
@@ -228,12 +270,13 @@ class BackupRepository(
             put("fetchedAt", fetchedAt)
         }
 
-        private fun exchangeRateCacheFromJson(json: JSONObject) = ExchangeRateCache(
-            pairKey = json.getString("pairKey"),
-            instrumentCode = json.getString("instrumentCode"),
-            intermediaryCode = json.getString("intermediaryCode"),
-            rate = json.getDouble("rate"),
-            fetchedAt = json.getLong("fetchedAt")
-        )
+        private fun exchangeRateCacheFromJson(json: JSONObject) =
+            ExchangeRateCache(
+                pairKey = json.getString("pairKey"),
+                instrumentCode = json.getString("instrumentCode"),
+                intermediaryCode = json.getString("intermediaryCode"),
+                rate = json.getDouble("rate"),
+                fetchedAt = json.getLong("fetchedAt")
+            )
     }
 }
