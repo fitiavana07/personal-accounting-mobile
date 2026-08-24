@@ -39,7 +39,7 @@ import dev.fitiavana.accounting.data.repository.BalanceRepository
 import dev.fitiavana.accounting.data.repository.TransactionRepository
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.UiUtils
-import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import dev.fitiavana.accounting.ui.transactions.TransactionValidator
 import kotlin.math.pow
 import kotlin.math.roundToLong

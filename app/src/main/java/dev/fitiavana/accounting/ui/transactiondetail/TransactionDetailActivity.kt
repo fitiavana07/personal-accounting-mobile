@@ -16,7 +16,7 @@ import dev.fitiavana.accounting.data.model.TransactionEntry
 import dev.fitiavana.accounting.data.model.TransactionWithEntries
 import dev.fitiavana.accounting.data.repository.AccountRepository
 import dev.fitiavana.accounting.data.repository.TransactionRepository
-import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.UiUtils
 import java.text.SimpleDateFormat

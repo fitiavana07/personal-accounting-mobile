@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting.ui.transactions
+package dev.fitiavana.accounting.ui.common
 
 import dev.fitiavana.accounting.data.model.Instrument
 

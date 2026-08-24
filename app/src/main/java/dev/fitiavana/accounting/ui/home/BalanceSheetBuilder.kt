@@ -2,7 +2,7 @@ package dev.fitiavana.accounting.ui.home
 
 import dev.fitiavana.accounting.data.model.Account
 import dev.fitiavana.accounting.data.model.AccountBalance
-import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

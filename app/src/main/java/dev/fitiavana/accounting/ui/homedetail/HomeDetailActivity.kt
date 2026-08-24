@@ -17,7 +17,7 @@ import dev.fitiavana.accounting.ui.UiUtils
 import dev.fitiavana.accounting.ui.home.GainLossCalculator
 import dev.fitiavana.accounting.ui.home.HomeItem
 import dev.fitiavana.accounting.ui.home.HomeItemBuilder
-import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

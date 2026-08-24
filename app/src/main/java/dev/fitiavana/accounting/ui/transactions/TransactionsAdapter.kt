@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

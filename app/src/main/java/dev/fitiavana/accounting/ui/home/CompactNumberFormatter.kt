@@ -1,6 +1,6 @@
 package dev.fitiavana.accounting.ui.home
 
-import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode

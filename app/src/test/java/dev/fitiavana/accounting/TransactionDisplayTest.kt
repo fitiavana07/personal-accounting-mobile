@@ -1,7 +1,7 @@
 package dev.fitiavana.accounting
 
 import dev.fitiavana.accounting.data.model.Instrument
-import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

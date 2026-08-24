@@ -1,7 +1,7 @@
 package dev.fitiavana.accounting.ui.home
 
 import dev.fitiavana.accounting.data.model.Instrument
-import dev.fitiavana.accounting.ui.transactions.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.TransactionDisplay
 
 object GainLossCalculator {
 
