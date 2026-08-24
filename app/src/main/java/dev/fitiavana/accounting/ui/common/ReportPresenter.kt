@@ -32,12 +32,17 @@ object ReportPresenter {
         }
     }
 
+    /**
+     * Trailing space on the non-parenthesized branch keeps the final digit aligned with
+     * parenthesized amounts (whose closing ")" would otherwise sit one character further right),
+     * since amounts are rendered in a monospace font.
+     */
     private fun formatAmount(amount: Long, arPrefixed: Boolean, contra: Boolean): String {
         val prefix = if (arPrefixed) "Ar " else ""
         return if (contra) {
             "($prefix${TransactionDisplay.formatAmount(Math.abs(amount))})"
         } else {
-            "$prefix${TransactionDisplay.formatAmount(amount)}"
+            "$prefix${TransactionDisplay.formatAmount(amount)} "
         }
     }
 }

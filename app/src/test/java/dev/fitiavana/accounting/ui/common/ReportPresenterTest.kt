@@ -40,7 +40,7 @@ class ReportPresenterTest {
     @Test
     fun `formats a plain AccountLine without Ar prefix or parens`() {
         val result = ReportPresenter.present(listOf(RawRow.AccountLine("Cash", 10_000)))
-        assertEquals(listOf(ReportDisplayRow.AccountLine("Cash", "10,000", null)), result)
+        assertEquals(listOf(ReportDisplayRow.AccountLine("Cash", "10,000 ", null)), result)
     }
 
     @Test
@@ -52,7 +52,7 @@ class ReportPresenterTest {
     @Test
     fun `formats an arPrefixed AccountLine with the Ar prefix`() {
         val result = ReportPresenter.present(listOf(RawRow.AccountLine("Income", 300, arPrefixed = true)))
-        assertEquals(listOf(ReportDisplayRow.AccountLine("Income", "Ar 300", null)), result)
+        assertEquals(listOf(ReportDisplayRow.AccountLine("Income", "Ar 300 ", null)), result)
     }
 
     @Test
@@ -73,7 +73,7 @@ class ReportPresenterTest {
     fun `formats a TotalLine with Ar prefix always, signed when not contra`() {
         val result = ReportPresenter.present(listOf(RawRow.TotalLine("Total Equity", -500, emphasized = true)))
         assertEquals(
-            listOf(ReportDisplayRow.TotalLine("Total Equity", "Ar -500", emphasized = true)),
+            listOf(ReportDisplayRow.TotalLine("Total Equity", "Ar -500 ", emphasized = true)),
             result
         )
     }
