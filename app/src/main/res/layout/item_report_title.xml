@@ -6,7 +6,7 @@
     android:paddingTop="16dp">
 
     <TextView
-        android:id="@+id/text_balance_sheet_title"
+        android:id="@+id/text_report_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="16dp"
@@ -15,13 +15,13 @@
         android:textSize="19sp"
         android:textStyle="bold"
         android:letterSpacing="0.02"
-        android:textColor="@color/bs_title" />
+        android:textColor="@color/report_title" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="2dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:background="@color/bs_title" />
+        android:background="@color/report_title" />
 
 </LinearLayout>

@@ -33,9 +33,9 @@ class ReportAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
-            VIEW_TYPE_TITLE -> TitleViewHolder(inflater.inflate(R.layout.item_balance_sheet_title, parent, false))
-            VIEW_TYPE_DATE -> DateViewHolder(inflater.inflate(R.layout.item_balance_sheet_date, parent, false))
-            else -> RowViewHolder(inflater.inflate(R.layout.item_balance_sheet_row, parent, false))
+            VIEW_TYPE_TITLE -> TitleViewHolder(inflater.inflate(R.layout.item_report_title, parent, false))
+            VIEW_TYPE_DATE -> DateViewHolder(inflater.inflate(R.layout.item_report_date, parent, false))
+            else -> RowViewHolder(inflater.inflate(R.layout.item_report_row, parent, false))
         }
     }
 
@@ -51,25 +51,25 @@ class ReportAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     class TitleViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        private val titleView: TextView = view.findViewById(R.id.text_balance_sheet_title)
+        private val titleView: TextView = view.findViewById(R.id.text_report_title)
         fun bind(row: ReportDisplayRow.Title) {
             titleView.text = row.text
         }
     }
 
     class DateViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        private val dateView: TextView = view.findViewById(R.id.text_balance_sheet_date)
+        private val dateView: TextView = view.findViewById(R.id.text_report_date)
         fun bind(row: ReportDisplayRow.DateLine) {
             dateView.text = row.text
         }
     }
 
     class RowViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        private val root: View = view.findViewById(R.id.layout_balance_sheet_row)
-        private val divider: View = view.findViewById(R.id.divider_balance_sheet_row)
-        private val content: View = view.findViewById(R.id.content_balance_sheet_row)
-        private val labelView: TextView = view.findViewById(R.id.text_balance_sheet_label)
-        private val amountView: TextView = view.findViewById(R.id.text_balance_sheet_amount)
+        private val root: View = view.findViewById(R.id.layout_report_row)
+        private val divider: View = view.findViewById(R.id.divider_report_row)
+        private val content: View = view.findViewById(R.id.content_report_row)
+        private val labelView: TextView = view.findViewById(R.id.text_report_label)
+        private val amountView: TextView = view.findViewById(R.id.text_report_amount)
         private val context = view.context
         private val labelStartPadding = content.paddingStart
         private val labelIndentPadding = labelStartPadding + dpToPx(16f)
@@ -79,9 +79,9 @@ class ReportAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             amountView.text = ""
             setBold(true, 14f)
             setLabelIndent(labelStartPadding)
-            setTextColor(ContextCompat.getColor(context, R.color.bs_header_text))
+            setTextColor(ContextCompat.getColor(context, R.color.report_header_text))
             setContentVerticalPadding(10f)
-            root.setBackgroundColor(ContextCompat.getColor(context, R.color.bs_section_header_bg))
+            root.setBackgroundColor(ContextCompat.getColor(context, R.color.report_section_header_bg))
             divider.visibility = View.GONE
             setColorDot(null)
         }
@@ -133,7 +133,7 @@ class ReportAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             setTextColor(defaultTextColor())
             setContentVerticalPadding(8f)
             root.setBackgroundColor(
-                if (row.emphasized) ContextCompat.getColor(context, R.color.bs_grand_total_bg) else 0
+                if (row.emphasized) ContextCompat.getColor(context, R.color.report_grand_total_bg) else 0
             )
             divider.visibility = View.VISIBLE
             setColorDot(null)
