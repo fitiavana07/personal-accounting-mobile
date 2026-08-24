@@ -1,11 +1,11 @@
-package dev.fitiavana.accounting.data.repository
+package dev.fitiavana.accounting.features.balances
 
 import androidx.lifecycle.LiveData
-import dev.fitiavana.accounting.data.dao.AccountBalanceDao
-import dev.fitiavana.accounting.data.dao.AccountDao
-import dev.fitiavana.accounting.data.dao.TransactionDao
-import dev.fitiavana.accounting.data.model.AccountBalance
-import dev.fitiavana.accounting.data.model.BalanceCalculator
+import dev.fitiavana.accounting.features.balances.AccountBalanceDao
+import dev.fitiavana.accounting.features.accounts.AccountDao
+import dev.fitiavana.accounting.features.transactions.TransactionDao
+import dev.fitiavana.accounting.features.balances.AccountBalance
+import dev.fitiavana.accounting.features.balances.BalanceCalculator
 
 class BalanceRepository(
     private val accountDao: AccountDao,

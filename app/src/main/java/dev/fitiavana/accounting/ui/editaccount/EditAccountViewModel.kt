@@ -2,10 +2,10 @@ package dev.fitiavana.accounting.ui.editaccount
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.model.Instrument
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.InstrumentRepository
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import java.util.UUID
 
 class EditAccountViewModel(

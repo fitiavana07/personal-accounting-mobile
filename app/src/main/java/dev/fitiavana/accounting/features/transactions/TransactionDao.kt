@@ -1,36 +1,34 @@
-package dev.fitiavana.accounting.data.dao
+package dev.fitiavana.accounting.features.transactions
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Transaction
-import dev.fitiavana.accounting.data.model.TransactionEntry
-import dev.fitiavana.accounting.data.model.TransactionWithEntries
+import androidx.room.Transaction as RoomTransaction
 
 @Dao
 interface TransactionDao {
 
-    @Transaction
+    @RoomTransaction
     @Query("SELECT * FROM transactions ORDER BY transactionDatetime DESC")
     fun getAllWithEntries(): LiveData<List<TransactionWithEntries>>
 
-    @Transaction
+    @RoomTransaction
     @Query("SELECT * FROM transactions WHERE id = :id")
     fun getWithEntries(id: String): TransactionWithEntries?
 
     @Query("SELECT * FROM transactions")
-    fun getAllTransactionsSync(): List<dev.fitiavana.accounting.data.model.Transaction>
+    fun getAllTransactionsSync(): List<Transaction>
 
     @Query("SELECT * FROM transaction_entries")
     fun getAllEntriesSync(): List<TransactionEntry>
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    fun insert(transaction: dev.fitiavana.accounting.data.model.Transaction)
+    fun insert(transaction: Transaction)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertAllTransactions(transactions: List<dev.fitiavana.accounting.data.model.Transaction>)
+    fun insertAllTransactions(transactions: List<Transaction>)
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insertEntry(entry: TransactionEntry)
@@ -101,7 +99,7 @@ interface TransactionDao {
     @Query("SELECT MAX(transactionDatetime) FROM transactions")
     fun getMaxTransactionDatetime(): Long?
 
-    @Transaction
+    @RoomTransaction
     @Query(
         """
         SELECT * FROM transactions

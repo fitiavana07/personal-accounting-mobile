@@ -1,6 +1,6 @@
 package dev.fitiavana.accounting
 
-import dev.fitiavana.accounting.data.model.BalanceCalculator
+import dev.fitiavana.accounting.features.balances.BalanceCalculator
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

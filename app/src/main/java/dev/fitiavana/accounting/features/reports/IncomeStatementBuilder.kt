@@ -1,6 +1,6 @@
 package dev.fitiavana.accounting.features.reports
 
-import dev.fitiavana.accounting.data.model.Account
+import dev.fitiavana.accounting.features.accounts.Account
 
 /**
  * Income Statement: "Income", "Expense", "Gain" and "Loss" are the main sections (no

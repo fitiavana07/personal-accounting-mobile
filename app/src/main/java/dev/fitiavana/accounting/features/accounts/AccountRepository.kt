@@ -1,8 +1,8 @@
-package dev.fitiavana.accounting.data.repository
+package dev.fitiavana.accounting.features.accounts
 
 import androidx.lifecycle.LiveData
-import dev.fitiavana.accounting.data.dao.AccountDao
-import dev.fitiavana.accounting.data.model.Account
+import dev.fitiavana.accounting.features.accounts.AccountDao
+import dev.fitiavana.accounting.features.accounts.Account
 
 class AccountRepository(val dao: AccountDao) {
     fun getAll(): LiveData<List<Account>> = dao.getAll()

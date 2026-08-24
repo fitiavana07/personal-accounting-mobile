@@ -30,13 +30,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.ImageViewCompat
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.model.Instrument
-import dev.fitiavana.accounting.data.model.Transaction
-import dev.fitiavana.accounting.data.model.TransactionEntry
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.BalanceRepository
-import dev.fitiavana.accounting.data.repository.TransactionRepository
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.transactions.Transaction
+import dev.fitiavana.accounting.features.transactions.TransactionEntry
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.balances.BalanceRepository
+import dev.fitiavana.accounting.features.transactions.TransactionRepository
+import dev.fitiavana.accounting.features.balances.AccountBalanceDao
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.UiUtils
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
@@ -54,7 +55,7 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var accountRepo: AccountRepository
     private lateinit var accounts: List<Account>
     private lateinit var instrumentsMap: Map<String, Instrument>
-    private lateinit var accountBalanceDao: dev.fitiavana.accounting.data.dao.AccountBalanceDao
+    private lateinit var accountBalanceDao: AccountBalanceDao
 
     private val dateFormat =
         SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
@@ -93,9 +94,9 @@ class AddTransactionActivity : AppCompatActivity() {
         var currentBalance: Long = 0L,
         var currentAccountType: String = "",
         var currentInstrumentBalance: Long = 0L,
-        var currentInstrument: dev.fitiavana.accounting.data.model.Instrument? = null,
+        var currentInstrument: Instrument? = null,
         var currentIntermediaryBalance: Long = 0L,
-        var currentIntermediaryInstrument: dev.fitiavana.accounting.data.model.Instrument? = null
+        var currentIntermediaryInstrument: Instrument? = null
     )
 
     private val entryRows = mutableListOf<EntryRow>()

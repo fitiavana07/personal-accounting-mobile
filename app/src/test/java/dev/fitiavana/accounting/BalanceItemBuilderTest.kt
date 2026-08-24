@@ -1,8 +1,8 @@
 package dev.fitiavana.accounting
 
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.model.AccountBalance
-import dev.fitiavana.accounting.data.model.Instrument
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.balances.AccountBalance
+import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.ui.balances.BalanceItem
 import dev.fitiavana.accounting.ui.balances.BalanceItemBuilder
 import org.junit.Assert.assertEquals

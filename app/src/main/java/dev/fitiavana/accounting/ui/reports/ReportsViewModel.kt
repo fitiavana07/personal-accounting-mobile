@@ -3,9 +3,9 @@ package dev.fitiavana.accounting.ui.reports
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.BalanceRepository
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
 import dev.fitiavana.accounting.features.reports.IncomeStatementBuilder
 import dev.fitiavana.accounting.ui.home.BalanceSheetPresenter

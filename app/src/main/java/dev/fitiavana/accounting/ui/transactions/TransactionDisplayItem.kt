@@ -1,7 +1,7 @@
 package dev.fitiavana.accounting.ui.transactions
 
-import dev.fitiavana.accounting.data.model.Transaction
-import dev.fitiavana.accounting.data.model.TransactionEntry
+import dev.fitiavana.accounting.features.transactions.Transaction
+import dev.fitiavana.accounting.features.transactions.TransactionEntry
 
 data class TransactionDisplayItem(
     val transaction: Transaction,

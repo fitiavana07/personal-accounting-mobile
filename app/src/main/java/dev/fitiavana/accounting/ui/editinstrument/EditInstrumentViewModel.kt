@@ -1,8 +1,8 @@
 package dev.fitiavana.accounting.ui.editinstrument
 
 import androidx.lifecycle.ViewModel
-import dev.fitiavana.accounting.data.model.Instrument
-import dev.fitiavana.accounting.data.repository.InstrumentRepository
+import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 
 class EditInstrumentViewModel(private val repository: InstrumentRepository) : ViewModel() {
 

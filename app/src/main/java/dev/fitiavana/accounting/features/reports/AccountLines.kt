@@ -1,7 +1,7 @@
 package dev.fitiavana.accounting.features.reports
 
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.model.AccountBalance
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.balances.AccountBalance
 
 internal data class NamedBalance(val name: String, val balance: Long)
 

@@ -1,10 +1,10 @@
-package dev.fitiavana.accounting.data.repository
+package dev.fitiavana.accounting.features.exchangerates
 
 import android.util.Log
 import androidx.lifecycle.LiveData
-import dev.fitiavana.accounting.data.dao.ExchangeRateCacheDao
-import dev.fitiavana.accounting.data.model.ExchangeRateCache
-import dev.fitiavana.accounting.data.model.Instrument
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
+import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.data.network.CoinGeckoClient
 import dev.fitiavana.accounting.data.network.ExchangeRateFetcher
 import dev.fitiavana.accounting.data.network.StockPriceFetcher

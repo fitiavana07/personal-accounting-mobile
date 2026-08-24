@@ -2,8 +2,8 @@ package dev.fitiavana.accounting.ui.reports
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.BalanceRepository
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.balances.BalanceRepository
 
 class ReportsViewModelFactory(
     private val accountRepository: AccountRepository,

@@ -2,8 +2,8 @@ package dev.fitiavana.accounting.ui.editaccount
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.InstrumentRepository
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 
 class EditAccountViewModelFactory(
     private val repository: AccountRepository,

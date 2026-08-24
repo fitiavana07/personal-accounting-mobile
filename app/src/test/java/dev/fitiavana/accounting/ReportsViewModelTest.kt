@@ -1,9 +1,9 @@
 package dev.fitiavana.accounting
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.BalanceRepository
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.ui.home.BalanceSheetRow
 import dev.fitiavana.accounting.ui.reports.ReportPeriodSelector
 import dev.fitiavana.accounting.ui.reports.ReportType

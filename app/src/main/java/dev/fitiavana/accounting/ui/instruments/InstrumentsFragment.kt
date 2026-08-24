@@ -12,7 +12,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.data.repository.InstrumentRepository
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.editinstrument.EditInstrumentActivity
 

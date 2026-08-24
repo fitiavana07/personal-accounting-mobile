@@ -13,7 +13,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.data.repository.InstrumentRepository
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.UiUtils
 

@@ -1,11 +1,11 @@
 package dev.fitiavana.accounting
 
-import dev.fitiavana.accounting.data.dao.AccountBalanceDao
-import dev.fitiavana.accounting.data.dao.AccountDao
-import dev.fitiavana.accounting.data.dao.TransactionDao
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.model.AccountBalance
-import dev.fitiavana.accounting.data.repository.BalanceRepository
+import dev.fitiavana.accounting.features.balances.AccountBalanceDao
+import dev.fitiavana.accounting.features.accounts.AccountDao
+import dev.fitiavana.accounting.features.transactions.TransactionDao
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.balances.AccountBalance
+import dev.fitiavana.accounting.features.balances.BalanceRepository
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull

@@ -3,10 +3,10 @@ package dev.fitiavana.accounting
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import dev.fitiavana.accounting.data.dao.AccountDao
-import dev.fitiavana.accounting.data.dao.InstrumentDao
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.model.Instrument
+import dev.fitiavana.accounting.features.accounts.AccountDao
+import dev.fitiavana.accounting.features.instruments.InstrumentDao
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.db.AppDatabase
 import org.junit.After
 import org.junit.Assert.assertFalse

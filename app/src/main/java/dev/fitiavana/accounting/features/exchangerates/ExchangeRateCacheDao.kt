@@ -1,11 +1,11 @@
-package dev.fitiavana.accounting.data.dao
+package dev.fitiavana.accounting.features.exchangerates
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import dev.fitiavana.accounting.data.model.ExchangeRateCache
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 
 @Dao
 interface ExchangeRateCacheDao {

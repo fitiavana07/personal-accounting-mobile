@@ -1,9 +1,10 @@
-package dev.fitiavana.accounting.data.model
+package dev.fitiavana.accounting.features.transactions
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import dev.fitiavana.accounting.features.accounts.Account
 
 @Entity(
     tableName = "transaction_entries",

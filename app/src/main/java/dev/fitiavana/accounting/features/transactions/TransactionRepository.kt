@@ -1,10 +1,10 @@
-package dev.fitiavana.accounting.data.repository
+package dev.fitiavana.accounting.features.transactions
 
 import androidx.lifecycle.LiveData
-import dev.fitiavana.accounting.data.dao.TransactionDao
-import dev.fitiavana.accounting.data.model.Transaction
-import dev.fitiavana.accounting.data.model.TransactionEntry
-import dev.fitiavana.accounting.data.model.TransactionWithEntries
+import dev.fitiavana.accounting.features.transactions.TransactionDao
+import dev.fitiavana.accounting.features.transactions.Transaction
+import dev.fitiavana.accounting.features.transactions.TransactionEntry
+import dev.fitiavana.accounting.features.transactions.TransactionWithEntries
 
 class TransactionRepository(private val dao: TransactionDao) {
     fun getAllWithEntries(): LiveData<List<TransactionWithEntries>> = dao.getAllWithEntries()

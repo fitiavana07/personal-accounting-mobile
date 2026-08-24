@@ -1,7 +1,7 @@
 package dev.fitiavana.accounting
 
-import dev.fitiavana.accounting.data.model.Instrument
-import dev.fitiavana.accounting.data.repository.InstrumentRepository
+import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.ui.editinstrument.EditInstrumentViewModel
 import org.junit.Assert.assertEquals
 import org.junit.Before

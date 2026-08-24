@@ -1,6 +1,6 @@
 package dev.fitiavana.accounting.ui.common
 
-import dev.fitiavana.accounting.data.model.Instrument
+import dev.fitiavana.accounting.features.instruments.Instrument
 
 object TransactionDisplay {
 

@@ -1,8 +1,8 @@
 package dev.fitiavana.accounting
 
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.InstrumentRepository
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.ui.editaccount.EditAccountViewModel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

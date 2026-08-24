@@ -1,11 +1,11 @@
-package dev.fitiavana.accounting.data.dao
+package dev.fitiavana.accounting.features.balances
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import dev.fitiavana.accounting.data.model.AccountBalance
+import dev.fitiavana.accounting.features.balances.AccountBalance
 
 @Dao
 interface AccountBalanceDao {

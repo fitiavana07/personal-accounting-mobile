@@ -14,9 +14,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.BalanceRepository
-import dev.fitiavana.accounting.data.repository.InstrumentRepository
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.balances.BalanceRepository
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.db.AppDatabase
 
 class BalancesFragment : Fragment() {

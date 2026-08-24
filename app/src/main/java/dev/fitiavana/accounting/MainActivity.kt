@@ -12,8 +12,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import dev.fitiavana.accounting.data.repository.BackupRepository
-import dev.fitiavana.accounting.data.repository.RestoreResult
+import dev.fitiavana.accounting.features.backup.BackupRepository
+import dev.fitiavana.accounting.features.backup.RestoreResult
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.UiUtils
 import dev.fitiavana.accounting.ui.accounts.AccountsFragment

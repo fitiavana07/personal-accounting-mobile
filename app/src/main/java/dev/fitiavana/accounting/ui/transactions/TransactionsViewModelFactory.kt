@@ -2,8 +2,8 @@ package dev.fitiavana.accounting.ui.transactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.TransactionRepository
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.transactions.TransactionRepository
 
 class TransactionsViewModelFactory(
     private val transactionRepository: TransactionRepository,

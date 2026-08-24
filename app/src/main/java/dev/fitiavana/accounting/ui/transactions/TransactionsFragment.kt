@@ -23,9 +23,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dev.fitiavana.accounting.BuildConfig
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.TransactionRepository
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.transactions.TransactionRepository
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.addtransaction.AddTransactionActivity
 import java.text.SimpleDateFormat

@@ -1,9 +1,9 @@
 package dev.fitiavana.accounting.ui.home
 
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.model.AccountBalance
-import dev.fitiavana.accounting.data.model.ExchangeRateCache
-import dev.fitiavana.accounting.data.model.Instrument
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.balances.AccountBalance
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
+import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.balances.GainLossCalculator
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 

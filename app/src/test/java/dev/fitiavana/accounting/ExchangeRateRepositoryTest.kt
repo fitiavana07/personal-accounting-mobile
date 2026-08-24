@@ -1,13 +1,13 @@
 package dev.fitiavana.accounting
 
-import dev.fitiavana.accounting.data.dao.ExchangeRateCacheDao
-import dev.fitiavana.accounting.data.model.ExchangeRateCache
-import dev.fitiavana.accounting.data.model.Instrument
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
+import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.data.network.ExchangeRateFetcher
 import dev.fitiavana.accounting.data.network.StockPriceFetcher
 import dev.fitiavana.accounting.data.network.StockQuote
 import dev.fitiavana.accounting.data.network.TickerQuote
-import dev.fitiavana.accounting.data.repository.ExchangeRateRepository
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before

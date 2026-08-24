@@ -1,7 +1,7 @@
 package dev.fitiavana.accounting.ui.home
 
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.model.AccountBalance
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.balances.AccountBalance
 
 data class AssetSlice(val name: String, val amount: Long)
 

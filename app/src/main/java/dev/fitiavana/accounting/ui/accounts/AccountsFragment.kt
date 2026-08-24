@@ -16,8 +16,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.data.dao.AccountDao
-import dev.fitiavana.accounting.data.repository.AccountRepository
+import dev.fitiavana.accounting.features.accounts.AccountDao
+import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.editaccount.EditAccountActivity
 

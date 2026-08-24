@@ -3,12 +3,12 @@ package dev.fitiavana.accounting.ui.balances
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.ViewModel
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.model.AccountBalance
-import dev.fitiavana.accounting.data.model.Instrument
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.BalanceRepository
-import dev.fitiavana.accounting.data.repository.InstrumentRepository
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.balances.AccountBalance
+import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.balances.BalanceRepository
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 
 class BalancesViewModel(
     private val balanceRepository: BalanceRepository,

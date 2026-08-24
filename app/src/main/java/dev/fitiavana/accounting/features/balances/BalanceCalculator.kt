@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting.data.model
+package dev.fitiavana.accounting.features.balances
 
 object BalanceCalculator {
     fun compute(

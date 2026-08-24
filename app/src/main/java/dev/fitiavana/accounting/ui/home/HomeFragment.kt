@@ -13,10 +13,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.data.repository.AccountRepository
-import dev.fitiavana.accounting.data.repository.BalanceRepository
-import dev.fitiavana.accounting.data.repository.ExchangeRateRepository
-import dev.fitiavana.accounting.data.repository.InstrumentRepository
+import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.balances.BalanceRepository
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.homedetail.HomeDetailActivity
 

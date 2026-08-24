@@ -6,17 +6,17 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import dev.fitiavana.accounting.data.dao.AccountBalanceDao
-import dev.fitiavana.accounting.data.dao.AccountDao
-import dev.fitiavana.accounting.data.dao.ExchangeRateCacheDao
-import dev.fitiavana.accounting.data.dao.InstrumentDao
-import dev.fitiavana.accounting.data.dao.TransactionDao
-import dev.fitiavana.accounting.data.model.Account
-import dev.fitiavana.accounting.data.model.AccountBalance
-import dev.fitiavana.accounting.data.model.ExchangeRateCache
-import dev.fitiavana.accounting.data.model.Instrument
-import dev.fitiavana.accounting.data.model.Transaction
-import dev.fitiavana.accounting.data.model.TransactionEntry
+import dev.fitiavana.accounting.features.balances.AccountBalanceDao
+import dev.fitiavana.accounting.features.accounts.AccountDao
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
+import dev.fitiavana.accounting.features.instruments.InstrumentDao
+import dev.fitiavana.accounting.features.transactions.TransactionDao
+import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.balances.AccountBalance
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
+import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.transactions.Transaction
+import dev.fitiavana.accounting.features.transactions.TransactionEntry
 
 @Database(
     entities = [Account::class, Transaction::class, TransactionEntry::class, AccountBalance::class, Instrument::class, ExchangeRateCache::class],

@@ -1,9 +1,9 @@
-package dev.fitiavana.accounting.data.repository
+package dev.fitiavana.accounting.features.instruments
 
 import androidx.lifecycle.LiveData
-import dev.fitiavana.accounting.data.dao.AccountDao
-import dev.fitiavana.accounting.data.dao.InstrumentDao
-import dev.fitiavana.accounting.data.model.Instrument
+import dev.fitiavana.accounting.features.accounts.AccountDao
+import dev.fitiavana.accounting.features.instruments.InstrumentDao
+import dev.fitiavana.accounting.features.instruments.Instrument
 
 class InstrumentRepository(private val dao: InstrumentDao, private val accountDao: AccountDao) {
     fun getAll(): LiveData<List<Instrument>> = dao.getAll()

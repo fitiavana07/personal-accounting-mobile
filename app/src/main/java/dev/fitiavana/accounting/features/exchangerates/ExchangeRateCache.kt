@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting.data.model
+package dev.fitiavana.accounting.features.exchangerates
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

@@ -1,8 +1,9 @@
-package dev.fitiavana.accounting.data.model
+package dev.fitiavana.accounting.features.balances
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import dev.fitiavana.accounting.features.accounts.Account
 
 @Entity(
     tableName = "account_balances",
