@@ -5,10 +5,10 @@ import androidx.lifecycle.LiveData
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 import dev.fitiavana.accounting.features.instruments.Instrument
-import dev.fitiavana.accounting.data.network.CoinGeckoClient
-import dev.fitiavana.accounting.data.network.ExchangeRateFetcher
-import dev.fitiavana.accounting.data.network.StockPriceFetcher
-import dev.fitiavana.accounting.data.network.YahooFinanceClient
+import dev.fitiavana.accounting.network.CoinGeckoClient
+import dev.fitiavana.accounting.network.ExchangeRateFetcher
+import dev.fitiavana.accounting.network.StockPriceFetcher
+import dev.fitiavana.accounting.network.YahooFinanceClient
 import java.io.IOException
 
 data class RefreshResult(

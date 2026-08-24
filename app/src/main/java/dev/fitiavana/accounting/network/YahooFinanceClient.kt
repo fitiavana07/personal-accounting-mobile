@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting.data.network
+package dev.fitiavana.accounting.network
 
 import okhttp3.OkHttpClient
 import okhttp3.Request

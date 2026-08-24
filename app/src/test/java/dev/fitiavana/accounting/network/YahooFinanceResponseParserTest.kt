@@ -1,6 +1,6 @@
-package dev.fitiavana.accounting.data.network
+package dev.fitiavana.accounting.network
 
-import dev.fitiavana.accounting.data.network.YahooFinanceResponseParser
+import dev.fitiavana.accounting.network.YahooFinanceResponseParser
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

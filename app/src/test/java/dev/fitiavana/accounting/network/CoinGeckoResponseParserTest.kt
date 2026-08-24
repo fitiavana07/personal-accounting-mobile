@@ -1,6 +1,6 @@
-package dev.fitiavana.accounting.data.network
+package dev.fitiavana.accounting.network
 
-import dev.fitiavana.accounting.data.network.CoinGeckoResponseParser
+import dev.fitiavana.accounting.network.CoinGeckoResponseParser
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

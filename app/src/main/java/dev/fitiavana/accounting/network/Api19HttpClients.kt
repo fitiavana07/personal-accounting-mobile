@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting.data.network
+package dev.fitiavana.accounting.network
 
 import android.os.Build
 import okhttp3.ConnectionSpec

@@ -3,10 +3,10 @@ package dev.fitiavana.accounting.features.exchangerates
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 import dev.fitiavana.accounting.features.instruments.Instrument
-import dev.fitiavana.accounting.data.network.ExchangeRateFetcher
-import dev.fitiavana.accounting.data.network.StockPriceFetcher
-import dev.fitiavana.accounting.data.network.StockQuote
-import dev.fitiavana.accounting.data.network.TickerQuote
+import dev.fitiavana.accounting.network.ExchangeRateFetcher
+import dev.fitiavana.accounting.network.StockPriceFetcher
+import dev.fitiavana.accounting.network.StockQuote
+import dev.fitiavana.accounting.network.TickerQuote
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

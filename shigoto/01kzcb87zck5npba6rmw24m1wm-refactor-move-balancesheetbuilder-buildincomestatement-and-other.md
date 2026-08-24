@@ -116,3 +116,6 @@ move, running `./gradlew assembleDebug testDebugUnitTest` after each step:
 5. **Done.** Reorganized test sources under `app/src/test/java/dev/fitiavana/accounting/` to mirror the
    new `features/*`/`ui/*` layout, moving each test file into the test package matching the package of
    its class under test and updating the `package` declaration accordingly.
+6. **Done.** Moved `data/network` to `network` (main and test sources) unchanged aside from the
+   package rename, updating call sites (`features/exchangerates/ExchangeRateRepository.kt` and its
+   test) to match the suggested directory structure.

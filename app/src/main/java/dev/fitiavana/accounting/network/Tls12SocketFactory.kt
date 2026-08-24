@@ -1,4 +1,4 @@
-package dev.fitiavana.accounting.data.network
+package dev.fitiavana.accounting.network
 
 import java.net.InetAddress
 import java.net.Socket
