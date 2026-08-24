@@ -172,31 +172,27 @@ object BalanceSheetBuilder {
                 if (incomeLines.isNotEmpty()) {
                     rows += ReportRow.AccountLine(
                         "Income",
-                        totalIncome,
-                        arPrefixed = true
+                        totalIncome
                     )
                 }
                 if (expenseLines.isNotEmpty()) {
                     rows += ReportRow.AccountLine(
                         "Expense",
                         totalExpense,
-                        contra = true,
-                        arPrefixed = true
+                        contra = true
                     )
                 }
                 if (gainLines.isNotEmpty()) {
                     rows += ReportRow.AccountLine(
                         "Gain",
-                        totalGain,
-                        arPrefixed = true
+                        totalGain
                     )
                 }
                 if (lossLines.isNotEmpty()) {
                     rows += ReportRow.AccountLine(
                         "Loss",
                         totalLoss,
-                        contra = true,
-                        arPrefixed = true
+                        contra = true
                     )
                 }
                 rows += ReportRow.TotalLine(
