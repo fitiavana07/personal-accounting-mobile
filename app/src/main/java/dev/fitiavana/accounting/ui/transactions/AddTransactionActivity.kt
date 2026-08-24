@@ -37,7 +37,6 @@ import dev.fitiavana.accounting.features.transactions.TransactionEntry
 import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
-import dev.fitiavana.accounting.features.balances.AccountBalanceDao
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.ui.UiUtils
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
@@ -53,9 +52,9 @@ class AddTransactionActivity : AppCompatActivity() {
 
     private lateinit var transactionRepo: TransactionRepository
     private lateinit var accountRepo: AccountRepository
+    private lateinit var balanceRepo: BalanceRepository
     private lateinit var accounts: List<Account>
     private lateinit var instrumentsMap: Map<String, Instrument>
-    private lateinit var accountBalanceDao: AccountBalanceDao
 
     private val dateFormat =
         SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
@@ -111,7 +110,7 @@ class AddTransactionActivity : AppCompatActivity() {
         val db = AppDatabase.getInstance(this)
         transactionRepo = TransactionRepository(db.transactionDao())
         accountRepo = AccountRepository(db.accountDao())
-        accountBalanceDao = db.accountBalanceDao()
+        balanceRepo = BalanceRepository(db.accountDao(), db.accountBalanceDao(), db.transactionDao())
 
         textDatetime = findViewById(R.id.text_datetime)
         editNote = findViewById(R.id.edit_note)
@@ -255,7 +254,7 @@ class AddTransactionActivity : AppCompatActivity() {
                 }
                 if (account != null) {
                     Thread {
-                        val bal = accountBalanceDao.getByAccountId(account.id)
+                        val bal = balanceRepo.getByAccountId(account.id)
                         runOnUiThread {
                             val balance = bal?.balance ?: 0
                             textBalance.text = "Balance: ${TransactionDisplay.formatAmount(balance)} Ar"
@@ -623,11 +622,6 @@ class AddTransactionActivity : AppCompatActivity() {
                     )
                 )
             }
-            val balanceRepo = BalanceRepository(
-                accountRepo.dao,
-                AppDatabase.getInstance(this).accountBalanceDao(),
-                AppDatabase.getInstance(this).transactionDao()
-            )
             for (entry in entryDataList) {
                 val account = accounts.first { it.id == entry.accountId }
                 balanceRepo.recalculateForAccount(entry.accountId, account.type)

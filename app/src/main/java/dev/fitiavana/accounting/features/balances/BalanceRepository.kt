@@ -14,6 +14,7 @@ class BalanceRepository(
 ) {
     fun getAll(): LiveData<List<AccountBalance>> = balanceDao.getAll()
     fun getAllSync(): List<AccountBalance> = balanceDao.getAllSync()
+    fun getByAccountId(accountId: String): AccountBalance? = balanceDao.getByAccountId(accountId)
 
     fun recalculateForAccount(accountId: String, accountType: String) {
         val totalDebits = transactionDao.sumDebitsForAccount(accountId)
