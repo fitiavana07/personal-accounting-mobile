@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModel
 import dev.fitiavana.accounting.data.model.Account
 import dev.fitiavana.accounting.data.repository.AccountRepository
 import dev.fitiavana.accounting.data.repository.BalanceRepository
-import dev.fitiavana.accounting.ui.home.BalanceSheetBuilder
+import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
+import dev.fitiavana.accounting.features.reports.IncomeStatementBuilder
+import dev.fitiavana.accounting.ui.home.BalanceSheetPresenter
 import dev.fitiavana.accounting.ui.home.BalanceSheetRow
 
 class ReportsViewModel(
@@ -127,8 +129,10 @@ class ReportsViewModel(
         )
         _balanceSheetRows.postValue(
             when (type) {
-                ReportType.BALANCE_SHEET -> BalanceSheetBuilder.buildMonthly(lastAccounts, lastBalances)
-                ReportType.INCOME_STATEMENT -> BalanceSheetBuilder.buildIncomeStatement(lastAccounts, lastPeriodBalances)
+                ReportType.BALANCE_SHEET ->
+                    BalanceSheetPresenter.present(BalanceSheetBuilder.buildMonthly(lastAccounts, lastBalances))
+                ReportType.INCOME_STATEMENT ->
+                    BalanceSheetPresenter.present(IncomeStatementBuilder.build(lastAccounts, lastPeriodBalances))
                 ReportType.CHANGES_IN_EQUITY -> emptyList()
             }
         )

@@ -12,6 +12,7 @@ import dev.fitiavana.accounting.data.repository.BalanceRepository
 import dev.fitiavana.accounting.data.repository.ExchangeRateRepository
 import dev.fitiavana.accounting.data.repository.InstrumentRepository
 import dev.fitiavana.accounting.data.repository.RefreshResult
+import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
 
 class HomeViewModel(
     private val balanceRepository: BalanceRepository,
@@ -58,7 +59,7 @@ class HomeViewModel(
         var latestAccounts: List<Account> = emptyList()
 
         fun update() {
-            value = BalanceSheetBuilder.build(latestAccounts, latestBalances)
+            value = BalanceSheetPresenter.present(BalanceSheetBuilder.build(latestAccounts, latestBalances))
         }
 
         addSource(balances) { b ->
@@ -76,7 +77,7 @@ class HomeViewModel(
         var latestAccounts: List<Account> = emptyList()
 
         fun update() {
-            value = BalanceSheetBuilder.assetSlices(latestAccounts, latestBalances)
+            value = AssetSliceBuilder.assetSlices(latestAccounts, latestBalances)
         }
 
         addSource(balances) { b ->
