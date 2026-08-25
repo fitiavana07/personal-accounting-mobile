@@ -23,16 +23,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.widget.ImageViewCompat
+import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.transactions.Transaction
 import dev.fitiavana.accounting.features.transactions.TransactionEntry
-import dev.fitiavana.accounting.features.accounts.AccountRepository
-import dev.fitiavana.accounting.features.balances.BalanceRepository
-import dev.fitiavana.accounting.features.instruments.InstrumentRepository
-import dev.fitiavana.accounting.features.transactions.TransactionRepository
 import dev.fitiavana.accounting.ui.common.UiUtils
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import kotlin.math.pow
@@ -44,10 +41,7 @@ import java.util.UUID
 
 class AddTransactionActivity : AppCompatActivity() {
 
-    private lateinit var transactionRepo: TransactionRepository
-    private lateinit var accountRepo: AccountRepository
-    private lateinit var balanceRepo: BalanceRepository
-    private lateinit var instrumentRepo: InstrumentRepository
+    private lateinit var viewModel: AddTransactionViewModel
     private lateinit var accounts: List<Account>
     private lateinit var instrumentsMap: Map<String, Instrument>
 
@@ -103,10 +97,16 @@ class AddTransactionActivity : AppCompatActivity() {
         title = getString(R.string.title_new_transaction)
 
         val container = AppContainer.getInstance(this)
-        transactionRepo = container.transactionRepository
-        accountRepo = container.accountRepository
-        balanceRepo = container.balanceRepository
-        instrumentRepo = container.instrumentRepository
+        viewModel = ViewModelProvider(
+            this,
+            AddTransactionViewModelFactory(
+                container.transactionRepository,
+                container.accountRepository,
+                container.balanceRepository,
+                container.instrumentRepository
+            )
+        )
+            .get(AddTransactionViewModel::class.java)
 
         textDatetime = findViewById(R.id.text_datetime)
         editNote = findViewById(R.id.edit_note)
@@ -117,9 +117,9 @@ class AddTransactionActivity : AppCompatActivity() {
         textDatetime.setOnClickListener { pickDate() }
 
         Thread {
-            accounts = accountRepo.getAllSync()
-            instrumentsMap =
-                instrumentRepo.getAllSync().associateBy { it.code }
+            val loaded = viewModel.loadAccountsAndInstruments()
+            accounts = loaded.accounts
+            instrumentsMap = loaded.instrumentsByCode
             runOnUiThread {
                 addEntryRow()
                 addEntryRow()
@@ -277,7 +277,7 @@ class AddTransactionActivity : AppCompatActivity() {
                     }
                     if (account != null) {
                         Thread {
-                            val bal = balanceRepo.getByAccountId(account.id)
+                            val bal = viewModel.getBalance(account.id)
                             runOnUiThread {
                                 val balance = bal?.balance ?: 0
                                 textBalance.text = "Balance: ${
@@ -815,31 +815,24 @@ class AddTransactionActivity : AppCompatActivity() {
             note = editNote.text.toString().trim()
         )
 
+        val entries = entryDataList.mapIndexed { i, entry ->
+            val ia = instrumentAmountsList[i]
+            TransactionEntry(
+                id = UUID.randomUUID().toString(),
+                transactionId = transactionId,
+                accountId = entry.accountId,
+                debitAmount = entry.debitAmount,
+                creditAmount = entry.creditAmount,
+                instrumentDebitAmount = ia.debit,
+                instrumentCreditAmount = ia.credit,
+                intermediaryDebitAmount = ia.interDebit,
+                intermediaryCreditAmount = ia.interCredit
+            )
+        }
+        val accountTypesById = accounts.associate { it.id to it.type }
+
         Thread {
-            transactionRepo.insert(transaction)
-            entryDataList.forEachIndexed { i, entry ->
-                val ia = instrumentAmountsList[i]
-                transactionRepo.insertEntry(
-                    TransactionEntry(
-                        id = UUID.randomUUID().toString(),
-                        transactionId = transactionId,
-                        accountId = entry.accountId,
-                        debitAmount = entry.debitAmount,
-                        creditAmount = entry.creditAmount,
-                        instrumentDebitAmount = ia.debit,
-                        instrumentCreditAmount = ia.credit,
-                        intermediaryDebitAmount = ia.interDebit,
-                        intermediaryCreditAmount = ia.interCredit
-                    )
-                )
-            }
-            for (entry in entryDataList) {
-                val account = accounts.first { it.id == entry.accountId }
-                balanceRepo.recalculateForAccount(
-                    entry.accountId,
-                    account.type
-                )
-            }
+            viewModel.saveTransaction(transaction, entries, accountTypesById)
             runOnUiThread { finish() }
         }.start()
     }

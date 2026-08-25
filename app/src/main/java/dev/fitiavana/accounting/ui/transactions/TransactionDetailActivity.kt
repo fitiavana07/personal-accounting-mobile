@@ -9,6 +9,7 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
@@ -37,20 +38,28 @@ class TransactionDetailActivity : AppCompatActivity() {
             ?: run { finish(); return }
 
         val container = AppContainer.getInstance(this)
-        val transactionRepo = container.transactionRepository
-        val accountRepo = container.accountRepository
-        val instrumentRepo = container.instrumentRepository
+        val viewModel = ViewModelProvider(
+            this,
+            TransactionDetailViewModelFactory(
+                container.transactionRepository,
+                container.accountRepository,
+                container.instrumentRepository
+            )
+        )
+            .get(TransactionDetailViewModel::class.java)
 
         Thread {
-            val twe = transactionRepo.getWithEntries(transactionId)
-            val accounts =
-                accountRepo.getAll().value ?: accountRepo.getAllSync()
-            val instruments =
-                instrumentRepo.getAllSync().associateBy { it.code }
-            val accountsMap = accounts.associate { it.id to it }
+            val detail = viewModel.loadDetail(transactionId)
             runOnUiThread {
-                if (twe != null) bindData(twe, accountsMap, instruments)
-                else finish()
+                if (detail != null) {
+                    bindData(
+                        detail.transactionWithEntries,
+                        detail.accountsById,
+                        detail.instrumentsByCode
+                    )
+                } else {
+                    finish()
+                }
             }
         }.start()
     }

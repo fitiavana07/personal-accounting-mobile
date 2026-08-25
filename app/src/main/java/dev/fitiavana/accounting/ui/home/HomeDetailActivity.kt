@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.ui.common.UiUtils
@@ -31,19 +32,19 @@ class HomeDetailActivity : AppCompatActivity() {
             intent.getStringExtra(EXTRA_ACCOUNT_ID) ?: run { finish(); return }
 
         val container = AppContainer.getInstance(this)
-        val balanceRepo = container.balanceRepository
-        val accountRepo = container.accountRepository
-        val instrumentRepo = container.instrumentRepository
-        val exchangeRateRepo = container.exchangeRateRepository
+        val viewModel = ViewModelProvider(
+            this,
+            HomeDetailViewModelFactory(
+                container.balanceRepository,
+                container.accountRepository,
+                container.instrumentRepository,
+                container.exchangeRateRepository
+            )
+        )
+            .get(HomeDetailViewModel::class.java)
 
         Thread {
-            val items = HomeItemBuilder.build(
-                balanceRepo.getAllSync(),
-                accountRepo.getAllSync(),
-                instrumentRepo.getAllSync().associateBy { it.code },
-                exchangeRateRepo.getAllCachedSync().associateBy { it.pairKey }
-            )
-            val item = items.find { it.accountId == accountId }
+            val item = viewModel.findItem(accountId)
             runOnUiThread {
                 if (item != null) bindData(item) else finish()
             }
