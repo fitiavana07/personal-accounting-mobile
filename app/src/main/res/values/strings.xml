@@ -18,6 +18,7 @@
     <string name="restore_failed">Restore failed: %1$s</string>
     <string name="restore_schema_mismatch">This backup was made with a different app version (schema v%1$d) and can\'t be restored on this version (schema v%2$d).</string>
     <string name="restore_success">Restore complete</string>
+    <string name="amount_ar">Ar %1$s</string>
     <string name="app_name">Accounting</string>
     <string name="app_name_with_version">Accounting v%1$s</string>
     <string name="balances_recalculated">Balances recalculated</string>

@@ -46,7 +46,10 @@ class TransactionsAdapter(
         holder.accounts.text = "${TransactionDisplay.formatAccountList(debitAccounts)} ⇄ ${TransactionDisplay.formatAccountList(creditAccounts)}"
 
         val totalDebit = item.entries.sumOf { it.debitAmount ?: 0L }
-        holder.amount.text = "Ar ${TransactionDisplay.formatAmount(totalDebit)}"
+        holder.amount.text = holder.amount.context.getString(
+            R.string.amount_ar,
+            TransactionDisplay.formatAmount(totalDebit)
+        )
 
         val notePreview = TransactionDisplay.formatNotePreview(item.transaction.note)
         if (notePreview.isEmpty()) {

@@ -56,7 +56,10 @@ class BalancesAdapter : RecyclerView.Adapter<BalancesAdapter.ViewHolder>() {
         fun bind(item: BalanceItem, dateFormat: SimpleDateFormat) {
             nameView.text = item.accountName
             updatedAtView.text = dateFormat.format(Date(item.updatedAt))
-            amountView.text = "Ar ${TransactionDisplay.formatAmount(item.balance)}"
+            amountView.text = amountView.context.getString(
+                R.string.amount_ar,
+                TransactionDisplay.formatAmount(item.balance)
+            )
             if (item.instrument != null) {
                 val instrumentText = TransactionDisplay.formatInstrumentAmount(item.instrumentBalance, item.instrument)
                 instrumentAmountView.text = if (item.intermediaryInstrument != null) {

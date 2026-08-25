@@ -77,7 +77,7 @@ class HomeDetailActivity : AppCompatActivity() {
             R.id.row_market_value_ar,
             R.id.text_detail_market_value_ar,
             item.currentValueAr?.let {
-                "Ar ${TransactionDisplay.formatAmount(Math.round(it))}"
+                getString(R.string.amount_ar, TransactionDisplay.formatAmount(Math.round(it)))
             })
 
         bindOptionalRow(
