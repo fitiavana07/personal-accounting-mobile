@@ -32,11 +32,13 @@ menu) and `release`. Both can be installed side-by-side.
 No dependency injection framework. Each ViewModel has a manual ViewModelFactory
 that receives Repository instances from the Activity/Fragment.
 
-**Layering rule: ViewModel/Activity/Fragment → Repository → DAO.** ViewModels
-and Activities/Fragments must talk to Repositories only — never import or
-call a DAO directly. A Repository may depend on multiple DAOs, but a DAO must
-never depend on a Repository. If a Repository is missing a method you need,
-add it to the Repository rather than reaching into the DAO from the UI layer.
+**Layering rule: Activity/Fragment → ViewModel → Repository → DAO.**
+Activities and Fragments must talk to a ViewModel only — never call a
+Repository or DAO directly. A ViewModel may depend on multiple Repositories,
+a Repository may depend on multiple DAOs, but a DAO must never depend on a
+Repository and a Repository must never be called directly from the UI layer.
+If a ViewModel is missing a method you need, add it to the ViewModel (which
+delegates to the Repository) rather than reaching past it from the UI layer.
 
 RoomDatabase singleton in
 app/src/main/java/dev/fitiavana/accounting/db/AppDatabase.kt
@@ -47,7 +49,7 @@ app/src/main/java/dev/fitiavana/accounting/db/AppDatabase.kt
 data/
   model/       # Room @Entity classes
   dao/         # Room @Dao interfaces
-  repository/  # Repository classes (ViewModel talks to these, not DAOs directly)
+  repository/  # Repository classes (only ViewModels talk to these, never UI)
 db/            # AppDatabase singleton
 ui/
   accounts/    # AccountsFragment, AccountsViewModel, AccountsAdapter
