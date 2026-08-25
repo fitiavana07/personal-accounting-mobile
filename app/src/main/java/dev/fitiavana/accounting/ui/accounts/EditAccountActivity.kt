@@ -15,7 +15,7 @@ import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.instruments.Instrument
-import dev.fitiavana.accounting.ui.UiUtils
+import dev.fitiavana.accounting.ui.common.UiUtils
 
 class EditAccountActivity : AppCompatActivity() {
 

@@ -1,5 +1,6 @@
-package dev.fitiavana.accounting.ui
+package dev.fitiavana.accounting.ui.common
 
+import android.content.res.Configuration
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -35,8 +36,8 @@ class UiUtils {
                 }
 
                 val isNightMode = (activity.resources.configuration.uiMode and
-                        android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
-                        android.content.res.Configuration.UI_MODE_NIGHT_YES
+                        Configuration.UI_MODE_NIGHT_MASK) ==
+                        Configuration.UI_MODE_NIGHT_YES
 
                 WindowInsetsControllerCompat(
                     activity.window,

@@ -14,7 +14,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import dev.fitiavana.accounting.features.backup.BackupRepository
 import dev.fitiavana.accounting.features.backup.RestoreResult
-import dev.fitiavana.accounting.ui.UiUtils
+import dev.fitiavana.accounting.ui.common.UiUtils
 import dev.fitiavana.accounting.ui.accounts.AccountsFragment
 import dev.fitiavana.accounting.ui.balances.BalancesActivity
 import dev.fitiavana.accounting.ui.home.HomeFragment
@@ -48,14 +48,22 @@ class MainActivity : AppCompatActivity() {
         backupRepository = AppContainer.getInstance(this).backupRepository
 
         UiUtils.setupActionBar(this, displayHomeAsUp = false)
-        supportActionBar?.title = getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME)
+        supportActionBar?.title =
+            getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME)
 
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        val bottomNav =
+            findViewById<BottomNavigationView>(R.id.bottom_navigation)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { view, insets ->
-                val navBar = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
-                view.setPadding(view.paddingLeft, view.paddingTop, view.paddingRight, navBar.bottom)
+                val navBar =
+                    insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+                view.setPadding(
+                    view.paddingLeft,
+                    view.paddingTop,
+                    view.paddingRight,
+                    navBar.bottom
+                )
                 insets
             }
         }
@@ -104,14 +112,17 @@ class MainActivity : AppCompatActivity() {
                 createBackupDocument.launch(filename)
                 return true
             }
+
             R.id.action_restore -> {
                 openRestoreDocument.launch(arrayOf("*/*"))
                 return true
             }
+
             R.id.action_instruments -> {
                 startActivity(InstrumentsActivity.intent(this))
                 return true
             }
+
             R.id.action_balances -> {
                 startActivity(BalancesActivity.intent(this))
                 return true
@@ -129,7 +140,11 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle(R.string.dialog_restore_title)
             .setMessage(R.string.dialog_restore_message)
-            .setPositiveButton(R.string.action_restore) { _, _ -> performRestore(uri) }
+            .setPositiveButton(R.string.action_restore) { _, _ ->
+                performRestore(
+                    uri
+                )
+            }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
@@ -139,13 +154,22 @@ class MainActivity : AppCompatActivity() {
         Thread {
             try {
                 val json = backupRepository.export()
-                contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) }
+                contentResolver.openOutputStream(uri)
+                    ?.use { it.write(json.toByteArray()) }
                 runOnUiThread {
-                    Toast.makeText(this, R.string.backup_success, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        R.string.backup_success,
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    Toast.makeText(this, getString(R.string.backup_failed, e.message), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        getString(R.string.backup_failed, e.message),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             } finally {
                 runOnUiThread { setOperationInProgress(false) }
@@ -157,27 +181,46 @@ class MainActivity : AppCompatActivity() {
         setOperationInProgress(true)
         Thread {
             try {
-                val json = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                val json = contentResolver.openInputStream(uri)
+                    ?.use { it.readBytes() }
                     ?.toString(Charsets.UTF_8)
                     ?: throw IllegalStateException("Could not read backup file")
                 when (val result = backupRepository.restore(json)) {
                     is RestoreResult.Success -> runOnUiThread {
-                        Toast.makeText(this, R.string.restore_success, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this,
+                            R.string.restore_success,
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
+
                     is RestoreResult.SchemaMismatch -> runOnUiThread {
                         Toast.makeText(
                             this,
-                            getString(R.string.restore_schema_mismatch, result.backupVersion, result.currentVersion),
+                            getString(
+                                R.string.restore_schema_mismatch,
+                                result.backupVersion,
+                                result.currentVersion
+                            ),
                             Toast.LENGTH_LONG
                         ).show()
                     }
+
                     is RestoreResult.Error -> runOnUiThread {
-                        Toast.makeText(this, getString(R.string.restore_failed, result.message), Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this,
+                            getString(R.string.restore_failed, result.message),
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    Toast.makeText(this, getString(R.string.restore_failed, e.message), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        getString(R.string.restore_failed, e.message),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             } finally {
                 runOnUiThread { setOperationInProgress(false) }
@@ -186,6 +229,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        private val backupFilenameDateFormat = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.US)
+        private val backupFilenameDateFormat =
+            SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.US)
     }
 }

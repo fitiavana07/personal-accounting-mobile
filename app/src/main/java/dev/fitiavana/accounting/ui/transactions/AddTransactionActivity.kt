@@ -33,7 +33,7 @@ import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
-import dev.fitiavana.accounting.ui.UiUtils
+import dev.fitiavana.accounting.ui.common.UiUtils
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import kotlin.math.pow
 import kotlin.math.roundToLong

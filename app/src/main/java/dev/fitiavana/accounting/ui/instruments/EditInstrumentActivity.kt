@@ -14,7 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.ui.UiUtils
+import dev.fitiavana.accounting.ui.common.UiUtils
 
 class EditInstrumentActivity : AppCompatActivity() {
 
@@ -89,7 +89,9 @@ class EditInstrumentActivity : AppCompatActivity() {
                         typeSpinner.setSelection(typeIndex)
                         decimalPlacesInput.setText(instrument.decimalPlaces.toString())
                         coingeckoIdInput.setText(instrument.coingeckoId ?: "")
-                        stockApiSymbolInput.setText(instrument.stockApiSymbol ?: "")
+                        stockApiSymbolInput.setText(
+                            instrument.stockApiSymbol ?: ""
+                        )
                     }
                 }
             }.start()
@@ -103,8 +105,10 @@ class EditInstrumentActivity : AppCompatActivity() {
             val decimalPlaces =
                 decimalPlacesInput.text.toString().trim().toIntOrNull() ?: 0
             val selectedType = TYPE_VALUES[typeSpinner.selectedItemPosition]
-            val coingeckoId = coingeckoIdInput.text.toString().trim().ifEmpty { null }
-            val stockApiSymbol = stockApiSymbolInput.text.toString().trim().ifEmpty { null }
+            val coingeckoId =
+                coingeckoIdInput.text.toString().trim().ifEmpty { null }
+            val stockApiSymbol =
+                stockApiSymbolInput.text.toString().trim().ifEmpty { null }
 
             if (code.isNotEmpty()) {
                 Thread {
@@ -171,18 +175,27 @@ class EditInstrumentActivity : AppCompatActivity() {
                                 .setMessage(R.string.dialog_delete_instrument_message)
                                 .setPositiveButton(R.string.action_delete) { _, _ ->
                                     Thread {
-                                        val instrument = viewModel.getInstrument(instrumentCode!!)
-                                        if (instrument != null) viewModel.deleteInstrument(instrument)
+                                        val instrument =
+                                            viewModel.getInstrument(
+                                                instrumentCode!!
+                                            )
+                                        if (instrument != null) viewModel.deleteInstrument(
+                                            instrument
+                                        )
                                         runOnUiThread { finish() }
                                     }.start()
                                 }
-                                .setNegativeButton(android.R.string.cancel, null)
+                                .setNegativeButton(
+                                    android.R.string.cancel,
+                                    null
+                                )
                                 .show()
                         }
                     }
                 }.start()
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }

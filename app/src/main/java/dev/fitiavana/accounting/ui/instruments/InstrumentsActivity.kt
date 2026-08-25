@@ -5,7 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.ui.UiUtils
+import dev.fitiavana.accounting.ui.common.UiUtils
 
 class InstrumentsActivity : AppCompatActivity() {
 
