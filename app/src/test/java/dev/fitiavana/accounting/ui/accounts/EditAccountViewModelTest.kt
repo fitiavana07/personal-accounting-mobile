@@ -2,26 +2,32 @@ package dev.fitiavana.accounting.ui.accounts
 
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
 class EditAccountViewModelTest {
 
     private lateinit var accountRepository: AccountRepository
     private lateinit var instrumentRepository: InstrumentRepository
+    private lateinit var balanceRepository: BalanceRepository
     private lateinit var viewModel: EditAccountViewModel
 
     @Before
     fun setUp() {
         accountRepository = mock()
         instrumentRepository = mock()
-        viewModel = EditAccountViewModel(accountRepository, instrumentRepository)
+        balanceRepository = mock()
+        viewModel = EditAccountViewModel(accountRepository, instrumentRepository, balanceRepository)
     }
 
     // --- Account data class ---
@@ -137,5 +143,19 @@ class EditAccountViewModelTest {
         val account = Account(id = "1", name = "Cash", type = "asset")
         viewModel.deleteAccount(account)
         verify(accountRepository).delete(account)
+    }
+
+    // --- hasTransactions ---
+
+    @Test
+    fun `hasTransactions returns true when balance repository reports transactions`() {
+        whenever(balanceRepository.hasTransactions("abc")).thenReturn(true)
+        assertTrue(viewModel.hasTransactions("abc"))
+    }
+
+    @Test
+    fun `hasTransactions returns false when balance repository reports no transactions`() {
+        whenever(balanceRepository.hasTransactions("abc")).thenReturn(false)
+        assertFalse(viewModel.hasTransactions("abc"))
     }
 }

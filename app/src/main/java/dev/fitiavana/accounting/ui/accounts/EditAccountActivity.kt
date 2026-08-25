@@ -54,29 +54,49 @@ class EditAccountActivity : AppCompatActivity() {
     private var instrumentInitiallyUnset: Boolean = true
     private var intermediaryInitiallyUnset: Boolean = true
 
+    private lateinit var container: AppContainer
+    private lateinit var saveButton: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_account)
 
         UiUtils.setupActionBar(this)
 
-        val container = AppContainer.getInstance(this)
-        val repository = container.accountRepository
-        val instrumentRepository = container.instrumentRepository
+        container = AppContainer.getInstance(this)
+        accountId = intent.getStringExtra(EXTRA_ACCOUNT_ID)
 
+        initViewModel()
+        bindViews()
+        setupTypeSpinner()
+        observeInstruments()
+        setupInstrumentSpinnerListener()
+        loadAccountForEditingIfNeeded()
+        setupSaveButton()
+    }
+
+    private fun initViewModel() {
         viewModel = ViewModelProvider(
             this,
-            EditAccountViewModelFactory(repository, instrumentRepository)
+            EditAccountViewModelFactory(
+                container.accountRepository,
+                container.instrumentRepository,
+                container.balanceRepository
+            )
         )
             .get(EditAccountViewModel::class.java)
+    }
 
+    private fun bindViews() {
         nameInput = findViewById(R.id.input_account_name)
         typeSpinner = findViewById(R.id.spinner_account_type)
         instrumentSpinner = findViewById(R.id.spinner_instrument)
         intermediaryInstrumentSpinner =
             findViewById(R.id.spinner_intermediary_instrument)
-        val saveButton: Button = findViewById(R.id.button_save)
+        saveButton = findViewById(R.id.button_save)
+    }
 
+    private fun setupTypeSpinner() {
         val typeDisplayNames =
             resources.getStringArray(R.array.account_type_display)
         val spinnerAdapter = ArrayAdapter(
@@ -86,13 +106,14 @@ class EditAccountActivity : AppCompatActivity() {
         )
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         typeSpinner.adapter = spinnerAdapter
+    }
 
-        accountId = intent.getStringExtra(EXTRA_ACCOUNT_ID)
-
+    private fun observeInstruments() {
         viewModel.instruments.observe(this) { list ->
             instruments = list
             val displayNames =
                 listOf(getString(R.string.spinner_no_instrument)) + list.map { it.code }
+
             val adapter = ArrayAdapter(
                 this,
                 android.R.layout.simple_spinner_item,
@@ -109,9 +130,10 @@ class EditAccountActivity : AppCompatActivity() {
             intermediaryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             intermediaryInstrumentSpinner.adapter = intermediaryAdapter
 
-            if (accountId != null) {
+            val id = accountId
+            if (id != null) {
                 Thread {
-                    val account = viewModel.getAccount(accountId!!)
+                    val account = viewModel.getAccount(id)
                     runOnUiThread {
                         if (account != null) {
                             val index =
@@ -132,7 +154,9 @@ class EditAccountActivity : AppCompatActivity() {
                 updateIntermediarySpinnerEnabled()
             }
         }
+    }
 
+    private fun setupInstrumentSpinnerListener() {
         instrumentSpinner.onItemSelectedListener =
             object : android.widget.AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(
@@ -151,32 +175,37 @@ class EditAccountActivity : AppCompatActivity() {
                     updateIntermediarySpinnerEnabled()
                 }
             }
+    }
 
-        if (accountId != null) {
-            title = getString(R.string.title_edit_account)
-            Thread {
-                val account = viewModel.getAccount(accountId!!)
-                val locked =
-                    container.balanceRepository.hasTransactions(accountId!!)
-                runOnUiThread {
-                    if (account != null) {
-                        nameInput.setText(account.name)
-                        nameInput.setSelection(account.name.length)
-                        val typeIndex = TYPE_VALUES.indexOf(account.type)
-                            .takeIf { it >= 0 } ?: 0
-                        typeSpinner.setSelection(typeIndex)
-                    }
-                    isLocked = locked
-                    typeSpinner.isEnabled = !locked
-                    instrumentSpinner.isEnabled =
-                        !locked || instrumentInitiallyUnset
-                    updateIntermediarySpinnerEnabled()
-                }
-            }.start()
-        } else {
+    private fun loadAccountForEditingIfNeeded() {
+        val id = accountId
+        if (id == null) {
             title = getString(R.string.title_add_account)
+            return
         }
 
+        title = getString(R.string.title_edit_account)
+        Thread {
+            val account = viewModel.getAccount(id)
+            val locked = viewModel.hasTransactions(id)
+            runOnUiThread {
+                if (account != null) {
+                    nameInput.setText(account.name)
+                    nameInput.setSelection(account.name.length)
+                    val typeIndex = TYPE_VALUES.indexOf(account.type)
+                        .takeIf { it >= 0 } ?: 0
+                    typeSpinner.setSelection(typeIndex)
+                }
+                isLocked = locked
+                typeSpinner.isEnabled = !locked
+                instrumentSpinner.isEnabled =
+                    !locked || instrumentInitiallyUnset
+                updateIntermediarySpinnerEnabled()
+            }
+        }.start()
+    }
+
+    private fun setupSaveButton() {
         saveButton.setOnClickListener {
             val name = nameInput.text.toString().trim()
             if (name.isNotEmpty()) {
@@ -221,9 +250,7 @@ class EditAccountActivity : AppCompatActivity() {
             R.id.action_delete_account -> {
                 Thread {
                     val hasTransactions =
-                        AppContainer.getInstance(this).balanceRepository.hasTransactions(
-                            accountId!!
-                        )
+                        viewModel.hasTransactions(accountId!!)
                     runOnUiThread {
                         if (hasTransactions) {
                             AlertDialog.Builder(this)
