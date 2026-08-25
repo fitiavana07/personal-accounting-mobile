@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.features.accounts.AccountTypes
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.ui.common.UiUtils
 
@@ -21,18 +22,6 @@ class EditAccountActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_ACCOUNT_ID = "account_id"
-
-        private val TYPE_VALUES =
-            listOf(
-                "asset",
-                "liability",
-                "equity",
-                "revenue",
-                "expense",
-                "drawing",
-                "gain",
-                "loss"
-            )
 
         fun addIntent(context: Context): Intent =
             Intent(context, EditAccountActivity::class.java)
@@ -192,7 +181,7 @@ class EditAccountActivity : AppCompatActivity() {
                 if (account != null) {
                     nameInput.setText(account.name)
                     nameInput.setSelection(account.name.length)
-                    val typeIndex = TYPE_VALUES.indexOf(account.type)
+                    val typeIndex = AccountTypes.VALUES.indexOf(account.type)
                         .takeIf { it >= 0 } ?: 0
                     typeSpinner.setSelection(typeIndex)
                 }
@@ -210,7 +199,7 @@ class EditAccountActivity : AppCompatActivity() {
             val name = nameInput.text.toString().trim()
             if (name.isNotEmpty()) {
                 val selectedType =
-                    TYPE_VALUES[typeSpinner.selectedItemPosition]
+                    AccountTypes.VALUES[typeSpinner.selectedItemPosition]
                 val instrumentPos = instrumentSpinner.selectedItemPosition
                 val selectedInstrumentCode =
                     if (instrumentPos == 0) null else instruments[instrumentPos - 1].code

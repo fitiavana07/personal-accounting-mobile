@@ -17,22 +17,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.features.accounts.AccountTypes
 
 class AccountsFragment : Fragment() {
 
     private lateinit var viewModel: AccountsViewModel
     private lateinit var adapter: AccountsAdapter
-
-    private val accountTypes = listOf(
-        "asset",
-        "liability",
-        "equity",
-        "revenue",
-        "expense",
-        "drawing",
-        "gain",
-        "loss"
-    )
+    private lateinit var emptyView: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,12 +36,26 @@ class AccountsFragment : Fragment() {
     ): View = inflater.inflate(R.layout.fragment_accounts, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        initViewModel()
+        bindViews(view)
+        setupRecyclerView()
+        setupTypeSpinner(view.findViewById(R.id.spinner_account_type))
+        observeAccounts()
+    }
+
+    private fun initViewModel() {
         val repository =
             AppContainer.getInstance(requireContext()).accountRepository
         viewModel =
             ViewModelProvider(this, AccountsViewModelFactory(repository))
                 .get(AccountsViewModel::class.java)
+    }
 
+    private fun bindViews(view: View) {
+        emptyView = view.findViewById(R.id.text_empty)
+    }
+
+    private fun setupRecyclerView() {
         adapter = AccountsAdapter { account ->
             startActivity(
                 EditAccountActivity.editIntent(
@@ -59,16 +64,14 @@ class AccountsFragment : Fragment() {
                 )
             )
         }
-        view.findViewById<RecyclerView>(R.id.recycler_accounts).apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = this@AccountsFragment.adapter
-        }
+        requireView().findViewById<RecyclerView>(R.id.recycler_accounts)
+            .apply {
+                layoutManager = LinearLayoutManager(requireContext())
+                adapter = this@AccountsFragment.adapter
+            }
+    }
 
-        val spinnerType = view.findViewById<Spinner>(R.id.spinner_account_type)
-        val emptyView = view.findViewById<TextView>(R.id.text_empty)
-
-        setupTypeSpinner(spinnerType)
-
+    private fun observeAccounts() {
         viewModel.accounts.observe(viewLifecycleOwner) { accounts ->
             adapter.submitList(accounts)
             if (accounts.isEmpty()) {
@@ -87,7 +90,7 @@ class AccountsFragment : Fragment() {
     private fun setupTypeSpinner(spinner: Spinner) {
         val allTypesLabel = getString(R.string.filter_all_types)
         val labels = mutableListOf(allTypesLabel)
-        labels.addAll(accountTypes.map { it.replaceFirstChar { c -> c.uppercaseChar() } })
+        labels.addAll(resources.getStringArray(R.array.account_type_display))
 
         val spinnerAdapter = ArrayAdapter(
             requireContext(),
@@ -109,7 +112,7 @@ class AccountsFragment : Fragment() {
                     id: Long
                 ) {
                     val type =
-                        if (position == 0) null else accountTypes.getOrNull(
+                        if (position == 0) null else AccountTypes.VALUES.getOrNull(
                             position - 1
                         )
                     viewModel.setTypeFilter(type)
