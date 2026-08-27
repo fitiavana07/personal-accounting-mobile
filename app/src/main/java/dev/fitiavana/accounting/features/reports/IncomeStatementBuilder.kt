@@ -94,9 +94,10 @@ object IncomeStatementBuilder {
 
         if (rows.isNotEmpty()) {
             rows += ReportRow.TotalLine(
-                "Net Income",
+                if (netIncome < 0) "Net Loss" else "Net Income",
                 netIncome,
-                emphasized = true
+                emphasized = true,
+                parenthesizeNegative = true
             )
         }
 

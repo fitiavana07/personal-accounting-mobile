@@ -7,6 +7,7 @@ import dev.fitiavana.accounting.features.backup.BackupRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
+import dev.fitiavana.accounting.features.settings.AppSettingsRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
 
 /**
@@ -19,13 +20,16 @@ class AppContainer private constructor(context: Context) {
     val accountRepository = AccountRepository(database.accountDao())
     val instrumentRepository =
         InstrumentRepository(database.instrumentDao(), database.accountDao())
-    val transactionRepository = TransactionRepository(database.transactionDao())
+    val transactionRepository =
+        TransactionRepository(database.transactionDao())
     val balanceRepository = BalanceRepository(
         database.accountDao(),
         database.accountBalanceDao(),
         database.transactionDao()
     )
-    val exchangeRateRepository = ExchangeRateRepository(database.exchangeRateCacheDao())
+    val exchangeRateRepository =
+        ExchangeRateRepository(database.exchangeRateCacheDao())
+    val settingsRepository = AppSettingsRepository(database.appSettingsDao())
     val backupRepository = BackupRepository(
         database,
         database.accountDao(),
@@ -41,7 +45,9 @@ class AppContainer private constructor(context: Context) {
 
         fun getInstance(context: Context): AppContainer {
             return instance ?: synchronized(this) {
-                instance ?: AppContainer(context.applicationContext).also { instance = it }
+                instance ?: AppContainer(context.applicationContext).also {
+                    instance = it
+                }
             }
         }
     }

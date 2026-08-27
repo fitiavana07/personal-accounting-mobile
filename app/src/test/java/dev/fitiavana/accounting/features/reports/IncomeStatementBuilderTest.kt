@@ -1,8 +1,6 @@
 package dev.fitiavana.accounting.features.reports
 
 import dev.fitiavana.accounting.features.accounts.Account
-import dev.fitiavana.accounting.features.reports.ReportRow
-import dev.fitiavana.accounting.features.reports.IncomeStatementBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -30,7 +28,13 @@ class IncomeStatementBuilderTest {
             account("g", "Stock Gain", "gain"),
             account("o", "Stock Loss", "loss")
         )
-        val balances = mapOf("a" to 10_000L, "r" to 300L, "x" to 150L, "g" to 80L, "o" to 30L)
+        val balances = mapOf(
+            "a" to 10_000L,
+            "r" to 300L,
+            "x" to 150L,
+            "g" to 80L,
+            "o" to 30L
+        )
 
         val result = IncomeStatementBuilder.build(accounts, balances)
 
@@ -42,18 +46,39 @@ class IncomeStatementBuilderTest {
                 ReportRow.TotalLine("Total Income", 300, emphasized = true),
                 ReportRow.SectionHeader("Expense"),
                 ReportRow.AccountLine("Rent", 150, contra = true),
-                ReportRow.TotalLine("Total Expense", 150, emphasized = true, contra = true),
+                ReportRow.TotalLine(
+                    "Total Expense",
+                    150,
+                    emphasized = true,
+                    contra = true
+                ),
                 ReportRow.SectionHeader("Gain"),
                 ReportRow.AccountLine("Stock Gain", 80),
                 ReportRow.TotalLine("Total Gain", 80, emphasized = true),
                 ReportRow.SectionHeader("Loss"),
                 ReportRow.AccountLine("Stock Loss", 30, contra = true),
-                ReportRow.TotalLine("Total Loss", 30, emphasized = true, contra = true),
-                ReportRow.TotalLine("Net Income", 200, emphasized = true)
+                ReportRow.TotalLine(
+                    "Total Loss",
+                    30,
+                    emphasized = true,
+                    contra = true
+                ),
+                ReportRow.TotalLine(
+                    "Net Income",
+                    200,
+                    emphasized = true,
+                    parenthesizeNegative = true
+                )
             ),
             result
         )
-        assertTrue(result.none { it is ReportRow.SectionHeader && it.title in listOf("Assets", "Liabilities", "Equity") })
+        assertTrue(result.none {
+            it is ReportRow.SectionHeader && it.title in listOf(
+                "Assets",
+                "Liabilities",
+                "Equity"
+            )
+        })
     }
 
     @Test
@@ -63,21 +88,31 @@ class IncomeStatementBuilderTest {
             balancesByAccountId = mapOf("r" to 300L)
         )
 
-        assertTrue(result.none { it is ReportRow.SectionHeader && it.title in listOf("Expense", "Gain", "Loss") })
-        val netIncome = result.filterIsInstance<ReportRow.TotalLine>().single { it.label == "Net Income" }
+        assertTrue(result.none {
+            it is ReportRow.SectionHeader && it.title in listOf(
+                "Expense",
+                "Gain",
+                "Loss"
+            )
+        })
+        val netIncome = result.filterIsInstance<ReportRow.TotalLine>()
+            .single { it.label == "Net Income" }
         assertEquals(300L, netIncome.amount)
     }
 
     @Test
-    fun `Net Income carries a negative raw amount when negative, without the contra flag`() {
+    fun `Net Income becomes Net Loss when negative, without the contra flag`() {
         val result = IncomeStatementBuilder.build(
             accounts = listOf(account("x", "Rent", "expense")),
             balancesByAccountId = mapOf("x" to 500L)
         )
 
-        val netIncome = result.filterIsInstance<ReportRow.TotalLine>().single { it.label == "Net Income" }
-        assertEquals(-500L, netIncome.amount)
-        assertEquals(false, netIncome.contra)
+        val netLoss = result.filterIsInstance<ReportRow.TotalLine>()
+            .single { it.label == "Net Loss" }
+        assertEquals(-500L, netLoss.amount)
+        assertEquals(false, netLoss.contra)
+        assertTrue(netLoss.parenthesizeNegative)
+        assertTrue(result.none { it is ReportRow.TotalLine && it.label == "Net Income" })
     }
 
     @Test
@@ -91,6 +126,8 @@ class IncomeStatementBuilderTest {
         )
 
         val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
-        assertEquals(listOf("Big Client", "Small Client"), accountLines.map { it.name })
+        assertEquals(
+            listOf("Big Client", "Small Client"),
+            accountLines.map { it.name })
     }
 }

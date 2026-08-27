@@ -1,5 +1,6 @@
 package dev.fitiavana.accounting.ui.common
 
+import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -45,5 +46,12 @@ class UiUtils {
                 ).apply { isAppearanceLightStatusBars = !isNightMode }
             }
         }
+
+        /** Formats a base-currency amount as "Ar 1,234,567" (thousands-separated, "Ar" prefix, no parentheses). */
+        fun formatAmountAr(context: Context, amount: Long): String =
+            context.getString(
+                R.string.amount_ar,
+                TransactionDisplay.formatAmount(amount)
+            )
     }
 }

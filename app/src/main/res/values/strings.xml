@@ -19,6 +19,7 @@
     <string name="restore_schema_mismatch">This backup was made with a different app version (schema v%1$d) and can\'t be restored on this version (schema v%2$d).</string>
     <string name="restore_success">Restore complete</string>
     <string name="amount_ar">Ar %1$s</string>
+    <string name="transaction_account_flow">%1$s ⇄ %2$s</string>
     <string name="app_name">Accounting</string>
     <string name="app_name_with_version">Accounting v%1$s</string>
     <string name="balances_recalculated">Balances recalculated</string>
@@ -47,6 +48,14 @@
     <string name="home_rate_updated_at">Price as of %1$s</string>
     <string name="home_rate_never_updated">Price not fetched yet</string>
     <string name="home_refresh_failed">Failed to refresh some rates</string>
+    <string name="home_emergency_fund_header">Emergency Fund</string>
+    <string name="home_emergency_fund_6_month_caption">6-Month Emergency Fund</string>
+    <string name="home_percent_reached">%1$d%% reached</string>
+    <string name="home_emergency_fund_remaining">%1$s to go</string>
+    <string name="home_emergency_fund_goal_reached">Goal reached</string>
+    <string name="home_monthly_expenses">Monthly Expenses: %1$s</string>
+    <string name="edit_monthly_expenses">Edit monthly expenses</string>
+    <string name="dialog_edit_monthly_expenses_title">Monthly Living Expenses (Ar)</string>
     <string name="title_home_detail">Position Details</string>
     <string name="home_detail_label_balance">Balance</string>
     <string name="home_detail_label_market_value">Market value</string>

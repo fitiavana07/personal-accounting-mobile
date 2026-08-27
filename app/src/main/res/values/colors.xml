@@ -18,4 +18,6 @@
     <color name="report_divider">#40888888</color>
     <color name="report_title">@color/gold_500</color>
     <color name="report_header_text">@color/brown_500</color>
+
+    <color name="emergency_fund_in_progress">@color/gold_500</color>
 </resources>

@@ -197,7 +197,8 @@ object BalanceSheetBuilder {
                 }
                 rows += ReportRow.TotalLine(
                     "Total Unclosed IS accounts",
-                    totalIncome - totalExpense + totalGain - totalLoss
+                    totalIncome - totalExpense + totalGain - totalLoss,
+                    parenthesizeNegative = true
                 )
             }
 

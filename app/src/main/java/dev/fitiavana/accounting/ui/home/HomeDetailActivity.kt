@@ -10,8 +10,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.ui.common.UiUtils
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.UiUtils
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -77,7 +77,7 @@ class HomeDetailActivity : AppCompatActivity() {
             R.id.row_market_value_ar,
             R.id.text_detail_market_value_ar,
             item.currentValueAr?.let {
-                getString(R.string.amount_ar, TransactionDisplay.formatAmount(Math.round(it)))
+                UiUtils.formatAmountAr(this, Math.round(it))
             })
 
         bindOptionalRow(

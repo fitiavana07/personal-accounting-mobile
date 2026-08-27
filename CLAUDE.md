@@ -86,6 +86,13 @@ Transaction amounts stored as integers
   replacement instead.
 - Never include Co-Authored-By in commits
 - DRY: Reuse code when possible, refactor if needed
+- To display a base-currency amount (prefixed "Ar", thousands-separated, no
+  parentheses), always use `UiUtils.formatAmountAr(context, amount)` — never
+  duplicate `getString(R.string.amount_ar, TransactionDisplay.formatAmount(...))`
+  inline. This requires a `Context`, so it's for UI-layer code (Activities,
+  Fragments, Adapters) only. For report rows needing contra/parenthesized
+  formatting (e.g. Balance Sheet, Income Statement), use `ReportPresenter`'s
+  amount formatting instead, which has no `Context` dependency.
 
 ## Commit messages
 

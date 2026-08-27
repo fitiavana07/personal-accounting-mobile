@@ -33,7 +33,12 @@ sealed class ReportRow {
         // Total Original Equity, Total Drawing), which render without the
         // bold/highlighted grand-total styling.
         val emphasized: Boolean = false,
-        val contra: Boolean = false
+        val contra: Boolean = false,
+        // For a total that can be either positive or negative (e.g. a net
+        // total combining income/expense/gain/loss), parenthesize it only
+        // when it's actually negative — unlike [contra], which always
+        // parenthesizes regardless of sign.
+        val parenthesizeNegative: Boolean = false
     ) : ReportRow()
 
     data class DateLine(val timestampMs: Long) : ReportRow()

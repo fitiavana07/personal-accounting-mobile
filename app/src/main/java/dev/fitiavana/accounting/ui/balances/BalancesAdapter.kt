@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.UiUtils
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -25,7 +26,8 @@ data class BalanceItem(
 
 class BalancesAdapter : RecyclerView.Adapter<BalancesAdapter.ViewHolder>() {
 
-    private val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+    private val dateFormat =
+        SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
     private var items: List<BalanceItem> = emptyList()
 
     fun submitList(list: List<BalanceItem>) {
@@ -33,7 +35,10 @@ class BalancesAdapter : RecyclerView.Adapter<BalancesAdapter.ViewHolder>() {
         notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_balance, parent, false)
         return ViewHolder(view)
@@ -46,27 +51,40 @@ class BalancesAdapter : RecyclerView.Adapter<BalancesAdapter.ViewHolder>() {
     override fun getItemCount() = items.size
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        private val nameView: TextView = view.findViewById(R.id.text_balance_account_name)
-        private val updatedAtView: TextView = view.findViewById(R.id.text_balance_updated_at)
-        private val amountView: TextView = view.findViewById(R.id.text_balance_amount)
-        private val instrumentAmountView: TextView = view.findViewById(R.id.text_balance_instrument_amount)
-        private val exchangeRateView: TextView = view.findViewById(R.id.text_balance_exchange_rate)
-        private val exchangeRateSecondaryView: TextView = view.findViewById(R.id.text_balance_exchange_rate_secondary)
+        private val nameView: TextView =
+            view.findViewById(R.id.text_balance_account_name)
+        private val updatedAtView: TextView =
+            view.findViewById(R.id.text_balance_updated_at)
+        private val amountView: TextView =
+            view.findViewById(R.id.text_balance_amount)
+        private val instrumentAmountView: TextView =
+            view.findViewById(R.id.text_balance_instrument_amount)
+        private val exchangeRateView: TextView =
+            view.findViewById(R.id.text_balance_exchange_rate)
+        private val exchangeRateSecondaryView: TextView =
+            view.findViewById(R.id.text_balance_exchange_rate_secondary)
 
         fun bind(item: BalanceItem, dateFormat: SimpleDateFormat) {
             nameView.text = item.accountName
             updatedAtView.text = dateFormat.format(Date(item.updatedAt))
-            amountView.text = amountView.context.getString(
-                R.string.amount_ar,
-                TransactionDisplay.formatAmount(item.balance)
-            )
+            amountView.text =
+                UiUtils.formatAmountAr(amountView.context, item.balance)
             if (item.instrument != null) {
-                val instrumentText = TransactionDisplay.formatInstrumentAmount(item.instrumentBalance, item.instrument)
-                instrumentAmountView.text = if (item.intermediaryInstrument != null) {
-                    "$instrumentText · ${TransactionDisplay.formatInstrumentAmount(item.intermediaryBalance, item.intermediaryInstrument)}"
-                } else {
-                    instrumentText
-                }
+                val instrumentText = TransactionDisplay.formatInstrumentAmount(
+                    item.instrumentBalance,
+                    item.instrument
+                )
+                instrumentAmountView.text =
+                    if (item.intermediaryInstrument != null) {
+                        "$instrumentText · ${
+                            TransactionDisplay.formatInstrumentAmount(
+                                item.intermediaryBalance,
+                                item.intermediaryInstrument
+                            )
+                        }"
+                    } else {
+                        instrumentText
+                    }
                 instrumentAmountView.visibility = View.VISIBLE
             } else {
                 instrumentAmountView.visibility = View.GONE
@@ -76,13 +94,22 @@ class BalancesAdapter : RecyclerView.Adapter<BalancesAdapter.ViewHolder>() {
             var exchangeRateSecondary: String? = null
             if (item.instrument != null && item.intermediaryInstrument != null) {
                 exchangeRate = TransactionDisplay.formatInstrumentExchangeRate(
-                    item.instrumentBalance, item.instrument, item.intermediaryBalance, item.intermediaryInstrument
+                    item.instrumentBalance,
+                    item.instrument,
+                    item.intermediaryBalance,
+                    item.intermediaryInstrument
                 )
                 exchangeRateSecondary = TransactionDisplay.formatExchangeRate(
-                    item.balance, item.intermediaryBalance, item.intermediaryInstrument
+                    item.balance,
+                    item.intermediaryBalance,
+                    item.intermediaryInstrument
                 )
             } else if (item.instrument != null) {
-                exchangeRate = TransactionDisplay.formatExchangeRate(item.balance, item.instrumentBalance, item.instrument)
+                exchangeRate = TransactionDisplay.formatExchangeRate(
+                    item.balance,
+                    item.instrumentBalance,
+                    item.instrument
+                )
             }
 
             if (exchangeRate != null) {

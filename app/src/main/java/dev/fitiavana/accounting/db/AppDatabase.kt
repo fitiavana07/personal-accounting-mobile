@@ -6,21 +6,23 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import dev.fitiavana.accounting.features.balances.AccountBalanceDao
-import dev.fitiavana.accounting.features.accounts.AccountDao
-import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
-import dev.fitiavana.accounting.features.instruments.InstrumentDao
-import dev.fitiavana.accounting.features.transactions.TransactionDao
 import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.accounts.AccountDao
 import dev.fitiavana.accounting.features.balances.AccountBalance
+import dev.fitiavana.accounting.features.balances.AccountBalanceDao
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
+import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
 import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.instruments.InstrumentDao
+import dev.fitiavana.accounting.features.settings.AppSettings
+import dev.fitiavana.accounting.features.settings.AppSettingsDao
 import dev.fitiavana.accounting.features.transactions.Transaction
+import dev.fitiavana.accounting.features.transactions.TransactionDao
 import dev.fitiavana.accounting.features.transactions.TransactionEntry
 
 @Database(
     entities = [Account::class, Transaction::class, TransactionEntry::class,
-        AccountBalance::class, Instrument::class, ExchangeRateCache::class],
+        AccountBalance::class, Instrument::class, ExchangeRateCache::class, AppSettings::class],
     version = AppDatabase.SCHEMA_VERSION
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -29,9 +31,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun accountBalanceDao(): AccountBalanceDao
     abstract fun instrumentDao(): InstrumentDao
     abstract fun exchangeRateCacheDao(): ExchangeRateCacheDao
+    abstract fun appSettingsDao(): AppSettingsDao
 
     companion object {
-        const val SCHEMA_VERSION = 15
+        const val SCHEMA_VERSION = 16
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -243,6 +246,16 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `app_settings` (" +
+                            "`id` INTEGER NOT NULL PRIMARY KEY, " +
+                            "`monthlyLivingExpenses` INTEGER NOT NULL)"
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -264,7 +277,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_11_12,
                         MIGRATION_12_13,
                         MIGRATION_13_14,
-                        MIGRATION_14_15
+                        MIGRATION_14_15,
+                        MIGRATION_15_16
                     )
                     .build().also { instance = it }
             }

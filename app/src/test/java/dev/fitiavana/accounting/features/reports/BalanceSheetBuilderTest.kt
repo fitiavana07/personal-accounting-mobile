@@ -2,8 +2,6 @@ package dev.fitiavana.accounting.features.reports
 
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.balances.AccountBalance
-import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
-import dev.fitiavana.accounting.features.reports.ReportRow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -13,8 +11,17 @@ class BalanceSheetBuilderTest {
     private fun account(id: String, name: String, type: String) =
         Account(id = id, name = name, type = type)
 
-    private fun balance(accountId: String, balance: Long, updatedAt: Long = 0L) =
-        AccountBalance(accountId = accountId, balance = balance, updatedAt = updatedAt, createdAt = updatedAt)
+    private fun balance(
+        accountId: String,
+        balance: Long,
+        updatedAt: Long = 0L
+    ) =
+        AccountBalance(
+            accountId = accountId,
+            balance = balance,
+            updatedAt = updatedAt,
+            createdAt = updatedAt
+        )
 
     @Test
     fun `no balances yields empty result`() {
@@ -68,7 +75,9 @@ class BalanceSheetBuilderTest {
         )
 
         val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
-        assertEquals(listOf("Alpha Bank", "Zebra Bank"), accountLines.map { it.name })
+        assertEquals(
+            listOf("Alpha Bank", "Zebra Bank"),
+            accountLines.map { it.name })
     }
 
     @Test
@@ -79,7 +88,9 @@ class BalanceSheetBuilderTest {
         )
 
         val totals = result.filterIsInstance<ReportRow.TotalLine>()
-        assertEquals(listOf("Total Assets"), totals.filter { it.emphasized }.map { it.label })
+        assertEquals(
+            listOf("Total Assets"),
+            totals.filter { it.emphasized }.map { it.label })
     }
 
     @Test
@@ -90,7 +101,11 @@ class BalanceSheetBuilderTest {
                 account("b", "Petty Cash", "asset"),
                 account("c", "Coin Jar", "asset")
             ),
-            balances = listOf(balance("a", 15_000), balance("b", 4_000), balance("c", 2_500))
+            balances = listOf(
+                balance("a", 15_000),
+                balance("b", 4_000),
+                balance("c", 2_500)
+            )
         )
 
         assertEquals(
@@ -129,7 +144,8 @@ class BalanceSheetBuilderTest {
         val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
         assertEquals(listOf("Cash"), accountLines.map { it.name })
 
-        val totalAssets = result.filterIsInstance<ReportRow.TotalLine>().single { it.label == "Total Assets" }
+        val totalAssets = result.filterIsInstance<ReportRow.TotalLine>()
+            .single { it.label == "Total Assets" }
         assertEquals(10_000L, totalAssets.amount)
     }
 
@@ -155,7 +171,9 @@ class BalanceSheetBuilderTest {
 
         val dateLine = result.filterIsInstance<ReportRow.DateLine>().single()
         assertEquals(10L, dateLine.timestampMs)
-        assertTrue(result.filterIsInstance<ReportRow.AccountLine>().none { it.name.isEmpty() })
+        assertTrue(
+            result.filterIsInstance<ReportRow.AccountLine>()
+                .none { it.name.isEmpty() })
         assertEquals(1, result.filterIsInstance<ReportRow.AccountLine>().size)
     }
 
@@ -217,7 +235,11 @@ class BalanceSheetBuilderTest {
                 ReportRow.TotalLine("Total Assets", 10_000, emphasized = true),
                 ReportRow.SectionHeader("Liabilities"),
                 ReportRow.AccountLine("Loan", 200),
-                ReportRow.TotalLine("Total Liabilities", 200, emphasized = true),
+                ReportRow.TotalLine(
+                    "Total Liabilities",
+                    200,
+                    emphasized = true
+                ),
                 ReportRow.SectionHeader("Equity"),
                 ReportRow.SubsectionHeader("Original Equity"),
                 ReportRow.AccountLine("Owner Capital", 500),
@@ -227,7 +249,11 @@ class BalanceSheetBuilderTest {
                 ReportRow.AccountLine("Expense", 150, contra = true),
                 ReportRow.AccountLine("Gain", 80),
                 ReportRow.AccountLine("Loss", 30, contra = true),
-                ReportRow.TotalLine("Total Unclosed IS accounts", 200),
+                ReportRow.TotalLine(
+                    "Total Unclosed IS accounts",
+                    200,
+                    parenthesizeNegative = true
+                ),
                 ReportRow.SubsectionHeader("Drawing"),
                 ReportRow.AccountLine("Owner Drawing", 60, contra = true),
                 ReportRow.TotalLine("Total Drawing", 60, contra = true),
@@ -235,6 +261,22 @@ class BalanceSheetBuilderTest {
             ),
             result
         )
+    }
+
+    @Test
+    fun `buildMonthly Total Unclosed IS accounts is negative when expense exceeds income`() {
+        val accounts = listOf(
+            account("r", "Salary", "revenue"),
+            account("x", "Rent", "expense")
+        )
+        val balances = mapOf("r" to 100L, "x" to 300L)
+
+        val result = BalanceSheetBuilder.buildMonthly(accounts, balances)
+
+        val totalUnclosedIs = result.filterIsInstance<ReportRow.TotalLine>()
+            .single { it.label == "Total Unclosed IS accounts" }
+        assertEquals(-200L, totalUnclosedIs.amount)
+        assertTrue(totalUnclosedIs.parenthesizeNegative)
     }
 
     @Test
@@ -268,7 +310,8 @@ class BalanceSheetBuilderTest {
         )
 
         assertTrue(result.any { it is ReportRow.SectionHeader && it.title == "Equity" })
-        val totalEquity = result.filterIsInstance<ReportRow.TotalLine>().single { it.label == "Total Equity" }
+        val totalEquity = result.filterIsInstance<ReportRow.TotalLine>()
+            .single { it.label == "Total Equity" }
         assertEquals(-60L, totalEquity.amount)
     }
 
@@ -280,7 +323,11 @@ class BalanceSheetBuilderTest {
                 account("b", "Petty Cash", "asset"),
                 account("c", "Coin Jar", "asset")
             ),
-            balancesByAccountId = mapOf("a" to 15_000L, "b" to 4_000L, "c" to 2_500L)
+            balancesByAccountId = mapOf(
+                "a" to 15_000L,
+                "b" to 4_000L,
+                "c" to 2_500L
+            )
         )
 
         assertEquals(
