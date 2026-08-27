@@ -105,6 +105,13 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 Common types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`,
 `perf`. Use `!` after type/scope (e.g. `feat!:`) for breaking changes.
 
+## Version bumps
+
+When bumping `versionCode`/`versionName` in `app/build.gradle.kts`, do it in
+its own commit (`chore: bump version to <versionName> (<versionCode>)`), then
+create an annotated git tag `v<versionName>` (e.g. `v1.16`) pointing at that
+commit.
+
 ## On new features
 
 After every change:
