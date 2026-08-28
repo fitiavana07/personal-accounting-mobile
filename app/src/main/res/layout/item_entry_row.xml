@@ -27,7 +27,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ar"
+                android:text="@string/label_currency_ar"
                 android:textSize="12sp"
                 android:paddingEnd="4dp" />
 
@@ -57,12 +57,15 @@
 
         <ImageButton
             android:id="@+id/btn_remove_entry"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:layout_marginStart="4dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="4dp"
             android:src="@android:drawable/ic_delete"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Remove entry"
+            android:contentDescription="@string/cd_remove_entry"
             android:visibility="gone" />
 
     </LinearLayout>
