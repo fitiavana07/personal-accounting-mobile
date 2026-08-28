@@ -8,23 +8,40 @@ import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
 import dev.fitiavana.accounting.features.reports.IncomeStatementBuilder
-import dev.fitiavana.accounting.ui.common.ReportPresenter
 import dev.fitiavana.accounting.ui.common.ReportDisplayRow
+import dev.fitiavana.accounting.ui.common.ReportPresenter
 
 class ReportsViewModel(
     private val accountRepository: AccountRepository,
     private val balanceRepository: BalanceRepository
 ) : ViewModel() {
 
+    /** All months that have transactions, grouped by year, for populating the year/month pickers. */
     private var monthsByYear: Map<Int, List<Int>> = emptyMap()
+
+    /** Whether [start] has already kicked off the initial load, so repeat calls are no-ops. */
     private var started = false
-    private var lastAccounts: List<Account> = emptyList()
-    private var lastBalances: Map<String, Long> = emptyMap()
-    private var lastPeriodBalances: Map<String, Long> = emptyMap()
-    private var lastAsOfMs = 0L
-    private var lastStartMs = 0L
-    private var lastReportYear = 0
-    private var lastReportMonth = 0
+
+    /** Accounts as of the last recompute, reused by [renderDisplay] when only the report type changes. */
+    private var cachedAccounts: List<Account> = emptyList()
+
+    /** Cumulative per-account balances as of [cachedPeriodCutoffMillis], used for the balance sheet. */
+    private var cachedBalancesAsOf: Map<String, Long> = emptyMap()
+
+    /** Per-account balances accrued between [cachedPeriodStartMillis] and [cachedPeriodCutoffMillis], used for the income statement. */
+    private var cachedPeriodBalances: Map<String, Long> = emptyMap()
+
+    /** End boundary of the selected period: "now" if the month is still in progress, otherwise its last millisecond. */
+    private var cachedPeriodCutoffMillis = 0L
+
+    /** Start boundary of the selected period: the first millisecond of the selected month. */
+    private var cachedPeriodStartMillis = 0L
+
+    /** Year of the currently selected report period, kept alongside the balances it produced. */
+    private var cachedReportYear = 0
+
+    /** Month (0-11) of the currently selected report period, kept alongside the balances it produced. */
+    private var cachedReportMonth = 0
 
     val reportTypes: List<ReportType> = ReportType.values().toList()
 
@@ -49,7 +66,8 @@ class ReportsViewModel(
     private val _asOfDateText = MutableLiveData<String>()
     val asOfDateText: LiveData<String> = _asOfDateText
 
-    private val _balanceSheetRows = MutableLiveData<List<ReportDisplayRow>>(emptyList())
+    private val _balanceSheetRows =
+        MutableLiveData<List<ReportDisplayRow>>(emptyList())
     val balanceSheetRows: LiveData<List<ReportDisplayRow>> = _balanceSheetRows
 
     /** Kicks off the initial background load. Safe to call from every onViewCreated — a no-op after the first call. */
@@ -81,7 +99,8 @@ class ReportsViewModel(
             return
         }
 
-        val months = ReportPeriodSelector.monthsBetween(range.first, range.second)
+        val months =
+            ReportPeriodSelector.monthsBetween(range.first, range.second)
         monthsByYear = months.groupBy({ it.year }, { it.month })
         val years = monthsByYear.keys.sorted()
         val lastYear = years.last()
@@ -115,34 +134,54 @@ class ReportsViewModel(
     private fun recomputeSync(year: Int, month: Int) {
         val startMs = ReportPeriodSelector.startOfMonthMillis(year, month)
         val asOfMs = ReportPeriodSelector.asOfMillis(year, month)
-        lastAsOfMs = asOfMs
-        lastStartMs = startMs
-        lastReportYear = year
-        lastReportMonth = month
-        lastAccounts = accountRepository.getAllSync()
-        lastBalances = balanceRepository.computeBalancesAsOf(asOfMs)
-        lastPeriodBalances = balanceRepository.computeBalancesBetween(startMs, asOfMs)
+        cachedPeriodCutoffMillis = asOfMs
+        cachedPeriodStartMillis = startMs
+        cachedReportYear = year
+        cachedReportMonth = month
+        cachedAccounts = accountRepository.getAllSync()
+        cachedBalancesAsOf = balanceRepository.computeBalancesAsOf(asOfMs)
+        cachedPeriodBalances =
+            balanceRepository.computeBalancesBetween(startMs, asOfMs)
         renderDisplay(_selectedReportType.value ?: ReportType.BALANCE_SHEET)
     }
 
     private fun renderDisplay(type: ReportType) {
         _asOfDateText.postValue(
             when (type) {
-                ReportType.BALANCE_SHEET -> ReportPeriodSelector.formatAsOfDate(lastAsOfMs)
-                ReportType.INCOME_STATEMENT -> ReportPeriodSelector.formatIncomeStatementPeriod(
-                    lastStartMs,
-                    lastAsOfMs,
-                    ReportPeriodSelector.endOfMonthMillis(lastReportYear, lastReportMonth)
+                ReportType.BALANCE_SHEET -> ReportPeriodSelector.formatAsOfDate(
+                    cachedPeriodCutoffMillis
                 )
+
+                ReportType.INCOME_STATEMENT -> ReportPeriodSelector.formatIncomeStatementPeriod(
+                    cachedPeriodStartMillis,
+                    cachedPeriodCutoffMillis,
+                    ReportPeriodSelector.endOfMonthMillis(
+                        cachedReportYear,
+                        cachedReportMonth
+                    )
+                )
+
                 ReportType.CHANGES_IN_EQUITY -> ""
             }
         )
         _balanceSheetRows.postValue(
             when (type) {
                 ReportType.BALANCE_SHEET ->
-                    ReportPresenter.present(BalanceSheetBuilder.buildMonthly(lastAccounts, lastBalances))
+                    ReportPresenter.present(
+                        BalanceSheetBuilder.buildMonthly(
+                            cachedAccounts,
+                            cachedBalancesAsOf
+                        )
+                    )
+
                 ReportType.INCOME_STATEMENT ->
-                    ReportPresenter.present(IncomeStatementBuilder.build(lastAccounts, lastPeriodBalances))
+                    ReportPresenter.present(
+                        IncomeStatementBuilder.build(
+                            cachedAccounts,
+                            cachedPeriodBalances
+                        )
+                    )
+
                 ReportType.CHANGES_IN_EQUITY -> emptyList()
             }
         )
