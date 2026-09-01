@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<com.github.mikephil.charting.charts.PieChart xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/chart_assets_pie"
-    android:layout_width="match_parent"
-    android:layout_height="220dp"
-    android:layout_marginStart="16dp"
-    android:layout_marginTop="8dp"
-    android:layout_marginEnd="16dp" />

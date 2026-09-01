@@ -23,8 +23,7 @@ class HomeFragment : Fragment() {
     private lateinit var viewModel: HomeViewModel
     private lateinit var adapter: HomeAdapter
     private lateinit var balanceSheetAdapter: ReportAdapter
-    private lateinit var assetsPieChartAdapter: AssetsPieChartAdapter
-    private lateinit var liquidityPieChartAdapter: AssetsPieChartAdapter
+    private lateinit var pieChartsAdapter: HomePieChartsAdapter
     private lateinit var emergencyFundAdapter: EmergencyFundAdapter
     private lateinit var noteAdapter: HomeNoteAdapter
     private lateinit var swipeRefresh: SwipeRefreshLayout
@@ -63,9 +62,7 @@ class HomeFragment : Fragment() {
             )
         }
         balanceSheetAdapter = ReportAdapter()
-        assetsPieChartAdapter = AssetsPieChartAdapter()
-        liquidityPieChartAdapter =
-            AssetsPieChartAdapter(centerTitle = getString(R.string.home_liquidity_pie_chart_center))
+        pieChartsAdapter = HomePieChartsAdapter()
         emergencyFundAdapter =
             EmergencyFundAdapter { showEditMonthlyExpensesDialog() }
         noteAdapter = HomeNoteAdapter()
@@ -74,8 +71,7 @@ class HomeFragment : Fragment() {
         recycler.adapter =
             ConcatAdapter(
                 emergencyFundAdapter,
-                liquidityPieChartAdapter,
-                assetsPieChartAdapter,
+                pieChartsAdapter,
                 balanceSheetAdapter,
                 noteAdapter,
                 adapter
@@ -104,11 +100,11 @@ class HomeFragment : Fragment() {
         }
 
         viewModel.assetSlices.observe(viewLifecycleOwner) { slices ->
-            assetsPieChartAdapter.submitList(slices)
+            pieChartsAdapter.submitAssetSlices(slices)
         }
 
         viewModel.liquiditySlices.observe(viewLifecycleOwner) { slices ->
-            liquidityPieChartAdapter.submitList(slices)
+            pieChartsAdapter.submitLiquiditySlices(slices)
         }
 
         viewModel.emergencyFund.observe(viewLifecycleOwner) { info ->
