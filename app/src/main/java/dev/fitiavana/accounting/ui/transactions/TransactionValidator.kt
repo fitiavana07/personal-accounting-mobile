@@ -23,6 +23,13 @@ object TransactionValidator {
         }
     }
 
+    /** Sum of base-currency debit and credit amounts across [entries], as (totalDebit, totalCredit). */
+    fun totals(entries: List<EntryData>): Pair<Long, Long> {
+        val totalDebit = entries.sumOf { it.debitAmount ?: 0L }
+        val totalCredit = entries.sumOf { it.creditAmount ?: 0L }
+        return totalDebit to totalCredit
+    }
+
     fun validate(entries: List<EntryData>): ValidationResult {
         val accountIds = entries.map { it.accountId }
         if (accountIds.size != accountIds.toSet().size) return ValidationResult.Error.DuplicateAccount
@@ -40,8 +47,7 @@ object TransactionValidator {
             if (entry.intermediaryCreditAmount != null && baseIsDebit) return ValidationResult.Error.MixedDebitCredit
         }
 
-        val totalDebit = entries.sumOf { it.debitAmount ?: 0L }
-        val totalCredit = entries.sumOf { it.creditAmount ?: 0L }
+        val (totalDebit, totalCredit) = totals(entries)
         if (totalDebit != totalCredit) return ValidationResult.Error.Unbalanced
 
         return ValidationResult.Valid

@@ -52,6 +52,7 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var textDatetime: TextView
     private lateinit var editNote: EditText
     private lateinit var entriesContainer: LinearLayout
+    private lateinit var textBalanceSummary: TextView
 
     private data class EntryRow(
         val container: View,
@@ -111,6 +112,7 @@ class AddTransactionActivity : AppCompatActivity() {
         textDatetime = findViewById(R.id.text_datetime)
         editNote = findViewById(R.id.edit_note)
         entriesContainer = findViewById(R.id.entries_container)
+        textBalanceSummary = findViewById(R.id.text_balance_summary)
 
         updateDatetimeDisplay()
 
@@ -123,11 +125,13 @@ class AddTransactionActivity : AppCompatActivity() {
             runOnUiThread {
                 addEntryRow()
                 addEntryRow()
+                recalculateBalanceSummary()
             }
         }.start()
 
         findViewById<Button>(R.id.btn_add_entry).setOnClickListener {
             addEntryRow()
+            recalculateBalanceSummary()
         }
 
         findViewById<Button>(R.id.btn_save).setOnClickListener {
@@ -492,6 +496,7 @@ class AddTransactionActivity : AppCompatActivity() {
                     updating = false
                 }
                 entryRowRef[0]?.let { updateNewBalance(it) }
+                recalculateBalanceSummary()
             }
         })
 
@@ -520,6 +525,7 @@ class AddTransactionActivity : AppCompatActivity() {
                     updating = false
                 }
                 entryRowRef[0]?.let { updateNewBalance(it) }
+                recalculateBalanceSummary()
             }
         })
 
@@ -592,21 +598,22 @@ class AddTransactionActivity : AppCompatActivity() {
             entriesContainer.removeView(row)
             entryRows.remove(entryRow)
             updateRemoveButtonVisibility()
+            recalculateBalanceSummary()
         }
 
         updateRemoveButtonVisibility()
     }
+
+    private fun parseAmount(edit: EditText): Long =
+        edit.text.toString().trim().replace(",", "").toLongOrNull() ?: 0L
 
     private fun updateNewBalance(entryRow: EntryRow) {
         if (entryRow.currentAccountType.isEmpty()) {
             entryRow.textNewBalanceRow.visibility = View.GONE
             return
         }
-        val debit = entryRow.editDebit.text.toString().trim().replace(",", "")
-            .toLongOrNull() ?: 0L
-        val credit =
-            entryRow.editCredit.text.toString().trim().replace(",", "")
-                .toLongOrNull() ?: 0L
+        val debit = parseAmount(entryRow.editDebit)
+        val credit = parseAmount(entryRow.editCredit)
         val newBalance =
             if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense" || entryRow.currentAccountType == "drawing" || entryRow.currentAccountType == "loss") {
                 entryRow.currentBalance + debit - credit
@@ -668,6 +675,40 @@ class AddTransactionActivity : AppCompatActivity() {
             )
         }"
         entryRow.textNewIntermediaryBalanceRow.visibility = View.VISIBLE
+    }
+
+    private fun recalculateBalanceSummary() {
+        val entries = entryRows.map { row ->
+            val debit = parseAmount(row.editDebit)
+            val credit = parseAmount(row.editCredit)
+            TransactionValidator.EntryData(
+                accountId = "",
+                debitAmount = if (debit != 0L) debit else null,
+                creditAmount = if (credit != 0L) credit else null
+            )
+        }
+        val (totalDebit, totalCredit) = TransactionValidator.totals(entries)
+        val totalsText = getString(
+            R.string.balance_summary_totals,
+            UiUtils.formatAmountAr(this, totalDebit),
+            UiUtils.formatAmountAr(this, totalCredit)
+        )
+        val balanced = totalDebit == totalCredit
+        val statusText = if (balanced) {
+            getString(R.string.balance_status_balanced)
+        } else {
+            getString(
+                R.string.balance_status_unbalanced,
+                UiUtils.formatAmountAr(this, Math.abs(totalDebit - totalCredit))
+            )
+        }
+        textBalanceSummary.text = "$totalsText — $statusText"
+        textBalanceSummary.setTextColor(
+            ContextCompat.getColor(
+                this,
+                if (balanced) R.color.gain else R.color.loss
+            )
+        )
     }
 
     private fun updateRemoveButtonVisibility() {

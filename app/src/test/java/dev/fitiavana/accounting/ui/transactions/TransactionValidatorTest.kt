@@ -200,4 +200,45 @@ class TransactionValidatorTest {
         )
         assertEquals(ValidationResult.Valid, TransactionValidator.validate(entries))
     }
+
+    // --- totals() ---
+
+    @Test
+    fun `totals sums debit and credit amounts across entries`() {
+        val entries = listOf(
+            EntryData("acc1", debitAmount = 300, creditAmount = null),
+            EntryData("acc2", debitAmount = null, creditAmount = 200),
+            EntryData("acc3", debitAmount = null, creditAmount = 100)
+        )
+        assertEquals(300L to 300L, TransactionValidator.totals(entries))
+    }
+
+    @Test
+    fun `totals returns zero for empty list`() {
+        assertEquals(0L to 0L, TransactionValidator.totals(emptyList()))
+    }
+
+    @Test
+    fun `totals ignores instrument and intermediary amounts`() {
+        val entries = listOf(
+            EntryData(
+                "acc1",
+                debitAmount = 100,
+                creditAmount = null,
+                instrumentDebitAmount = 5000,
+                intermediaryDebitAmount = 250
+            ),
+            EntryData("acc2", debitAmount = null, creditAmount = 100)
+        )
+        assertEquals(100L to 100L, TransactionValidator.totals(entries))
+    }
+
+    @Test
+    fun `totals reflects unbalanced amounts`() {
+        val entries = listOf(
+            EntryData("acc1", debitAmount = 150, creditAmount = null),
+            EntryData("acc2", debitAmount = null, creditAmount = 90)
+        )
+        assertEquals(150L to 90L, TransactionValidator.totals(entries))
+    }
 }
