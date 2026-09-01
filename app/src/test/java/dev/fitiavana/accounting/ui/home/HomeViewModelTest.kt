@@ -4,6 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.accounts.LiquidityLevels
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
@@ -36,8 +37,12 @@ class HomeViewModelTest {
     private lateinit var rates: MutableLiveData<List<ExchangeRateCache>>
     private lateinit var settings: MutableLiveData<AppSettings?>
 
-    private fun account(id: String, name: String, type: String = "asset") =
-        Account(id = id, name = name, type = type)
+    private fun account(
+        id: String,
+        name: String,
+        type: String = "asset",
+        liquidityLevel: String? = LiquidityLevels.CASH_AND_EQUIVALENTS
+    ) = Account(id = id, name = name, type = type, liquidityLevel = liquidityLevel)
 
     private fun balance(accountId: String, balance: Long) =
         AccountBalance(
@@ -124,6 +129,27 @@ class HomeViewModelTest {
         val updated = viewModel.emergencyFund.value!!
         assertEquals(1_200_000L, updated.sixMonthTarget)
         assertEquals(25, updated.sixMonthPercent)
+    }
+
+    @Test
+    fun `emergencyFund excludes asset balances without a cash-and-equivalents liquidity level`() {
+        val viewModel = viewModel()
+        settings.value = AppSettings(monthlyLivingExpenses = 100_000)
+
+        accounts.value = listOf(
+            account("acc1", "Cash", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS),
+            account("acc2", "Brokerage Stocks", liquidityLevel = LiquidityLevels.STOCKS),
+            account("acc3", "Unclassified Asset", liquidityLevel = null)
+        )
+        balances.value = listOf(
+            balance("acc1", 150_000),
+            balance("acc2", 1_000_000),
+            balance("acc3", 500_000)
+        )
+
+        val result = viewModel.emergencyFund.value!!
+        assertEquals(600_000L, result.sixMonthTarget)
+        assertEquals(25, result.sixMonthPercent)
     }
 
     @Test

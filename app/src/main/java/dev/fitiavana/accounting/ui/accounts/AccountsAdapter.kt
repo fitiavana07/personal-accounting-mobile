@@ -7,6 +7,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.accounts.LiquidityLevels
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import dev.fitiavana.accounting.ui.common.UiUtils
 import java.text.SimpleDateFormat
@@ -46,6 +47,8 @@ class AccountsAdapter(
             view.findViewById(R.id.text_account_name)
         private val typeView: TextView =
             view.findViewById(R.id.text_account_type)
+        private val liquidityLevelView: TextView =
+            view.findViewById(R.id.text_account_liquidity_level)
         private val amountView: TextView =
             view.findViewById(R.id.text_account_balance_amount)
         private val instrumentAmountView: TextView =
@@ -75,6 +78,17 @@ class AccountsAdapter(
             typeView.text =
                 if (instrumentDisplay != null) "$typeLabel · $instrumentDisplay" else typeLabel
             itemView.setOnClickListener { onClick(account) }
+
+            val liquidityLevelIndex =
+                LiquidityLevels.VALUES.indexOf(account.liquidityLevel)
+            if (liquidityLevelIndex >= 0) {
+                val displayNames = liquidityLevelView.context.resources
+                    .getStringArray(R.array.liquidity_level_display)
+                liquidityLevelView.text = displayNames[liquidityLevelIndex + 1]
+                liquidityLevelView.visibility = View.VISIBLE
+            } else {
+                liquidityLevelView.visibility = View.GONE
+            }
 
             amountView.text =
                 UiUtils.formatAmountAr(amountView.context, item.balance)

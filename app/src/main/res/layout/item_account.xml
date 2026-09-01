@@ -27,6 +27,15 @@
             android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary" />
 
+        <TextView
+            android:id="@+id/text_account_liquidity_level"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:alpha="0.7"
+            android:textColor="?android:attr/textColorSecondary"
+            android:visibility="gone" />
+
     </LinearLayout>
 
     <LinearLayout

@@ -54,8 +54,9 @@
     <string name="home_rate_never_updated">Price not fetched yet</string>
     <string name="home_refresh_failed">Failed to refresh some rates</string>
     <string name="home_emergency_fund_header">Emergency Fund</string>
+    <string name="home_liquidity_pie_chart_center">By Liquidity</string>
     <string name="home_emergency_fund_6_month_caption">6-Month Emergency Fund</string>
-    <string name="home_percent_reached">%1$d%% reached</string>
+    <string name="home_percent_reached">%1$s · %2$d%% reached</string>
     <string name="home_emergency_fund_remaining">%1$s to go</string>
     <string name="home_emergency_fund_goal_reached">Goal reached</string>
     <string name="home_monthly_expenses">Monthly Expenses: %1$s</string>
@@ -105,6 +106,7 @@
     <string name="label_instrument_type">Instrument type</string>
     <string name="label_coming_soon">Coming soon</string>
     <string name="label_intermediary_instrument">Intermediary Instrument</string>
+    <string name="label_liquidity_level">Liquidity level</string>
     <string name="label_note">Note</string>
     <string name="label_total">Total</string>
     <string name="label_transaction_date">Transaction Date</string>
@@ -113,7 +115,13 @@
     <string name="nav_reports">Reports</string>
     <string name="nav_transactions">Transactions</string>
     <string name="spinner_no_instrument">None</string>
+    <string name="spinner_no_liquidity_level">Not set</string>
     <string name="spinner_select_account">Select account…</string>
+    <string name="liquidity_level_description_cash">Highly liquid assets — cash on hand, bank balances, or holdings convertible to cash within about 3 months.</string>
+    <string name="liquidity_level_description_accounts_receivable">Money owed to you by customers or debtors that you expect to collect within 1 year.</string>
+    <string name="liquidity_level_description_stocks">Equity investments (shares, funds) that can be sold for cash but may take time and could lose value if sold quickly.</string>
+    <string name="liquidity_level_description_crypto">Cryptocurrency holdings other than stablecoins — can be sold for cash but value is volatile and a quick sale may mean a loss.</string>
+    <string name="liquidity_level_description_other_long_term">Assets not expected to be converted to cash within 12 months, such as long-term investments, property, or equipment.</string>
     <string name="title_add_account">Add Account</string>
     <string name="title_add_instrument">Add Instrument</string>
     <string name="title_edit_account">Edit Account</string>

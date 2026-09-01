@@ -136,6 +136,65 @@ class EditAccountViewModelTest {
         assertNull(captor.firstValue.intermediaryInstrumentCode)
     }
 
+    // --- liquidityLevel ---
+
+    @Test
+    fun `new asset account with liquidityLevel sets it correctly`() {
+        viewModel.saveAccount(
+            id = null,
+            name = "Cash",
+            type = "asset",
+            instrumentCode = "USD",
+            intermediaryInstrumentCode = null,
+            liquidityLevel = "cash_and_equivalents"
+        )
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).insert(captor.capture())
+        assertEquals("cash_and_equivalents", captor.firstValue.liquidityLevel)
+    }
+
+    @Test
+    fun `new asset account with other_long_term_assets liquidityLevel sets it correctly`() {
+        viewModel.saveAccount(
+            id = null,
+            name = "Land",
+            type = "asset",
+            instrumentCode = null,
+            intermediaryInstrumentCode = null,
+            liquidityLevel = "other_long_term_assets"
+        )
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).insert(captor.capture())
+        assertEquals("other_long_term_assets", captor.firstValue.liquidityLevel)
+    }
+
+    @Test
+    fun `saveAccount defaults liquidityLevel to null when omitted`() {
+        viewModel.saveAccount(id = null, name = "Cash", type = "asset", instrumentCode = null, intermediaryInstrumentCode = null)
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).insert(captor.capture())
+        assertNull(captor.firstValue.liquidityLevel)
+    }
+
+    @Test
+    fun `update account clears liquidityLevel when null passed`() {
+        viewModel.saveAccount(
+            id = "abc",
+            name = "Cash",
+            type = "asset",
+            instrumentCode = null,
+            intermediaryInstrumentCode = null,
+            liquidityLevel = null
+        )
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).update(captor.capture())
+        assertNull(captor.firstValue.liquidityLevel)
+    }
+
     // --- deleteAccount ---
 
     @Test

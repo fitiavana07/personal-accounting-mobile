@@ -16,7 +16,7 @@ class EmergencyFundAdapter(
     private val onEditClick: () -> Unit
 ) : RecyclerView.Adapter<EmergencyFundAdapter.ViewHolder>() {
 
-    private var info = EmergencyFundInfo(0, 0, 100, 0)
+    private var info = EmergencyFundInfo(0, 0, 0, 100, 0)
 
     fun submit(info: EmergencyFundInfo) {
         this.info = info
@@ -69,6 +69,7 @@ class EmergencyFundAdapter(
 
             percentView.text = context.getString(
                 R.string.home_percent_reached,
+                UiUtils.formatAmountAr(context, info.sixMonthReached),
                 info.sixMonthPercent
             )
             percentView.setTextColor(

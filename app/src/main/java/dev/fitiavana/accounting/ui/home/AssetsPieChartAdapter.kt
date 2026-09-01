@@ -22,7 +22,9 @@ import dev.fitiavana.accounting.R
 import java.text.DecimalFormat
 
 /** Single-item header showing an asset allocation pie chart, hidden entirely when there are no asset slices. */
-class AssetsPieChartAdapter : RecyclerView.Adapter<AssetsPieChartAdapter.ViewHolder>() {
+class AssetsPieChartAdapter(
+    private val centerTitle: String = "Assets"
+) : RecyclerView.Adapter<AssetsPieChartAdapter.ViewHolder>() {
 
     private var slices: List<AssetSlice> = emptyList()
 
@@ -36,14 +38,14 @@ class AssetsPieChartAdapter : RecyclerView.Adapter<AssetsPieChartAdapter.ViewHol
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_home_assets_pie_chart, parent, false)
-        return ViewHolder(view)
+        return ViewHolder(view, centerTitle)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(slices)
     }
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    class ViewHolder(view: View, private val centerTitle: String) : RecyclerView.ViewHolder(view) {
         private val chart: PieChart = view as PieChart
 
         init {
@@ -80,7 +82,7 @@ class AssetsPieChartAdapter : RecyclerView.Adapter<AssetsPieChartAdapter.ViewHol
         private fun buildCenterText(slices: List<AssetSlice>): CharSequence {
             val totalAssets = slices.sumOf { it.amount }
             val subtitle = CompactNumberFormatter.format(totalAssets)
-            val text = "Assets\n$subtitle"
+            val text = "$centerTitle\n$subtitle"
             return SpannableStringBuilder(text).apply {
                 val subtitleStart = text.indexOf('\n') + 1
                 setSpan(

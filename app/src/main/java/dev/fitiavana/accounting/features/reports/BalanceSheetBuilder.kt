@@ -1,6 +1,7 @@
 package dev.fitiavana.accounting.features.reports
 
 import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.accounts.LiquidityLevels
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import kotlin.math.abs
 
@@ -8,7 +9,13 @@ object BalanceSheetBuilder {
 
     private const val OTHER_ASSET_THRESHOLD = 10_000L
 
-    /** Home tab's "Instant Balance Sheet" card: assets only, no liabilities/equity. */
+    private data class NamedLiquidAmount(
+        val name: String,
+        val amount: Long,
+        val liquidityLevel: String?
+    )
+
+    /** Home tab's "Instant Balance Sheet" card: assets only, grouped by liquidity level, no liabilities/equity. */
     fun build(
         accounts: List<Account>,
         balances: List<AccountBalance>
@@ -18,33 +25,45 @@ object BalanceSheetBuilder {
             balances.filter { accountMap.containsKey(it.accountId) }
         if (includedBalances.isEmpty()) return emptyList()
 
-        val assetLines = linesFor(
-            accountMap,
-            includedBalances,
-            "asset"
-        ).sortedByDescending { it.amount }
+        val assetLines = includedBalances
+            .filter { accountMap.getValue(it.accountId).type == "asset" }
+            .filter { it.balance != 0L }
+            .map {
+                val account = accountMap.getValue(it.accountId)
+                NamedLiquidAmount(account.name, it.balance, account.liquidityLevel)
+            }
         val totalAssets = assetLines.sumOf { it.amount }
 
         val rows = mutableListOf<ReportRow>()
         rows += ReportRow.Title("ASSETS")
 
         if (assetLines.isNotEmpty()) {
-            val (mainAssetLines, otherAssetLines) = assetLines.partition {
-                abs(it.amount) >= OTHER_ASSET_THRESHOLD
-            }
+            // Null last: unclassified assets are shown after every known liquidity level.
+            val groupOrder = LiquidityLevels.VALUES + listOf<String?>(null)
+            var assetIndex = 0
+            var groupIndex = 0
+            for (liquidityLevel in groupOrder) {
+                val groupLines = assetLines
+                    .filter { it.liquidityLevel == liquidityLevel }
+                    .sortedByDescending { it.amount }
+                if (groupLines.isEmpty()) continue
 
-            mainAssetLines.forEachIndexed { index, line ->
-                rows += ReportRow.AccountLine(
-                    line.name,
-                    line.amount,
-                    assetIndex = index
+                rows += ReportRow.SubsectionHeader(
+                    LiquidityLevels.displayName(liquidityLevel),
+                    assetIndex = groupIndex
                 )
-            }
-            if (otherAssetLines.isNotEmpty()) {
-                rows += ReportRow.AccountLine(
-                    "Other",
-                    otherAssetLines.sumOf { it.amount },
-                    assetIndex = mainAssetLines.size
+                groupIndex++
+                groupLines.forEach { line ->
+                    rows += ReportRow.AccountLine(
+                        line.name,
+                        line.amount,
+                        assetIndex = assetIndex
+                    )
+                    assetIndex++
+                }
+                rows += ReportRow.TotalLine(
+                    "Subtotal",
+                    groupLines.sumOf { it.amount }
                 )
             }
             rows += ReportRow.TotalLine(

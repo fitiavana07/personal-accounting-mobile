@@ -11,7 +11,13 @@ sealed class ReportRow {
 
     data class SectionHeader(val title: String) : ReportRow()
 
-    data class SubsectionHeader(val title: String) : ReportRow()
+    data class SubsectionHeader(
+        val title: String,
+        // Same purpose as AccountLine.assetIndex: assigns a color dot from
+        // AssetPalette. Only set for the assets-only home view's liquidity
+        // level group headers; null elsewhere (e.g. BalanceSheetBuilder.buildMonthly).
+        val assetIndex: Int? = null
+    ) : ReportRow()
 
     data class AccountLine(
         val name: String,

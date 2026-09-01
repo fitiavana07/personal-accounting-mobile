@@ -108,19 +108,43 @@ class HomeViewModel(
         }
     }
 
+    val liquiditySlices = MediatorLiveData<List<AssetSlice>>().apply {
+        var latestBalances: List<AccountBalance> = emptyList()
+        var latestAccounts: List<Account> = emptyList()
+
+        fun update() {
+            value =
+                LiquiditySliceBuilder.liquiditySlices(latestAccounts, latestBalances)
+        }
+
+        addSource(balances) { b ->
+            latestBalances = b ?: emptyList()
+            update()
+        }
+        addSource(accounts) { a ->
+            latestAccounts = a ?: emptyList()
+            update()
+        }
+    }
+
     val emergencyFund = MediatorLiveData<EmergencyFundInfo>().apply {
-        var latestTotalAssets = 0L
+        var latestBalances: List<AccountBalance> = emptyList()
+        var latestAccounts: List<Account> = emptyList()
         var latestMonthlyExpenses = 0L
 
         fun update() {
             value = EmergencyFundBuilder.build(
-                latestTotalAssets,
+                LiquidAssetsBuilder.totalLiquidAssets(latestAccounts, latestBalances),
                 latestMonthlyExpenses
             )
         }
 
-        addSource(assetSlices) { slices ->
-            latestTotalAssets = (slices ?: emptyList()).sumOf { it.amount }
+        addSource(balances) { b ->
+            latestBalances = b ?: emptyList()
+            update()
+        }
+        addSource(accounts) { a ->
+            latestAccounts = a ?: emptyList()
             update()
         }
         addSource(settingsRepository.observe()) { settings ->

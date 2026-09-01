@@ -4,7 +4,6 @@ import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
 import dev.fitiavana.accounting.ui.home.AssetPalette
-import dev.fitiavana.accounting.ui.home.AssetSliceBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import dev.fitiavana.accounting.features.reports.ReportRow as RawRow
@@ -37,6 +36,23 @@ class ReportPresenterTest {
                 ReportDisplayRow.Title("Instant Balance Sheet"),
                 ReportDisplayRow.SectionHeader("Assets"),
                 ReportDisplayRow.SubsectionHeader("Original Equity")
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `assigns a color dot to a SubsectionHeader with an assetIndex`() {
+        val result = ReportPresenter.present(
+            listOf(RawRow.SubsectionHeader("Cash & Cash Equivalents", assetIndex = 0))
+        )
+
+        assertEquals(
+            listOf(
+                ReportDisplayRow.SubsectionHeader(
+                    "Cash & Cash Equivalents",
+                    AssetPalette.colorFor(0)
+                )
             ),
             result
         )
@@ -243,7 +259,10 @@ class ReportPresenterTest {
     }
 
     @Test
-    fun `asset line colors follow the same order as the pie chart slices`() {
+    fun `asset line colors follow the account lines' own render order`() {
+        // Since assets are now grouped by liquidity level, this order no longer
+        // matches the (differently grouped, "Other"-collapsing) pie chart slices —
+        // each line's dot color is assigned by its position in the grouped list itself.
         val accounts = listOf(
             account("a", "Bank", "asset"),
             account("b", "Petty Cash", "asset"),
@@ -255,7 +274,6 @@ class ReportPresenterTest {
             balance("c", 2_500)
         )
 
-        val slices = AssetSliceBuilder.assetSlices(accounts, balances)
         val accountLines = ReportPresenter.present(
             BalanceSheetBuilder.build(
                 accounts,
@@ -264,9 +282,9 @@ class ReportPresenterTest {
         )
             .filterIsInstance<ReportDisplayRow.AccountLine>()
 
-        assertEquals(slices.map { it.name }, accountLines.map { it.name })
+        assertEquals(listOf("Bank", "Petty Cash", "Coin Jar"), accountLines.map { it.name })
         assertEquals(
-            slices.indices.map { AssetPalette.colorFor(it) },
+            accountLines.indices.map { AssetPalette.colorFor(it) },
             accountLines.map { it.color }
         )
     }

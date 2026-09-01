@@ -5,6 +5,7 @@ import kotlin.math.roundToInt
 data class EmergencyFundInfo(
     val monthlyExpenses: Long,
     val sixMonthTarget: Long,
+    val sixMonthReached: Long,
     val sixMonthPercent: Int,
     val sixMonthRemaining: Long
 )
@@ -15,6 +16,7 @@ object EmergencyFundBuilder {
         return EmergencyFundInfo(
             monthlyExpenses = monthlyExpenses,
             sixMonthTarget = sixMonthTarget,
+            sixMonthReached = totalAssets,
             sixMonthPercent = percentReached(totalAssets, sixMonthTarget),
             sixMonthRemaining = (sixMonthTarget - totalAssets).coerceAtLeast(0)
         )

@@ -14,6 +14,7 @@ class EmergencyFundBuilderTest {
 
         assertEquals(100_000L, result.monthlyExpenses)
         assertEquals(600_000L, result.sixMonthTarget)
+        assertEquals(150_000L, result.sixMonthReached)
         assertEquals(25, result.sixMonthPercent)
         assertEquals(450_000L, result.sixMonthRemaining)
     }
