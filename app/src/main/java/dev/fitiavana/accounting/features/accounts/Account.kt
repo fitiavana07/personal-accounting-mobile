@@ -29,5 +29,6 @@ data class Account(
     val name: String,
     val type: String,
     val instrumentCode: String? = null,
-    val intermediaryInstrumentCode: String? = null
+    val intermediaryInstrumentCode: String? = null,
+    val liquidityLevel: String? = null
 )

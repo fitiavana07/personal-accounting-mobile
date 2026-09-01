@@ -19,5 +19,11 @@
     <color name="report_title">@color/gold_500</color>
     <color name="report_header_text">@color/brown_500</color>
 
-    <color name="emergency_fund_in_progress">@color/gold_500</color>
+    <color name="emergency_fund_in_progress">@color/gold_700</color>
+
+    <color name="metrics_card_bg">#FFF7EED8</color>
+    <color name="metrics_card_border">#33B8860B</color>
+    <color name="metrics_card_divider">#1F5D4037</color>
+    <color name="metrics_card_label">@color/gold_700</color>
+    <color name="metrics_card_value">@color/black</color>
 </resources>

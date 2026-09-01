@@ -95,7 +95,7 @@ class ReportAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             setContentVerticalPadding(6f)
             root.setBackgroundColor(0)
             divider.visibility = View.GONE
-            setColorDot(null)
+            setColorDot(row.color)
         }
 
         fun bindAccount(row: ReportDisplayRow.AccountLine) {

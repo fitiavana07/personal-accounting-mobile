@@ -4,6 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.accounts.LiquidityLevels
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
@@ -36,8 +37,12 @@ class HomeViewModelTest {
     private lateinit var rates: MutableLiveData<List<ExchangeRateCache>>
     private lateinit var settings: MutableLiveData<AppSettings?>
 
-    private fun account(id: String, name: String, type: String = "asset") =
-        Account(id = id, name = name, type = type)
+    private fun account(
+        id: String,
+        name: String,
+        type: String = "asset",
+        liquidityLevel: String? = LiquidityLevels.CASH_AND_EQUIVALENTS
+    ) = Account(id = id, name = name, type = type, liquidityLevel = liquidityLevel)
 
     private fun balance(accountId: String, balance: Long) =
         AccountBalance(
@@ -80,6 +85,7 @@ class HomeViewModelTest {
         )
         // MediatorLiveData only forwards source updates while it has an active observer.
         viewModel.emergencyFund.observeForever {}
+        viewModel.metrics.observeForever {}
         return viewModel
     }
 
@@ -124,6 +130,62 @@ class HomeViewModelTest {
         val updated = viewModel.emergencyFund.value!!
         assertEquals(1_200_000L, updated.sixMonthTarget)
         assertEquals(25, updated.sixMonthPercent)
+    }
+
+    @Test
+    fun `emergencyFund excludes asset balances without a cash-and-equivalents liquidity level`() {
+        val viewModel = viewModel()
+        settings.value = AppSettings(monthlyLivingExpenses = 100_000)
+
+        accounts.value = listOf(
+            account("acc1", "Cash", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS),
+            account("acc2", "Brokerage Stocks", liquidityLevel = LiquidityLevels.STOCKS),
+            account("acc3", "Unclassified Asset", liquidityLevel = null)
+        )
+        balances.value = listOf(
+            balance("acc1", 150_000),
+            balance("acc2", 1_000_000),
+            balance("acc3", 500_000)
+        )
+
+        val result = viewModel.emergencyFund.value!!
+        assertEquals(600_000L, result.sixMonthTarget)
+        assertEquals(25, result.sixMonthPercent)
+    }
+
+    @Test
+    fun `metrics combines total equity, cash and emergency fund percent`() {
+        val viewModel = viewModel()
+        settings.value = AppSettings(monthlyLivingExpenses = 100_000)
+
+        accounts.value = listOf(
+            account("cash", "Cash", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS),
+            account("capital", "Owner Capital", type = "equity", liquidityLevel = null)
+        )
+        balances.value = listOf(balance("cash", 150_000), balance("capital", 900_000))
+
+        val result = viewModel.metrics.value!!
+        assertEquals(900_000L, result.totalEquity)
+        assertEquals(150_000L, result.cash)
+        assertEquals(25, result.emergencyFundPercent)
+        assertEquals(17, result.cashToEquityPercent)
+        assertEquals(100_000L, result.monthlyExpenses)
+        assertEquals(1.5, result.cashRunwayMonths, 0.0001)
+    }
+
+    @Test
+    fun `metrics recomputes when monthly expenses setting changes`() {
+        val viewModel = viewModel()
+        accounts.value =
+            listOf(account("cash", "Cash", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS))
+        balances.value = listOf(balance("cash", 300_000))
+        settings.value = AppSettings(monthlyLivingExpenses = 100_000)
+
+        assertEquals(50, viewModel.metrics.value!!.emergencyFundPercent)
+
+        settings.value = AppSettings(monthlyLivingExpenses = 200_000)
+
+        assertEquals(25, viewModel.metrics.value!!.emergencyFundPercent)
     }
 
     @Test

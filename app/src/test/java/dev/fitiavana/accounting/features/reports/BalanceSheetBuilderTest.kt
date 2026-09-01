@@ -1,6 +1,7 @@
 package dev.fitiavana.accounting.features.reports
 
 import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.accounts.LiquidityLevels
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -8,8 +9,8 @@ import org.junit.Test
 
 class BalanceSheetBuilderTest {
 
-    private fun account(id: String, name: String, type: String) =
-        Account(id = id, name = name, type = type)
+    private fun account(id: String, name: String, type: String, liquidityLevel: String? = null) =
+        Account(id = id, name = name, type = type, liquidityLevel = liquidityLevel)
 
     private fun balance(
         accountId: String,
@@ -42,7 +43,9 @@ class BalanceSheetBuilderTest {
         assertEquals(
             listOf(
                 ReportRow.Title("ASSETS"),
+                ReportRow.SubsectionHeader("Unclassified", assetIndex = 0),
                 ReportRow.AccountLine("Cash", 10_000, assetIndex = 0),
+                ReportRow.TotalLine("Subtotal", 10_000),
                 ReportRow.TotalLine("Total Assets", 10_000, emphasized = true),
                 ReportRow.DateLine(0L)
             ),
@@ -94,12 +97,72 @@ class BalanceSheetBuilderTest {
     }
 
     @Test
-    fun `asset accounts under 10000Ar are grouped into an Other line`() {
+    fun `assets are grouped by liquidity level in LiquidityLevels order, unclassified last`() {
         val result = BalanceSheetBuilder.build(
             accounts = listOf(
-                account("a", "Bank", "asset"),
-                account("b", "Petty Cash", "asset"),
-                account("c", "Coin Jar", "asset")
+                account("a", "Brokerage", "asset", liquidityLevel = LiquidityLevels.STOCKS),
+                account("b", "Bank", "asset", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS),
+                account("c", "Piggy Bank", "asset", liquidityLevel = null)
+            ),
+            balances = listOf(
+                balance("a", 500_000),
+                balance("b", 200_000),
+                balance("c", 50_000)
+            )
+        )
+
+        assertEquals(
+            listOf(
+                ReportRow.Title("ASSETS"),
+                ReportRow.SubsectionHeader("Cash & Cash Equivalents", assetIndex = 0),
+                ReportRow.AccountLine("Bank", 200_000, assetIndex = 1),
+                ReportRow.TotalLine("Subtotal", 200_000),
+                ReportRow.SubsectionHeader("Stocks", assetIndex = 1),
+                ReportRow.AccountLine("Brokerage", 500_000, assetIndex = 0),
+                ReportRow.TotalLine("Subtotal", 500_000),
+                ReportRow.SubsectionHeader("Unclassified", assetIndex = 2),
+                ReportRow.AccountLine("Piggy Bank", 50_000, assetIndex = 2),
+                ReportRow.TotalLine("Subtotal", 50_000),
+                ReportRow.TotalLine("Total Assets", 750_000, emphasized = true),
+                ReportRow.DateLine(0L)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `account line asset index matches the Assets pie chart's global balance ranking, not liquidity group order`() {
+        // Brokerage has the largest balance overall but sits in a liquidity
+        // group processed after Cash & Cash Equivalents — its color dot must
+        // still be index 0, matching AssetSliceBuilder's flat balance sort,
+        // not the sequential per-group order BalanceSheetBuilder renders in.
+        val result = BalanceSheetBuilder.build(
+            accounts = listOf(
+                account("a", "Brokerage", "asset", liquidityLevel = LiquidityLevels.STOCKS),
+                account("b", "Bank", "asset", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS),
+                account("c", "Piggy Bank", "asset", liquidityLevel = null)
+            ),
+            balances = listOf(
+                balance("a", 500_000),
+                balance("b", 200_000),
+                balance("c", 50_000)
+            )
+        )
+
+        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
+        assertEquals(
+            mapOf("Brokerage" to 0, "Bank" to 1, "Piggy Bank" to 2),
+            accountLines.associate { it.name to it.assetIndex }
+        )
+    }
+
+    @Test
+    fun `account lines below the Other threshold share one asset index across liquidity groups`() {
+        val result = BalanceSheetBuilder.build(
+            accounts = listOf(
+                account("a", "Bank", "asset", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS),
+                account("b", "Petty Cash", "asset", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS),
+                account("c", "Spare Change", "asset", liquidityLevel = LiquidityLevels.STOCKS)
             ),
             balances = listOf(
                 balance("a", 15_000),
@@ -108,27 +171,54 @@ class BalanceSheetBuilderTest {
             )
         )
 
-        assertEquals(
-            listOf(
-                ReportRow.Title("ASSETS"),
-                ReportRow.AccountLine("Bank", 15_000, assetIndex = 0),
-                ReportRow.AccountLine("Other", 6_500, assetIndex = 1),
-                ReportRow.TotalLine("Total Assets", 21_500, emphasized = true),
-                ReportRow.DateLine(0L)
+        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
+        assertEquals(0, accountLines.single { it.name == "Bank" }.assetIndex)
+        assertEquals(1, accountLines.single { it.name == "Petty Cash" }.assetIndex)
+        assertEquals(1, accountLines.single { it.name == "Spare Change" }.assetIndex)
+    }
+
+    @Test
+    fun `liquidity level group headers are indexed by their render order, skipping empty groups`() {
+        val result = BalanceSheetBuilder.build(
+            accounts = listOf(
+                account("a", "Brokerage", "asset", liquidityLevel = LiquidityLevels.STOCKS),
+                account("b", "Piggy Bank", "asset", liquidityLevel = null)
             ),
-            result
+            balances = listOf(balance("a", 500_000), balance("b", 50_000))
+        )
+
+        val headers = result.filterIsInstance<ReportRow.SubsectionHeader>()
+        assertEquals(
+            listOf("Stocks" to 0, "Unclassified" to 1),
+            headers.map { it.title to it.assetIndex }
         )
     }
 
     @Test
-    fun `asset account exactly at the 10000Ar threshold is not grouped`() {
+    fun `liquidity level groups with no accounts are omitted`() {
         val result = BalanceSheetBuilder.build(
-            accounts = listOf(account("a", "Bank", "asset")),
-            balances = listOf(balance("a", 10_000))
+            accounts = listOf(
+                account("a", "Bank", "asset", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS)
+            ),
+            balances = listOf(balance("a", 100_000))
+        )
+
+        val headers = result.filterIsInstance<ReportRow.SubsectionHeader>()
+        assertEquals(listOf("Cash & Cash Equivalents"), headers.map { it.title })
+    }
+
+    @Test
+    fun `accounts within a liquidity level group are sorted by balance decreasing`() {
+        val result = BalanceSheetBuilder.build(
+            accounts = listOf(
+                account("a", "Zebra Bank", "asset", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS),
+                account("b", "Alpha Bank", "asset", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS)
+            ),
+            balances = listOf(balance("a", 10_000), balance("b", 20_000))
         )
 
         val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
-        assertEquals(listOf("Bank"), accountLines.map { it.name })
+        assertEquals(listOf("Alpha Bank", "Zebra Bank"), accountLines.map { it.name })
     }
 
     @Test
@@ -339,5 +429,53 @@ class BalanceSheetBuilderTest {
             ),
             result
         )
+    }
+
+    // --- totalEquity ---
+
+    @Test
+    fun `totalEquity folds original equity, unclosed income statement accounts and drawing`() {
+        val accounts = listOf(
+            account("e", "Owner Capital", "equity"),
+            account("r", "Salary", "revenue"),
+            account("x", "Rent", "expense"),
+            account("g", "Stock Gain", "gain"),
+            account("o", "Stock Loss", "loss"),
+            account("d", "Owner Drawing", "drawing")
+        )
+        val balances = mapOf(
+            "e" to 500L, "r" to 300L, "x" to 150L, "g" to 80L, "o" to 30L, "d" to 60L
+        )
+
+        // 500 + 300 - 150 + 80 - 30 - 60 = 640
+        assertEquals(640L, BalanceSheetBuilder.totalEquity(accounts, balances))
+    }
+
+    @Test
+    fun `totalEquity ignores asset and liability accounts`() {
+        val accounts = listOf(
+            account("a", "Cash", "asset"),
+            account("l", "Loan", "liability")
+        )
+        val balances = mapOf("a" to 10_000L, "l" to 5_000L)
+
+        assertEquals(0L, BalanceSheetBuilder.totalEquity(accounts, balances))
+    }
+
+    @Test
+    fun `totalEquity matches the Total Equity line produced by buildMonthly`() {
+        val accounts = listOf(
+            account("e", "Owner Capital", "equity"),
+            account("r", "Salary", "revenue"),
+            account("d", "Owner Drawing", "drawing")
+        )
+        val balances = mapOf("e" to 500L, "r" to 300L, "d" to 60L)
+
+        val totalEquityLine = BalanceSheetBuilder.buildMonthly(accounts, balances)
+            .filterIsInstance<ReportRow.TotalLine>()
+            .single { it.label == "Total Equity" }
+            .amount
+
+        assertEquals(totalEquityLine, BalanceSheetBuilder.totalEquity(accounts, balances))
     }
 }

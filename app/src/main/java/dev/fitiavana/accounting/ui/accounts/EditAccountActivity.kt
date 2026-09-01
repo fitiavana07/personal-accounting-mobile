@@ -5,16 +5,19 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.AccountTypes
+import dev.fitiavana.accounting.features.accounts.LiquidityLevels
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.ui.common.UiUtils
 
@@ -36,6 +39,9 @@ class EditAccountActivity : AppCompatActivity() {
     private lateinit var typeSpinner: Spinner
     private lateinit var instrumentSpinner: Spinner
     private lateinit var intermediaryInstrumentSpinner: Spinner
+    private lateinit var liquidityLevelLabel: TextView
+    private lateinit var liquidityLevelSpinner: Spinner
+    private lateinit var liquidityLevelDescription: TextView
     private var accountId: String? = null
 
     private var instruments: List<Instrument> = emptyList()
@@ -58,6 +64,7 @@ class EditAccountActivity : AppCompatActivity() {
         initViewModel()
         bindViews()
         setupTypeSpinner()
+        setupLiquidityLevelSpinner()
         observeInstruments()
         setupInstrumentSpinnerListener()
         loadAccountForEditingIfNeeded()
@@ -82,6 +89,10 @@ class EditAccountActivity : AppCompatActivity() {
         instrumentSpinner = findViewById(R.id.spinner_instrument)
         intermediaryInstrumentSpinner =
             findViewById(R.id.spinner_intermediary_instrument)
+        liquidityLevelLabel = findViewById(R.id.label_liquidity_level)
+        liquidityLevelSpinner = findViewById(R.id.spinner_liquidity_level)
+        liquidityLevelDescription =
+            findViewById(R.id.text_liquidity_level_description)
         saveButton = findViewById(R.id.button_save)
     }
 
@@ -95,6 +106,71 @@ class EditAccountActivity : AppCompatActivity() {
         )
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         typeSpinner.adapter = spinnerAdapter
+        typeSpinner.onItemSelectedListener =
+            object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: android.widget.AdapterView<*>?,
+                    view: android.view.View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    updateLiquidityLevelVisibility()
+                }
+
+                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {
+                    updateLiquidityLevelVisibility()
+                }
+            }
+    }
+
+    private fun setupLiquidityLevelSpinner() {
+        val displayNames =
+            resources.getStringArray(R.array.liquidity_level_display)
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            displayNames
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        liquidityLevelSpinner.adapter = adapter
+        liquidityLevelSpinner.onItemSelectedListener =
+            object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: android.widget.AdapterView<*>?,
+                    view: android.view.View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    updateLiquidityLevelDescription()
+                }
+
+                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {
+                    updateLiquidityLevelDescription()
+                }
+            }
+        updateLiquidityLevelVisibility()
+        updateLiquidityLevelDescription()
+    }
+
+    private fun updateLiquidityLevelVisibility() {
+        val isAsset =
+            AccountTypes.VALUES.getOrNull(typeSpinner.selectedItemPosition) == "asset"
+        val visibility = if (isAsset) View.VISIBLE else View.GONE
+        liquidityLevelLabel.visibility = visibility
+        liquidityLevelSpinner.visibility = visibility
+        liquidityLevelDescription.visibility =
+            if (isAsset) liquidityLevelDescription.visibility else View.GONE
+        if (isAsset) updateLiquidityLevelDescription()
+    }
+
+    private fun updateLiquidityLevelDescription() {
+        val descriptions =
+            resources.getStringArray(R.array.liquidity_level_description)
+        val description =
+            descriptions.getOrNull(liquidityLevelSpinner.selectedItemPosition).orEmpty()
+        liquidityLevelDescription.text = description
+        liquidityLevelDescription.visibility =
+            if (description.isEmpty()) View.GONE else View.VISIBLE
     }
 
     private fun observeInstruments() {
@@ -184,6 +260,10 @@ class EditAccountActivity : AppCompatActivity() {
                     val typeIndex = AccountTypes.VALUES.indexOf(account.type)
                         .takeIf { it >= 0 } ?: 0
                     typeSpinner.setSelection(typeIndex)
+                    val liquidityIndex =
+                        LiquidityLevels.VALUES.indexOf(account.liquidityLevel)
+                    liquidityLevelSpinner.setSelection(if (liquidityIndex >= 0) liquidityIndex + 1 else 0)
+                    updateLiquidityLevelVisibility()
                 }
                 isLocked = locked
                 typeSpinner.isEnabled = !locked
@@ -207,13 +287,17 @@ class EditAccountActivity : AppCompatActivity() {
                     intermediaryInstrumentSpinner.selectedItemPosition
                 val selectedIntermediaryCode =
                     if (interPos == 0 || selectedInstrumentCode == null) null else instruments[interPos - 1].code
+                val liquidityPos = liquidityLevelSpinner.selectedItemPosition
+                val selectedLiquidityLevel =
+                    if (selectedType != "asset" || liquidityPos == 0) null else LiquidityLevels.VALUES[liquidityPos - 1]
                 Thread {
                     viewModel.saveAccount(
                         accountId,
                         name,
                         selectedType,
                         selectedInstrumentCode,
-                        selectedIntermediaryCode
+                        selectedIntermediaryCode,
+                        selectedLiquidityLevel
                     )
                     runOnUiThread { finish() }
                 }.start()

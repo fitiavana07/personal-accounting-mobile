@@ -21,12 +21,37 @@ class EditAccountViewModel(
 
     fun hasTransactions(id: String): Boolean = balanceRepository.hasTransactions(id)
 
-    fun saveAccount(id: String?, name: String, type: String, instrumentCode: String?, intermediaryInstrumentCode: String?) {
+    fun saveAccount(
+        id: String?,
+        name: String,
+        type: String,
+        instrumentCode: String?,
+        intermediaryInstrumentCode: String?,
+        liquidityLevel: String? = null
+    ) {
         val trimmed = name.trim()
         if (id == null) {
-            repository.insert(Account(id = UUID.randomUUID().toString(), name = trimmed, type = type, instrumentCode = instrumentCode, intermediaryInstrumentCode = intermediaryInstrumentCode))
+            repository.insert(
+                Account(
+                    id = UUID.randomUUID().toString(),
+                    name = trimmed,
+                    type = type,
+                    instrumentCode = instrumentCode,
+                    intermediaryInstrumentCode = intermediaryInstrumentCode,
+                    liquidityLevel = liquidityLevel
+                )
+            )
         } else {
-            repository.update(Account(id = id, name = trimmed, type = type, instrumentCode = instrumentCode, intermediaryInstrumentCode = intermediaryInstrumentCode))
+            repository.update(
+                Account(
+                    id = id,
+                    name = trimmed,
+                    type = type,
+                    instrumentCode = instrumentCode,
+                    intermediaryInstrumentCode = intermediaryInstrumentCode,
+                    liquidityLevel = liquidityLevel
+                )
+            )
         }
     }
 

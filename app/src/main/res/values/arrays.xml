@@ -20,4 +20,20 @@
         <item>cryptocurrency</item>
         <item>stock</item>
     </string-array>
+    <string-array name="liquidity_level_display">
+        <item>@string/spinner_no_liquidity_level</item>
+        <item>Cash &amp; Cash Equivalents</item>
+        <item>Accounts Receivable</item>
+        <item>Stocks</item>
+        <item>Crypto (non-stablecoin)</item>
+        <item>Other Long-Term Assets</item>
+    </string-array>
+    <string-array name="liquidity_level_description">
+        <item></item>
+        <item>@string/liquidity_level_description_cash</item>
+        <item>@string/liquidity_level_description_accounts_receivable</item>
+        <item>@string/liquidity_level_description_stocks</item>
+        <item>@string/liquidity_level_description_crypto</item>
+        <item>@string/liquidity_level_description_other_long_term</item>
+    </string-array>
 </resources>

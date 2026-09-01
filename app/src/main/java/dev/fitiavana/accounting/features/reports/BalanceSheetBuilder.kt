@@ -1,14 +1,20 @@
 package dev.fitiavana.accounting.features.reports
 
 import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.accounts.LiquidityLevels
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import kotlin.math.abs
 
 object BalanceSheetBuilder {
 
-    private const val OTHER_ASSET_THRESHOLD = 10_000L
+    private data class NamedLiquidAmount(
+        val accountId: String,
+        val name: String,
+        val amount: Long,
+        val liquidityLevel: String?
+    )
 
-    /** Home tab's "Instant Balance Sheet" card: assets only, no liabilities/equity. */
+    /** Home tab's "Instant Balance Sheet" card: assets only, grouped by liquidity level, no liabilities/equity. */
     fun build(
         accounts: List<Account>,
         balances: List<AccountBalance>
@@ -18,33 +24,48 @@ object BalanceSheetBuilder {
             balances.filter { accountMap.containsKey(it.accountId) }
         if (includedBalances.isEmpty()) return emptyList()
 
-        val assetLines = linesFor(
-            accountMap,
-            includedBalances,
-            "asset"
-        ).sortedByDescending { it.amount }
+        val assetLines = includedBalances
+            .filter { accountMap.getValue(it.accountId).type == "asset" }
+            .filter { it.balance != 0L }
+            .map {
+                val account = accountMap.getValue(it.accountId)
+                NamedLiquidAmount(account.id, account.name, it.balance, account.liquidityLevel)
+            }
         val totalAssets = assetLines.sumOf { it.amount }
+
+        // Same color per account as the Home "Assets" pie chart (AssetColorIndex),
+        // even though this view groups/orders accounts differently (by liquidity level).
+        val colorIndexByAccountId =
+            AssetColorIndex.compute(accounts, balances).colorIndexByAccountId()
 
         val rows = mutableListOf<ReportRow>()
         rows += ReportRow.Title("ASSETS")
 
         if (assetLines.isNotEmpty()) {
-            val (mainAssetLines, otherAssetLines) = assetLines.partition {
-                abs(it.amount) >= OTHER_ASSET_THRESHOLD
-            }
+            // Null last: unclassified assets are shown after every known liquidity level.
+            val groupOrder = LiquidityLevels.VALUES + listOf<String?>(null)
+            var groupIndex = 0
+            for (liquidityLevel in groupOrder) {
+                val groupLines = assetLines
+                    .filter { it.liquidityLevel == liquidityLevel }
+                    .sortedByDescending { it.amount }
+                if (groupLines.isEmpty()) continue
 
-            mainAssetLines.forEachIndexed { index, line ->
-                rows += ReportRow.AccountLine(
-                    line.name,
-                    line.amount,
-                    assetIndex = index
+                rows += ReportRow.SubsectionHeader(
+                    LiquidityLevels.displayName(liquidityLevel),
+                    assetIndex = groupIndex
                 )
-            }
-            if (otherAssetLines.isNotEmpty()) {
-                rows += ReportRow.AccountLine(
-                    "Other",
-                    otherAssetLines.sumOf { it.amount },
-                    assetIndex = mainAssetLines.size
+                groupIndex++
+                groupLines.forEach { line ->
+                    rows += ReportRow.AccountLine(
+                        line.name,
+                        line.amount,
+                        assetIndex = colorIndexByAccountId[line.accountId]
+                    )
+                }
+                rows += ReportRow.TotalLine(
+                    "Subtotal",
+                    groupLines.sumOf { it.amount }
                 )
             }
             rows += ReportRow.TotalLine(
@@ -97,14 +118,20 @@ object BalanceSheetBuilder {
         val totalGain = gainLines.sumOf { it.amount }
         val totalLoss = lossLines.sumOf { it.amount }
         val totalDrawing = drawingLines.sumOf { it.amount }
-        val totalEquity =
-            totalOriginalEquity + totalIncome - totalExpense + totalGain - totalLoss - totalDrawing
+        val totalEquity = totalEquityOf(
+            totalOriginalEquity,
+            totalIncome,
+            totalExpense,
+            totalGain,
+            totalLoss,
+            totalDrawing
+        )
 
         val rows = mutableListOf<ReportRow>()
 
         if (assetLines.isNotEmpty()) {
             val (mainAssetLines, otherAssetLines) = assetLines.partition {
-                abs(it.amount) >= OTHER_ASSET_THRESHOLD
+                abs(it.amount) >= AssetColorIndex.OTHER_ASSET_THRESHOLD
             }
 
             rows += ReportRow.SectionHeader("Assets")
@@ -227,4 +254,35 @@ object BalanceSheetBuilder {
 
         return rows
     }
+
+    /** Total Equity as of [balancesByAccountId], same formula as the "Total Equity" line in [buildMonthly]. */
+    fun totalEquity(
+        accounts: List<Account>,
+        balancesByAccountId: Map<String, Long>
+    ): Long {
+        val accountMap = accounts.associateBy { it.id }
+
+        fun linesFor(type: String): List<NamedAmount> =
+            linesFor(accountMap, balancesByAccountId, type)
+
+        return totalEquityOf(
+            totalOriginalEquity = linesFor("equity").sumOf { it.amount },
+            totalIncome = linesFor("revenue").sumOf { it.amount },
+            totalExpense = linesFor("expense").sumOf { it.amount },
+            totalGain = linesFor("gain").sumOf { it.amount },
+            totalLoss = linesFor("loss").sumOf { it.amount },
+            totalDrawing = linesFor("drawing").sumOf { it.amount }
+        )
+    }
+
+    /** Shared "Total Equity" formula used by both [buildMonthly] and [totalEquity]. */
+    private fun totalEquityOf(
+        totalOriginalEquity: Long,
+        totalIncome: Long,
+        totalExpense: Long,
+        totalGain: Long,
+        totalLoss: Long,
+        totalDrawing: Long
+    ): Long =
+        totalOriginalEquity + totalIncome - totalExpense + totalGain - totalLoss - totalDrawing
 }

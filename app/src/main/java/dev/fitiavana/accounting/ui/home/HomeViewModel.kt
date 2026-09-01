@@ -108,23 +108,77 @@ class HomeViewModel(
         }
     }
 
+    val liquiditySlices = MediatorLiveData<List<AssetSlice>>().apply {
+        var latestBalances: List<AccountBalance> = emptyList()
+        var latestAccounts: List<Account> = emptyList()
+
+        fun update() {
+            value =
+                LiquiditySliceBuilder.liquiditySlices(latestAccounts, latestBalances)
+        }
+
+        addSource(balances) { b ->
+            latestBalances = b ?: emptyList()
+            update()
+        }
+        addSource(accounts) { a ->
+            latestAccounts = a ?: emptyList()
+            update()
+        }
+    }
+
     val emergencyFund = MediatorLiveData<EmergencyFundInfo>().apply {
-        var latestTotalAssets = 0L
+        var latestBalances: List<AccountBalance> = emptyList()
+        var latestAccounts: List<Account> = emptyList()
         var latestMonthlyExpenses = 0L
 
         fun update() {
             value = EmergencyFundBuilder.build(
-                latestTotalAssets,
+                LiquidAssetsBuilder.totalLiquidAssets(latestAccounts, latestBalances),
                 latestMonthlyExpenses
             )
         }
 
-        addSource(assetSlices) { slices ->
-            latestTotalAssets = (slices ?: emptyList()).sumOf { it.amount }
+        addSource(balances) { b ->
+            latestBalances = b ?: emptyList()
+            update()
+        }
+        addSource(accounts) { a ->
+            latestAccounts = a ?: emptyList()
             update()
         }
         addSource(settingsRepository.observe()) { settings ->
             latestMonthlyExpenses = settings?.monthlyLivingExpenses ?: 0L
+            update()
+        }
+    }
+
+    val metrics = MediatorLiveData<HomeMetrics>().apply {
+        var latestBalances: List<AccountBalance> = emptyList()
+        var latestAccounts: List<Account> = emptyList()
+        var latestEmergencyFundPercent = 100
+        var latestMonthlyExpenses = 0L
+
+        fun update() {
+            value = HomeMetricsBuilder.build(
+                latestAccounts,
+                latestBalances,
+                latestEmergencyFundPercent,
+                latestMonthlyExpenses
+            )
+        }
+
+        addSource(balances) { b ->
+            latestBalances = b ?: emptyList()
+            update()
+        }
+        addSource(accounts) { a ->
+            latestAccounts = a ?: emptyList()
+            update()
+        }
+        addSource(emergencyFund) { info ->
+            latestEmergencyFundPercent = info?.sixMonthPercent ?: 100
+            latestMonthlyExpenses = info?.monthlyExpenses ?: 0L
             update()
         }
     }

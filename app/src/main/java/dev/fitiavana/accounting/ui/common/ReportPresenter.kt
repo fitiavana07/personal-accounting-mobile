@@ -16,7 +16,10 @@ object ReportPresenter {
         when (row) {
             is RawRow.Title -> ReportDisplayRow.Title(row.text)
             is RawRow.SectionHeader -> ReportDisplayRow.SectionHeader(row.title)
-            is RawRow.SubsectionHeader -> ReportDisplayRow.SubsectionHeader(row.title)
+            is RawRow.SubsectionHeader -> ReportDisplayRow.SubsectionHeader(
+                row.title,
+                row.assetIndex?.let { AssetPalette.colorFor(it) }
+            )
             is RawRow.AccountLine -> ReportDisplayRow.AccountLine(
                 row.name,
                 formatAmount(
