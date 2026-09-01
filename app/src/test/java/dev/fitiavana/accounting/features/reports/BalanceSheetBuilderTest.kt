@@ -115,10 +115,10 @@ class BalanceSheetBuilderTest {
             listOf(
                 ReportRow.Title("ASSETS"),
                 ReportRow.SubsectionHeader("Cash & Cash Equivalents", assetIndex = 0),
-                ReportRow.AccountLine("Bank", 200_000, assetIndex = 0),
+                ReportRow.AccountLine("Bank", 200_000, assetIndex = 1),
                 ReportRow.TotalLine("Subtotal", 200_000),
                 ReportRow.SubsectionHeader("Stocks", assetIndex = 1),
-                ReportRow.AccountLine("Brokerage", 500_000, assetIndex = 1),
+                ReportRow.AccountLine("Brokerage", 500_000, assetIndex = 0),
                 ReportRow.TotalLine("Subtotal", 500_000),
                 ReportRow.SubsectionHeader("Unclassified", assetIndex = 2),
                 ReportRow.AccountLine("Piggy Bank", 50_000, assetIndex = 2),
@@ -128,6 +128,53 @@ class BalanceSheetBuilderTest {
             ),
             result
         )
+    }
+
+    @Test
+    fun `account line asset index matches the Assets pie chart's global balance ranking, not liquidity group order`() {
+        // Brokerage has the largest balance overall but sits in a liquidity
+        // group processed after Cash & Cash Equivalents — its color dot must
+        // still be index 0, matching AssetSliceBuilder's flat balance sort,
+        // not the sequential per-group order BalanceSheetBuilder renders in.
+        val result = BalanceSheetBuilder.build(
+            accounts = listOf(
+                account("a", "Brokerage", "asset", liquidityLevel = LiquidityLevels.STOCKS),
+                account("b", "Bank", "asset", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS),
+                account("c", "Piggy Bank", "asset", liquidityLevel = null)
+            ),
+            balances = listOf(
+                balance("a", 500_000),
+                balance("b", 200_000),
+                balance("c", 50_000)
+            )
+        )
+
+        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
+        assertEquals(
+            mapOf("Brokerage" to 0, "Bank" to 1, "Piggy Bank" to 2),
+            accountLines.associate { it.name to it.assetIndex }
+        )
+    }
+
+    @Test
+    fun `account lines below the Other threshold share one asset index across liquidity groups`() {
+        val result = BalanceSheetBuilder.build(
+            accounts = listOf(
+                account("a", "Bank", "asset", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS),
+                account("b", "Petty Cash", "asset", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS),
+                account("c", "Spare Change", "asset", liquidityLevel = LiquidityLevels.STOCKS)
+            ),
+            balances = listOf(
+                balance("a", 15_000),
+                balance("b", 4_000),
+                balance("c", 2_500)
+            )
+        )
+
+        val accountLines = result.filterIsInstance<ReportRow.AccountLine>()
+        assertEquals(0, accountLines.single { it.name == "Bank" }.assetIndex)
+        assertEquals(1, accountLines.single { it.name == "Petty Cash" }.assetIndex)
+        assertEquals(1, accountLines.single { it.name == "Spare Change" }.assetIndex)
     }
 
     @Test

@@ -7,9 +7,8 @@ import kotlin.math.abs
 
 object BalanceSheetBuilder {
 
-    private const val OTHER_ASSET_THRESHOLD = 10_000L
-
     private data class NamedLiquidAmount(
+        val accountId: String,
         val name: String,
         val amount: Long,
         val liquidityLevel: String?
@@ -30,9 +29,14 @@ object BalanceSheetBuilder {
             .filter { it.balance != 0L }
             .map {
                 val account = accountMap.getValue(it.accountId)
-                NamedLiquidAmount(account.name, it.balance, account.liquidityLevel)
+                NamedLiquidAmount(account.id, account.name, it.balance, account.liquidityLevel)
             }
         val totalAssets = assetLines.sumOf { it.amount }
+
+        // Same color per account as the Home "Assets" pie chart (AssetColorIndex),
+        // even though this view groups/orders accounts differently (by liquidity level).
+        val colorIndexByAccountId =
+            AssetColorIndex.compute(accounts, balances).colorIndexByAccountId()
 
         val rows = mutableListOf<ReportRow>()
         rows += ReportRow.Title("ASSETS")
@@ -40,7 +44,6 @@ object BalanceSheetBuilder {
         if (assetLines.isNotEmpty()) {
             // Null last: unclassified assets are shown after every known liquidity level.
             val groupOrder = LiquidityLevels.VALUES + listOf<String?>(null)
-            var assetIndex = 0
             var groupIndex = 0
             for (liquidityLevel in groupOrder) {
                 val groupLines = assetLines
@@ -57,9 +60,8 @@ object BalanceSheetBuilder {
                     rows += ReportRow.AccountLine(
                         line.name,
                         line.amount,
-                        assetIndex = assetIndex
+                        assetIndex = colorIndexByAccountId[line.accountId]
                     )
-                    assetIndex++
                 }
                 rows += ReportRow.TotalLine(
                     "Subtotal",
@@ -123,7 +125,7 @@ object BalanceSheetBuilder {
 
         if (assetLines.isNotEmpty()) {
             val (mainAssetLines, otherAssetLines) = assetLines.partition {
-                abs(it.amount) >= OTHER_ASSET_THRESHOLD
+                abs(it.amount) >= AssetColorIndex.OTHER_ASSET_THRESHOLD
             }
 
             rows += ReportRow.SectionHeader("Assets")
