@@ -72,6 +72,10 @@ Transaction amounts stored as integers
 
 - **JUnit**: Unit testing framework
 - **Mockito**: Mocking library for unit tests
+- **TDD is mandatory**: for every change (new feature, bug fix, refactor),
+  write a failing test first, then write the minimum code to make it pass,
+  then refactor. Never write production code before there is a test that
+  requires it.
 
 ## UI
 
