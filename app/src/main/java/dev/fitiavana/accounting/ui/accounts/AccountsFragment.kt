@@ -7,14 +7,13 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Spinner
+import android.widget.CheckBox
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.tabs.TabLayout
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.AccountTypes
@@ -39,16 +38,22 @@ class AccountsFragment : Fragment() {
         initViewModel()
         bindViews(view)
         setupRecyclerView()
-        setupTypeSpinner(view.findViewById(R.id.spinner_account_type))
+        setupTypeTabs(view.findViewById(R.id.tabs_account_type))
+        setupHideZeroBalanceCheckbox(view.findViewById(R.id.checkbox_hide_zero_balance))
         observeAccounts()
     }
 
     private fun initViewModel() {
-        val repository =
-            AppContainer.getInstance(requireContext()).accountRepository
+        val container = AppContainer.getInstance(requireContext())
         viewModel =
-            ViewModelProvider(this, AccountsViewModelFactory(repository))
-                .get(AccountsViewModel::class.java)
+            ViewModelProvider(
+                this,
+                AccountsViewModelFactory(
+                    container.accountRepository,
+                    container.balanceRepository,
+                    container.instrumentRepository
+                )
+            ).get(AccountsViewModel::class.java)
     }
 
     private fun bindViews(view: View) {
@@ -76,7 +81,8 @@ class AccountsFragment : Fragment() {
             adapter.submitList(accounts)
             if (accounts.isEmpty()) {
                 emptyView.visibility = View.VISIBLE
-                val hasFilter = viewModel.typeFilter.value != null
+                val hasFilter = viewModel.typeFilter.value != null ||
+                    viewModel.hideZeroBalance.value == true
                 emptyView.setText(
                     if (hasFilter) R.string.empty_accounts_filtered
                     else R.string.empty_accounts
@@ -87,39 +93,31 @@ class AccountsFragment : Fragment() {
         }
     }
 
-    private fun setupTypeSpinner(spinner: Spinner) {
-        val allTypesLabel = getString(R.string.filter_all_types)
-        val labels = mutableListOf(allTypesLabel)
-        labels.addAll(resources.getStringArray(R.array.account_type_display))
-
-        val spinnerAdapter = ArrayAdapter(
-            requireContext(),
-            R.layout.item_spinner_small,
-            labels
-        ).apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+    private fun setupTypeTabs(tabLayout: TabLayout) {
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.filter_all_types))
+        resources.getStringArray(R.array.account_type_display).forEach { label ->
+            tabLayout.addTab(tabLayout.newTab().setText(label))
         }
 
-        spinner.adapter = spinnerAdapter
-        spinner.setSelection(0, false)
-
-        spinner.onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(
-                    parent: AdapterView<*>,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    val type =
-                        if (position == 0) null else AccountTypes.VALUES.getOrNull(
-                            position - 1
-                        )
-                    viewModel.setTypeFilter(type)
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>) {}
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                val type =
+                    if (tab.position == 0) null else AccountTypes.VALUES.getOrNull(
+                        tab.position - 1
+                    )
+                viewModel.setTypeFilter(type)
             }
+
+            override fun onTabUnselected(tab: TabLayout.Tab) {}
+            override fun onTabReselected(tab: TabLayout.Tab) {}
+        })
+    }
+
+    private fun setupHideZeroBalanceCheckbox(checkbox: CheckBox) {
+        checkbox.isChecked = viewModel.hideZeroBalance.value ?: true
+        checkbox.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setHideZeroBalance(isChecked)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

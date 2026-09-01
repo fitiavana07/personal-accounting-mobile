@@ -46,7 +46,7 @@
     <string name="action_discard">Discard</string>
     <string name="action_keep_editing">Keep editing</string>
     <string name="empty_accounts">No accounts yet</string>
-    <string name="empty_accounts_filtered">No accounts match the selected type</string>
+    <string name="empty_accounts_filtered">No accounts match the current filters</string>
     <string name="empty_balances">No balances yet</string>
     <string name="empty_reports">No transactions yet</string>
     <string name="empty_home">No cryptocurrency positions with an intermediary instrument yet</string>
@@ -80,6 +80,7 @@
     <string name="error_validation_entry_incomplete">Each entry needs an account and an amount</string>
     <string name="filter_all_accounts">All accounts</string>
     <string name="filter_all_types">All types</string>
+    <string name="filter_hide_zero_balance_accounts">Hide zero-balance accounts</string>
     <string name="filter_from">From</string>
     <string name="filter_to">To</string>
     <string name="hint_account_name">Account name</string>
