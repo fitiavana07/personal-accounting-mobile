@@ -153,6 +153,33 @@ class HomeViewModel(
         }
     }
 
+    val metrics = MediatorLiveData<HomeMetrics>().apply {
+        var latestBalances: List<AccountBalance> = emptyList()
+        var latestAccounts: List<Account> = emptyList()
+        var latestEmergencyFundPercent = 100
+
+        fun update() {
+            value = HomeMetricsBuilder.build(
+                latestAccounts,
+                latestBalances,
+                latestEmergencyFundPercent
+            )
+        }
+
+        addSource(balances) { b ->
+            latestBalances = b ?: emptyList()
+            update()
+        }
+        addSource(accounts) { a ->
+            latestAccounts = a ?: emptyList()
+            update()
+        }
+        addSource(emergencyFund) { info ->
+            latestEmergencyFundPercent = info?.sixMonthPercent ?: 100
+            update()
+        }
+    }
+
     /** Synchronous — callers must invoke this off the main thread. */
     fun setMonthlyLivingExpenses(amount: Long) =
         settingsRepository.setMonthlyLivingExpenses(amount)

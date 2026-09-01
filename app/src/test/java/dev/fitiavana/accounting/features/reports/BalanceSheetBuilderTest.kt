@@ -430,4 +430,52 @@ class BalanceSheetBuilderTest {
             result
         )
     }
+
+    // --- totalEquity ---
+
+    @Test
+    fun `totalEquity folds original equity, unclosed income statement accounts and drawing`() {
+        val accounts = listOf(
+            account("e", "Owner Capital", "equity"),
+            account("r", "Salary", "revenue"),
+            account("x", "Rent", "expense"),
+            account("g", "Stock Gain", "gain"),
+            account("o", "Stock Loss", "loss"),
+            account("d", "Owner Drawing", "drawing")
+        )
+        val balances = mapOf(
+            "e" to 500L, "r" to 300L, "x" to 150L, "g" to 80L, "o" to 30L, "d" to 60L
+        )
+
+        // 500 + 300 - 150 + 80 - 30 - 60 = 640
+        assertEquals(640L, BalanceSheetBuilder.totalEquity(accounts, balances))
+    }
+
+    @Test
+    fun `totalEquity ignores asset and liability accounts`() {
+        val accounts = listOf(
+            account("a", "Cash", "asset"),
+            account("l", "Loan", "liability")
+        )
+        val balances = mapOf("a" to 10_000L, "l" to 5_000L)
+
+        assertEquals(0L, BalanceSheetBuilder.totalEquity(accounts, balances))
+    }
+
+    @Test
+    fun `totalEquity matches the Total Equity line produced by buildMonthly`() {
+        val accounts = listOf(
+            account("e", "Owner Capital", "equity"),
+            account("r", "Salary", "revenue"),
+            account("d", "Owner Drawing", "drawing")
+        )
+        val balances = mapOf("e" to 500L, "r" to 300L, "d" to 60L)
+
+        val totalEquityLine = BalanceSheetBuilder.buildMonthly(accounts, balances)
+            .filterIsInstance<ReportRow.TotalLine>()
+            .single { it.label == "Total Equity" }
+            .amount
+
+        assertEquals(totalEquityLine, BalanceSheetBuilder.totalEquity(accounts, balances))
+    }
 }

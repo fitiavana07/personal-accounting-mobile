@@ -22,6 +22,7 @@ class HomeFragment : Fragment() {
 
     private lateinit var viewModel: HomeViewModel
     private lateinit var adapter: HomeAdapter
+    private lateinit var metricsAdapter: HomeMetricsAdapter
     private lateinit var balanceSheetAdapter: ReportAdapter
     private lateinit var pieChartsAdapter: HomePieChartsAdapter
     private lateinit var emergencyFundAdapter: EmergencyFundAdapter
@@ -61,6 +62,7 @@ class HomeFragment : Fragment() {
                 )
             )
         }
+        metricsAdapter = HomeMetricsAdapter()
         balanceSheetAdapter = ReportAdapter()
         pieChartsAdapter = HomePieChartsAdapter()
         emergencyFundAdapter =
@@ -70,6 +72,7 @@ class HomeFragment : Fragment() {
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.adapter =
             ConcatAdapter(
+                metricsAdapter,
                 emergencyFundAdapter,
                 pieChartsAdapter,
                 balanceSheetAdapter,
@@ -109,6 +112,10 @@ class HomeFragment : Fragment() {
 
         viewModel.emergencyFund.observe(viewLifecycleOwner) { info ->
             emergencyFundAdapter.submit(info)
+        }
+
+        viewModel.metrics.observe(viewLifecycleOwner) { metrics ->
+            metricsAdapter.submit(metrics)
         }
 
         refreshRates()

@@ -85,6 +85,7 @@ class HomeViewModelTest {
         )
         // MediatorLiveData only forwards source updates while it has an active observer.
         viewModel.emergencyFund.observeForever {}
+        viewModel.metrics.observeForever {}
         return viewModel
     }
 
@@ -150,6 +151,39 @@ class HomeViewModelTest {
         val result = viewModel.emergencyFund.value!!
         assertEquals(600_000L, result.sixMonthTarget)
         assertEquals(25, result.sixMonthPercent)
+    }
+
+    @Test
+    fun `metrics combines total equity, cash and emergency fund percent`() {
+        val viewModel = viewModel()
+        settings.value = AppSettings(monthlyLivingExpenses = 100_000)
+
+        accounts.value = listOf(
+            account("cash", "Cash", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS),
+            account("capital", "Owner Capital", type = "equity", liquidityLevel = null)
+        )
+        balances.value = listOf(balance("cash", 150_000), balance("capital", 900_000))
+
+        val result = viewModel.metrics.value!!
+        assertEquals(900_000L, result.totalEquity)
+        assertEquals(150_000L, result.cash)
+        assertEquals(25, result.emergencyFundPercent)
+        assertEquals(17, result.cashToEquityPercent)
+    }
+
+    @Test
+    fun `metrics recomputes when monthly expenses setting changes`() {
+        val viewModel = viewModel()
+        accounts.value =
+            listOf(account("cash", "Cash", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS))
+        balances.value = listOf(balance("cash", 300_000))
+        settings.value = AppSettings(monthlyLivingExpenses = 100_000)
+
+        assertEquals(50, viewModel.metrics.value!!.emergencyFundPercent)
+
+        settings.value = AppSettings(monthlyLivingExpenses = 200_000)
+
+        assertEquals(25, viewModel.metrics.value!!.emergencyFundPercent)
     }
 
     @Test

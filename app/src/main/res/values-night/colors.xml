@@ -3,4 +3,11 @@
     <color name="icon_toolbar">@color/white</color>
     <color name="report_title">@color/gold_300</color>
     <color name="report_header_text">@color/gold_300</color>
+    <color name="emergency_fund_in_progress">@color/gold_300</color>
+
+    <color name="metrics_card_bg">#2A2313</color>
+    <color name="metrics_card_border">#4DFFD966</color>
+    <color name="metrics_card_divider">#33FFFFFF</color>
+    <color name="metrics_card_label">@color/gold_300</color>
+    <color name="metrics_card_value">@color/white</color>
 </resources>

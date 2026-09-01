@@ -118,8 +118,14 @@ object BalanceSheetBuilder {
         val totalGain = gainLines.sumOf { it.amount }
         val totalLoss = lossLines.sumOf { it.amount }
         val totalDrawing = drawingLines.sumOf { it.amount }
-        val totalEquity =
-            totalOriginalEquity + totalIncome - totalExpense + totalGain - totalLoss - totalDrawing
+        val totalEquity = totalEquityOf(
+            totalOriginalEquity,
+            totalIncome,
+            totalExpense,
+            totalGain,
+            totalLoss,
+            totalDrawing
+        )
 
         val rows = mutableListOf<ReportRow>()
 
@@ -248,4 +254,35 @@ object BalanceSheetBuilder {
 
         return rows
     }
+
+    /** Total Equity as of [balancesByAccountId], same formula as the "Total Equity" line in [buildMonthly]. */
+    fun totalEquity(
+        accounts: List<Account>,
+        balancesByAccountId: Map<String, Long>
+    ): Long {
+        val accountMap = accounts.associateBy { it.id }
+
+        fun linesFor(type: String): List<NamedAmount> =
+            linesFor(accountMap, balancesByAccountId, type)
+
+        return totalEquityOf(
+            totalOriginalEquity = linesFor("equity").sumOf { it.amount },
+            totalIncome = linesFor("revenue").sumOf { it.amount },
+            totalExpense = linesFor("expense").sumOf { it.amount },
+            totalGain = linesFor("gain").sumOf { it.amount },
+            totalLoss = linesFor("loss").sumOf { it.amount },
+            totalDrawing = linesFor("drawing").sumOf { it.amount }
+        )
+    }
+
+    /** Shared "Total Equity" formula used by both [buildMonthly] and [totalEquity]. */
+    private fun totalEquityOf(
+        totalOriginalEquity: Long,
+        totalIncome: Long,
+        totalExpense: Long,
+        totalGain: Long,
+        totalLoss: Long,
+        totalDrawing: Long
+    ): Long =
+        totalOriginalEquity + totalIncome - totalExpense + totalGain - totalLoss - totalDrawing
 }

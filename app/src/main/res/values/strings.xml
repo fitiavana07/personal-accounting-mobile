@@ -53,6 +53,12 @@
     <string name="home_rate_updated_at">Price as of %1$s</string>
     <string name="home_rate_never_updated">Price not fetched yet</string>
     <string name="home_refresh_failed">Failed to refresh some rates</string>
+    <string name="home_metrics_header">Metrics</string>
+    <string name="home_metric_equity_label">Equity</string>
+    <string name="home_metric_cash_label">Cash</string>
+    <string name="home_metric_emergency_fund_label">Cash to Emergency Fund</string>
+    <string name="home_metric_cash_to_equity_label">Cash to Equity</string>
+    <string name="home_metric_percent_format">%1$d%%</string>
     <string name="home_emergency_fund_header">Emergency Fund</string>
     <string name="home_liquidity_pie_chart_center">By Liquidity</string>
     <string name="home_emergency_fund_6_month_caption">6-Month Emergency Fund</string>
