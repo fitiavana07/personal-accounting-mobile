@@ -14,7 +14,9 @@ class HomeMetricsAdapter : RecyclerView.Adapter<HomeMetricsAdapter.ViewHolder>()
         totalEquity = 0,
         cash = 0,
         emergencyFundPercent = 100,
-        cashToEquityPercent = 0
+        cashToEquityPercent = 0,
+        monthlyExpenses = 0,
+        cashRunwayMonths = 0.0
     )
 
     fun submit(metrics: HomeMetrics) {
@@ -43,6 +45,10 @@ class HomeMetricsAdapter : RecyclerView.Adapter<HomeMetricsAdapter.ViewHolder>()
             view.findViewById(R.id.text_metric_emergency_fund_value)
         private val cashToEquityView: TextView =
             view.findViewById(R.id.text_metric_cash_to_equity_value)
+        private val monthlyExpenseView: TextView =
+            view.findViewById(R.id.text_metric_monthly_expense_value)
+        private val cashRunwayView: TextView =
+            view.findViewById(R.id.text_metric_cash_runway_value)
         private val context = view.context
 
         fun bind(metrics: HomeMetrics) {
@@ -61,6 +67,14 @@ class HomeMetricsAdapter : RecyclerView.Adapter<HomeMetricsAdapter.ViewHolder>()
             cashToEquityView.text = context.getString(
                 R.string.home_metric_percent_format,
                 metrics.cashToEquityPercent
+            )
+            monthlyExpenseView.text = context.getString(
+                R.string.amount_ar,
+                CompactNumberFormatter.format(metrics.monthlyExpenses)
+            )
+            cashRunwayView.text = context.getString(
+                R.string.home_metric_runway_format,
+                String.format("%.1f", metrics.cashRunwayMonths)
             )
         }
     }

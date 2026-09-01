@@ -10,7 +10,9 @@ data class HomeMetrics(
     val totalEquity: Long,
     val cash: Long,
     val emergencyFundPercent: Int,
-    val cashToEquityPercent: Int
+    val cashToEquityPercent: Int,
+    val monthlyExpenses: Long,
+    val cashRunwayMonths: Double
 )
 
 /** Home screen's top-level "Metrics" block: equity, cash, and emergency fund progress at a glance. */
@@ -19,7 +21,8 @@ object HomeMetricsBuilder {
     fun build(
         accounts: List<Account>,
         balances: List<AccountBalance>,
-        emergencyFundPercent: Int
+        emergencyFundPercent: Int,
+        monthlyExpenses: Long = 0L
     ): HomeMetrics {
         val balancesByAccountId = balances.associate { it.accountId to it.balance }
         val cashLabel = LiquidityLevels.displayName(LiquidityLevels.CASH_AND_EQUIVALENTS)
@@ -32,12 +35,19 @@ object HomeMetricsBuilder {
             totalEquity = totalEquity,
             cash = cash,
             emergencyFundPercent = emergencyFundPercent,
-            cashToEquityPercent = cashToEquityPercent(cash, totalEquity)
+            cashToEquityPercent = cashToEquityPercent(cash, totalEquity),
+            monthlyExpenses = monthlyExpenses,
+            cashRunwayMonths = cashRunwayMonths(cash, monthlyExpenses)
         )
     }
 
     private fun cashToEquityPercent(cash: Long, totalEquity: Long): Int {
         if (totalEquity <= 0) return 0
         return (cash.toDouble() / totalEquity * 100).roundToInt()
+    }
+
+    private fun cashRunwayMonths(cash: Long, monthlyExpenses: Long): Double {
+        if (monthlyExpenses <= 0) return 0.0
+        return (cash.toDouble() / monthlyExpenses * 10).roundToInt() / 10.0
     }
 }

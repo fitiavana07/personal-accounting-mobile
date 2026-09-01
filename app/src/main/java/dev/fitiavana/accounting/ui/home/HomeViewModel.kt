@@ -157,12 +157,14 @@ class HomeViewModel(
         var latestBalances: List<AccountBalance> = emptyList()
         var latestAccounts: List<Account> = emptyList()
         var latestEmergencyFundPercent = 100
+        var latestMonthlyExpenses = 0L
 
         fun update() {
             value = HomeMetricsBuilder.build(
                 latestAccounts,
                 latestBalances,
-                latestEmergencyFundPercent
+                latestEmergencyFundPercent,
+                latestMonthlyExpenses
             )
         }
 
@@ -176,6 +178,7 @@ class HomeViewModel(
         }
         addSource(emergencyFund) { info ->
             latestEmergencyFundPercent = info?.sixMonthPercent ?: 100
+            latestMonthlyExpenses = info?.monthlyExpenses ?: 0L
             update()
         }
     }

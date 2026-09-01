@@ -30,14 +30,21 @@ class HomeMetricsBuilderTest {
             balance("capital", 700_000)
         )
 
-        val result = HomeMetricsBuilder.build(accounts, balances, emergencyFundPercent = 40)
+        val result = HomeMetricsBuilder.build(
+            accounts,
+            balances,
+            emergencyFundPercent = 40,
+            monthlyExpenses = 100_000
+        )
 
         assertEquals(
             HomeMetrics(
                 totalEquity = 700_000,
                 cash = 200_000,
                 emergencyFundPercent = 40,
-                cashToEquityPercent = 29
+                cashToEquityPercent = 29,
+                monthlyExpenses = 100_000,
+                cashRunwayMonths = 2.0
             ),
             result
         )
@@ -107,5 +114,51 @@ class HomeMetricsBuilderTest {
         val result = HomeMetricsBuilder.build(accounts, balances, emergencyFundPercent = 0)
 
         assertEquals(0, result.cashToEquityPercent)
+    }
+
+    @Test
+    fun `passes the given monthly expenses through unchanged`() {
+        val result = HomeMetricsBuilder.build(
+            emptyList(),
+            emptyList(),
+            emergencyFundPercent = 0,
+            monthlyExpenses = 150_000
+        )
+
+        assertEquals(150_000L, result.monthlyExpenses)
+    }
+
+    @Test
+    fun `cashRunwayMonths is cash divided by monthly expenses, rounded to one decimal`() {
+        val accounts = listOf(
+            account("cash", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS)
+        )
+        val balances = listOf(balance("cash", 250_000))
+
+        val result = HomeMetricsBuilder.build(
+            accounts,
+            balances,
+            emergencyFundPercent = 0,
+            monthlyExpenses = 100_000
+        )
+
+        assertEquals(2.5, result.cashRunwayMonths, 0.0001)
+    }
+
+    @Test
+    fun `cashRunwayMonths is zero when monthly expenses is zero or negative`() {
+        val accounts = listOf(
+            account("cash", liquidityLevel = LiquidityLevels.CASH_AND_EQUIVALENTS)
+        )
+        val balances = listOf(balance("cash", 250_000))
+
+        val result = HomeMetricsBuilder.build(
+            accounts,
+            balances,
+            emergencyFundPercent = 0,
+            monthlyExpenses = 0
+        )
+
+        assertEquals(0.0, result.cashRunwayMonths, 0.0001)
     }
 }

@@ -169,6 +169,8 @@ class HomeViewModelTest {
         assertEquals(150_000L, result.cash)
         assertEquals(25, result.emergencyFundPercent)
         assertEquals(17, result.cashToEquityPercent)
+        assertEquals(100_000L, result.monthlyExpenses)
+        assertEquals(1.5, result.cashRunwayMonths, 0.0001)
     }
 
     @Test
