@@ -7,7 +7,10 @@ import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
+import dev.fitiavana.accounting.features.reports.EquityStatementBuilder
 import dev.fitiavana.accounting.features.reports.IncomeStatementBuilder
+import dev.fitiavana.accounting.ui.common.EquityStatementDisplay
+import dev.fitiavana.accounting.ui.common.EquityStatementPresenter
 import dev.fitiavana.accounting.ui.common.ReportDisplayRow
 import dev.fitiavana.accounting.ui.common.ReportPresenter
 
@@ -36,6 +39,12 @@ class ReportsViewModel(
 
     /** Start boundary of the selected period: the first millisecond of the selected month. */
     private var cachedPeriodStartMillis = 0L
+
+    /** Last millisecond of the month preceding the selected period, used by the Changes in Equity report. */
+    private var cachedPreviousMonthEndMillis = 0L
+
+    /** Cumulative per-account balances as of [cachedPreviousMonthEndMillis], used by the Changes in Equity report. */
+    private var cachedPreviousMonthEndBalances: Map<String, Long> = emptyMap()
 
     /** Year of the currently selected report period, kept alongside the balances it produced. */
     private var cachedReportYear = 0
@@ -69,6 +78,10 @@ class ReportsViewModel(
     private val _balanceSheetRows =
         MutableLiveData<List<ReportDisplayRow>>(emptyList())
     val balanceSheetRows: LiveData<List<ReportDisplayRow>> = _balanceSheetRows
+
+    private val _equityStatement =
+        MutableLiveData(EquityStatementDisplay(emptyList(), emptyList()))
+    val equityStatement: LiveData<EquityStatementDisplay> = _equityStatement
 
     /** Kicks off the initial background load. Safe to call from every onViewCreated — a no-op after the first call. */
     fun start() {
@@ -134,14 +147,18 @@ class ReportsViewModel(
     private fun recomputeSync(year: Int, month: Int) {
         val startMs = ReportPeriodSelector.startOfMonthMillis(year, month)
         val asOfMs = ReportPeriodSelector.asOfMillis(year, month)
+        val previousMonthEndMs = ReportPeriodSelector.previousMonthEndMillis(year, month)
         cachedPeriodCutoffMillis = asOfMs
         cachedPeriodStartMillis = startMs
+        cachedPreviousMonthEndMillis = previousMonthEndMs
         cachedReportYear = year
         cachedReportMonth = month
         cachedAccounts = accountRepository.getAllSync()
         cachedBalancesAsOf = balanceRepository.computeBalancesAsOf(asOfMs)
         cachedPeriodBalances =
             balanceRepository.computeBalancesBetween(startMs, asOfMs)
+        cachedPreviousMonthEndBalances =
+            balanceRepository.computeBalancesAsOf(previousMonthEndMs)
         renderDisplay(_selectedReportType.value ?: ReportType.BALANCE_SHEET)
     }
 
@@ -152,16 +169,15 @@ class ReportsViewModel(
                     cachedPeriodCutoffMillis
                 )
 
-                ReportType.INCOME_STATEMENT -> ReportPeriodSelector.formatIncomeStatementPeriod(
-                    cachedPeriodStartMillis,
-                    cachedPeriodCutoffMillis,
-                    ReportPeriodSelector.endOfMonthMillis(
-                        cachedReportYear,
-                        cachedReportMonth
+                ReportType.INCOME_STATEMENT, ReportType.CHANGES_IN_EQUITY ->
+                    ReportPeriodSelector.formatIncomeStatementPeriod(
+                        cachedPeriodStartMillis,
+                        cachedPeriodCutoffMillis,
+                        ReportPeriodSelector.endOfMonthMillis(
+                            cachedReportYear,
+                            cachedReportMonth
+                        )
                     )
-                )
-
-                ReportType.CHANGES_IN_EQUITY -> ""
             }
         )
         _balanceSheetRows.postValue(
@@ -183,6 +199,25 @@ class ReportsViewModel(
                     )
 
                 ReportType.CHANGES_IN_EQUITY -> emptyList()
+            }
+        )
+        _equityStatement.postValue(
+            when (type) {
+                ReportType.CHANGES_IN_EQUITY ->
+                    EquityStatementPresenter.present(
+                        EquityStatementBuilder.build(
+                            accounts = cachedAccounts,
+                            previousMonthEndBalances = cachedPreviousMonthEndBalances,
+                            periodChangeBalances = cachedPeriodBalances,
+                            previousBalanceLabel =
+                                "Balance at ${ReportPeriodSelector.formatDate(cachedPreviousMonthEndMillis)}",
+                            currentBalanceLabel =
+                                "Balance at ${ReportPeriodSelector.formatDate(cachedPeriodCutoffMillis)}"
+                        )
+                    )
+
+                ReportType.BALANCE_SHEET, ReportType.INCOME_STATEMENT ->
+                    EquityStatementDisplay(emptyList(), emptyList())
             }
         )
     }

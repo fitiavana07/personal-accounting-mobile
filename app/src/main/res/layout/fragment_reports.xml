@@ -56,16 +56,19 @@
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <TextView
-            android:id="@+id/text_reports_coming_soon"
+        <HorizontalScrollView
+            android:id="@+id/scroll_reports_equity"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:gravity="center"
-            android:text="@string/label_coming_soon"
-            android:textSize="15sp"
-            android:textColor="?android:attr/textColorSecondary"
-            android:visibility="gone" />
+            android:visibility="gone">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_reports_equity"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent" />
+
+        </HorizontalScrollView>
 
     </LinearLayout>
 

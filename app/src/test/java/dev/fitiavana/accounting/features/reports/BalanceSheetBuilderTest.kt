@@ -478,4 +478,59 @@ class BalanceSheetBuilderTest {
 
         assertEquals(totalEquityLine, BalanceSheetBuilder.totalEquity(accounts, balances))
     }
+
+    // --- unclosedIsBalance ---
+
+    @Test
+    fun `unclosedIsBalance folds income, expense, gain and loss`() {
+        val accounts = listOf(
+            account("r", "Salary", "revenue"),
+            account("x", "Rent", "expense"),
+            account("g", "Stock Gain", "gain"),
+            account("o", "Stock Loss", "loss")
+        )
+        val balances = mapOf("r" to 300L, "x" to 150L, "g" to 80L, "o" to 30L)
+
+        // 300 - 150 + 80 - 30 = 200
+        assertEquals(200L, BalanceSheetBuilder.unclosedIsBalance(accounts, balances))
+    }
+
+    @Test
+    fun `unclosedIsBalance is negative when expense exceeds income`() {
+        val accounts = listOf(
+            account("r", "Salary", "revenue"),
+            account("x", "Rent", "expense")
+        )
+        val balances = mapOf("r" to 100L, "x" to 300L)
+
+        assertEquals(-200L, BalanceSheetBuilder.unclosedIsBalance(accounts, balances))
+    }
+
+    @Test
+    fun `unclosedIsBalance ignores asset, liability, equity and drawing accounts`() {
+        val accounts = listOf(
+            account("a", "Cash", "asset"),
+            account("e", "Owner Capital", "equity"),
+            account("d", "Owner Drawing", "drawing")
+        )
+        val balances = mapOf("a" to 10_000L, "e" to 500L, "d" to 60L)
+
+        assertEquals(0L, BalanceSheetBuilder.unclosedIsBalance(accounts, balances))
+    }
+
+    @Test
+    fun `unclosedIsBalance matches the Total Unclosed IS accounts line produced by buildMonthly`() {
+        val accounts = listOf(
+            account("r", "Salary", "revenue"),
+            account("x", "Rent", "expense")
+        )
+        val balances = mapOf("r" to 300L, "x" to 150L)
+
+        val totalUnclosedIsLine = BalanceSheetBuilder.buildMonthly(accounts, balances)
+            .filterIsInstance<ReportRow.TotalLine>()
+            .single { it.label == "Total Unclosed IS accounts" }
+            .amount
+
+        assertEquals(totalUnclosedIsLine, BalanceSheetBuilder.unclosedIsBalance(accounts, balances))
+    }
 }

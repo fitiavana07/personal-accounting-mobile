@@ -103,4 +103,25 @@ object IncomeStatementBuilder {
 
         return rows
     }
+
+    /**
+     * Net Income (positive) or Net Loss (negative) for [balancesByAccountId]
+     * — same formula as the final row of [build]. Reused by
+     * [EquityStatementBuilder] to compute the period's change in "Unclosed
+     * IS Accounts".
+     */
+    fun netIncome(
+        accounts: List<Account>,
+        balancesByAccountId: Map<String, Long>
+    ): Long {
+        val accountMap = accounts.associateBy { it.id }
+
+        fun linesFor(type: String): List<NamedAmount> =
+            linesFor(accountMap, balancesByAccountId, type)
+
+        return linesFor("revenue").sumOf { it.amount } -
+            linesFor("expense").sumOf { it.amount } +
+            linesFor("gain").sumOf { it.amount } -
+            linesFor("loss").sumOf { it.amount }
+    }
 }

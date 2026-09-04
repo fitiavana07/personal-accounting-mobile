@@ -149,6 +149,28 @@ class ReportPeriodSelectorTest {
         assertEquals("At March 31, 2026", ReportPeriodSelector.formatAsOfDate(asOfMs))
     }
 
+    // --- previousMonthEndMillis ---
+
+    @Test
+    fun `previousMonthEndMillis returns the last millisecond of the prior month`() {
+        val result = ReportPeriodSelector.previousMonthEndMillis(2026, Calendar.MARCH)
+        assertEquals(ReportPeriodSelector.endOfMonthMillis(2026, Calendar.FEBRUARY), result)
+    }
+
+    @Test
+    fun `previousMonthEndMillis rolls back across a year boundary`() {
+        val result = ReportPeriodSelector.previousMonthEndMillis(2026, Calendar.JANUARY)
+        assertEquals(ReportPeriodSelector.endOfMonthMillis(2025, Calendar.DECEMBER), result)
+    }
+
+    // --- formatDate ---
+
+    @Test
+    fun `formatDate formats with full month name`() {
+        val ms = ReportPeriodSelector.endOfMonthMillis(2026, Calendar.MARCH)
+        assertEquals("March 31, 2026", ReportPeriodSelector.formatDate(ms))
+    }
+
     // --- monthName ---
 
     @Test

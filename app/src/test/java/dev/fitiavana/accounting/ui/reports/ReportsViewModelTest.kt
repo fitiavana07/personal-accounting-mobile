@@ -165,7 +165,7 @@ class ReportsViewModelTest {
     }
 
     @Test
-    fun `selectReportType for Changes in Equity yields no rows`() {
+    fun `selectReportType for Changes in Equity yields no balance sheet rows`() {
         val min = millisFor(2026, Calendar.MARCH, 1)
         val max = millisFor(2026, Calendar.MARCH, 15)
         whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
@@ -174,6 +174,62 @@ class ReportsViewModelTest {
         viewModel.selectReportType(ReportType.CHANGES_IN_EQUITY)
 
         assertEquals(emptyList<ReportDisplayRow>(), viewModel.balanceSheetRows.value)
+    }
+
+    @Test
+    fun `selectReportType for Changes in Equity shows the Month ended period label`() {
+        val min = millisFor(2026, Calendar.MARCH, 1)
+        val max = millisFor(2026, Calendar.MARCH, 15)
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
+        viewModel.loadInitialSync()
+
+        viewModel.selectReportType(ReportType.CHANGES_IN_EQUITY)
+
+        assertEquals("Month ended March 31, 2026", viewModel.asOfDateText.value)
+    }
+
+    @Test
+    fun `selectReportType for Changes in Equity populates the equity statement`() {
+        val min = millisFor(2026, Calendar.MARCH, 1)
+        val max = millisFor(2026, Calendar.MARCH, 15)
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
+        whenever(accountRepository.getAllSync()).thenReturn(
+            listOf(Account(id = "e", name = "Owner Capital", type = "equity"))
+        )
+        whenever(balanceRepository.computeBalancesAsOf(any())).thenReturn(mapOf("e" to 500L))
+        whenever(balanceRepository.computeBalancesBetween(any(), any())).thenReturn(mapOf("e" to 50L))
+        viewModel.loadInitialSync()
+
+        viewModel.selectReportType(ReportType.CHANGES_IN_EQUITY)
+
+        val statement = viewModel.equityStatement.value
+        assertEquals(
+            listOf("Owner Capital", "Unclosed IS Accounts", "Drawing", "Total"),
+            statement?.columnTitles
+        )
+        assertEquals(
+            listOf(
+                "Balance at February 28, 2026",
+                "Changes in Owner Capital",
+                "Changes in Unclosed IS Accounts",
+                "Changes in Drawing",
+                "Balance at March 31, 2026"
+            ),
+            statement?.rows?.map { it.label }
+        )
+        val previousRow = statement?.rows?.first { it.label == "Balance at February 28, 2026" }
+        assertEquals(listOf("500", "0", "0", "500"), previousRow?.cellTexts)
+    }
+
+    @Test
+    fun `selectReportType for other report types yields an empty equity statement`() {
+        val min = millisFor(2026, Calendar.MARCH, 1)
+        val max = millisFor(2026, Calendar.MARCH, 15)
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
+        viewModel.loadInitialSync()
+
+        assertEquals(emptyList<String>(), viewModel.equityStatement.value?.columnTitles)
+        assertEquals(emptyList<Any>(), viewModel.equityStatement.value?.rows)
     }
 
     @Test

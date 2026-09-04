@@ -67,8 +67,23 @@ object ReportPeriodSelector {
         }
     }
 
+    /**
+     * The last millisecond of the month preceding [month] (0-11) in [year],
+     * rolling back into December of the prior year when [month] is January.
+     */
+    fun previousMonthEndMillis(year: Int, month: Int): Long {
+        val cal = Calendar.getInstance().apply {
+            set(year, month, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+            add(Calendar.MILLISECOND, -1)
+        }
+        return cal.timeInMillis
+    }
+
     private val dateFormat = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
     private val monthNameFormat = SimpleDateFormat("MMMM", Locale.getDefault())
+
+    fun formatDate(ms: Long): String = dateFormat.format(Date(ms))
 
     fun formatAsOfDate(asOfMs: Long): String = "At ${dateFormat.format(Date(asOfMs))}"
 

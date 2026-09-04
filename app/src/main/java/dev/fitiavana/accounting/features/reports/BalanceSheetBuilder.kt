@@ -275,6 +275,27 @@ object BalanceSheetBuilder {
         )
     }
 
+    /**
+     * Unclosed Income Statement accounts' combined balance for
+     * [balancesByAccountId] (Income - Expense + Gain - Loss). Same formula as
+     * the "Total Unclosed IS accounts" line in [buildMonthly]; reused by
+     * [EquityStatementBuilder] to show that balance as of an arbitrary date.
+     */
+    fun unclosedIsBalance(
+        accounts: List<Account>,
+        balancesByAccountId: Map<String, Long>
+    ): Long {
+        val accountMap = accounts.associateBy { it.id }
+
+        fun linesFor(type: String): List<NamedAmount> =
+            linesFor(accountMap, balancesByAccountId, type)
+
+        return linesFor("revenue").sumOf { it.amount } -
+            linesFor("expense").sumOf { it.amount } +
+            linesFor("gain").sumOf { it.amount } -
+            linesFor("loss").sumOf { it.amount }
+    }
+
     /** Shared "Total Equity" formula used by both [buildMonthly] and [totalEquity]. */
     private fun totalEquityOf(
         totalOriginalEquity: Long,

@@ -11,12 +11,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.ui.common.EquityStatementAdapter
 import dev.fitiavana.accounting.ui.common.ReportAdapter
 
 class ReportsFragment : Fragment() {
 
     private lateinit var viewModel: ReportsViewModel
     private lateinit var contentAdapter: ReportAdapter
+    private lateinit var equityAdapter: EquityStatementAdapter
     private lateinit var yearsAdapter: PeriodSelectorAdapter<Int>
     private lateinit var monthsAdapter: PeriodSelectorAdapter<Int>
     private lateinit var reportTypeAdapter: PeriodSelectorAdapter<ReportType>
@@ -39,6 +41,7 @@ class ReportsFragment : Fragment() {
         monthsAdapter = PeriodSelectorAdapter(labelFor = { ReportPeriodSelector.monthName(it) }, onSelected = { viewModel.selectMonth(it) })
         reportTypeAdapter = PeriodSelectorAdapter(labelFor = { it.label }, onSelected = { viewModel.selectReportType(it) })
         contentAdapter = ReportAdapter()
+        equityAdapter = EquityStatementAdapter()
 
         view.findViewById<RecyclerView>(R.id.recycler_reports_years).apply {
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
@@ -56,12 +59,16 @@ class ReportsFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = contentAdapter
         }
+        view.findViewById<RecyclerView>(R.id.recycler_reports_equity).apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = equityAdapter
+        }
 
         val contentLayout = view.findViewById<View>(R.id.layout_reports_content)
         val emptyView = view.findViewById<TextView>(R.id.text_empty_reports)
         val asOfDateView = view.findViewById<TextView>(R.id.text_reports_as_of_date)
         val contentRecycler = view.findViewById<RecyclerView>(R.id.recycler_reports_content)
-        val comingSoonView = view.findViewById<TextView>(R.id.text_reports_coming_soon)
+        val equityScroll = view.findViewById<View>(R.id.scroll_reports_equity)
 
         reportTypeAdapter.submitList(viewModel.reportTypes, viewModel.selectedReportType.value)
 
@@ -75,12 +82,13 @@ class ReportsFragment : Fragment() {
         viewModel.selectedMonth.observe(viewLifecycleOwner) { monthsAdapter.submitList(viewModel.availableMonths.value ?: emptyList(), it) }
         viewModel.selectedReportType.observe(viewLifecycleOwner) { reportType ->
             reportTypeAdapter.submitList(viewModel.reportTypes, reportType)
-            val isComingSoon = reportType == ReportType.CHANGES_IN_EQUITY
-            contentRecycler.visibility = if (isComingSoon) View.GONE else View.VISIBLE
-            comingSoonView.visibility = if (isComingSoon) View.VISIBLE else View.GONE
+            val isEquityStatement = reportType == ReportType.CHANGES_IN_EQUITY
+            contentRecycler.visibility = if (isEquityStatement) View.GONE else View.VISIBLE
+            equityScroll.visibility = if (isEquityStatement) View.VISIBLE else View.GONE
         }
         viewModel.asOfDateText.observe(viewLifecycleOwner) { asOfDateView.text = it }
         viewModel.balanceSheetRows.observe(viewLifecycleOwner) { contentAdapter.submitList(it) }
+        viewModel.equityStatement.observe(viewLifecycleOwner) { equityAdapter.submitList(it) }
 
         viewModel.start()
     }

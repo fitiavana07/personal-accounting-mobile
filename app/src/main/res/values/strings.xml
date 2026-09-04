@@ -113,7 +113,6 @@
     <string name="label_id">ID</string>
     <string name="label_instrument">Instrument</string>
     <string name="label_instrument_type">Instrument type</string>
-    <string name="label_coming_soon">Coming soon</string>
     <string name="label_intermediary_instrument">Intermediary Instrument</string>
     <string name="label_liquidity_level">Liquidity level</string>
     <string name="label_note">Note</string>

@@ -130,4 +130,44 @@ class IncomeStatementBuilderTest {
             listOf("Big Client", "Small Client"),
             accountLines.map { it.name })
     }
+
+    // --- netIncome ---
+
+    @Test
+    fun `netIncome folds income, expense, gain and loss`() {
+        val accounts = listOf(
+            account("r", "Salary", "revenue"),
+            account("x", "Rent", "expense"),
+            account("g", "Stock Gain", "gain"),
+            account("o", "Stock Loss", "loss")
+        )
+        val balances = mapOf("r" to 300L, "x" to 150L, "g" to 80L, "o" to 30L)
+
+        // 300 - 150 + 80 - 30 = 200
+        assertEquals(200L, IncomeStatementBuilder.netIncome(accounts, balances))
+    }
+
+    @Test
+    fun `netIncome is negative when expense exceeds income`() {
+        val accounts = listOf(account("x", "Rent", "expense"))
+        val balances = mapOf("x" to 500L)
+
+        assertEquals(-500L, IncomeStatementBuilder.netIncome(accounts, balances))
+    }
+
+    @Test
+    fun `netIncome matches the Net Income line produced by build`() {
+        val accounts = listOf(
+            account("r", "Salary", "revenue"),
+            account("x", "Rent", "expense")
+        )
+        val balances = mapOf("r" to 300L, "x" to 150L)
+
+        val netIncomeLine = IncomeStatementBuilder.build(accounts, balances)
+            .filterIsInstance<ReportRow.TotalLine>()
+            .single { it.label == "Net Income" }
+            .amount
+
+        assertEquals(netIncomeLine, IncomeStatementBuilder.netIncome(accounts, balances))
+    }
 }
