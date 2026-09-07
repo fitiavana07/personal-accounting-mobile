@@ -29,7 +29,11 @@ class EquityStatementAdapter : RecyclerView.Adapter<EquityStatementAdapter.RowVi
         val topDivider: Boolean,
         // Only the header row's value cells (column titles) wrap onto multiple lines;
         // every other cell, including the leftmost/label column on every row, stays single-line.
-        val wrapsValueCells: Boolean = false
+        val wrapsValueCells: Boolean = false,
+        // Background color resource, matching the section-header/grand-total rows of the
+        // other reports: goldish for the column-titles header row, grey for the
+        // Starting/Ending balance rows, none for the intermediate "Changes in ..." rows.
+        val backgroundColorRes: Int? = null
     )
 
     private var rows: List<Row> = emptyList()
@@ -43,10 +47,16 @@ class EquityStatementAdapter : RecyclerView.Adapter<EquityStatementAdapter.RowVi
             listOf("") + display.columnTitles,
             emphasized = true,
             topDivider = false,
-            wrapsValueCells = true
+            wrapsValueCells = true,
+            backgroundColorRes = R.color.report_section_header_bg
         )
         val dataRows = display.rows.map {
-            Row(listOf(it.label) + it.cellTexts, emphasized = it.emphasized, topDivider = it.emphasized)
+            Row(
+                listOf(it.label) + it.cellTexts,
+                emphasized = it.emphasized,
+                topDivider = it.emphasized,
+                backgroundColorRes = if (it.emphasized) R.color.report_grand_total_bg else null
+            )
         }
         rows = listOf(headerRow) + dataRows
         labelColumnWidthPx = null
@@ -68,12 +78,16 @@ class EquityStatementAdapter : RecyclerView.Adapter<EquityStatementAdapter.RowVi
     }
 
     class RowViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        private val root: View = view.findViewById(R.id.layout_equity_row)
         private val divider: View = view.findViewById(R.id.divider_equity_row)
         private val content: LinearLayout = view.findViewById(R.id.content_equity_row)
         private val context = view.context
 
         internal fun bind(row: Row, labelColumnWidthPx: Int) {
             divider.visibility = if (row.topDivider) View.VISIBLE else View.GONE
+            root.setBackgroundColor(
+                row.backgroundColorRes?.let { ContextCompat.getColor(context, it) } ?: 0
+            )
             content.removeAllViews()
             row.cellTexts.forEachIndexed { index, text ->
                 val isLabel = index == 0
