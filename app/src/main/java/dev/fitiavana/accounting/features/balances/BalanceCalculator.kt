@@ -19,4 +19,16 @@ object BalanceCalculator {
             else -> totalCredits - totalDebits
         }
     }
+
+    /**
+     * The balance [currentBalance] would become once a pending [debit] and
+     * [credit] are applied, following the account's normal balance side.
+     * Used to preview the effect of a transaction that is still being entered.
+     */
+    fun project(
+        accountType: String,
+        currentBalance: Long,
+        debit: Long,
+        credit: Long
+    ): Long = currentBalance + compute(accountType, debit, credit)
 }

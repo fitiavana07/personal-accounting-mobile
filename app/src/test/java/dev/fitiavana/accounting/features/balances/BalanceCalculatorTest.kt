@@ -123,4 +123,62 @@ class BalanceCalculatorTest {
     fun `all zeros gives zero for liability`() {
         assertEquals(0, BalanceCalculator.compute("liability", totalDebits = 0, totalCredits = 0))
     }
+
+    // --- project: the balance a pending debit/credit would produce ---
+
+    @Test
+    fun `project adds a pending debit to a debit-normal balance`() {
+        assertEquals(
+            7000,
+            BalanceCalculator.project("asset", currentBalance = 5000, debit = 2000, credit = 0)
+        )
+    }
+
+    @Test
+    fun `project subtracts a pending credit from a debit-normal balance`() {
+        assertEquals(
+            3000,
+            BalanceCalculator.project("asset", currentBalance = 5000, debit = 0, credit = 2000)
+        )
+    }
+
+    @Test
+    fun `project can take a debit-normal balance negative`() {
+        assertEquals(
+            -1000,
+            BalanceCalculator.project("asset", currentBalance = 1000, debit = 0, credit = 2000)
+        )
+    }
+
+    @Test
+    fun `project adds a pending credit to a credit-normal balance`() {
+        assertEquals(
+            6000,
+            BalanceCalculator.project("liability", currentBalance = 5000, debit = 0, credit = 1000)
+        )
+    }
+
+    @Test
+    fun `project subtracts a pending debit from a credit-normal balance`() {
+        assertEquals(
+            4000,
+            BalanceCalculator.project("liability", currentBalance = 5000, debit = 1000, credit = 0)
+        )
+    }
+
+    @Test
+    fun `project leaves the balance unchanged when nothing is pending`() {
+        assertEquals(
+            5000,
+            BalanceCalculator.project("asset", currentBalance = 5000, debit = 0, credit = 0)
+        )
+    }
+
+    @Test
+    fun `project nets a pending debit and credit on the same account`() {
+        assertEquals(
+            5500,
+            BalanceCalculator.project("asset", currentBalance = 5000, debit = 800, credit = 300)
+        )
+    }
 }

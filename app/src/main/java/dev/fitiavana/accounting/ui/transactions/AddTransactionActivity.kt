@@ -24,9 +24,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.widget.ImageViewCompat
 import androidx.lifecycle.ViewModelProvider
+import com.google.android.material.tabs.TabLayout
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.balances.BalanceCalculator
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.transactions.Transaction
 import dev.fitiavana.accounting.features.transactions.TransactionEntry
@@ -41,6 +43,11 @@ import java.util.UUID
 
 class AddTransactionActivity : AppCompatActivity() {
 
+    /** Data-entry mode selected by the tabs; only the inputs differ, not the saved transaction. */
+    private enum class Mode { CLASSIC, SIMPLE_TRANSFER }
+
+    private var mode = Mode.CLASSIC
+
     private lateinit var viewModel: AddTransactionViewModel
     private lateinit var accounts: List<Account>
     private lateinit var instrumentsMap: Map<String, Instrument>
@@ -53,6 +60,28 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var editNote: EditText
     private lateinit var entriesContainer: LinearLayout
     private lateinit var textBalanceSummary: TextView
+    private lateinit var modeClassic: View
+    private lateinit var modeSimpleTransfer: View
+    private lateinit var editTransferAmount: EditText
+    private lateinit var transferFrom: TransferSide
+    private lateinit var transferTo: TransferSide
+
+    /** Accounts offered by the Simple Transfer spinners; see [SimpleTransferBuilder]. */
+    private var transferAccounts: List<Account> = emptyList()
+
+    /**
+     * One side of a Simple Transfer, with its current and projected balance.
+     * The From side is credited and the To side debited by the amount entered.
+     */
+    private class TransferSide(
+        val spinner: Spinner,
+        val textBalance: TextView,
+        val textNewBalance: TextView,
+        /** True when the transferred amount is a debit for this side. */
+        val isDebit: Boolean,
+        var account: Account? = null,
+        var balance: Long = 0L
+    )
 
     private data class EntryRow(
         val container: View,
@@ -113,6 +142,26 @@ class AddTransactionActivity : AppCompatActivity() {
         editNote = findViewById(R.id.edit_note)
         entriesContainer = findViewById(R.id.entries_container)
         textBalanceSummary = findViewById(R.id.text_balance_summary)
+        modeClassic = findViewById(R.id.mode_classic)
+        modeSimpleTransfer = findViewById(R.id.mode_simple_transfer)
+        editTransferAmount = findViewById(R.id.edit_transfer_amount)
+        transferFrom = TransferSide(
+            spinner = findViewById(R.id.spinner_transfer_from),
+            textBalance = findViewById(R.id.text_transfer_from_balance),
+            textNewBalance = findViewById(R.id.text_transfer_from_new_balance),
+            isDebit = false
+        )
+        transferTo = TransferSide(
+            spinner = findViewById(R.id.spinner_transfer_to),
+            textBalance = findViewById(R.id.text_transfer_to_balance),
+            textNewBalance = findViewById(R.id.text_transfer_to_new_balance),
+            isDebit = true
+        )
+
+        setupModeTabs(findViewById(R.id.tabs_transaction_mode))
+        setupTransferAmountInput()
+        setupTransferSide(transferFrom)
+        setupTransferSide(transferTo)
 
         updateDatetimeDisplay()
 
@@ -125,6 +174,7 @@ class AddTransactionActivity : AppCompatActivity() {
             runOnUiThread {
                 addEntryRow()
                 addEntryRow()
+                populateTransferSpinners()
                 recalculateBalanceSummary()
             }
         }.start()
@@ -146,6 +196,154 @@ class AddTransactionActivity : AppCompatActivity() {
                 }
             }
         )
+    }
+
+    private fun setupModeTabs(tabLayout: TabLayout) {
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.tab_mode_classic))
+        tabLayout.addTab(
+            tabLayout.newTab().setText(R.string.tab_mode_simple_transfer)
+        )
+        tabLayout.addOnTabSelectedListener(
+            object : TabLayout.OnTabSelectedListener {
+                override fun onTabSelected(tab: TabLayout.Tab) {
+                    showMode(
+                        if (tab.position == 1) Mode.SIMPLE_TRANSFER
+                        else Mode.CLASSIC
+                    )
+                }
+
+                override fun onTabUnselected(tab: TabLayout.Tab) {}
+                override fun onTabReselected(tab: TabLayout.Tab) {}
+            }
+        )
+    }
+
+    private fun showMode(newMode: Mode) {
+        mode = newMode
+        modeClassic.visibility =
+            if (newMode == Mode.CLASSIC) View.VISIBLE else View.GONE
+        modeSimpleTransfer.visibility =
+            if (newMode == Mode.SIMPLE_TRANSFER) View.VISIBLE else View.GONE
+        recalculateBalanceSummary()
+    }
+
+    private fun setupTransferAmountInput() {
+        editTransferAmount.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(
+                s: CharSequence?,
+                st: Int,
+                c: Int,
+                a: Int
+            ) {
+            }
+
+            override fun onTextChanged(
+                s: CharSequence?,
+                st: Int,
+                c: Int,
+                a: Int
+            ) {
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+                updateTransferNewBalance(transferFrom)
+                updateTransferNewBalance(transferTo)
+                recalculateBalanceSummary()
+            }
+        })
+    }
+
+    /** Loads and shows the side's balance whenever its account selection changes. */
+    private fun setupTransferSide(side: TransferSide) {
+        side.spinner.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    val account = selectedTransferAccount(side.spinner)
+                    side.account = account
+                    side.balance = 0L
+                    if (account == null) {
+                        hideTransferBalances(side)
+                        return
+                    }
+                    Thread {
+                        val balance =
+                            viewModel.getBalance(account.id)?.balance ?: 0L
+                        runOnUiThread {
+                            // a newer selection may have won the race
+                            if (side.account?.id != account.id) return@runOnUiThread
+                            side.balance = balance
+                            side.textBalance.text = getString(
+                                R.string.label_balance_ar,
+                                TransactionDisplay.formatAmount(balance)
+                            )
+                            side.textBalance.visibility = View.VISIBLE
+                            updateTransferNewBalance(side)
+                        }
+                    }.start()
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    side.account = null
+                    hideTransferBalances(side)
+                }
+            }
+    }
+
+    private fun hideTransferBalances(side: TransferSide) {
+        side.textBalance.visibility = View.GONE
+        side.textNewBalance.visibility = View.GONE
+    }
+
+    private fun updateTransferNewBalance(side: TransferSide) {
+        val account = side.account
+        if (account == null) {
+            side.textNewBalance.visibility = View.GONE
+            return
+        }
+        val amount = parseAmount(editTransferAmount)
+        val newBalance = BalanceCalculator.project(
+            accountType = account.type,
+            currentBalance = side.balance,
+            debit = if (side.isDebit) amount else 0L,
+            credit = if (side.isDebit) 0L else amount
+        )
+        side.textNewBalance.text = getString(
+            R.string.label_new_balance_ar,
+            TransactionDisplay.formatAmount(newBalance)
+        )
+        side.textNewBalance.visibility = View.VISIBLE
+    }
+
+    private fun populateTransferSpinners() {
+        transferAccounts = SimpleTransferBuilder.selectableAccounts(accounts)
+        val names = listOf(getString(R.string.spinner_select_account)) +
+                transferAccounts.map { it.name }
+        listOf(transferFrom, transferTo).forEach { side ->
+            val adapter = ArrayAdapter(
+                this,
+                android.R.layout.simple_spinner_item,
+                names
+            )
+            adapter.setDropDownViewResource(
+                android.R.layout.simple_spinner_dropdown_item
+            )
+            side.spinner.adapter = adapter
+            side.spinner.setSelection(0)
+        }
+    }
+
+    private fun selectedTransferAccount(spinner: Spinner): Account? {
+        val position = spinner.selectedItemPosition
+        return if (position > 0 && position <= transferAccounts.size) {
+            transferAccounts[position - 1]
+        } else {
+            null
+        }
     }
 
     private fun updateDatetimeDisplay() {
@@ -284,9 +482,10 @@ class AddTransactionActivity : AppCompatActivity() {
                             val bal = viewModel.getBalance(account.id)
                             runOnUiThread {
                                 val balance = bal?.balance ?: 0
-                                textBalance.text = "Balance: ${
+                                textBalance.text = getString(
+                                    R.string.label_balance_ar,
                                     TransactionDisplay.formatAmount(balance)
-                                } Ar"
+                                )
                                 textBalanceRow.visibility = View.VISIBLE
                                 entryRowRef[0]?.currentAccountType =
                                     account.type
@@ -612,16 +811,16 @@ class AddTransactionActivity : AppCompatActivity() {
             entryRow.textNewBalanceRow.visibility = View.GONE
             return
         }
-        val debit = parseAmount(entryRow.editDebit)
-        val credit = parseAmount(entryRow.editCredit)
-        val newBalance =
-            if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense" || entryRow.currentAccountType == "drawing" || entryRow.currentAccountType == "loss") {
-                entryRow.currentBalance + debit - credit
-            } else {
-                entryRow.currentBalance + credit - debit
-            }
-        entryRow.textNewBalance.text =
-            "New balance: ${TransactionDisplay.formatAmount(newBalance)} Ar"
+        val newBalance = BalanceCalculator.project(
+            accountType = entryRow.currentAccountType,
+            currentBalance = entryRow.currentBalance,
+            debit = parseAmount(entryRow.editDebit),
+            credit = parseAmount(entryRow.editCredit)
+        )
+        entryRow.textNewBalance.text = getString(
+            R.string.label_new_balance_ar,
+            TransactionDisplay.formatAmount(newBalance)
+        )
         entryRow.textNewBalanceRow.visibility = View.VISIBLE
     }
 
@@ -636,12 +835,12 @@ class AddTransactionActivity : AppCompatActivity() {
             .toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
         val credit = entryRow.editInstrumentCredit.text.toString().trim()
             .toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
-        val newBalance =
-            if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense" || entryRow.currentAccountType == "drawing" || entryRow.currentAccountType == "loss") {
-                entryRow.currentInstrumentBalance + debit - credit
-            } else {
-                entryRow.currentInstrumentBalance + credit - debit
-            }
+        val newBalance = BalanceCalculator.project(
+            accountType = entryRow.currentAccountType,
+            currentBalance = entryRow.currentInstrumentBalance,
+            debit = debit,
+            credit = credit
+        )
         entryRow.textNewInstrumentBalance.text = "New balance: ${
             TransactionDisplay.formatInstrumentAmount(
                 newBalance,
@@ -662,12 +861,12 @@ class AddTransactionActivity : AppCompatActivity() {
             .toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
         val credit = entryRow.editIntermediaryCredit.text.toString().trim()
             .toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
-        val newBalance =
-            if (entryRow.currentAccountType == "asset" || entryRow.currentAccountType == "expense" || entryRow.currentAccountType == "drawing" || entryRow.currentAccountType == "loss") {
-                entryRow.currentIntermediaryBalance + debit - credit
-            } else {
-                entryRow.currentIntermediaryBalance + credit - debit
-            }
+        val newBalance = BalanceCalculator.project(
+            accountType = entryRow.currentAccountType,
+            currentBalance = entryRow.currentIntermediaryBalance,
+            debit = debit,
+            credit = credit
+        )
         entryRow.textNewIntermediaryBalance.text = "New balance: ${
             TransactionDisplay.formatInstrumentAmount(
                 newBalance,
@@ -677,17 +876,34 @@ class AddTransactionActivity : AppCompatActivity() {
         entryRow.textNewIntermediaryBalanceRow.visibility = View.VISIBLE
     }
 
-    private fun recalculateBalanceSummary() {
-        val entries = entryRows.map { row ->
-            val debit = parseAmount(row.editDebit)
-            val credit = parseAmount(row.editCredit)
-            TransactionValidator.EntryData(
-                accountId = "",
-                debitAmount = if (debit != 0L) debit else null,
-                creditAmount = if (credit != 0L) credit else null
+    /**
+     * Entries of the active mode as typed so far, for the running totals line.
+     * Account ids are irrelevant here — only the amounts are summed.
+     */
+    private fun summaryEntries(): List<TransactionValidator.EntryData> =
+        when (mode) {
+            Mode.CLASSIC -> entryRows.map { row ->
+                val debit = parseAmount(row.editDebit)
+                val credit = parseAmount(row.editCredit)
+                TransactionValidator.EntryData(
+                    accountId = "",
+                    debitAmount = if (debit != 0L) debit else null,
+                    creditAmount = if (credit != 0L) credit else null
+                )
+            }
+
+            Mode.SIMPLE_TRANSFER -> SimpleTransferBuilder.buildEntries(
+                fromAccountId = selectedTransferAccount(transferFrom.spinner)?.id
+                    ?: "",
+                toAccountId = selectedTransferAccount(transferTo.spinner)?.id
+                    ?: "",
+                amount = parseAmount(editTransferAmount)
             )
         }
-        val (totalDebit, totalCredit) = TransactionValidator.totals(entries)
+
+    private fun recalculateBalanceSummary() {
+        val (totalDebit, totalCredit) =
+            TransactionValidator.totals(summaryEntries())
         val totalsText = getString(
             R.string.balance_summary_totals,
             UiUtils.formatAmountAr(this, totalDebit),
@@ -718,18 +934,20 @@ class AddTransactionActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveTransaction() {
-        if (entryRows.isEmpty()) return
+    /**
+     * Entries for the active mode, or null when the inputs are incomplete — in
+     * which case the reason has already been shown to the user.
+     */
+    private fun collectEntries(): List<TransactionValidator.EntryData>? =
+        when (mode) {
+            Mode.CLASSIC -> collectClassicEntries()
+            Mode.SIMPLE_TRANSFER -> collectTransferEntries()
+        }
 
-        data class InstrumentAmounts(
-            val debit: Long?,
-            val credit: Long?,
-            val interDebit: Long?,
-            val interCredit: Long?
-        )
+    private fun collectClassicEntries(): List<TransactionValidator.EntryData>? {
+        if (entryRows.isEmpty()) return null
 
         val entryDataList = mutableListOf<TransactionValidator.EntryData>()
-        val instrumentAmountsList = mutableListOf<InstrumentAmounts>()
 
         for (row in entryRows) {
             val accountPos = row.spinner.selectedItemPosition
@@ -739,18 +957,24 @@ class AddTransactionActivity : AppCompatActivity() {
                     getString(R.string.error_validation_entry_incomplete),
                     Toast.LENGTH_SHORT
                 ).show()
-                return
+                return null
             }
             val account = accounts[accountPos - 1]
             val instrument = account.instrumentCode?.let { instrumentsMap[it] }
             val debit = row.editDebit.text.toString().trim().toLongOrNull()
             val credit = row.editCredit.text.toString().trim().toLongOrNull()
 
+            var instrumentDebit: Long? = null
+            var instrumentCredit: Long? = null
+            var intermediaryDebit: Long? = null
+            var intermediaryCredit: Long? = null
+
             if (instrument != null) {
-                val rawDebit = row.editInstrumentDebit.text.toString().trim()
-                val rawCredit = row.editInstrumentCredit.text.toString().trim()
-                val parsedDebit = rawDebit.toDoubleOrNull()
-                val parsedCredit = rawCredit.toDoubleOrNull()
+                val parsedDebit = row.editInstrumentDebit.text.toString().trim()
+                    .toDoubleOrNull()
+                val parsedCredit =
+                    row.editInstrumentCredit.text.toString().trim()
+                        .toDoubleOrNull()
                 if (parsedDebit == null && parsedCredit == null) {
                     Toast.makeText(
                         this,
@@ -760,52 +984,67 @@ class AddTransactionActivity : AppCompatActivity() {
                         ),
                         Toast.LENGTH_SHORT
                     ).show()
-                    return
+                    return null
                 }
                 val factor = 10.0.pow(instrument.decimalPlaces)
+                instrumentDebit = parsedDebit?.let { (it * factor).roundToLong() }
+                instrumentCredit =
+                    parsedCredit?.let { (it * factor).roundToLong() }
+
                 val intermediaryInstrument =
                     account.intermediaryInstrumentCode?.let { instrumentsMap[it] }
-                val interFactor =
-                    intermediaryInstrument?.let { 10.0.pow(it.decimalPlaces) }
-                val rawInterDebit =
-                    row.editIntermediaryDebit.text.toString().trim()
-                val rawInterCredit =
-                    row.editIntermediaryCredit.text.toString().trim()
-                instrumentAmountsList.add(
-                    InstrumentAmounts(
-                        debit = parsedDebit?.let { (it * factor).roundToLong() },
-                        credit = parsedCredit?.let { (it * factor).roundToLong() },
-                        interDebit = if (interFactor != null) rawInterDebit.toDoubleOrNull()
-                            ?.let { (it * interFactor).roundToLong() } else null,
-                        interCredit = if (interFactor != null) rawInterCredit.toDoubleOrNull()
-                            ?.let { (it * interFactor).roundToLong() } else null
-                    ))
-            } else {
-                instrumentAmountsList.add(
-                    InstrumentAmounts(
-                        null,
-                        null,
-                        null,
-                        null
-                    )
-                )
+                if (intermediaryInstrument != null) {
+                    val interFactor =
+                        10.0.pow(intermediaryInstrument.decimalPlaces)
+                    intermediaryDebit =
+                        row.editIntermediaryDebit.text.toString().trim()
+                            .toDoubleOrNull()
+                            ?.let { (it * interFactor).roundToLong() }
+                    intermediaryCredit =
+                        row.editIntermediaryCredit.text.toString().trim()
+                            .toDoubleOrNull()
+                            ?.let { (it * interFactor).roundToLong() }
+                }
             }
 
-            val ia = instrumentAmountsList.last()
             entryDataList.add(
                 TransactionValidator.EntryData(
                     accountId = account.id,
                     debitAmount = debit,
                     creditAmount = credit,
-                    instrumentDebitAmount = ia.debit,
-                    instrumentCreditAmount = ia.credit,
-                    intermediaryDebitAmount = ia.interDebit,
-                    intermediaryCreditAmount = ia.interCredit
+                    instrumentDebitAmount = instrumentDebit,
+                    instrumentCreditAmount = instrumentCredit,
+                    intermediaryDebitAmount = intermediaryDebit,
+                    intermediaryCreditAmount = intermediaryCredit
                 )
             )
         }
 
-        when (TransactionValidator.validate(entryDataList)) {
+        return entryDataList
+    }
+
+    private fun collectTransferEntries(): List<TransactionValidator.EntryData>? {
+        val from = selectedTransferAccount(transferFrom.spinner)
+        val to = selectedTransferAccount(transferTo.spinner)
+        if (from == null || to == null) {
+            Toast.makeText(
+                this,
+                getString(R.string.error_transfer_accounts_required),
+                Toast.LENGTH_SHORT
+            ).show()
+            return null
+        }
+        return SimpleTransferBuilder.buildEntries(
+            fromAccountId = from.id,
+            toAccountId = to.id,
+            amount = parseAmount(editTransferAmount)
+        )
+    }
+
+    private fun saveTransaction() {
+        val collectedEntries = collectEntries() ?: return
+
+        when (TransactionValidator.validate(collectedEntries)) {
             TransactionValidator.ValidationResult.Valid -> Unit
             TransactionValidator.ValidationResult.Error.DuplicateAccount -> {
                 Toast.makeText(
@@ -848,6 +1087,9 @@ class AddTransactionActivity : AppCompatActivity() {
             }
         }
 
+        // Entries are stored debits first, whatever order they were entered in.
+        val entryDataList = TransactionEntryOrder.debitsFirst(collectedEntries)
+
         val transactionId = UUID.randomUUID().toString()
         val transaction = Transaction(
             id = transactionId,
@@ -856,18 +1098,17 @@ class AddTransactionActivity : AppCompatActivity() {
             note = editNote.text.toString().trim()
         )
 
-        val entries = entryDataList.mapIndexed { i, entry ->
-            val ia = instrumentAmountsList[i]
+        val entries = entryDataList.map { entry ->
             TransactionEntry(
                 id = UUID.randomUUID().toString(),
                 transactionId = transactionId,
                 accountId = entry.accountId,
                 debitAmount = entry.debitAmount,
                 creditAmount = entry.creditAmount,
-                instrumentDebitAmount = ia.debit,
-                instrumentCreditAmount = ia.credit,
-                intermediaryDebitAmount = ia.interDebit,
-                intermediaryCreditAmount = ia.interCredit
+                instrumentDebitAmount = entry.instrumentDebitAmount,
+                instrumentCreditAmount = entry.instrumentCreditAmount,
+                intermediaryDebitAmount = entry.intermediaryDebitAmount,
+                intermediaryCreditAmount = entry.intermediaryCreditAmount
             )
         }
         val accountTypesById = accounts.associate { it.id to it.type }
@@ -885,6 +1126,9 @@ class AddTransactionActivity : AppCompatActivity() {
 
     private fun hasUnsavedChanges(): Boolean {
         if (editNote.text.toString().trim().isNotEmpty()) return true
+        if (editTransferAmount.text.toString().trim().isNotEmpty()) return true
+        if (transferFrom.spinner.selectedItemPosition > 0) return true
+        if (transferTo.spinner.selectedItemPosition > 0) return true
         return entryRows.any { row ->
             row.spinner.selectedItemPosition > 0 ||
                     row.editDebit.text.toString().trim().isNotEmpty() ||

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -9,6 +10,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="?attr/actionBarSize" />
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabs_transaction_mode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorSurface"
+        app:tabGravity="fill"
+        app:tabMode="fixed" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/colorControlHighlight" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -49,58 +63,174 @@
                 android:layout_marginBottom="16dp" />
 
             <LinearLayout
+                android:id="@+id/mode_classic"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
+                android:orientation="vertical">
 
-                <TextView
-                    android:layout_width="0dp"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="2"
-                    android:text="@string/label_account"
-                    android:textStyle="bold"
-                    android:textSize="13sp" />
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
 
-                <TextView
-                    android:layout_width="0dp"
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:text="@string/label_account"
+                        android:textStyle="bold"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:text="@string/label_debit"
+                        android:textStyle="bold"
+                        android:textSize="13sp"
+                        android:gravity="center" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:text="@string/label_credit"
+                        android:textStyle="bold"
+                        android:textSize="13sp"
+                        android:gravity="center" />
+
+                    <View
+                        android:layout_width="40dp"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/entries_container"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:text="@string/label_debit"
-                    android:textStyle="bold"
-                    android:textSize="13sp"
-                    android:gravity="center" />
+                    android:orientation="vertical" />
 
-                <TextView
-                    android:layout_width="0dp"
+                <Button
+                    android:id="@+id/btn_add_entry"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:text="@string/label_credit"
-                    android:textStyle="bold"
-                    android:textSize="13sp"
-                    android:gravity="center" />
-
-                <View
-                    android:layout_width="40dp"
-                    android:layout_height="wrap_content" />
+                    android:layout_marginTop="8dp"
+                    android:text="@string/action_add_entry" />
 
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/entries_container"
+                android:id="@+id/mode_simple_transfer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:orientation="vertical"
+                android:visibility="gone">
 
-            <Button
-                android:id="@+id/btn_add_entry"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/action_add_entry" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_transfer_from"
+                    android:textSize="12sp"
+                    android:alpha="0.7" />
+
+                <Spinner
+                    android:id="@+id/spinner_transfer_from"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/text_transfer_from_balance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:paddingTop="2dp"
+                    android:textSize="11sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/text_transfer_from_new_balance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:paddingTop="2dp"
+                    android:textSize="11sp"
+                    android:visibility="gone" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_transfer_to"
+                    android:textSize="12sp"
+                    android:alpha="0.7" />
+
+                <Spinner
+                    android:id="@+id/spinner_transfer_to"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/text_transfer_to_balance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:paddingTop="2dp"
+                    android:textSize="11sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/text_transfer_to_new_balance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:paddingTop="2dp"
+                    android:textSize="11sp"
+                    android:visibility="gone" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/hint_amount"
+                    android:textSize="12sp"
+                    android:alpha="0.7" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/label_currency_ar"
+                        android:textSize="14sp"
+                        android:paddingEnd="8dp" />
+
+                    <EditText
+                        android:id="@+id/edit_transfer_amount"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="@string/hint_amount"
+                        android:inputType="number"
+                        android:maxLines="1" />
+
+                </LinearLayout>
+
+            </LinearLayout>
 
         </LinearLayout>
 
