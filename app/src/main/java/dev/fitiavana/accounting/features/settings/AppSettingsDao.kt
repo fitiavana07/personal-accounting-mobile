@@ -11,6 +11,9 @@ interface AppSettingsDao {
     @Query("SELECT * FROM app_settings WHERE id = 0")
     fun observe(): LiveData<AppSettings?>
 
+    @Query("SELECT * FROM app_settings WHERE id = 0")
+    fun getSync(): AppSettings?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun upsert(settings: AppSettings)
 }

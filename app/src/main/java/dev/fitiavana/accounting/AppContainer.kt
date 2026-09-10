@@ -36,7 +36,8 @@ class AppContainer private constructor(context: Context) {
         database.instrumentDao(),
         database.transactionDao(),
         database.accountBalanceDao(),
-        database.exchangeRateCacheDao()
+        database.exchangeRateCacheDao(),
+        database.appSettingsDao()
     )
 
     companion object {

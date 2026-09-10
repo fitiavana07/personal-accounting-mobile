@@ -13,6 +13,8 @@ import dev.fitiavana.accounting.features.transactions.Transaction
 import dev.fitiavana.accounting.features.transactions.TransactionEntry
 import dev.fitiavana.accounting.features.backup.BackupRepository
 import dev.fitiavana.accounting.features.backup.RestoreResult
+import dev.fitiavana.accounting.features.settings.AppSettings
+import dev.fitiavana.accounting.features.settings.AppSettingsDao
 import dev.fitiavana.accounting.db.AppDatabase
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -40,6 +42,7 @@ class BackupRepositoryTest {
     private lateinit var transactionDao: TransactionDao
     private lateinit var balanceDao: AccountBalanceDao
     private lateinit var exchangeRateCacheDao: ExchangeRateCacheDao
+    private lateinit var appSettingsDao: AppSettingsDao
     private lateinit var repository: BackupRepository
 
     private val instrument = Instrument(
@@ -72,6 +75,7 @@ class BackupRepositoryTest {
         pairKey = "BTC:AR", instrumentCode = "BTC", intermediaryCode = "AR",
         rate = 12345.0, fetchedAt = 400L
     )
+    private val appSettings = AppSettings(monthlyLivingExpenses = 150000L)
 
     @Before
     fun setUp() {
@@ -81,7 +85,11 @@ class BackupRepositoryTest {
         transactionDao = mock()
         balanceDao = mock()
         exchangeRateCacheDao = mock()
-        repository = BackupRepository(database, accountDao, instrumentDao, transactionDao, balanceDao, exchangeRateCacheDao)
+        appSettingsDao = mock()
+        repository = BackupRepository(
+            database, accountDao, instrumentDao, transactionDao, balanceDao,
+            exchangeRateCacheDao, appSettingsDao
+        )
 
         whenever(database.runInTransaction(any<Runnable>())).thenAnswer { invocation ->
             (invocation.arguments[0] as Runnable).run()
@@ -93,6 +101,7 @@ class BackupRepositoryTest {
         whenever(transactionDao.getAllEntriesSync()).thenReturn(listOf(entry, entryNoOptionalAmounts))
         whenever(balanceDao.getAllSync()).thenReturn(listOf(balance))
         whenever(exchangeRateCacheDao.getAllSync()).thenReturn(listOf(rate))
+        whenever(appSettingsDao.getSync()).thenReturn(appSettings)
     }
 
     // --- export ---
@@ -122,6 +131,19 @@ class BackupRepositoryTest {
         assertTrue(!accountJson.has("instrumentCode"))
     }
 
+    @Test
+    fun `export includes monthly living expenses from app settings`() {
+        val json = JSONObject(repository.export())
+        assertEquals(150000L, json.getJSONObject("appSettings").getLong("monthlyLivingExpenses"))
+    }
+
+    @Test
+    fun `export omits appSettings key when no app settings exist yet`() {
+        whenever(appSettingsDao.getSync()).thenReturn(null)
+        val json = JSONObject(repository.export())
+        assertTrue(!json.has("appSettings"))
+    }
+
     // --- restore: round trip ---
 
     @Test
@@ -136,6 +158,18 @@ class BackupRepositoryTest {
         verify(transactionDao).insertAllEntries(listOf(entry, entryNoOptionalAmounts))
         verify(balanceDao).insertAll(listOf(balance))
         verify(exchangeRateCacheDao).insertAll(listOf(rate))
+        verify(appSettingsDao).upsert(appSettings)
+    }
+
+    @Test
+    fun `restore does not touch app settings when backup lacks appSettings key`() {
+        val json = JSONObject(repository.export())
+        json.remove("appSettings")
+
+        val result = repository.restore(json.toString())
+
+        assertEquals(RestoreResult.Success, result)
+        verify(appSettingsDao, never()).upsert(any())
     }
 
     @Test

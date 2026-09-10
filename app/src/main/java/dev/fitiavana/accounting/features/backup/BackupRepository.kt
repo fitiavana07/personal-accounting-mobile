@@ -4,11 +4,13 @@ import dev.fitiavana.accounting.features.balances.AccountBalanceDao
 import dev.fitiavana.accounting.features.accounts.AccountDao
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
 import dev.fitiavana.accounting.features.instruments.InstrumentDao
+import dev.fitiavana.accounting.features.settings.AppSettingsDao
 import dev.fitiavana.accounting.features.transactions.TransactionDao
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.transactions.Transaction
 import dev.fitiavana.accounting.features.transactions.TransactionEntry
 import dev.fitiavana.accounting.db.AppDatabase
@@ -37,7 +39,8 @@ class BackupRepository(
     private val instrumentDao: InstrumentDao,
     private val transactionDao: TransactionDao,
     private val balanceDao: AccountBalanceDao,
-    private val exchangeRateCacheDao: ExchangeRateCacheDao
+    private val exchangeRateCacheDao: ExchangeRateCacheDao,
+    private val appSettingsDao: AppSettingsDao
 ) {
 
     fun export(): String {
@@ -63,6 +66,10 @@ class BackupRepository(
         root.put(
             KEY_EXCHANGE_RATE_CACHE,
             exchangeRateCacheDao.getAllSync().toJsonArray { it.toJson() })
+        val settings = appSettingsDao.getSync()
+        if (settings != null) {
+            root.put(KEY_APP_SETTINGS, settings.toJson())
+        }
         return root.toString(2)
     }
 
@@ -93,6 +100,7 @@ class BackupRepository(
         val entries: List<TransactionEntry>
         val balances: List<AccountBalance>
         val rates: List<ExchangeRateCache>
+        val settings: AppSettings?
         try {
             instruments = root.getJSONArray(KEY_INSTRUMENTS)
                 .toList { instrumentFromJson(it) }
@@ -106,6 +114,11 @@ class BackupRepository(
                 .toList { accountBalanceFromJson(it) }
             rates = root.getJSONArray(KEY_EXCHANGE_RATE_CACHE)
                 .toList { exchangeRateCacheFromJson(it) }
+            settings = if (root.has(KEY_APP_SETTINGS)) {
+                appSettingsFromJson(root.getJSONObject(KEY_APP_SETTINGS))
+            } else {
+                null
+            }
         } catch (e: JSONException) {
             return RestoreResult.Error("Backup file is malformed: ${e.message}")
         }
@@ -126,6 +139,9 @@ class BackupRepository(
             transactionDao.insertAllEntries(entries)
             balanceDao.insertAll(balances)
             exchangeRateCacheDao.insertAll(rates)
+            if (settings != null) {
+                appSettingsDao.upsert(settings)
+            }
         }
 
         return RestoreResult.Success
@@ -140,6 +156,7 @@ class BackupRepository(
         private const val KEY_TRANSACTION_ENTRIES = "transactionEntries"
         private const val KEY_ACCOUNT_BALANCES = "accountBalances"
         private const val KEY_EXCHANGE_RATE_CACHE = "exchangeRateCache"
+        private const val KEY_APP_SETTINGS = "appSettings"
 
         private inline fun <T> List<T>.toJsonArray(toJson: (T) -> JSONObject): JSONArray {
             val array = JSONArray()
@@ -280,5 +297,13 @@ class BackupRepository(
                 rate = json.getDouble("rate"),
                 fetchedAt = json.getLong("fetchedAt")
             )
+
+        private fun AppSettings.toJson() = JSONObject().apply {
+            put("monthlyLivingExpenses", monthlyLivingExpenses)
+        }
+
+        private fun appSettingsFromJson(json: JSONObject) = AppSettings(
+            monthlyLivingExpenses = json.getLong("monthlyLivingExpenses")
+        )
     }
 }
