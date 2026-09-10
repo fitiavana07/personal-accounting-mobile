@@ -32,7 +32,7 @@ import java.util.UUID
 class AddTransactionActivity : AppCompatActivity() {
 
     /** Data-entry mode selected by the tabs; only the inputs differ, not the saved transaction. */
-    private enum class Mode { CLASSIC, SIMPLE_TRANSFER }
+    private enum class Mode { CLASSIC, SIMPLE_TRANSFER, INSTRUMENT_TRANSFER }
 
     private var mode = Mode.CLASSIC
 
@@ -50,8 +50,10 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var textBalanceSummary: TextView
     private lateinit var modeClassic: View
     private lateinit var modeSimpleTransfer: View
+    private lateinit var modeInstrumentTransfer: View
     private lateinit var editTransferAmount: EditText
     private lateinit var transferController: SimpleTransferController
+    private lateinit var instrumentTransferController: InstrumentTransferController
 
     private val entryRows = mutableListOf<EntryRowController>()
 
@@ -80,6 +82,7 @@ class AddTransactionActivity : AppCompatActivity() {
         textBalanceSummary = findViewById(R.id.text_balance_summary)
         modeClassic = findViewById(R.id.mode_classic)
         modeSimpleTransfer = findViewById(R.id.mode_simple_transfer)
+        modeInstrumentTransfer = findViewById(R.id.mode_instrument_transfer)
         editTransferAmount = findViewById(R.id.edit_transfer_amount)
         transferController = SimpleTransferController(
             context = this,
@@ -110,6 +113,24 @@ class AddTransactionActivity : AppCompatActivity() {
                 addEntryRow()
                 addEntryRow()
                 transferController.populateSpinners(accounts)
+                instrumentTransferController = InstrumentTransferController(
+                    context = this,
+                    viewModel = viewModel,
+                    instrumentsMap = instrumentsMap,
+                    fromSpinner = findViewById(R.id.spinner_instrument_transfer_from),
+                    fromTextBalance = findViewById(R.id.text_instrument_transfer_from_balance),
+                    fromTextNewBalance = findViewById(R.id.text_instrument_transfer_from_new_balance),
+                    toSpinner = findViewById(R.id.spinner_instrument_transfer_to),
+                    toTextBalance = findViewById(R.id.text_instrument_transfer_to_balance),
+                    toTextNewBalance = findViewById(R.id.text_instrument_transfer_to_new_balance),
+                    textAmountCode = findViewById(R.id.text_instrument_transfer_amount_code),
+                    editTransferAmount = findViewById(R.id.edit_instrument_transfer_amount),
+                    textAmountBase = findViewById(R.id.text_instrument_transfer_amount_base),
+                    onChanged = { recalculateBalanceSummary() },
+                    runInBackground = { Thread(it).start() },
+                    runOnUiThread = { runOnUiThread(it) }
+                )
+                instrumentTransferController.populateSpinners(accounts)
                 recalculateBalanceSummary()
             }
         }.start()
@@ -138,12 +159,18 @@ class AddTransactionActivity : AppCompatActivity() {
         tabLayout.addTab(
             tabLayout.newTab().setText(R.string.tab_mode_simple_transfer)
         )
+        tabLayout.addTab(
+            tabLayout.newTab().setText(R.string.tab_mode_instrument_transfer)
+        )
         tabLayout.addOnTabSelectedListener(
             object : TabLayout.OnTabSelectedListener {
                 override fun onTabSelected(tab: TabLayout.Tab) {
                     showMode(
-                        if (tab.position == 1) Mode.SIMPLE_TRANSFER
-                        else Mode.CLASSIC
+                        when (tab.position) {
+                            1 -> Mode.SIMPLE_TRANSFER
+                            2 -> Mode.INSTRUMENT_TRANSFER
+                            else -> Mode.CLASSIC
+                        }
                     )
                 }
 
@@ -159,6 +186,8 @@ class AddTransactionActivity : AppCompatActivity() {
             if (newMode == Mode.CLASSIC) View.VISIBLE else View.GONE
         modeSimpleTransfer.visibility =
             if (newMode == Mode.SIMPLE_TRANSFER) View.VISIBLE else View.GONE
+        modeInstrumentTransfer.visibility =
+            if (newMode == Mode.INSTRUMENT_TRANSFER) View.VISIBLE else View.GONE
         recalculateBalanceSummary()
     }
 
@@ -254,6 +283,12 @@ class AddTransactionActivity : AppCompatActivity() {
         when (mode) {
             Mode.CLASSIC -> entryRows.map { it.summaryEntry() }
             Mode.SIMPLE_TRANSFER -> transferController.summaryEntries()
+            Mode.INSTRUMENT_TRANSFER ->
+                if (::instrumentTransferController.isInitialized) {
+                    instrumentTransferController.summaryEntries()
+                } else {
+                    emptyList()
+                }
         }
 
     private fun recalculateBalanceSummary() {
@@ -297,6 +332,7 @@ class AddTransactionActivity : AppCompatActivity() {
         when (mode) {
             Mode.CLASSIC -> collectClassicEntries()
             Mode.SIMPLE_TRANSFER -> transferController.collectEntries()
+            Mode.INSTRUMENT_TRANSFER -> instrumentTransferController.collectEntries()
         }
 
     private fun collectClassicEntries(): List<TransactionValidator.EntryData>? {
@@ -420,6 +456,9 @@ class AddTransactionActivity : AppCompatActivity() {
     private fun hasUnsavedChanges(): Boolean {
         if (editNote.text.toString().trim().isNotEmpty()) return true
         if (transferController.hasContent()) return true
+        if (::instrumentTransferController.isInitialized && instrumentTransferController.hasContent()) {
+            return true
+        }
         return entryRows.any { it.hasContent() }
     }
 
