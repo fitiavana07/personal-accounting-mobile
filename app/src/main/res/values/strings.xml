@@ -112,8 +112,10 @@
     <string name="label_account_type">Account type</string>
     <string name="label_created">Created</string>
     <string name="label_credit">Credit</string>
+    <string name="label_credit_ar">Credit (Ar)</string>
     <string name="label_date">Date</string>
     <string name="label_debit">Debit</string>
+    <string name="label_debit_ar">Debit (Ar)</string>
     <string name="label_transfer_from">From</string>
     <string name="label_transfer_to">To</string>
     <string name="label_entries">Entries</string>

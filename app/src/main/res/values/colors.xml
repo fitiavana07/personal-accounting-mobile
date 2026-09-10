@@ -26,4 +26,6 @@
     <color name="metrics_card_divider">#1F5D4037</color>
     <color name="metrics_card_label">@color/gold_700</color>
     <color name="metrics_card_value">@color/black</color>
+
+    <color name="section_card_bg">@color/white</color>
 </resources>

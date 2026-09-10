@@ -2,20 +2,19 @@ package dev.fitiavana.accounting.ui.transactions
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Typeface
 import android.os.Bundle
-import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.TableLayout
-import android.widget.TableRow
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.features.accounts.Account
-import dev.fitiavana.accounting.features.instruments.Instrument
-import dev.fitiavana.accounting.features.transactions.TransactionEntry
-import dev.fitiavana.accounting.features.transactions.TransactionWithEntries
+import dev.fitiavana.accounting.features.transactions.Transaction
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import dev.fitiavana.accounting.ui.common.UiUtils
 import java.text.SimpleDateFormat
@@ -25,6 +24,8 @@ import java.util.Locale
 class TransactionDetailActivity : AppCompatActivity() {
 
     private val dateFormat =
+        SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+    private val createdDateFormat =
         SimpleDateFormat("MMM dd, yyyy HH:mm:ss", Locale.getDefault())
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,9 +54,12 @@ class TransactionDetailActivity : AppCompatActivity() {
             runOnUiThread {
                 if (detail != null) {
                     bindData(
-                        detail.transactionWithEntries,
-                        detail.accountsById,
-                        detail.instrumentsByCode
+                        detail.transactionWithEntries.transaction,
+                        TransactionDetailPresenter.present(
+                            detail.transactionWithEntries,
+                            detail.accountsById,
+                            detail.instrumentsByCode
+                        )
                     )
                 } else {
                     finish()
@@ -64,203 +68,160 @@ class TransactionDetailActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun bindData(
-        twe: TransactionWithEntries,
-        accountsMap: Map<String, Account>,
-        instruments: Map<String, Instrument>
-    ) {
-        val t = twe.transaction
-
+    private fun bindData(t: Transaction, view: TransactionDetailView) {
+        setFieldValue(R.id.value_amount, UiUtils.formatAmountAr(this, view.totalAmount))
+        setFieldValue(R.id.value_date, dateFormat.format(Date(t.transactionDatetime)))
         setFieldValue(R.id.value_id, t.id)
-        setFieldValue(R.id.value_created, dateFormat.format(Date(t.createdAt)))
-        setFieldValue(
-            R.id.value_date,
-            dateFormat.format(Date(t.transactionDatetime))
-        )
+        setFieldValue(R.id.value_created, createdDateFormat.format(Date(t.createdAt)))
 
         val noteSection = findViewById<LinearLayout>(R.id.section_note)
-        if (t.note.isBlank()) {
-            noteSection.visibility = android.view.View.GONE
+        if (view.note.isBlank()) {
+            noteSection.visibility = View.GONE
         } else {
-            noteSection.visibility = android.view.View.VISIBLE
-            setFieldValue(R.id.value_note, t.note)
+            noteSection.visibility = View.VISIBLE
+            setFieldValue(R.id.value_note, view.note)
         }
 
-        val tableEntries = findViewById<TableLayout>(R.id.table_entries)
-        tableEntries.removeAllViews()
+        bindEntriesTable(view.rows)
+    }
 
-        addTableHeader(tableEntries)
+    private fun bindEntriesTable(rows: List<TransactionDetailRow>) {
+        val container = findViewById<LinearLayout>(R.id.table_entries)
+        container.removeAllViews()
 
-        var totalDebit = 0L
-        var totalCredit = 0L
-        for (entry in twe.entries) {
-            val account = accountsMap[entry.accountId]
-            val instrument = account?.instrumentCode?.let { instruments[it] }
-            addEntryRow(
-                tableEntries,
-                account?.name ?: entry.accountId,
-                entry,
-                instrument,
-                account,
-                instruments
+        container.addView(
+            inflateRow(
+                accountText = getString(R.string.label_account),
+                debitText = getString(R.string.label_debit_ar),
+                creditText = getString(R.string.label_credit_ar),
+                backgroundColorRes = R.color.report_section_header_bg,
+                textColorRes = R.color.report_header_text,
+                bold = true,
+                allCaps = true,
+                textSizeSp = 11f
             )
-            totalDebit += entry.debitAmount ?: 0L
-            totalCredit += entry.creditAmount ?: 0L
+        )
+
+        for (row in rows) {
+            when (row) {
+                is TransactionDetailRow.Entry -> container.addView(
+                    inflateRow(row.accountName, row.debitText, row.creditText, textSizeSp = 14f)
+                )
+
+                is TransactionDetailRow.SubEntry -> container.addView(
+                    inflateRow(
+                        row.label,
+                        row.debitText,
+                        row.creditText,
+                        indented = true,
+                        secondary = true,
+                        textSizeSp = 12f
+                    )
+                )
+
+                is TransactionDetailRow.Total -> {
+                    container.addView(dividerRow())
+                    container.addView(
+                        inflateRow(
+                            getString(R.string.label_total),
+                            TransactionDisplay.formatAmount(row.debitAmount),
+                            TransactionDisplay.formatAmount(row.creditAmount),
+                            backgroundColorRes = R.color.report_grand_total_bg,
+                            bold = true,
+                            textSizeSp = 14f
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun dividerRow(): View =
+        View(this).apply {
+            setBackgroundColor(ContextCompat.getColor(this@TransactionDetailActivity, R.color.report_divider))
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dpToPx(1f)
+            )
         }
 
-        addTotalsRow(tableEntries, totalDebit, totalCredit)
+    private fun inflateRow(
+        accountText: String,
+        debitText: String,
+        creditText: String,
+        backgroundColorRes: Int? = null,
+        textColorRes: Int? = null,
+        bold: Boolean = false,
+        allCaps: Boolean = false,
+        indented: Boolean = false,
+        secondary: Boolean = false,
+        textSizeSp: Float = 15f
+    ): LinearLayout {
+        val row = LayoutInflater.from(this)
+            .inflate(R.layout.item_transaction_entry_row, null) as LinearLayout
+
+        val accountView = row.findViewById<TextView>(R.id.text_entry_account)
+        val debitView = row.findViewById<TextView>(R.id.text_entry_debit)
+        val creditView = row.findViewById<TextView>(R.id.text_entry_credit)
+
+        accountView.text = accountText
+        debitView.text = debitText
+        creditView.text = creditText
+
+        if (allCaps) {
+            accountView.isAllCaps = true
+            debitView.isAllCaps = true
+            creditView.isAllCaps = true
+        }
+
+        val style = if (bold) Typeface.BOLD else Typeface.NORMAL
+        listOf(accountView, debitView, creditView).forEach {
+            it.setTypeface(it.typeface, style)
+            it.textSize = textSizeSp
+        }
+
+        if (indented) {
+            accountView.setPadding(
+                accountView.paddingStart + dpToPx(16f),
+                accountView.paddingTop,
+                accountView.paddingEnd,
+                accountView.paddingBottom
+            )
+        }
+
+        val color = when {
+            textColorRes != null -> ContextCompat.getColor(this, textColorRes)
+            secondary -> secondaryTextColor()
+            else -> null
+        }
+        if (color != null) {
+            accountView.setTextColor(color)
+            debitView.setTextColor(color)
+            creditView.setTextColor(color)
+        }
+
+        if (backgroundColorRes != null) {
+            row.setBackgroundColor(ContextCompat.getColor(this, backgroundColorRes))
+        }
+
+        return row
+    }
+
+    private fun dpToPx(dp: Float): Int =
+        (dp * resources.displayMetrics.density).toInt()
+
+    private fun secondaryTextColor(): Int {
+        val typedValue = android.util.TypedValue()
+        theme.resolveAttribute(android.R.attr.textColorSecondary, typedValue, true)
+        return if (typedValue.resourceId != 0) {
+            ContextCompat.getColor(this, typedValue.resourceId)
+        } else {
+            typedValue.data
+        }
     }
 
     private fun setFieldValue(id: Int, value: String) {
         findViewById<TextView>(id).text = value
-    }
-
-    private fun addTableHeader(table: TableLayout) {
-        val row = TableRow(this)
-        row.addView(makeCell(getString(R.string.label_account), bold = true))
-        row.addView(
-            makeCell(
-                getString(R.string.label_debit),
-                bold = true,
-                gravity = Gravity.END
-            )
-        )
-        row.addView(
-            makeCell(
-                getString(R.string.label_credit),
-                bold = true,
-                gravity = Gravity.END
-            )
-        )
-        table.addView(row)
-    }
-
-    private fun addEntryRow(
-        table: TableLayout,
-        accountName: String,
-        entry: TransactionEntry,
-        instrument: Instrument?,
-        account: Account?,
-        instruments: Map<String, Instrument>
-    ) {
-        val row = TableRow(this)
-        row.addView(makeCell(accountName))
-        row.addView(makeCell(entry.debitAmount?.let { formatAmount(it) }
-            ?: "-", gravity = Gravity.END))
-        row.addView(makeCell(entry.creditAmount?.let { formatAmount(it) }
-            ?: "-", gravity = Gravity.END))
-        table.addView(row)
-
-        if (instrument != null && (entry.instrumentDebitAmount != null || entry.instrumentCreditAmount != null)) {
-            val instrRow = TableRow(this)
-            instrRow.addView(makeCell("  ${instrument.code}", italic = true))
-            instrRow.addView(
-                makeCell(
-                entry.instrumentDebitAmount?.let {
-                    TransactionDisplay.formatInstrumentAmount(
-                        it,
-                        instrument
-                    )
-                } ?: "-",
-                italic = true, gravity = Gravity.END
-            ))
-            instrRow.addView(
-                makeCell(
-                    entry.instrumentCreditAmount?.let {
-                    TransactionDisplay.formatInstrumentAmount(
-                        it,
-                        instrument
-                    )
-                } ?: "-",
-                italic = true, gravity = Gravity.END
-            ))
-            table.addView(instrRow)
-        }
-
-        val intermediaryInstrument =
-            account?.intermediaryInstrumentCode?.let { instruments[it] }
-        if (intermediaryInstrument != null && (entry.intermediaryDebitAmount != null || entry.intermediaryCreditAmount != null)) {
-            val interRow = TableRow(this)
-            interRow.addView(
-                makeCell(
-                    "  ${intermediaryInstrument.code}",
-                    italic = true
-                )
-            )
-            interRow.addView(
-                makeCell(
-                    entry.intermediaryDebitAmount?.let {
-                    TransactionDisplay.formatInstrumentAmount(
-                        it,
-                        intermediaryInstrument
-                    )
-                } ?: "-",
-                italic = true, gravity = Gravity.END
-            ))
-            interRow.addView(
-                makeCell(
-                    entry.intermediaryCreditAmount?.let {
-                    TransactionDisplay.formatInstrumentAmount(
-                        it,
-                        intermediaryInstrument
-                    )
-                } ?: "-",
-                italic = true, gravity = Gravity.END
-            ))
-            table.addView(interRow)
-        }
-    }
-
-    private fun addTotalsRow(
-        table: TableLayout,
-        totalDebit: Long,
-        totalCredit: Long
-    ) {
-        val row = TableRow(this)
-        row.addView(makeCell(getString(R.string.label_total), bold = true))
-        row.addView(
-            makeCell(
-                formatAmount(totalDebit),
-                bold = true,
-                gravity = Gravity.END
-            )
-        )
-        row.addView(
-            makeCell(
-                formatAmount(totalCredit),
-                bold = true,
-                gravity = Gravity.END
-            )
-        )
-        table.addView(row)
-    }
-
-    private fun formatAmount(amount: Long): String =
-        String.format("%,d", amount)
-
-    private fun makeCell(
-        text: String,
-        bold: Boolean = false,
-        italic: Boolean = false,
-        gravity: Int = Gravity.START
-    ): TextView {
-        return TextView(this).apply {
-            this.text = text
-            this.gravity = gravity
-            setPadding(8, 8, 8, 8)
-            val style = when {
-                bold && italic -> android.graphics.Typeface.BOLD_ITALIC
-                bold -> android.graphics.Typeface.BOLD
-                italic -> android.graphics.Typeface.ITALIC
-                else -> android.graphics.Typeface.NORMAL
-            }
-            setTypeface(typeface, style)
-            layoutParams = TableRow.LayoutParams(
-                0,
-                TableRow.LayoutParams.WRAP_CONTENT,
-                1f
-            )
-        }
     }
 
     override fun onSupportNavigateUp(): Boolean {

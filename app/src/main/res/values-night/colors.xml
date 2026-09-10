@@ -10,4 +10,6 @@
     <color name="metrics_card_divider">#33FFFFFF</color>
     <color name="metrics_card_label">@color/gold_300</color>
     <color name="metrics_card_value">@color/white</color>
+
+    <color name="section_card_bg">#1E1E1E</color>
 </resources>
