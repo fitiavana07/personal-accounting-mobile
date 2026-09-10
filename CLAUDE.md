@@ -21,6 +21,8 @@ above API 19 without adding appropriate compatibility notes or checks.
 Build variants: `debug` (applicationIdSuffix `.debug`, includes clear-data
 menu) and `release`. Both can be installed side-by-side.
 
+The package is dev.fitiavana.accounting.
+
 ## Architecture
 
 - **UI:** Android Views (XML layouts) — Jetpack Compose requires API 21+ and is
@@ -60,8 +62,7 @@ ui/
 Account ID is a UUID stored as `String`; generate with
 `UUID.randomUUID().toString()`.
 
-Features: Accounts, Instruments, Transactions, Balances (read-only),
-Roadmap (static)
+Features: Accounts, Instruments, Transactions, Balances, Reports
 
 Each CRUD feature: {Feature}Fragment + {Feature}ViewModel + {Feature}Adapter +
 Edit{Feature}Activity + Edit{Feature}ViewModel
@@ -73,9 +74,9 @@ Transaction amounts stored as integers
 - **JUnit**: Unit testing framework
 - **Mockito**: Mocking library for unit tests
 - **TDD is mandatory**: for every change (new feature, bug fix, refactor),
-  write a failing test first, then write the minimum code to make it pass,
-  then refactor. Never write production code before there is a test that
-  requires it.
+  write a failing test first, verify it actually fails, then write the minimum
+  code to make it pass, then refactor. Never write production code before there
+  is a test that requires it.
 
 ## UI
 
@@ -92,7 +93,8 @@ Transaction amounts stored as integers
 - DRY: Reuse code when possible, refactor if needed
 - To display a base-currency amount (prefixed "Ar", thousands-separated, no
   parentheses), always use `UiUtils.formatAmountAr(context, amount)` — never
-  duplicate `getString(R.string.amount_ar, TransactionDisplay.formatAmount(...))`
+  duplicate
+  `getString(R.string.amount_ar, TransactionDisplay.formatAmount(...))`
   inline. This requires a `Context`, so it's for UI-layer code (Activities,
   Fragments, Adapters) only. For report rows needing contra/parenthesized
   formatting (e.g. Balance Sheet, Income Statement), use `ReportPresenter`'s
@@ -122,7 +124,7 @@ After every change:
 
 - generate a testing checklist
 - write unit tests (new or update existing ones) conforming to this
-  checklist, for everything that is worth to be unit-tested 
+  checklist, for everything that is worth to be unit-tested
 
 ## When adding new libraries
 
