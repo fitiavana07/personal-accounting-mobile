@@ -77,6 +77,15 @@ Transaction amounts stored as integers
 
 - **JUnit**: Unit testing framework
 - **Mockito**: Mocking library for unit tests
+- **Robolectric**: Runs Android framework code (layout inflation, resources,
+  `Context`, Room via `androidx.room.testing`) on the JVM as unit tests, no
+  emulator needed. Use `@RunWith(RobolectricTestRunner::class)` for tests that
+  touch Android APIs (adapters binding views, DAOs, controllers depending on
+  `Context`/resources); plain JUnit/Mockito is enough when the code under test
+  has no Android framework dependency. `testOptions.unitTests` in
+  `app/build.gradle.kts` sets `isIncludeAndroidResources = true` (so resources
+  resolve under Robolectric) and `isReturnDefaultValues = true` (so
+  non-Robolectric unit tests calling stray Android APIs don't crash).
 - **TDD is mandatory**: for every change (new feature, bug fix, refactor),
   write a failing test first, verify it actually fails by running the test
   command, then write the minimum code to make it pass, then refactor. Never
