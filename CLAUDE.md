@@ -2,7 +2,8 @@
 
 Accounting app with features like accounts, balances, journal, reports.
 
-Build and test. Make sure to run it after every change.
+Build and test. Make sure to run it after every change. Remember to use TDD
+for every change: RED → GREEN → REFACTOR.
 
 ```
 ./gradlew assembleDebug testDebugUnitTest
@@ -64,6 +65,9 @@ Account ID is a UUID stored as `String`; generate with
 
 Features: Accounts, Instruments, Transactions, Balances, Reports
 
+See `docs/reports-feature.md` for how the Reports feature works (period
+selection, ViewModel data flow, report builders) before exploring its code.
+
 Each CRUD feature: {Feature}Fragment + {Feature}ViewModel + {Feature}Adapter +
 Edit{Feature}Activity + Edit{Feature}ViewModel
 
@@ -74,9 +78,9 @@ Transaction amounts stored as integers
 - **JUnit**: Unit testing framework
 - **Mockito**: Mocking library for unit tests
 - **TDD is mandatory**: for every change (new feature, bug fix, refactor),
-  write a failing test first, verify it actually fails, then write the minimum
-  code to make it pass, then refactor. Never write production code before there
-  is a test that requires it.
+  write a failing test first, verify it actually fails by running the test
+  command, then write the minimum code to make it pass, then refactor. Never
+  write production code before there is a test that requires it.
 
 ## UI
 
