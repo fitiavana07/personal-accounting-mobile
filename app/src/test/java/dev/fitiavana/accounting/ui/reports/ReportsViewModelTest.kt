@@ -71,7 +71,7 @@ class ReportsViewModelTest {
         assertEquals(listOf(2025, 2026), viewModel.availableYears.value)
         assertEquals(2026, viewModel.selectedYear.value)
         assertEquals(Calendar.FEBRUARY, viewModel.selectedMonth.value)
-        assertEquals(listOf(Calendar.JANUARY, Calendar.FEBRUARY), viewModel.availableMonths.value)
+        assertEquals(listOf(Calendar.JANUARY, Calendar.FEBRUARY, null), viewModel.availableMonths.value)
     }
 
     @Test
@@ -98,7 +98,7 @@ class ReportsViewModelTest {
 
         assertEquals(2025, viewModel.selectedYear.value)
         assertEquals(Calendar.DECEMBER, viewModel.selectedMonth.value)
-        assertEquals(listOf(Calendar.NOVEMBER, Calendar.DECEMBER), viewModel.availableMonths.value)
+        assertEquals(listOf(Calendar.NOVEMBER, Calendar.DECEMBER, null), viewModel.availableMonths.value)
     }
 
     @Test
@@ -243,5 +243,101 @@ class ReportsViewModelTest {
         viewModel.selectYearSync(1999)
 
         assertEquals(yearBefore, viewModel.selectedYear.value)
+    }
+
+    @Test
+    fun `selectMonthSync with null selects Year mode and updates selectedMonth`() {
+        val min = millisFor(2025, Calendar.JANUARY, 1)
+        val max = millisFor(2025, Calendar.MARCH, 15)
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
+        viewModel.loadInitialSync()
+
+        viewModel.selectMonthSync(null)
+
+        assertEquals(null, viewModel.selectedMonth.value)
+    }
+
+    @Test
+    fun `Year mode queries balances scoped to the full selected year`() {
+        val min = millisFor(2025, Calendar.JANUARY, 1)
+        val max = millisFor(2025, Calendar.MARCH, 15)
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
+        viewModel.loadInitialSync()
+
+        viewModel.selectMonthSync(null)
+
+        val expectedStart = ReportPeriodSelector.startOfYearMillis(2025)
+        val expectedEnd = ReportPeriodSelector.endOfYearMillis(2025)
+        verify(balanceRepository).computeBalancesBetween(expectedStart, expectedEnd)
+        verify(balanceRepository).computeBalancesAsOf(expectedEnd)
+    }
+
+    @Test
+    fun `Year mode shows the balance sheet as-of the last day of the year`() {
+        val min = millisFor(2025, Calendar.JANUARY, 1)
+        val max = millisFor(2025, Calendar.MARCH, 15)
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
+        viewModel.loadInitialSync()
+
+        viewModel.selectMonthSync(null)
+
+        assertEquals("At December 31, 2025", viewModel.asOfDateText.value)
+    }
+
+    @Test
+    fun `Year mode shows the income statement period ended for the full year`() {
+        val min = millisFor(2025, Calendar.JANUARY, 1)
+        val max = millisFor(2025, Calendar.MARCH, 15)
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
+        viewModel.loadInitialSync()
+
+        viewModel.selectMonthSync(null)
+        viewModel.selectReportType(ReportType.INCOME_STATEMENT)
+
+        assertEquals("Month ended December 31, 2025", viewModel.asOfDateText.value)
+    }
+
+    @Test
+    fun `Year mode Changes in Equity uses the prior year end balance as the previous balance`() {
+        val min = millisFor(2025, Calendar.JANUARY, 1)
+        val max = millisFor(2025, Calendar.MARCH, 15)
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
+        whenever(accountRepository.getAllSync()).thenReturn(
+            listOf(Account(id = "e", name = "Owner Capital", type = "equity"))
+        )
+        whenever(balanceRepository.computeBalancesAsOf(any())).thenReturn(mapOf("e" to 500L))
+        whenever(balanceRepository.computeBalancesBetween(any(), any())).thenReturn(mapOf("e" to 50L))
+        viewModel.loadInitialSync()
+
+        viewModel.selectMonthSync(null)
+        viewModel.selectReportType(ReportType.CHANGES_IN_EQUITY)
+
+        val expectedPreviousYearEnd = ReportPeriodSelector.previousYearEndMillis(2025)
+        verify(balanceRepository).computeBalancesAsOf(expectedPreviousYearEnd)
+        val statement = viewModel.equityStatement.value
+        assertEquals(
+            listOf(
+                "Balance at December 31, 2024",
+                "Changes in Owner Capital",
+                "Changes in Unclosed IS Accounts",
+                "Changes in Drawing",
+                "Balance at December 31, 2025"
+            ),
+            statement?.rows?.map { it.label }
+        )
+    }
+
+    @Test
+    fun `switching from Year mode back to a month recomputes month-scoped balances`() {
+        val min = millisFor(2025, Calendar.JANUARY, 1)
+        val max = millisFor(2025, Calendar.MARCH, 15)
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
+        viewModel.loadInitialSync()
+        viewModel.selectMonthSync(null)
+
+        viewModel.selectMonthSync(Calendar.JANUARY)
+
+        assertEquals(Calendar.JANUARY, viewModel.selectedMonth.value)
+        assertEquals("At January 31, 2025", viewModel.asOfDateText.value)
     }
 }

@@ -40,17 +40,17 @@ class ReportsViewModel(
     /** Start boundary of the selected period: the first millisecond of the selected month. */
     private var cachedPeriodStartMillis = 0L
 
-    /** Last millisecond of the month preceding the selected period, used by the Changes in Equity report. */
-    private var cachedPreviousMonthEndMillis = 0L
+    /** End of the period preceding the selected one (prior month, or prior year in Year mode), used by the Changes in Equity report. */
+    private var cachedPreviousPeriodEndMillis = 0L
 
-    /** Cumulative per-account balances as of [cachedPreviousMonthEndMillis], used by the Changes in Equity report. */
-    private var cachedPreviousMonthEndBalances: Map<String, Long> = emptyMap()
+    /** Cumulative per-account balances as of [cachedPreviousPeriodEndMillis], used by the Changes in Equity report. */
+    private var cachedPreviousPeriodEndBalances: Map<String, Long> = emptyMap()
 
     /** Year of the currently selected report period, kept alongside the balances it produced. */
     private var cachedReportYear = 0
 
-    /** Month (0-11) of the currently selected report period, kept alongside the balances it produced. */
-    private var cachedReportMonth = 0
+    /** Month (0-11) of the currently selected report period, or null when the whole year is selected. */
+    private var cachedReportMonth: Int? = 0
 
     val reportTypes: List<ReportType> = ReportType.values().toList()
 
@@ -60,14 +60,15 @@ class ReportsViewModel(
     private val _availableYears = MutableLiveData<List<Int>>(emptyList())
     val availableYears: LiveData<List<Int>> = _availableYears
 
-    private val _availableMonths = MutableLiveData<List<Int>>(emptyList())
-    val availableMonths: LiveData<List<Int>> = _availableMonths
+    private val _availableMonths = MutableLiveData<List<Int?>>(emptyList())
+    val availableMonths: LiveData<List<Int?>> = _availableMonths
 
     private val _selectedYear = MutableLiveData<Int>()
     val selectedYear: LiveData<Int> = _selectedYear
 
-    private val _selectedMonth = MutableLiveData<Int>()
-    val selectedMonth: LiveData<Int> = _selectedMonth
+    /** The selected month (0-11), or null when the "Year" tab is selected. */
+    private val _selectedMonth = MutableLiveData<Int?>()
+    val selectedMonth: LiveData<Int?> = _selectedMonth
 
     private val _selectedReportType = MutableLiveData(ReportType.BALANCE_SHEET)
     val selectedReportType: LiveData<ReportType> = _selectedReportType
@@ -94,7 +95,7 @@ class ReportsViewModel(
         Thread { selectYearSync(year) }.start()
     }
 
-    fun selectMonth(month: Int) {
+    fun selectMonth(month: Int?) {
         Thread { selectMonthSync(month) }.start()
     }
 
@@ -121,7 +122,7 @@ class ReportsViewModel(
 
         _hasTransactions.postValue(true)
         _availableYears.postValue(years)
-        _availableMonths.postValue(monthsByYear.getValue(lastYear))
+        _availableMonths.postValue(monthsByYear.getValue(lastYear) + null)
         _selectedYear.postValue(lastYear)
         _selectedMonth.postValue(lastMonth)
         recomputeSync(lastYear, lastMonth)
@@ -132,33 +133,42 @@ class ReportsViewModel(
         val months = monthsByYear[year] ?: return
         val month = months.max()
         _selectedYear.postValue(year)
-        _availableMonths.postValue(months)
+        _availableMonths.postValue(months + null)
         _selectedMonth.postValue(month)
         recomputeSync(year, month)
     }
 
     /** Synchronous version of [selectMonth], for use on a background thread (or directly in tests). */
-    internal fun selectMonthSync(month: Int) {
+    internal fun selectMonthSync(month: Int?) {
         val year = _selectedYear.value ?: return
         _selectedMonth.postValue(month)
         recomputeSync(year, month)
     }
 
-    private fun recomputeSync(year: Int, month: Int) {
-        val startMs = ReportPeriodSelector.startOfMonthMillis(year, month)
-        val asOfMs = ReportPeriodSelector.asOfMillis(year, month)
-        val previousMonthEndMs = ReportPeriodSelector.previousMonthEndMillis(year, month)
+    private fun recomputeSync(year: Int, month: Int?) {
+        val startMs: Long
+        val asOfMs: Long
+        val previousPeriodEndMs: Long
+        if (month == null) {
+            startMs = ReportPeriodSelector.startOfYearMillis(year)
+            asOfMs = ReportPeriodSelector.asOfYearMillis(year)
+            previousPeriodEndMs = ReportPeriodSelector.previousYearEndMillis(year)
+        } else {
+            startMs = ReportPeriodSelector.startOfMonthMillis(year, month)
+            asOfMs = ReportPeriodSelector.asOfMillis(year, month)
+            previousPeriodEndMs = ReportPeriodSelector.previousMonthEndMillis(year, month)
+        }
         cachedPeriodCutoffMillis = asOfMs
         cachedPeriodStartMillis = startMs
-        cachedPreviousMonthEndMillis = previousMonthEndMs
+        cachedPreviousPeriodEndMillis = previousPeriodEndMs
         cachedReportYear = year
         cachedReportMonth = month
         cachedAccounts = accountRepository.getAllSync()
         cachedBalancesAsOf = balanceRepository.computeBalancesAsOf(asOfMs)
         cachedPeriodBalances =
             balanceRepository.computeBalancesBetween(startMs, asOfMs)
-        cachedPreviousMonthEndBalances =
-            balanceRepository.computeBalancesAsOf(previousMonthEndMs)
+        cachedPreviousPeriodEndBalances =
+            balanceRepository.computeBalancesAsOf(previousPeriodEndMs)
         renderDisplay(_selectedReportType.value ?: ReportType.BALANCE_SHEET)
     }
 
@@ -173,10 +183,9 @@ class ReportsViewModel(
                     ReportPeriodSelector.formatIncomeStatementPeriod(
                         cachedPeriodStartMillis,
                         cachedPeriodCutoffMillis,
-                        ReportPeriodSelector.endOfMonthMillis(
-                            cachedReportYear,
-                            cachedReportMonth
-                        )
+                        cachedReportMonth?.let {
+                            ReportPeriodSelector.endOfMonthMillis(cachedReportYear, it)
+                        } ?: ReportPeriodSelector.endOfYearMillis(cachedReportYear)
                     )
             }
         )
@@ -207,10 +216,10 @@ class ReportsViewModel(
                     EquityStatementPresenter.present(
                         EquityStatementBuilder.build(
                             accounts = cachedAccounts,
-                            previousMonthEndBalances = cachedPreviousMonthEndBalances,
+                            previousMonthEndBalances = cachedPreviousPeriodEndBalances,
                             periodChangeBalances = cachedPeriodBalances,
                             previousBalanceLabel =
-                                "Balance at ${ReportPeriodSelector.formatDate(cachedPreviousMonthEndMillis)}",
+                                "Balance at ${ReportPeriodSelector.formatDate(cachedPreviousPeriodEndMillis)}",
                             currentBalanceLabel =
                                 "Balance at ${ReportPeriodSelector.formatDate(cachedPeriodCutoffMillis)}"
                         )

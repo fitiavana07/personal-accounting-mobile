@@ -80,6 +80,55 @@ object ReportPeriodSelector {
         return cal.timeInMillis
     }
 
+    /**
+     * The first millisecond of [year].
+     */
+    fun startOfYearMillis(year: Int): Long {
+        val cal = Calendar.getInstance().apply {
+            set(year, Calendar.JANUARY, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        return cal.timeInMillis
+    }
+
+    /**
+     * The last millisecond of [year].
+     */
+    fun endOfYearMillis(year: Int): Long {
+        val cal = Calendar.getInstance().apply {
+            set(year, Calendar.JANUARY, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+            add(Calendar.YEAR, 1)
+            add(Calendar.MILLISECOND, -1)
+        }
+        return cal.timeInMillis
+    }
+
+    /**
+     * The as-of instant for [year]: "now" for the current calendar year (since it hasn't ended
+     * yet), otherwise the last millisecond of that year.
+     */
+    fun asOfYearMillis(year: Int): Long {
+        val now = Calendar.getInstance()
+        return if (year == now.get(Calendar.YEAR)) {
+            now.timeInMillis
+        } else {
+            endOfYearMillis(year)
+        }
+    }
+
+    /**
+     * The last millisecond of the year preceding [year].
+     */
+    fun previousYearEndMillis(year: Int): Long {
+        val cal = Calendar.getInstance().apply {
+            set(year, Calendar.JANUARY, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+            add(Calendar.MILLISECOND, -1)
+        }
+        return cal.timeInMillis
+    }
+
     private val dateFormat = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
     private val monthNameFormat = SimpleDateFormat("MMMM", Locale.getDefault())
 

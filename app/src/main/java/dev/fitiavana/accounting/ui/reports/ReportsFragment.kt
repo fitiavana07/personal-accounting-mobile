@@ -20,7 +20,7 @@ class ReportsFragment : Fragment() {
     private lateinit var contentAdapter: ReportAdapter
     private lateinit var equityAdapter: EquityStatementAdapter
     private lateinit var yearsAdapter: PeriodSelectorAdapter<Int>
-    private lateinit var monthsAdapter: PeriodSelectorAdapter<Int>
+    private lateinit var monthsAdapter: PeriodSelectorAdapter<Int?>
     private lateinit var reportTypeAdapter: PeriodSelectorAdapter<ReportType>
 
     override fun onCreateView(
@@ -38,7 +38,10 @@ class ReportsFragment : Fragment() {
             .get(ReportsViewModel::class.java)
 
         yearsAdapter = PeriodSelectorAdapter(labelFor = { it.toString() }, onSelected = { viewModel.selectYear(it) })
-        monthsAdapter = PeriodSelectorAdapter(labelFor = { ReportPeriodSelector.monthName(it) }, onSelected = { viewModel.selectMonth(it) })
+        monthsAdapter = PeriodSelectorAdapter(
+            labelFor = { it?.let { month -> ReportPeriodSelector.monthName(month) } ?: "Year" },
+            onSelected = { viewModel.selectMonth(it) }
+        )
         reportTypeAdapter = PeriodSelectorAdapter(labelFor = { it.label }, onSelected = { viewModel.selectReportType(it) })
         contentAdapter = ReportAdapter()
         equityAdapter = EquityStatementAdapter()

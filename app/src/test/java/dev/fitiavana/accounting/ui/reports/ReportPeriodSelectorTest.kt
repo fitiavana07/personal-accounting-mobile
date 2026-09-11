@@ -163,6 +163,60 @@ class ReportPeriodSelectorTest {
         assertEquals(ReportPeriodSelector.endOfMonthMillis(2025, Calendar.DECEMBER), result)
     }
 
+    // --- startOfYearMillis / endOfYearMillis ---
+
+    @Test
+    fun `startOfYearMillis returns January 1st at midnight`() {
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = ReportPeriodSelector.startOfYearMillis(2026)
+        }
+        assertEquals(Calendar.JANUARY, cal.get(Calendar.MONTH))
+        assertEquals(1, cal.get(Calendar.DAY_OF_MONTH))
+        assertEquals(0, cal.get(Calendar.HOUR_OF_DAY))
+        assertEquals(0, cal.get(Calendar.MINUTE))
+    }
+
+    @Test
+    fun `endOfYearMillis returns the last millisecond of December 31st`() {
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = ReportPeriodSelector.endOfYearMillis(2026)
+        }
+        assertEquals(Calendar.DECEMBER, cal.get(Calendar.MONTH))
+        assertEquals(31, cal.get(Calendar.DAY_OF_MONTH))
+        assertEquals(23, cal.get(Calendar.HOUR_OF_DAY))
+        assertEquals(59, cal.get(Calendar.MINUTE))
+    }
+
+    // --- asOfYearMillis ---
+
+    @Test
+    fun `asOfYearMillis returns now for the current year`() {
+        val now = Calendar.getInstance()
+
+        val result = ReportPeriodSelector.asOfYearMillis(now.get(Calendar.YEAR))
+
+        assert(result <= System.currentTimeMillis())
+        assert(result >= now.timeInMillis - 1000)
+    }
+
+    @Test
+    fun `asOfYearMillis returns end of year for a past year`() {
+        val cal = Calendar.getInstance().apply { add(Calendar.YEAR, -1) }
+        val year = cal.get(Calendar.YEAR)
+
+        val result = ReportPeriodSelector.asOfYearMillis(year)
+
+        assertEquals(ReportPeriodSelector.endOfYearMillis(year), result)
+    }
+
+    // --- previousYearEndMillis ---
+
+    @Test
+    fun `previousYearEndMillis returns the last millisecond of the prior year`() {
+        val result = ReportPeriodSelector.previousYearEndMillis(2026)
+        assertEquals(ReportPeriodSelector.endOfYearMillis(2025), result)
+    }
+
     // --- formatDate ---
 
     @Test
