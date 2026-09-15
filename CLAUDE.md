@@ -1,6 +1,6 @@
 # Accounting
 
-Accounting app with features like accounts, balances, journal, reports.
+Accounting app with features like accounts, balances, transactions, reports.
 
 Build and test. Make sure to run it after every change. Remember to use TDD
 for every change: RED → GREEN → REFACTOR.
@@ -55,9 +55,13 @@ data/
   repository/  # Repository classes (only ViewModels talk to these, never UI)
 db/            # AppDatabase singleton
 ui/
-  accounts/    # AccountsFragment, AccountsViewModel, AccountsAdapter
-  balances/    # (planned)
-  journal/     # (planned)
+  accounts/      # AccountsFragment, AccountsViewModel, AccountsAdapter
+  balances/      # BalancesFragment, BalancesViewModel, BalancesAdapter
+  transactions/  # TransactionsFragment, AddTransactionActivity, TransactionDetailActivity
+  instruments/   # InstrumentsFragment, InstrumentsViewModel
+  reports/       # ReportsFragment, ReportsViewModel, ReportPeriodSelector
+  home/          # HomeFragment, HomeViewModel (dashboard/metrics)
+  common/        # shared presenters/adapters (UiUtils, ReportPresenter, TransactionDisplay)
 ```
 
 Account ID is a UUID stored as `String`; generate with
@@ -116,7 +120,9 @@ Transaction amounts stored as integers
   formatting (e.g. Balance Sheet, Income Statement), use `ReportPresenter`'s
   amount formatting instead, which has no `Context` dependency.
 
-## Commit messages
+## Commits
+
+### Commit messages
 
 Use [Conventional Commits](https://www.conventionalcommits.org/):
 
@@ -127,7 +133,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 Common types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`,
 `perf`. Use `!` after type/scope (e.g. `feat!:`) for breaking changes.
 
-## Version bumps
+### Version bumps
 
 When bumping `versionCode`/`versionName` in `app/build.gradle.kts`, do it in
 its own commit (`chore: bump version to <versionName> (<versionCode>)`), then
