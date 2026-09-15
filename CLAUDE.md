@@ -68,6 +68,9 @@ Features: Accounts, Instruments, Transactions, Balances, Reports
 See `docs/reports-feature.md` for how the Reports feature works (period
 selection, ViewModel data flow, report builders) before exploring its code.
 
+See `docs/instrument-transfer-base-amount.md` for how the base currency
+amount is calculated in Instrument Transfer transaction creation mode.
+
 Each CRUD feature: {Feature}Fragment + {Feature}ViewModel + {Feature}Adapter +
 Edit{Feature}Activity + Edit{Feature}ViewModel
 
