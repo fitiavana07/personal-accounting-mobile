@@ -19,8 +19,8 @@ android {
         applicationId = "dev.fitiavana.accounting"
         minSdk = 19
         targetSdk = 36
-        versionCode = 22
-        versionName = "1.22"
+        versionCode = 23
+        versionName = "1.23"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
