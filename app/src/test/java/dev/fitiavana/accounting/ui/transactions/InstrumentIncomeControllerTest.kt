@@ -119,7 +119,7 @@ class InstrumentIncomeControllerTest {
 
         assetSpinner.setSelection(1) // usd_wallet
         revenueSpinner.setSelection(1) // sales_revenue
-        editIncomeAmount.setText("1.50")
+        editIncomeAmount.setText("11.50") // new balance; prior instrument balance was 10.0
 
         val entries = controller.collectEntries()
         assertEquals(2, entries?.size)
@@ -178,6 +178,64 @@ class InstrumentIncomeControllerTest {
         assetSpinner.setSelection(1)
         revenueSpinner.setSelection(1)
         editIncomeAmount.setText("1.50")
+
+        assertNull(controller.collectEntries())
+    }
+
+    @Test
+    fun `collectEntries fails when the new balance is not above the current balance`() {
+        whenever(viewModel.getBalance("usd_wallet")).thenReturn(
+            AccountBalance(
+                accountId = "usd_wallet",
+                balance = 400_000L,
+                instrumentBalance = 1000L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        whenever(viewModel.getBalance("sales_revenue")).thenReturn(
+            AccountBalance(
+                accountId = "sales_revenue",
+                balance = 0L,
+                instrumentBalance = 0L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        val controller = controller()
+
+        assetSpinner.setSelection(1)
+        revenueSpinner.setSelection(1)
+        editIncomeAmount.setText("10.00") // equal to the current instrument balance of 10.0
+
+        assertNull(controller.collectEntries())
+    }
+
+    @Test
+    fun `collectEntries fails when the new balance is below the current balance`() {
+        whenever(viewModel.getBalance("usd_wallet")).thenReturn(
+            AccountBalance(
+                accountId = "usd_wallet",
+                balance = 400_000L,
+                instrumentBalance = 1000L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        whenever(viewModel.getBalance("sales_revenue")).thenReturn(
+            AccountBalance(
+                accountId = "sales_revenue",
+                balance = 0L,
+                instrumentBalance = 0L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        val controller = controller()
+
+        assetSpinner.setSelection(1)
+        revenueSpinner.setSelection(1)
+        editIncomeAmount.setText("9.00") // below the current instrument balance of 10.0
 
         assertNull(controller.collectEntries())
     }
@@ -273,12 +331,43 @@ class InstrumentIncomeControllerTest {
 
         assetSpinner.setSelection(1)
         revenueSpinner.setSelection(1)
-        editIncomeAmount.setText("1.50")
+        editIncomeAmount.setText("11.50") // new balance; prior instrument balance was 10.0
 
         assertEquals(View.VISIBLE, assetTextNewBalance.visibility)
         assertEquals("New balance: 460,000 Ar · 11.5 USD", assetTextNewBalance.text.toString())
 
         controller.collectEntries()
+    }
+
+    @Test
+    fun `new balance previews default to the current balance when the field is blank`() {
+        whenever(viewModel.getBalance("usd_wallet")).thenReturn(
+            AccountBalance(
+                accountId = "usd_wallet",
+                balance = 400_000L,
+                instrumentBalance = 1000L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        whenever(viewModel.getBalance("sales_revenue")).thenReturn(
+            AccountBalance(
+                accountId = "sales_revenue",
+                balance = 100_000L,
+                instrumentBalance = 0L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        controller()
+
+        assetSpinner.setSelection(1)
+        revenueSpinner.setSelection(1)
+
+        assertEquals(View.VISIBLE, assetTextNewBalance.visibility)
+        assertEquals("New balance: 400,000 Ar · 10.0 USD", assetTextNewBalance.text.toString())
+        assertEquals(View.VISIBLE, revenueTextNewBalance.visibility)
+        assertEquals("New balance: 100,000 Ar", revenueTextNewBalance.text.toString())
     }
 
     @Test
@@ -305,14 +394,14 @@ class InstrumentIncomeControllerTest {
 
         assetSpinner.setSelection(1)
         revenueSpinner.setSelection(1)
-        editIncomeAmount.setText("1.50")
+        editIncomeAmount.setText("11.50") // new balance; prior instrument balance was 10.0
 
         assertEquals(View.VISIBLE, revenueTextNewBalance.visibility)
         assertEquals("New balance: 160,000 Ar", revenueTextNewBalance.text.toString())
     }
 
     @Test
-    fun `amount input shows its base currency equivalent once the asset account's rate is known`() {
+    fun `new balance input shows the inferred transaction amount once the asset account's rate is known`() {
         whenever(viewModel.getBalance("usd_wallet")).thenReturn(
             AccountBalance(
                 accountId = "usd_wallet",
@@ -325,10 +414,74 @@ class InstrumentIncomeControllerTest {
         controller()
 
         assetSpinner.setSelection(1)
-        editIncomeAmount.setText("1.50")
+        editIncomeAmount.setText("11.50") // new balance; prior instrument balance was 10.0
 
         assertEquals(View.VISIBLE, textAmountBase.visibility)
-        assertEquals("≈ 60,000 Ar", textAmountBase.text.toString())
+        assertEquals("+ 60,000 Ar · 1.5 USD", textAmountBase.text.toString())
+    }
+
+    @Test
+    fun `transaction amount preview is hidden while the new balance field is blank`() {
+        whenever(viewModel.getBalance("usd_wallet")).thenReturn(
+            AccountBalance(
+                accountId = "usd_wallet",
+                balance = 400_000L,
+                instrumentBalance = 1000L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        controller()
+
+        assetSpinner.setSelection(1)
+
+        assertEquals(View.GONE, textAmountBase.visibility)
+    }
+
+    @Test
+    fun `transaction amount preview warns when the typed new balance is not above the current balance`() {
+        whenever(viewModel.getBalance("usd_wallet")).thenReturn(
+            AccountBalance(
+                accountId = "usd_wallet",
+                balance = 400_000L,
+                instrumentBalance = 1000L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        controller()
+
+        assetSpinner.setSelection(1)
+        editIncomeAmount.setText("9.00") // below the current instrument balance of 10.0
+
+        assertEquals(View.VISIBLE, textAmountBase.visibility)
+        assertEquals(
+            "New balance must be above the current balance",
+            textAmountBase.text.toString()
+        )
+    }
+
+    @Test
+    fun `transaction amount preview warns when the typed new balance equals the current balance`() {
+        whenever(viewModel.getBalance("usd_wallet")).thenReturn(
+            AccountBalance(
+                accountId = "usd_wallet",
+                balance = 400_000L,
+                instrumentBalance = 1000L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        controller()
+
+        assetSpinner.setSelection(1)
+        editIncomeAmount.setText("10.00") // equal to the current instrument balance of 10.0
+
+        assertEquals(View.VISIBLE, textAmountBase.visibility)
+        assertEquals(
+            "New balance must be above the current balance",
+            textAmountBase.text.toString()
+        )
     }
 
     @Test

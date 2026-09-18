@@ -39,8 +39,12 @@
     <string name="error_instrument_transfer_amount_required">Enter an amount</string>
     <string name="label_instrument_income_asset">Asset account</string>
     <string name="label_instrument_income_revenue">Revenue account</string>
+    <string name="label_instrument_income_new_balance">New balance</string>
+    <string name="label_amount_plus_ar_instrument">+ %1$s Ar · %2$s</string>
+    <string name="label_instrument_income_new_balance_too_low">New balance must be above the current balance</string>
     <string name="error_instrument_income_accounts_required">Select both the asset and revenue accounts</string>
     <string name="error_instrument_income_amount_required">Enter an amount</string>
+    <string name="error_instrument_income_new_balance_too_low">New balance can\'t be lower than the current balance</string>
     <string name="error_instrument_income_no_rate">The asset account has no prior balance to establish a rate</string>
     <string name="app_name">Accounting</string>
     <string name="app_name_with_version">Accounting v%1$s</string>

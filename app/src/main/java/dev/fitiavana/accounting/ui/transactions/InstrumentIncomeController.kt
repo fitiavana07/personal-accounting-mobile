@@ -20,11 +20,13 @@ import kotlin.math.roundToLong
 
 /**
  * Owns the Instrument Income mode's asset and revenue account spinners and
- * shared amount field: wires account selection (independent spinners, no
- * chaining between them), loads and previews each side's balance (the
+ * shared new-balance field: wires account selection (independent spinners,
+ * no chaining between them), loads and previews each side's balance (the
  * asset side has both base and instrument lines; the revenue side, holding
  * no instrument, has a plain base-currency line only), and builds the
- * two-entry income once both accounts and an amount are chosen. See
+ * two-entry income once both accounts are chosen and a new balance above
+ * the asset's current instrument balance is typed — the transaction amount
+ * is inferred as the difference between the two. See
  * [InstrumentIncomeBuilder] for the pure logic behind account filtering and
  * entry construction, and [InstrumentValueCalculator] for the base-amount
  * rate math (shared with Instrument Transfer).
@@ -152,15 +154,24 @@ class InstrumentIncomeController(
     private fun currentInstrument(): Instrument? =
         asset.account?.instrumentCode?.let { instrumentsMap[it] }
 
-    private fun parsedInstrumentAmount(instrument: Instrument): Long {
+    /**
+     * The instrument-denominated new balance typed into the field. An empty
+     * or unparseable field defaults to the asset's current instrument
+     * balance, i.e. no change yet.
+     */
+    private fun parsedNewInstrumentBalance(instrument: Instrument): Long {
         val factor = 10.0.pow(instrument.decimalPlaces)
         return editIncomeAmount.text.toString().trim()
-            .toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
+            .toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: asset.instrumentBalance
     }
+
+    /** The transaction amount, inferred as the typed new balance minus the asset's current balance. */
+    private fun transactionInstrumentAmount(instrument: Instrument): Long =
+        parsedNewInstrumentBalance(instrument) - asset.instrumentBalance
 
     private fun computedBaseAmount(instrument: Instrument): Long? =
         InstrumentValueCalculator.computeBaseAmount(
-            instrumentAmount = parsedInstrumentAmount(instrument),
+            instrumentAmount = transactionInstrumentAmount(instrument),
             balance = asset.balance,
             instrumentBalance = asset.instrumentBalance
         )
@@ -182,7 +193,7 @@ class InstrumentIncomeController(
         )
 
         if (side === asset) {
-            val instrumentAmount = parsedInstrumentAmount(instrument)
+            val instrumentAmount = transactionInstrumentAmount(instrument)
             val newInstrumentBalance = BalanceCalculator.project(
                 accountType = account.type,
                 currentBalance = side.instrumentBalance,
@@ -203,22 +214,33 @@ class InstrumentIncomeController(
         side.textNewBalance.visibility = View.VISIBLE
     }
 
-    /** Shows the amount typed so far converted to base currency, using the asset account's rate. */
+    /**
+     * Shows the transaction amount inferred from the typed new balance, in
+     * base currency and instrument units — or a warning when the typed new
+     * balance isn't above the current one. Hidden while the field is blank
+     * (nothing typed yet) or no asset account is selected.
+     */
     private fun updateAmountBasePreview() {
         val instrument = currentInstrument()
-        val instrumentAmount = instrument?.let { parsedInstrumentAmount(it) } ?: 0L
-        val baseAmount = if (instrument != null && instrumentAmount > 0L) {
-            computedBaseAmount(instrument)
-        } else {
-            null
+        if (instrument == null || editIncomeAmount.text.toString().trim().isEmpty()) {
+            textAmountBase.visibility = View.GONE
+            return
         }
+        val instrumentAmount = transactionInstrumentAmount(instrument)
+        if (instrumentAmount <= 0L) {
+            textAmountBase.text = context.getString(R.string.label_instrument_income_new_balance_too_low)
+            textAmountBase.visibility = View.VISIBLE
+            return
+        }
+        val baseAmount = computedBaseAmount(instrument)
         if (baseAmount == null) {
             textAmountBase.visibility = View.GONE
             return
         }
         textAmountBase.text = context.getString(
-            R.string.label_amount_base_ar,
-            TransactionDisplay.formatAmount(baseAmount)
+            R.string.label_amount_plus_ar_instrument,
+            TransactionDisplay.formatAmount(baseAmount),
+            TransactionDisplay.formatInstrumentAmount(instrumentAmount, instrument)
         )
         textAmountBase.visibility = View.VISIBLE
     }
@@ -261,8 +283,16 @@ class InstrumentIncomeController(
             return null
         }
         val instrument = currentInstrument()
-        val instrumentAmount = instrument?.let { parsedInstrumentAmount(it) } ?: 0L
-        if (instrumentAmount <= 0L) {
+        val instrumentAmount = instrument?.let { transactionInstrumentAmount(it) } ?: 0L
+        if (instrumentAmount < 0L) {
+            Toast.makeText(
+                context,
+                context.getString(R.string.error_instrument_income_new_balance_too_low),
+                Toast.LENGTH_SHORT
+            ).show()
+            return null
+        }
+        if (instrumentAmount == 0L) {
             Toast.makeText(
                 context,
                 context.getString(R.string.error_instrument_income_amount_required),
@@ -294,7 +324,7 @@ class InstrumentIncomeController(
     /** Entries as typed so far, for the running totals line — ignores validity. */
     fun summaryEntries(): List<TransactionValidator.EntryData> {
         val instrument = currentInstrument()
-        val instrumentAmount = instrument?.let { parsedInstrumentAmount(it) } ?: 0L
+        val instrumentAmount = instrument?.let { transactionInstrumentAmount(it) } ?: 0L
         val baseAmount = instrument?.let { computedBaseAmount(it) }
         return InstrumentIncomeBuilder.buildEntries(
             assetAccountId = asset.account?.id ?: "",
