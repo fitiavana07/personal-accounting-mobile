@@ -161,10 +161,10 @@ class InstrumentTransferController(
     }
 
     private fun computedBaseAmount(instrument: Instrument): Long? =
-        InstrumentTransferBuilder.computeBaseAmount(
+        InstrumentValueCalculator.computeBaseAmount(
             instrumentAmount = parsedInstrumentAmount(instrument),
-            fromBalance = from.balance,
-            fromInstrumentBalance = from.instrumentBalance
+            balance = from.balance,
+            instrumentBalance = from.instrumentBalance
         )
 
     private fun updateNewBalances(side: Side) {
@@ -274,10 +274,10 @@ class InstrumentTransferController(
             ).show()
             return null
         }
-        val baseAmount = InstrumentTransferBuilder.computeBaseAmount(
+        val baseAmount = InstrumentValueCalculator.computeBaseAmount(
             instrumentAmount = instrumentAmount,
-            fromBalance = from.balance,
-            fromInstrumentBalance = from.instrumentBalance
+            balance = from.balance,
+            instrumentBalance = from.instrumentBalance
         )
         if (baseAmount == null) {
             Toast.makeText(

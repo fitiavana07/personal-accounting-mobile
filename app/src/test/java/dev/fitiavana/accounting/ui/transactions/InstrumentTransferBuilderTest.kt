@@ -2,7 +2,6 @@ package dev.fitiavana.accounting.ui.transactions
 
 import dev.fitiavana.accounting.features.accounts.Account
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 class InstrumentTransferBuilderTest {
@@ -63,53 +62,6 @@ class InstrumentTransferBuilderTest {
         )
 
         assertEquals(listOf(usdWallet, usdSavings), result)
-    }
-
-    @Test
-    fun `computeBaseAmount derives the base amount from the from account's prior rate`() {
-        // From account previously held 1000 units (10.00 USD at 2 decimal places)
-        // worth 400000 Ar. Moving 150 units (1.50 USD) should be 60000 Ar.
-        val result = InstrumentTransferBuilder.computeBaseAmount(
-            instrumentAmount = 150L,
-            fromBalance = 400_000L,
-            fromInstrumentBalance = 1000L
-        )
-
-        assertEquals(60_000L, result)
-    }
-
-    @Test
-    fun `computeBaseAmount rounds to the nearest long`() {
-        val result = InstrumentTransferBuilder.computeBaseAmount(
-            instrumentAmount = 1L,
-            fromBalance = 10L,
-            fromInstrumentBalance = 3L
-        )
-
-        // 1 * 10 / 3 = 3.333... -> rounds to 3
-        assertEquals(3L, result)
-    }
-
-    @Test
-    fun `computeBaseAmount is null when the from account has no prior instrument balance`() {
-        assertNull(
-            InstrumentTransferBuilder.computeBaseAmount(
-                instrumentAmount = 150L,
-                fromBalance = 0L,
-                fromInstrumentBalance = 0L
-            )
-        )
-    }
-
-    @Test
-    fun `computeBaseAmount is null when the from account's prior instrument balance is negative`() {
-        assertNull(
-            InstrumentTransferBuilder.computeBaseAmount(
-                instrumentAmount = 150L,
-                fromBalance = 0L,
-                fromInstrumentBalance = -1000L
-            )
-        )
     }
 
     @Test
