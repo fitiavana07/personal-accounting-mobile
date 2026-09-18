@@ -33,9 +33,15 @@
     <string name="tab_mode_classic">Classic</string>
     <string name="tab_mode_simple_transfer">Simple Transfer</string>
     <string name="tab_mode_instrument_transfer">Instrument Transfer</string>
+    <string name="tab_mode_instrument_income">Instrument Income</string>
     <string name="error_transfer_accounts_required">Select both the From and To accounts</string>
     <string name="error_instrument_transfer_no_rate">The From account has no prior balance to transfer from</string>
     <string name="error_instrument_transfer_amount_required">Enter an amount</string>
+    <string name="label_instrument_income_asset">Asset account</string>
+    <string name="label_instrument_income_revenue">Revenue account</string>
+    <string name="error_instrument_income_accounts_required">Select both the asset and revenue accounts</string>
+    <string name="error_instrument_income_amount_required">Enter an amount</string>
+    <string name="error_instrument_income_no_rate">The asset account has no prior balance to establish a rate</string>
     <string name="app_name">Accounting</string>
     <string name="app_name_with_version">Accounting v%1$s</string>
     <string name="balances_recalculated">Balances recalculated</string>
