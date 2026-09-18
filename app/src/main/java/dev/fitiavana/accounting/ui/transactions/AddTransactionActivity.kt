@@ -332,7 +332,12 @@ class AddTransactionActivity : AppCompatActivity() {
         when (mode) {
             Mode.CLASSIC -> collectClassicEntries()
             Mode.SIMPLE_TRANSFER -> transferController.collectEntries()
-            Mode.INSTRUMENT_TRANSFER -> instrumentTransferController.collectEntries()
+            Mode.INSTRUMENT_TRANSFER ->
+                if (::instrumentTransferController.isInitialized) {
+                    instrumentTransferController.collectEntries()
+                } else {
+                    null
+                }
         }
 
     private fun collectClassicEntries(): List<TransactionValidator.EntryData>? {
