@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Release script: bumps the patch version, commits, tags, builds a signed
-# release APK, and (after confirmation) pushes branch + tag to origin.
+# release APK, and pushes branch + tag to origin.
 #
 # Signing credentials must be provided via environment variables:
 #   ANDROID_KEYSTORE_PATH
@@ -90,17 +90,11 @@ cp "$BUILT_APK" "$OUTPUT_APK"
 
 echo "Signed APK: $OUTPUT_APK"
 
-# --- Confirm before pushing ------------------------------------------------
+# --- Push --------------------------------------------------------------
 
-read -r -p "Push branch '$CURRENT_BRANCH' and tag 'v$NEW_VERSION_NAME' to origin? [y/N] " CONFIRM
-if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
-  git push origin "$CURRENT_BRANCH"
-  git push origin "v$NEW_VERSION_NAME"
-  echo "Pushed branch and tag to origin."
-else
-  echo "Skipped push. Run manually when ready:"
-  echo "  git push origin $CURRENT_BRANCH"
-  echo "  git push origin v$NEW_VERSION_NAME"
-fi
+echo "Pushing branch '$CURRENT_BRANCH' and tag 'v$NEW_VERSION_NAME' to origin..."
+git push origin "$CURRENT_BRANCH"
+git push origin "v$NEW_VERSION_NAME"
+echo "Pushed branch and tag to origin."
 
 echo "Release $NEW_VERSION_NAME complete."
