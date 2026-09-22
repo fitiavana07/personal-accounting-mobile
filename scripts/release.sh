@@ -3,11 +3,10 @@
 # Release script: bumps the patch version, commits, tags, builds a signed
 # release APK, and pushes branch + tag to origin.
 #
-# Signing credentials must be provided via environment variables:
-#   ANDROID_KEYSTORE_PATH
-#   ANDROID_KEYSTORE_PASSWORD
-#   ANDROID_KEY_ALIAS
-#   ANDROID_KEY_PASSWORD
+# Signing credentials are read only from local.properties (see
+# local.properties for the expected keys: android.keystore.path,
+# android.keystore.password, android.key.alias, android.key.password).
+# There is no environment variable fallback.
 #
 # Usage: scripts/release.sh
 
@@ -18,12 +17,32 @@ cd "$REPO_ROOT"
 
 GRADLE_FILE="app/build.gradle.kts"
 RELEASES_DIR="releases"
+LOCAL_PROPERTIES="local.properties"
 
 # --- Preconditions -----------------------------------------------------
 
+read_local_property() {
+  local key="$1"
+  if [[ -f "$LOCAL_PROPERTIES" ]]; then
+    sed -n -E "s/^${key}=(.*)$/\1/p" "$LOCAL_PROPERTIES" | tail -n1
+  fi
+}
+
+ANDROID_KEYSTORE_PATH="$(read_local_property 'android\.keystore\.path')"
+ANDROID_KEYSTORE_PASSWORD="$(read_local_property 'android\.keystore\.password')"
+ANDROID_KEY_ALIAS="$(read_local_property 'android\.key\.alias')"
+ANDROID_KEY_PASSWORD="$(read_local_property 'android\.key\.password')"
+
+declare -A LOCAL_PROPERTY_KEYS=(
+  [ANDROID_KEYSTORE_PATH]="android.keystore.path"
+  [ANDROID_KEYSTORE_PASSWORD]="android.keystore.password"
+  [ANDROID_KEY_ALIAS]="android.key.alias"
+  [ANDROID_KEY_PASSWORD]="android.key.password"
+)
+
 for var in ANDROID_KEYSTORE_PATH ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
   if [[ -z "${!var:-}" ]]; then
-    echo "Error: $var is not set. Export all signing env vars before running this script." >&2
+    echo "Error: ${LOCAL_PROPERTY_KEYS[$var]} is not set in local.properties. Set it there before running this script." >&2
     exit 1
   fi
 done

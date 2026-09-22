@@ -1,7 +1,20 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.ksp)
 }
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
+}
+
+// Signing credentials come only from local.properties — no env var fallback.
+fun signingProperty(localKey: String): String? =
+    localProperties.getProperty(localKey)?.takeIf { it.isNotBlank() }
 
 android {
     namespace = "dev.fitiavana.accounting"
@@ -29,10 +42,10 @@ android {
 
     signingConfigs {
         create("release") {
-            val storeFilePath = System.getenv("ANDROID_KEYSTORE_PATH")
-            val storePwd = System.getenv("ANDROID_KEYSTORE_PASSWORD")
-            val keyAliasEnv = System.getenv("ANDROID_KEY_ALIAS")
-            val keyPwd = System.getenv("ANDROID_KEY_PASSWORD")
+            val storeFilePath = signingProperty("android.keystore.path")
+            val storePwd = signingProperty("android.keystore.password")
+            val keyAliasEnv = signingProperty("android.key.alias")
+            val keyPwd = signingProperty("android.key.password")
             if (storeFilePath != null && storePwd != null && keyAliasEnv != null && keyPwd != null) {
                 storeFile = file(storeFilePath)
                 storePassword = storePwd
