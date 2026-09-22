@@ -16,12 +16,6 @@ class EmergencyFundAdapter(
     private val onEditClick: () -> Unit
 ) : RecyclerView.Adapter<EmergencyFundAdapter.ViewHolder>() {
 
-    companion object {
-        /** Color for a 6-month emergency fund percent: reached (>=100) vs. still in progress. */
-        fun percentColorRes(percent: Int): Int =
-            if (percent >= 100) R.color.gain else R.color.emergency_fund_in_progress
-    }
-
     private var info = EmergencyFundInfo(0, 0, 0, 100, 0)
 
     fun submit(info: EmergencyFundInfo) {
@@ -74,24 +68,24 @@ class EmergencyFundAdapter(
                 UiUtils.formatAmountAr(context, info.sixMonthTarget)
 
             percentView.text = context.getString(
-                R.string.home_percent_reached,
+                R.string.home_progress_percent_reached,
                 UiUtils.formatAmountAr(context, info.sixMonthReached),
                 info.sixMonthPercent
             )
             percentView.setTextColor(
                 ContextCompat.getColor(
                     context,
-                    percentColorRes(info.sixMonthPercent)
+                    UiUtils.progressPercentColorRes(info.sixMonthPercent)
                 )
             )
 
             progress.progress = info.sixMonthPercent
 
             remainingView.text = if (info.sixMonthRemaining <= 0) {
-                context.getString(R.string.home_emergency_fund_goal_reached)
+                context.getString(R.string.home_progress_goal_reached)
             } else {
                 context.getString(
-                    R.string.home_emergency_fund_remaining,
+                    R.string.home_progress_remaining,
                     UiUtils.formatAmountAr(context, info.sixMonthRemaining)
                 )
             }

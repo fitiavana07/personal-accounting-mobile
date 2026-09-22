@@ -13,11 +13,14 @@ import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
+import dev.fitiavana.accounting.ui.reports.ReportPeriodSelector
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 class HomeViewModelTest {
@@ -196,5 +199,64 @@ class HomeViewModelTest {
 
         org.mockito.kotlin.verify(settingsRepository)
             .setMonthlyLivingExpenses(250_000)
+    }
+
+    @Test
+    fun `computeMonthlyNetIncomesSync computes net income for each of the last 6 full months`() {
+        val viewModel = viewModel()
+        val now = System.currentTimeMillis()
+        val earliest = now - 400L * 24 * 60 * 60 * 1000
+
+        whenever(accountRepository.getAllSync()).thenReturn(
+            listOf(account("revenue", "Salary", type = "revenue", liquidityLevel = null))
+        )
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(earliest to now)
+        whenever(balanceRepository.computeBalancesBetween(any(), any()))
+            .thenReturn(mapOf("revenue" to 100_000L))
+
+        val result = viewModel.computeMonthlyNetIncomesSync()
+
+        val expectedMonths = ReportPeriodSelector.lastNFullMonths(now, 6, earliest)
+        assertEquals(List(expectedMonths.size) { 100_000L }, result)
+        expectedMonths.forEach { ym ->
+            verify(balanceRepository).computeBalancesBetween(
+                ReportPeriodSelector.startOfMonthMillis(ym.year, ym.month),
+                ReportPeriodSelector.endOfMonthMillis(ym.year, ym.month)
+            )
+        }
+    }
+
+    @Test
+    fun `incomeToExpenses combines monthly net incomes and monthly expenses`() {
+        val viewModel = viewModel()
+        settings.value = AppSettings(monthlyLivingExpenses = 200_000)
+        viewModel.incomeToExpenses.observeForever {}
+
+        whenever(accountRepository.getAllSync()).thenReturn(emptyList())
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(null)
+        viewModel.refreshMonthlyNetIncomesSync()
+
+        assertEquals(200_000L, viewModel.incomeToExpenses.value!!.monthlyExpenses)
+        assertEquals(0L, viewModel.incomeToExpenses.value!!.averageMonthlyIncome)
+        assertEquals(0, viewModel.incomeToExpenses.value!!.percent)
+    }
+
+    @Test
+    fun `metrics includes incomeToExpensesPercent once monthly net incomes are computed`() {
+        val viewModel = viewModel()
+        settings.value = AppSettings(monthlyLivingExpenses = 100_000)
+        val now = System.currentTimeMillis()
+        val earliest = now - 400L * 24 * 60 * 60 * 1000
+
+        whenever(accountRepository.getAllSync()).thenReturn(
+            listOf(account("revenue", "Salary", type = "revenue", liquidityLevel = null))
+        )
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(earliest to now)
+        whenever(balanceRepository.computeBalancesBetween(any(), any()))
+            .thenReturn(mapOf("revenue" to 125_000L))
+
+        viewModel.refreshMonthlyNetIncomesSync()
+
+        assertEquals(125, viewModel.metrics.value!!.incomeToExpensesPercent)
     }
 }

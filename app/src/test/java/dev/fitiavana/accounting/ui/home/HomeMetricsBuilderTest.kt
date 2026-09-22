@@ -44,7 +44,8 @@ class HomeMetricsBuilderTest {
                 emergencyFundPercent = 40,
                 cashToEquityPercent = 29,
                 monthlyExpenses = 100_000,
-                cashRunwayMonths = 2.0
+                cashRunwayMonths = 2.0,
+                incomeToExpensesPercent = 0
             ),
             result
         )
@@ -160,5 +161,60 @@ class HomeMetricsBuilderTest {
         )
 
         assertEquals(0.0, result.cashRunwayMonths, 0.0001)
+    }
+
+    @Test
+    fun `incomeToExpensesPercent is average monthly net income divided by monthly expenses`() {
+        val result = HomeMetricsBuilder.build(
+            emptyList(),
+            emptyList(),
+            emergencyFundPercent = 0,
+            monthlyExpenses = 200_000,
+            monthlyNetIncomes = listOf(100_000, 150_000, 125_000)
+        )
+
+        assertEquals(63, result.incomeToExpensesPercent)
+    }
+
+    @Test
+    fun `incomeToExpensesPercent is not clamped and can exceed 100 or go negative`() {
+        val over = HomeMetricsBuilder.build(
+            emptyList(),
+            emptyList(),
+            emergencyFundPercent = 0,
+            monthlyExpenses = 100_000,
+            monthlyNetIncomes = listOf(300_000)
+        )
+        assertEquals(300, over.incomeToExpensesPercent)
+
+        val loss = HomeMetricsBuilder.build(
+            emptyList(),
+            emptyList(),
+            emergencyFundPercent = 0,
+            monthlyExpenses = 100_000,
+            monthlyNetIncomes = listOf(-50_000)
+        )
+        assertEquals(-50, loss.incomeToExpensesPercent)
+    }
+
+    @Test
+    fun `incomeToExpensesPercent is zero when there are no monthly net incomes or monthly expenses is zero`() {
+        val noIncomes = HomeMetricsBuilder.build(
+            emptyList(),
+            emptyList(),
+            emergencyFundPercent = 0,
+            monthlyExpenses = 200_000,
+            monthlyNetIncomes = emptyList()
+        )
+        assertEquals(0, noIncomes.incomeToExpensesPercent)
+
+        val noExpenses = HomeMetricsBuilder.build(
+            emptyList(),
+            emptyList(),
+            emergencyFundPercent = 0,
+            monthlyExpenses = 0,
+            monthlyNetIncomes = listOf(100_000)
+        )
+        assertEquals(0, noExpenses.incomeToExpensesPercent)
     }
 }

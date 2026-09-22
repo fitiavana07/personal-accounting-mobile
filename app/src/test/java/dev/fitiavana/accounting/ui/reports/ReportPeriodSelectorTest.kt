@@ -232,4 +232,116 @@ class ReportPeriodSelectorTest {
         assertEquals("January", ReportPeriodSelector.monthName(Calendar.JANUARY))
         assertEquals("December", ReportPeriodSelector.monthName(Calendar.DECEMBER))
     }
+
+    // --- isLastDayOfMonth ---
+
+    @Test
+    fun `isLastDayOfMonth is true on the last day of a 31-day month`() {
+        val ms = millisFor(2026, Calendar.MARCH, 31)
+        assert(ReportPeriodSelector.isLastDayOfMonth(ms))
+    }
+
+    @Test
+    fun `isLastDayOfMonth is false mid-month`() {
+        val ms = millisFor(2026, Calendar.MARCH, 15)
+        assert(!ReportPeriodSelector.isLastDayOfMonth(ms))
+    }
+
+    @Test
+    fun `isLastDayOfMonth is true on February 28 in a non-leap year`() {
+        val ms = millisFor(2026, Calendar.FEBRUARY, 28)
+        assert(ReportPeriodSelector.isLastDayOfMonth(ms))
+    }
+
+    @Test
+    fun `isLastDayOfMonth is true on February 29 in a leap year`() {
+        val ms = millisFor(2024, Calendar.FEBRUARY, 29)
+        assert(ReportPeriodSelector.isLastDayOfMonth(ms))
+    }
+
+    @Test
+    fun `isLastDayOfMonth is false on February 28 in a leap year`() {
+        val ms = millisFor(2024, Calendar.FEBRUARY, 28)
+        assert(!ReportPeriodSelector.isLastDayOfMonth(ms))
+    }
+
+    // --- lastNFullMonths ---
+
+    @Test
+    fun `lastNFullMonths excludes the current month when today is not month-end`() {
+        val now = millisFor(2026, Calendar.SEPTEMBER, 22)
+        val earliest = millisFor(2026, Calendar.JANUARY, 10)
+
+        val result = ReportPeriodSelector.lastNFullMonths(now, 6, earliest)
+
+        assertEquals(
+            listOf(
+                YearMonth(2026, Calendar.MARCH),
+                YearMonth(2026, Calendar.APRIL),
+                YearMonth(2026, Calendar.MAY),
+                YearMonth(2026, Calendar.JUNE),
+                YearMonth(2026, Calendar.JULY),
+                YearMonth(2026, Calendar.AUGUST)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `lastNFullMonths includes the current month when today is the last day of the month`() {
+        val now = millisFor(2026, Calendar.SEPTEMBER, 30)
+        val earliest = millisFor(2026, Calendar.JANUARY, 10)
+
+        val result = ReportPeriodSelector.lastNFullMonths(now, 6, earliest)
+
+        assertEquals(
+            listOf(
+                YearMonth(2026, Calendar.APRIL),
+                YearMonth(2026, Calendar.MAY),
+                YearMonth(2026, Calendar.JUNE),
+                YearMonth(2026, Calendar.JULY),
+                YearMonth(2026, Calendar.AUGUST),
+                YearMonth(2026, Calendar.SEPTEMBER)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `lastNFullMonths clips to the earliest transaction month when history is shorter than n`() {
+        // Earliest transaction in January, "now" is mid-April: full months available are
+        // Jan/Feb/Mar (April is excluded as not-yet-full).
+        val now = millisFor(2026, Calendar.APRIL, 22)
+        val earliest = millisFor(2026, Calendar.JANUARY, 10)
+
+        val result = ReportPeriodSelector.lastNFullMonths(now, 6, earliest)
+
+        assertEquals(
+            listOf(
+                YearMonth(2026, Calendar.JANUARY),
+                YearMonth(2026, Calendar.FEBRUARY),
+                YearMonth(2026, Calendar.MARCH)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `lastNFullMonths returns an empty list when there are no transactions`() {
+        val now = millisFor(2026, Calendar.SEPTEMBER, 22)
+
+        val result = ReportPeriodSelector.lastNFullMonths(now, 6, null)
+
+        assert(result.isEmpty())
+    }
+
+    @Test
+    fun `lastNFullMonths returns an empty list when only the excluded current month has transactions`() {
+        val now = millisFor(2026, Calendar.SEPTEMBER, 22)
+        val earliest = millisFor(2026, Calendar.SEPTEMBER, 5)
+
+        val result = ReportPeriodSelector.lastNFullMonths(now, 6, earliest)
+
+        assert(result.isEmpty())
+    }
 }

@@ -26,6 +26,7 @@ class HomeFragment : Fragment() {
     private lateinit var balanceSheetAdapter: ReportAdapter
     private lateinit var pieChartsAdapter: HomePieChartsAdapter
     private lateinit var emergencyFundAdapter: EmergencyFundAdapter
+    private lateinit var incomeToExpensesAdapter: IncomeToExpensesAdapter
     private lateinit var noteAdapter: HomeNoteAdapter
     private lateinit var swipeRefresh: SwipeRefreshLayout
 
@@ -67,6 +68,7 @@ class HomeFragment : Fragment() {
         pieChartsAdapter = HomePieChartsAdapter()
         emergencyFundAdapter =
             EmergencyFundAdapter { showEditMonthlyExpensesDialog() }
+        incomeToExpensesAdapter = IncomeToExpensesAdapter()
         noteAdapter = HomeNoteAdapter()
         val recycler = view.findViewById<RecyclerView>(R.id.recycler_home)
         recycler.layoutManager = LinearLayoutManager(requireContext())
@@ -74,6 +76,7 @@ class HomeFragment : Fragment() {
             ConcatAdapter(
                 metricsAdapter,
                 emergencyFundAdapter,
+                incomeToExpensesAdapter,
                 pieChartsAdapter,
                 balanceSheetAdapter,
                 noteAdapter,
@@ -112,6 +115,10 @@ class HomeFragment : Fragment() {
 
         viewModel.emergencyFund.observe(viewLifecycleOwner) { info ->
             emergencyFundAdapter.submit(info)
+        }
+
+        viewModel.incomeToExpenses.observe(viewLifecycleOwner) { info ->
+            incomeToExpensesAdapter.submit(info)
         }
 
         viewModel.metrics.observe(viewLifecycleOwner) { metrics ->

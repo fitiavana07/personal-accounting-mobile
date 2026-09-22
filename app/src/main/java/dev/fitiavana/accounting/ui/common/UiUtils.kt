@@ -53,5 +53,9 @@ class UiUtils {
                 R.string.amount_ar,
                 TransactionDisplay.formatAmount(amount)
             )
+
+        /** Color for a progress-bar percent: goal reached (>=100) vs. still in progress. */
+        fun progressPercentColorRes(percent: Int): Int =
+            if (percent >= 100) R.color.gain else R.color.emergency_fund_in_progress
     }
 }

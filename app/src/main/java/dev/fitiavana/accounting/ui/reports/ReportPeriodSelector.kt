@@ -154,4 +154,45 @@ object ReportPeriodSelector {
         val cal = Calendar.getInstance().apply { set(Calendar.MONTH, month) }
         return monthNameFormat.format(cal.time)
     }
+
+    /**
+     * Whether [dateMs] falls on the last calendar day of its month.
+     */
+    fun isLastDayOfMonth(dateMs: Long): Boolean {
+        val cal = Calendar.getInstance().apply { timeInMillis = dateMs }
+        return cal.get(Calendar.DAY_OF_MONTH) ==
+            cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+    }
+
+    /**
+     * Up to [n] consecutive full calendar months ending at the last full month before/at
+     * [nowMs] (the current month counts as full only when [nowMs] is its last day; otherwise
+     * the window ends the month before), in chronological order (oldest first), never starting
+     * before the calendar month containing [earliestTransactionMs]. Returns an empty list when
+     * [earliestTransactionMs] is null or falls entirely after the window.
+     */
+    fun lastNFullMonths(nowMs: Long, n: Int, earliestTransactionMs: Long?): List<YearMonth> {
+        if (earliestTransactionMs == null) return emptyList()
+
+        val now = Calendar.getInstance().apply { timeInMillis = nowMs }
+        val lastFullMonth = Calendar.getInstance().apply {
+            set(now.get(Calendar.YEAR), now.get(Calendar.MONTH), 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (!isLastDayOfMonth(nowMs)) add(Calendar.MONTH, -1)
+        }
+
+        val earliest = Calendar.getInstance().apply { timeInMillis = earliestTransactionMs }
+        val earliestYearMonth = earliest.get(Calendar.YEAR) * 12 + earliest.get(Calendar.MONTH)
+        val lastFullYearMonth =
+            lastFullMonth.get(Calendar.YEAR) * 12 + lastFullMonth.get(Calendar.MONTH)
+        if (lastFullYearMonth < earliestYearMonth) return emptyList()
+
+        val startYearMonth = maxOf(earliestYearMonth, lastFullYearMonth - (n - 1))
+
+        val months = mutableListOf<YearMonth>()
+        for (ym in startYearMonth..lastFullYearMonth) {
+            months += YearMonth(ym / 12, ym % 12)
+        }
+        return months
+    }
 }

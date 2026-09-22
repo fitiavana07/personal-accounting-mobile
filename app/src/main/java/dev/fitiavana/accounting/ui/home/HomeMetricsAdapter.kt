@@ -19,7 +19,8 @@ class HomeMetricsAdapter :
         emergencyFundPercent = 100,
         cashToEquityPercent = 0,
         monthlyExpenses = 0,
-        cashRunwayMonths = 0.0
+        cashRunwayMonths = 0.0,
+        incomeToExpensesPercent = 0
     )
 
     fun submit(metrics: HomeMetrics) {
@@ -51,6 +52,8 @@ class HomeMetricsAdapter :
         private val cashView = addRow(R.string.home_metric_cash_label)
         private val cashToEquityView =
             addRow(R.string.home_metric_cash_to_equity_label)
+        private val incomeToExpensesView =
+            addRow(R.string.home_metric_income_to_expenses_label)
         private val monthlyExpenseView =
             addRow(R.string.home_metric_monthly_expense_label)
         private val emergencyFundView =
@@ -84,6 +87,10 @@ class HomeMetricsAdapter :
             cashToEquityView.text = context.getString(
                 R.string.home_metric_percent_format,
                 metrics.cashToEquityPercent
+            )
+            incomeToExpensesView.text = context.getString(
+                R.string.home_metric_percent_format,
+                metrics.incomeToExpensesPercent
             )
             monthlyExpenseView.text = context.getString(
                 R.string.amount_ar,
