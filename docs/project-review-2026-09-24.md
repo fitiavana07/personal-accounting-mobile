@@ -38,8 +38,9 @@ below have already been fixed:
   `.dev` (the code) was the established convention, not `.debug`. Fixed by
   updating `CLAUDE.md`'s "Build variants" line to say `.dev`.
 
-Remaining open items: Low #7. See the updated recommendation list at the
-bottom for current status per item.
+All recommendations from the original review have since been fixed or
+closed as superseded. See the updated recommendation list at the bottom
+for current status per item.
 
 ## Overview
 
@@ -171,15 +172,12 @@ patterns:
   `coingeckoId` upstream (`eligible`); safe, but a `filterNotNull`-style
   restructure or a comment noting the invariant would make it locally
   obvious without needing to trace `eligible`'s construction.
-- `EditInstrumentActivity.kt:81,154,156,180` and
-  `EditAccountActivity.kt:326,341` — `instrumentCode!!` / `accountId!!`
-  reading an `Intent` extra stashed as a nullable field. These fire only
-  after a null-check earlier in the same method in most cases, but because
-  the check and the `!!` are in different methods/branches, a future edit
-  could easily introduce a crash. **Low priority**: convert the nullable
-  `var instrumentCode: String? = null` field pattern to a
-  `lateinit var instrumentCode: String` set once in `onCreate` from the
-  `Intent`, eliminating the need for `!!` at each use site.
+- `EditInstrumentActivity.kt` / `EditAccountActivity.kt` —
+  `instrumentCode!!` / `accountId!!` reading an `Intent` extra stashed as a
+  nullable field, in methods/branches separate from the null-check. **✅
+  Fixed** — each `!!` site now captures the field into a local
+  `val ... ?: return true` first, smart-casting to non-null for the rest of
+  that block/closure.
 
 **No `TODO`/`FIXME` markers anywhere** — either the project has no known
 debt markers, or debt isn't being tracked inline. Given the "no
@@ -317,7 +315,18 @@ APIs.
    animated transitions, not tab-based. The recommendation was based on
    tab-switching assumptions and is less relevant to the current
    architecture. — **Closed as superseded.**
-7. Replace the handful of `Intent`-extra `!!` usages in
+7. ~~Replace the handful of `Intent`-extra `!!` usages in
    `EditInstrumentActivity.kt` / `EditAccountActivity.kt` with `lateinit
    var` fields set once in `onCreate`, removing the need for `!!` at each
-   read site. — **Open.**
+   read site.~~ — **✅ Fixed**, with a pragmatic adjustment: the nullable
+   `instrumentCode`/`accountId` fields double as the add-vs-edit mode
+   discriminator (`if (instrumentCode != null)` / `if (accountId != null)`
+   throughout both files), so replacing them outright with `lateinit var`
+   would have required a separate boolean flag instead. Kept the nullable
+   field, and at each `!!` call site captured it into a local
+   `val code = instrumentCode ?: return true` / `val id = accountId ?:
+   return true` (the same "extract to local val" idiom the surrounding code
+   already used in `loadAccountForEditingIfNeeded`/`observeInstruments`),
+   which smart-casts to non-null for the rest of that block/closure —
+   eliminating all 4 `!!` in `EditInstrumentActivity.kt` and both in
+   `EditAccountActivity.kt` without changing the add/edit mode logic.

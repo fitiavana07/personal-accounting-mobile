@@ -321,9 +321,10 @@ class EditAccountActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_delete_account -> {
+                val id = accountId ?: return true
                 Thread {
                     val hasTransactions =
-                        viewModel.hasTransactions(accountId!!)
+                        viewModel.hasTransactions(id)
                     runOnUiThread {
                         if (hasTransactions) {
                             AlertDialog.Builder(this)
@@ -338,7 +339,7 @@ class EditAccountActivity : AppCompatActivity() {
                                 .setPositiveButton(R.string.action_delete) { _, _ ->
                                     Thread {
                                         val account =
-                                            viewModel.getAccount(accountId!!)
+                                            viewModel.getAccount(id)
                                         if (account != null) viewModel.deleteAccount(
                                             account
                                         )

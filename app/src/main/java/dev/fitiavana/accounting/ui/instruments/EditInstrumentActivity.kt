@@ -72,13 +72,14 @@ class EditInstrumentActivity : AppCompatActivity() {
         typeSpinner.adapter = spinnerAdapter
 
         instrumentCode = intent.getStringExtra(EXTRA_INSTRUMENT_CODE)
+        val code = instrumentCode
 
-        if (instrumentCode != null) {
+        if (code != null) {
             title = getString(R.string.title_edit_instrument)
             codeInput.isEnabled = false
             decimalPlacesInput.isEnabled = false
             Thread {
-                val instrument = viewModel.getInstrument(instrumentCode!!)
+                val instrument = viewModel.getInstrument(code)
                 runOnUiThread {
                     if (instrument != null) {
                         codeInput.setText(instrument.code)
@@ -150,10 +151,11 @@ class EditInstrumentActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_delete_instrument -> {
+                val code = instrumentCode ?: return true
                 Thread {
-                    val hasAccounts = viewModel.hasAccounts(instrumentCode!!)
+                    val hasAccounts = viewModel.hasAccounts(code)
                     val hasIntermediaryAccounts =
-                        viewModel.hasIntermediaryAccounts(instrumentCode!!)
+                        viewModel.hasIntermediaryAccounts(code)
                     runOnUiThread {
                         if (hasAccounts || hasIntermediaryAccounts) {
                             val message = when {
@@ -176,9 +178,7 @@ class EditInstrumentActivity : AppCompatActivity() {
                                 .setPositiveButton(R.string.action_delete) { _, _ ->
                                     Thread {
                                         val instrument =
-                                            viewModel.getInstrument(
-                                                instrumentCode!!
-                                            )
+                                            viewModel.getInstrument(code)
                                         if (instrument != null) viewModel.deleteInstrument(
                                             instrument
                                         )
