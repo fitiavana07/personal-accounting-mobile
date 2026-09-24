@@ -19,7 +19,7 @@ above API 19 without adding appropriate compatibility notes or checks.
 - **Language**: Kotlin.
 - **Build system**: Gradle, with Kotlin DSL `build.gradle.kts`
 
-Build variants: `debug` (applicationIdSuffix `.debug`, includes clear-data
+Build variants: `debug` (applicationIdSuffix `.dev`, includes clear-data
 menu) and `release`. Both can be installed side-by-side.
 
 The package is dev.fitiavana.accounting.

@@ -4,7 +4,7 @@ Full-codebase review covering architecture, code structure, code style,
 testing, and build/config. ~10,250 LOC across ~130 main-source files,
 ~45 test files, API 19 target.
 
-**Status update (2026-09-24, later same day):** two of the recommendations
+**Status update (2026-09-24, later same day):** three of the recommendations
 below have already been fixed:
 - Medium #2 / Low #4 (`CLAUDE.md` package-structure doc) — fixed in
   `a2f1bb5` (`docs: fix package-structure section to match
@@ -17,10 +17,14 @@ below have already been fixed:
   `CLAUDE.md` was also updated (`828107b`) to require a Robolectric test
   for any new/changed DAO query with `WHERE`/`JOIN`/date-range/aggregation
   logic going forward.
+- Low #5 (`applicationIdSuffix` doc/code mismatch) — `README.md` already
+  documented the debug package as `dev.fitiavana.accounting.dev`, confirming
+  `.dev` (the code) was the established convention, not `.debug`. Fixed by
+  updating `CLAUDE.md`'s "Build variants" line to say `.dev`.
 
 Remaining open items: Medium #1 (controller duplication), Medium #3
 (`Thread`/`runOnUiThread` duplication in `AddTransactionActivity`), and
-Low #5–7. See the updated recommendation list at the bottom for current
+Low #6–7. See the updated recommendation list at the bottom for current
 status per item.
 
 ## Overview
@@ -290,8 +294,9 @@ APIs.
    `features/<name>/` (entity + DAO + repository colocated). Fix the doc,
    not the code — the actual structure is reasonable.~~ — **✅ Fixed in
    `a2f1bb5`.**
-5. **Fix the `applicationIdSuffix` doc/code mismatch** — `CLAUDE.md` says
-   `.debug`, `app/build.gradle.kts:60` sets `.dev`. — **Open.**
+5. ~~**Fix the `applicationIdSuffix` doc/code mismatch** — `CLAUDE.md` says
+   `.debug`, `app/build.gradle.kts:60` sets `.dev`.~~ — **✅ Fixed** — updated
+   `CLAUDE.md` to say `.dev`, matching the code and `README.md`.
 6. Consider extracting the tab/mode-lifecycle logic out of
    `AddTransactionActivity.kt` (529 lines) as the file continues to grow
    with new transaction modes. — **Open.**
