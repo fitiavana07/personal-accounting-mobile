@@ -49,13 +49,19 @@ app/src/main/java/dev/fitiavana/accounting/db/AppDatabase.kt
 ### Package structure (by feature)
 
 ```
-data/
-  model/       # Room @Entity classes
-  dao/         # Room @Dao interfaces
-  repository/  # Repository classes (only ViewModels talk to these, never UI)
-db/            # AppDatabase singleton
+features/
+  accounts/       # Account (@Entity), AccountDao, AccountRepository, AccountTypes, LiquidityLevels
+  balances/       # AccountBalance (@Entity), AccountBalanceDao, BalanceRepository, BalanceCalculator, GainLossCalculator
+  transactions/   # Transaction/TransactionEntry (@Entity), TransactionDao, TransactionRepository, TransactionWithEntries
+  instruments/    # Instrument (@Entity), InstrumentDao, InstrumentRepository
+  exchangerates/  # ExchangeRateCache (@Entity), ExchangeRateCacheDao, ExchangeRateRepository
+  reports/        # AccountLines, ReportRow, BalanceSheetBuilder, IncomeStatementBuilder, EquityStatementBuilder
+  settings/       # AppSettings (@Entity), AppSettingsDao, AppSettingsRepository
+  backup/         # BackupRepository
+db/               # AppDatabase singleton (Room, migrations)
+network/          # HTTP clients for exchange-rate providers (CoinGecko, Yahoo Finance)
 ui/
-  accounts/      # AccountsFragment, AccountsViewModel, AccountsAdapter
+  accounts/      # AccountsFragment, AccountsViewModel, AccountsAdapter, EditAccountActivity
   balances/      # BalancesFragment, BalancesViewModel, BalancesAdapter
   transactions/  # TransactionsFragment, AddTransactionActivity, TransactionDetailActivity
   instruments/   # InstrumentsFragment, InstrumentsViewModel
@@ -63,6 +69,13 @@ ui/
   home/          # HomeFragment, HomeViewModel (dashboard/metrics)
   common/        # shared presenters/adapters (UiUtils, ReportPresenter, TransactionDisplay)
 ```
+
+Each feature under `features/<name>/` colocates its Room `@Entity`, `@Dao`,
+and `Repository` together (rather than splitting them across `data/model/`,
+`data/dao/`, `data/repository/`) — feature-cohesive, fewer cross-package
+jumps to touch one feature. The `ui/<name>/` layering rule still applies:
+UI code only talks to a `features/<name>/*Repository` through a ViewModel,
+never to a `*Dao` directly.
 
 Account ID is a UUID stored as `String`; generate with
 `UUID.randomUUID().toString()`.
