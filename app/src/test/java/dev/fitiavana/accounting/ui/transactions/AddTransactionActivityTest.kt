@@ -1,6 +1,7 @@
 package dev.fitiavana.accounting.ui.transactions
 
 import android.os.Looper
+import android.view.MotionEvent
 import android.view.View
 import android.widget.EditText
 import dev.fitiavana.accounting.R
@@ -134,6 +135,27 @@ class AddTransactionActivityTest {
 
         assertEquals(true, activity.isFinishing)
         assertEquals(null, ShadowDialog.getLatestDialog())
+    }
+
+    @Test
+    fun `pressing down on a mode card scales it down, releasing restores it and still selects the mode`() {
+        val activity = launch().get()
+        val card = activity.findViewById<View>(R.id.mode_option_classic)
+
+        card.dispatchTouchEvent(
+            MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0f, 0f, 0)
+        )
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(150))
+        assertEquals(0.96f, card.scaleX)
+
+        card.dispatchTouchEvent(
+            MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, 0f, 0f, 0)
+        )
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(150))
+        assertEquals(1f, card.scaleX)
+
+        card.performClick()
+        assertEquals(View.VISIBLE, activity.step2().visibility)
     }
 
     @Test

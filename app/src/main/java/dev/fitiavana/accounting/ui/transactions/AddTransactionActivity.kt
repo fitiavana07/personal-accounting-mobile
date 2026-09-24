@@ -5,7 +5,10 @@ import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -16,6 +19,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.transition.Slide
+import androidx.transition.TransitionManager
+import androidx.transition.TransitionSet
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
@@ -51,6 +57,7 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var editNote: EditText
     private lateinit var entriesContainer: LinearLayout
     private lateinit var textBalanceSummary: TextView
+    private lateinit var rootContainer: ViewGroup
     private lateinit var stepModeSelection: View
     private lateinit var stepTransactionForm: View
     private lateinit var modeClassic: View
@@ -87,6 +94,7 @@ class AddTransactionActivity : AppCompatActivity() {
         editNote = findViewById(R.id.edit_note)
         entriesContainer = findViewById(R.id.entries_container)
         textBalanceSummary = findViewById(R.id.text_balance_summary)
+        rootContainer = findViewById(R.id.add_transaction_root)
         stepModeSelection = findViewById(R.id.step_mode_selection)
         stepTransactionForm = findViewById(R.id.step_transaction_form)
         modeClassic = findViewById(R.id.mode_classic)
@@ -183,18 +191,31 @@ class AddTransactionActivity : AppCompatActivity() {
     }
 
     private fun setupModeSelection() {
-        findViewById<View>(R.id.mode_option_classic).setOnClickListener {
-            selectMode(Mode.CLASSIC)
+        val modeOptions = listOf(
+            R.id.mode_option_classic to Mode.CLASSIC,
+            R.id.mode_option_simple_transfer to Mode.SIMPLE_TRANSFER,
+            R.id.mode_option_instrument_transfer to Mode.INSTRUMENT_TRANSFER,
+            R.id.mode_option_instrument_income to Mode.INSTRUMENT_INCOME
+        )
+        modeOptions.forEach { (viewId, optionMode) ->
+            val optionView = findViewById<View>(viewId)
+            optionView.setOnTouchListener { view, event -> onModeOptionTouched(view, event) }
+            optionView.setOnClickListener { selectMode(optionMode) }
         }
-        findViewById<View>(R.id.mode_option_simple_transfer).setOnClickListener {
-            selectMode(Mode.SIMPLE_TRANSFER)
+    }
+
+    /**
+     * Small press-down/release scale so tapping a mode card feels tactile,
+     * on top of the existing ripple. Returns false so the click still fires.
+     */
+    private fun onModeOptionTouched(view: View, event: MotionEvent): Boolean {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN ->
+                view.animate().scaleX(0.96f).scaleY(0.96f).setDuration(100).start()
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                view.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
         }
-        findViewById<View>(R.id.mode_option_instrument_transfer).setOnClickListener {
-            selectMode(Mode.INSTRUMENT_TRANSFER)
-        }
-        findViewById<View>(R.id.mode_option_instrument_income).setOnClickListener {
-            selectMode(Mode.INSTRUMENT_INCOME)
-        }
+        return false
     }
 
     private fun selectMode(newMode: Mode) {
@@ -202,8 +223,28 @@ class AddTransactionActivity : AppCompatActivity() {
         showStep(Step.TRANSACTION_FORM)
     }
 
+    /**
+     * Slides the entering step in from one edge while the leaving step slides
+     * out the other, instead of a hard visibility swap — mirrors the slide-in
+     * transition already used when opening this screen from the FAB.
+     */
     private fun showStep(newStep: Step) {
         step = newStep
+        val enteringView =
+            if (newStep == Step.TRANSACTION_FORM) stepTransactionForm else stepModeSelection
+        val leavingView =
+            if (newStep == Step.TRANSACTION_FORM) stepModeSelection else stepTransactionForm
+        val enteringEdge = if (newStep == Step.TRANSACTION_FORM) Gravity.END else Gravity.START
+        val leavingEdge = if (newStep == Step.TRANSACTION_FORM) Gravity.START else Gravity.END
+
+        TransitionManager.beginDelayedTransition(
+            rootContainer,
+            TransitionSet()
+                .setOrdering(TransitionSet.ORDERING_TOGETHER)
+                .addTransition(Slide(enteringEdge).addTarget(enteringView))
+                .addTransition(Slide(leavingEdge).addTarget(leavingView))
+                .setDuration(220)
+        )
         stepModeSelection.visibility =
             if (newStep == Step.MODE_SELECTION) View.VISIBLE else View.GONE
         stepTransactionForm.visibility =
