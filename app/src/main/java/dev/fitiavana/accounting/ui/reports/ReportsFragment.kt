@@ -42,7 +42,11 @@ class ReportsFragment : Fragment() {
             labelFor = { it?.let { month -> ReportPeriodSelector.monthName(month) } ?: "Year" },
             onSelected = { viewModel.selectMonth(it) }
         )
-        reportTypeAdapter = PeriodSelectorAdapter(labelFor = { it.label }, onSelected = { viewModel.selectReportType(it) })
+        reportTypeAdapter = PeriodSelectorAdapter(
+            labelFor = { it.label },
+            onSelected = { viewModel.selectReportType(it) },
+            iconFor = { it.iconRes }
+        )
         contentAdapter = ReportAdapter()
         equityAdapter = EquityStatementAdapter()
 

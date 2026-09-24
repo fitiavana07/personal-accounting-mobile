@@ -8,17 +8,33 @@
     android:clickable="true"
     android:focusable="true">
 
-    <TextView
-        android:id="@+id/text_period_selector"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingTop="8dp"
-        android:paddingBottom="6dp"
-        android:textSize="15sp"
-        android:textColor="?android:attr/textColorPrimary" />
+        android:paddingBottom="6dp">
+
+        <ImageView
+            android:id="@+id/image_period_selector"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_marginEnd="6dp"
+            android:visibility="gone"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/text_period_selector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="?android:attr/textColorPrimary" />
+
+    </LinearLayout>
 
     <View
         android:id="@+id/underline_period_selector"

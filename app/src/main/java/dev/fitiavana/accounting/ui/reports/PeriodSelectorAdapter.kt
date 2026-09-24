@@ -4,6 +4,7 @@ import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -11,11 +12,13 @@ import dev.fitiavana.accounting.R
 
 /**
  * Horizontal scrollable selector of values (years, months as 0-11, or report types), used
- * for the year, month and report type rows on the Reports screen.
+ * for the year, month and report type rows on the Reports screen. [iconFor] is optional and
+ * only used by the report type row, which shows a small icon above the label.
  */
 class PeriodSelectorAdapter<T>(
     private val labelFor: (T) -> String,
-    private val onSelected: (T) -> Unit
+    private val onSelected: (T) -> Unit,
+    private val iconFor: ((T) -> Int?)? = null
 ) : RecyclerView.Adapter<PeriodSelectorAdapter<T>.ViewHolder>() {
 
     private var items: List<T> = emptyList()
@@ -40,19 +43,27 @@ class PeriodSelectorAdapter<T>(
     }
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        private val iconView: ImageView = view.findViewById(R.id.image_period_selector)
         private val textView: TextView = view.findViewById(R.id.text_period_selector)
         private val underline: View = view.findViewById(R.id.underline_period_selector)
 
         fun bind(value: T, isSelected: Boolean) {
+            val tint = if (isSelected) {
+                ContextCompat.getColor(textView.context, R.color.gold_500)
+            } else {
+                defaultTextColor(textView.context)
+            }
+            val iconRes = iconFor?.invoke(value)
+            if (iconRes != null) {
+                iconView.setImageResource(iconRes)
+                iconView.imageTintList = android.content.res.ColorStateList.valueOf(tint)
+                iconView.visibility = View.VISIBLE
+            } else {
+                iconView.visibility = View.GONE
+            }
             textView.text = labelFor(value)
             textView.setTypeface(Typeface.DEFAULT, if (isSelected) Typeface.BOLD else Typeface.NORMAL)
-            textView.setTextColor(
-                if (isSelected) {
-                    ContextCompat.getColor(textView.context, R.color.gold_500)
-                } else {
-                    defaultTextColor(textView.context)
-                }
-            )
+            textView.setTextColor(tint)
             underline.setBackgroundColor(
                 if (isSelected) ContextCompat.getColor(underline.context, R.color.gold_500) else 0
             )
