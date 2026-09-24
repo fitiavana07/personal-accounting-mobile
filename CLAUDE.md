@@ -110,6 +110,15 @@ Transaction amounts stored as integers
   write a failing test first, verify it actually fails by running the test
   command, then write the minimum code to make it pass, then refactor. Never
   write production code before there is a test that requires it.
+- **Add a Robolectric test whenever it's relevant**, not just Mockito-mocked
+  coverage: any new or changed `@Dao` interface with a non-trivial `@Query`
+  (`WHERE`/`JOIN`/date-range filter/ordering/aggregation) needs its own
+  `androidx.room.testing`-backed `@RunWith(RobolectricTestRunner::class)`
+  test hitting a real in-memory Room database — a mocked-repository test in
+  a ViewModel test cannot catch a broken `@Query`. The same applies to other
+  Android-framework-dependent code (adapters binding views, anything reading
+  resources/`Context`). See `features/accounts/AccountDaoTest.kt` or
+  `features/transactions/TransactionDaoTest.kt` for the pattern.
 
 ## UI
 
