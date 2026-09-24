@@ -14,9 +14,11 @@ import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.ui.common.ReportAdapter
+import dev.fitiavana.accounting.ui.transactions.AddTransactionActivity
 
 class HomeFragment : Fragment() {
 
@@ -86,6 +88,11 @@ class HomeFragment : Fragment() {
         val emptyView = view.findViewById<TextView>(R.id.text_empty_home)
         swipeRefresh = view.findViewById(R.id.swipe_refresh_home)
         swipeRefresh.setOnRefreshListener { refreshRates() }
+
+        view.findViewById<FloatingActionButton>(R.id.fab_add_transaction)
+            .setOnClickListener {
+                startActivity(AddTransactionActivity.intent(requireContext()))
+            }
 
         fun updateEmptyState() {
             val isEmpty =
