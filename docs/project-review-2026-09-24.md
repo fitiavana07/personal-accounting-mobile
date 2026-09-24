@@ -38,9 +38,8 @@ below have already been fixed:
   `.dev` (the code) was the established convention, not `.debug`. Fixed by
   updating `CLAUDE.md`'s "Build variants" line to say `.dev`.
 
-Remaining open items: Medium #3 (`Thread`/`runOnUiThread` duplication in
-`AddTransactionActivity`), and Low #6–7. See the updated recommendation
-list at the bottom for current status per item.
+Remaining open items: Low #7. See the updated recommendation list at the
+bottom for current status per item.
 
 ## Overview
 
@@ -101,13 +100,13 @@ and controllers take `runInBackground: (() -> Unit) -> Unit` /
 runInBackground = { Thread(it).start() },
 runOnUiThread = { runOnUiThread(it) }
 ```
-This appears **4 times** in `AddTransactionActivity.kt` alone (lines 101-102,
-133-134, 151-152, 267-268). Each call spins up a brand-new `Thread` with no
-pooling/cancellation — for a small local-only app this is low-risk, but it's
-duplicated boilerplate that belongs in one place (e.g. a small
-`BackgroundRunner` object or a constant lambda pair built once in `onCreate`
-and reused). **Medium priority**: extract `private val runners = Pair(...)`
-once per Activity, or a shared `UiUtils.newBackgroundRunner()` helper.
+This appeared **4 times** in `AddTransactionActivity.kt` (controller
+constructions). Each call spins up a brand-new `Thread` with no
+pooling/cancellation — for a small local-only app this is low-risk, but it
+was duplicated boilerplate that belonged in one place.
+
+**✅ Fixed** — extracted `backgroundRunner`/`uiThreadRunner` as instance
+`val`s built once in `AddTransactionActivity`, reused at all 4 call sites.
 
 **Singletons use double-checked locking correctly** —
 `AppDatabase.getInstance` (`db/AppDatabase.kt:265-292`) and
@@ -297,9 +296,11 @@ APIs.
    `AppSettingsDao` — currently only `AccountDao` has one, and hand-written
    `@Query` filters (date ranges, joins) are exactly the kind of thing
    mocked-repository tests can't catch.~~ — **✅ Fixed in `59915a1`.**
-3. **Centralize the repeated `Thread`/`runOnUiThread` lambda pair** in
+3. ~~**Centralize the repeated `Thread`/`runOnUiThread` lambda pair** in
    `AddTransactionActivity.kt` (4 duplicate call sites) into a single
-   reusable helper. — **Open.**
+   reusable helper.~~ — **✅ Fixed** — extracted `backgroundRunner`/
+   `uiThreadRunner` as instance `val`s built once in the class body, reused
+   at all 4 controller-construction call sites.
 
 ### Low
 4. ~~**Update `CLAUDE.md`'s package-structure section** — it still describes

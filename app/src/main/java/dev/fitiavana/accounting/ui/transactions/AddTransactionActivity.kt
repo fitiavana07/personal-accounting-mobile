@@ -71,6 +71,10 @@ class AddTransactionActivity : AppCompatActivity() {
 
     private val entryRows = mutableListOf<EntryRowController>()
 
+    /** Shared background/UI-thread lambda pair, built once instead of at every controller call site. */
+    private val backgroundRunner: (() -> Unit) -> Unit = { Thread(it).start() }
+    private val uiThreadRunner: (() -> Unit) -> Unit = { runOnUiThread(it) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_transaction)
@@ -114,8 +118,8 @@ class AddTransactionActivity : AppCompatActivity() {
             toTextNewBalance = findViewById(R.id.text_transfer_to_new_balance),
             editTransferAmount = editTransferAmount,
             onChanged = { recalculateBalanceSummary() },
-            runInBackground = { Thread(it).start() },
-            runOnUiThread = { runOnUiThread(it) }
+            runInBackground = backgroundRunner,
+            runOnUiThread = uiThreadRunner
         )
 
         setupModeSelection()
@@ -147,8 +151,8 @@ class AddTransactionActivity : AppCompatActivity() {
                     editTransferAmount = findViewById(R.id.edit_instrument_transfer_amount),
                     textAmountBase = findViewById(R.id.text_instrument_transfer_amount_base),
                     onChanged = { recalculateBalanceSummary() },
-                    runInBackground = { Thread(it).start() },
-                    runOnUiThread = { runOnUiThread(it) }
+                    runInBackground = backgroundRunner,
+                    runOnUiThread = uiThreadRunner
                 )
                 instrumentTransferController.populateSpinners(accounts)
                 instrumentIncomeController = InstrumentIncomeController(
@@ -165,8 +169,8 @@ class AddTransactionActivity : AppCompatActivity() {
                     editIncomeAmount = findViewById(R.id.edit_instrument_income_amount),
                     textAmountBase = findViewById(R.id.text_instrument_income_amount_base),
                     onChanged = { recalculateBalanceSummary() },
-                    runInBackground = { Thread(it).start() },
-                    runOnUiThread = { runOnUiThread(it) }
+                    runInBackground = backgroundRunner,
+                    runOnUiThread = uiThreadRunner
                 )
                 instrumentIncomeController.populateSpinners(accounts)
                 recalculateBalanceSummary()
@@ -312,8 +316,8 @@ class AddTransactionActivity : AppCompatActivity() {
             instrumentsMap = instrumentsMap,
             onChanged = { recalculateBalanceSummary() },
             onRemoveClicked = { removeEntryRow(it) },
-            runInBackground = { Thread(it).start() },
-            runOnUiThread = { runOnUiThread(it) }
+            runInBackground = backgroundRunner,
+            runOnUiThread = uiThreadRunner
         )
         entryRows.add(entryRow)
         entriesContainer.addView(entryRow.view)
