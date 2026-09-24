@@ -4,8 +4,6 @@ import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
@@ -28,8 +26,10 @@ import kotlin.math.roundToLong
  * the asset's current instrument balance is typed — the transaction amount
  * is inferred as the difference between the two. See
  * [InstrumentIncomeBuilder] for the pure logic behind account filtering and
- * entry construction, and [InstrumentValueCalculator] for the base-amount
- * rate math (shared with Instrument Transfer).
+ * entry construction, [InstrumentValueCalculator] for the base-amount
+ * rate math (shared with Instrument Transfer), and [AccountSideController]
+ * for the account-selection/balance-loading plumbing shared with
+ * [InstrumentTransferController].
  */
 class InstrumentIncomeController(
     private val context: Context,
@@ -37,36 +37,66 @@ class InstrumentIncomeController(
     private val instrumentsMap: Map<String, Instrument>,
     assetSpinner: Spinner,
     assetTextBalance: TextView,
-    assetTextNewBalance: TextView,
+    private val assetTextNewBalance: TextView,
     revenueSpinner: Spinner,
     revenueTextBalance: TextView,
-    revenueTextNewBalance: TextView,
+    private val revenueTextNewBalance: TextView,
     private val textAmountCode: TextView,
     private val editIncomeAmount: EditText,
     private val textAmountBase: TextView,
     private val onChanged: () -> Unit,
-    private val runInBackground: (() -> Unit) -> Unit,
-    private val runOnUiThread: (() -> Unit) -> Unit
+    runInBackground: (() -> Unit) -> Unit,
+    runOnUiThread: (() -> Unit) -> Unit
 ) {
 
-    /**
-     * One side of an income entry, with its current and projected balances.
-     * The asset side is debited and the revenue side credited by the amount
-     * entered.
-     */
-    private class Side(
-        val spinner: Spinner,
-        val textBalance: TextView,
-        val textNewBalance: TextView,
-        val isDebit: Boolean,
-        var accounts: List<Account> = emptyList(),
-        var account: Account? = null,
-        var balance: Long = 0L,
-        var instrumentBalance: Long = 0L
+    private val getBalance: (String) -> Pair<Long, Long>? = { id ->
+        viewModel.getBalance(id)?.let { it.balance to it.instrumentBalance }
+    }
+
+    private val asset: AccountSideController = AccountSideController(
+        context = context,
+        instrumentsMap = instrumentsMap,
+        getBalance = getBalance,
+        spinner = assetSpinner,
+        textBalance = assetTextBalance,
+        isDebit = true,
+        onAccountSelected = { account ->
+            textAmountCode.text = account?.instrumentCode?.let { instrumentsMap[it] }?.code ?: ""
+            if (account == null) {
+                assetTextNewBalance.visibility = View.GONE
+                updateAmountBasePreview()
+            }
+        },
+        onBalanceLoaded = {
+            updateNewBalances(asset)
+            updateNewBalances(revenue)
+            updateAmountBasePreview()
+        },
+        runInBackground = runInBackground,
+        runOnUiThread = runOnUiThread
     )
 
-    private val asset = Side(assetSpinner, assetTextBalance, assetTextNewBalance, isDebit = true)
-    private val revenue = Side(revenueSpinner, revenueTextBalance, revenueTextNewBalance, isDebit = false)
+    private val revenue: AccountSideController = AccountSideController(
+        context = context,
+        instrumentsMap = instrumentsMap,
+        getBalance = getBalance,
+        spinner = revenueSpinner,
+        textBalance = revenueTextBalance,
+        isDebit = false,
+        onAccountSelected = { account ->
+            if (account == null) {
+                revenueTextNewBalance.visibility = View.GONE
+                updateAmountBasePreview()
+            }
+        },
+        onBalanceLoaded = {
+            updateNewBalances(asset)
+            updateNewBalances(revenue)
+            updateAmountBasePreview()
+        },
+        runInBackground = runInBackground,
+        runOnUiThread = runOnUiThread
+    )
 
     init {
         editIncomeAmount.addTextChangedListener(object : TextWatcher {
@@ -79,76 +109,6 @@ class InstrumentIncomeController(
                 onChanged()
             }
         })
-        setupSide(asset)
-        setupSide(revenue)
-    }
-
-    private fun setupSide(side: Side) {
-        side.spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>?,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                val account = selectedAccount(side)
-                side.account = account
-                side.balance = 0L
-                side.instrumentBalance = 0L
-                if (side === asset) {
-                    textAmountCode.text = account?.instrumentCode?.let { instrumentsMap[it] }?.code ?: ""
-                }
-                if (account == null) {
-                    hideBalances(side)
-                    updateAmountBasePreview()
-                    return
-                }
-                loadBalance(side, account)
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                side.account = null
-                hideBalances(side)
-                if (side === asset) {
-                    textAmountCode.text = ""
-                }
-                updateAmountBasePreview()
-            }
-        }
-    }
-
-    private fun loadBalance(side: Side, account: Account) {
-        runInBackground {
-            val bal = viewModel.getBalance(account.id)
-            runOnUiThread {
-                // a newer selection may have won the race
-                if (side.account?.id != account.id) return@runOnUiThread
-                side.balance = bal?.balance ?: 0L
-                side.instrumentBalance = bal?.instrumentBalance ?: 0L
-                val instrument = account.instrumentCode?.let { instrumentsMap[it] }
-                side.textBalance.text = if (instrument != null) {
-                    context.getString(
-                        R.string.label_balance_ar_instrument,
-                        TransactionDisplay.formatAmount(side.balance),
-                        TransactionDisplay.formatInstrumentAmount(side.instrumentBalance, instrument)
-                    )
-                } else {
-                    context.getString(
-                        R.string.label_balance_ar,
-                        TransactionDisplay.formatAmount(side.balance)
-                    )
-                }
-                side.textBalance.visibility = View.VISIBLE
-                updateNewBalances(asset)
-                updateNewBalances(revenue)
-                updateAmountBasePreview()
-            }
-        }
-    }
-
-    private fun hideBalances(side: Side) {
-        side.textBalance.visibility = View.GONE
-        side.textNewBalance.visibility = View.GONE
     }
 
     private fun currentInstrument(): Instrument? =
@@ -176,11 +136,12 @@ class InstrumentIncomeController(
             instrumentBalance = asset.instrumentBalance
         )
 
-    private fun updateNewBalances(side: Side) {
+    private fun updateNewBalances(side: AccountSideController) {
         val account = side.account
         val instrument = currentInstrument()
+        val textNewBalance = if (side === asset) assetTextNewBalance else revenueTextNewBalance
         if (account == null || instrument == null) {
-            side.textNewBalance.visibility = View.GONE
+            textNewBalance.visibility = View.GONE
             return
         }
         val baseAmount = computedBaseAmount(instrument) ?: 0L
@@ -200,18 +161,18 @@ class InstrumentIncomeController(
                 debit = instrumentAmount,
                 credit = 0L
             )
-            side.textNewBalance.text = context.getString(
+            textNewBalance.text = context.getString(
                 R.string.label_new_balance_ar_instrument,
                 TransactionDisplay.formatAmount(newBalance),
                 TransactionDisplay.formatInstrumentAmount(newInstrumentBalance, instrument)
             )
         } else {
-            side.textNewBalance.text = context.getString(
+            textNewBalance.text = context.getString(
                 R.string.label_new_balance_ar,
                 TransactionDisplay.formatAmount(newBalance)
             )
         }
-        side.textNewBalance.visibility = View.VISIBLE
+        textNewBalance.visibility = View.VISIBLE
     }
 
     /**
@@ -246,28 +207,8 @@ class InstrumentIncomeController(
     }
 
     fun populateSpinners(accounts: List<Account>) {
-        asset.accounts = InstrumentIncomeBuilder.selectableAssetAccounts(accounts)
-        populateSpinner(asset)
-        revenue.accounts = InstrumentIncomeBuilder.selectableRevenueAccounts(accounts)
-        populateSpinner(revenue)
-    }
-
-    private fun populateSpinner(side: Side) {
-        val names = listOf(context.getString(R.string.spinner_select_account)) +
-                side.accounts.map { it.name }
-        val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, names)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        side.spinner.adapter = adapter
-        side.spinner.setSelection(0)
-    }
-
-    private fun selectedAccount(side: Side): Account? {
-        val position = side.spinner.selectedItemPosition
-        return if (position > 0 && position <= side.accounts.size) {
-            side.accounts[position - 1]
-        } else {
-            null
-        }
+        asset.populate(InstrumentIncomeBuilder.selectableAssetAccounts(accounts))
+        revenue.populate(InstrumentIncomeBuilder.selectableRevenueAccounts(accounts))
     }
 
     /** The two entries for this income, or null with a Toast already shown if incomplete. */

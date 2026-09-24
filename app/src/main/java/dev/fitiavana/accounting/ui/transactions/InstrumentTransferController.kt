@@ -4,8 +4,6 @@ import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
@@ -25,7 +23,9 @@ import kotlin.math.roundToLong
  * instrument balances (one line each for current/new balance), and builds
  * the two-entry transfer once both accounts and an amount are chosen. See
  * [InstrumentTransferBuilder] for the pure logic behind account filtering
- * and entry/amount calculation.
+ * and entry/amount calculation, and [AccountSideController] for the
+ * account-selection/balance-loading plumbing shared with
+ * [InstrumentIncomeController].
  */
 class InstrumentTransferController(
     private val context: Context,
@@ -33,38 +33,70 @@ class InstrumentTransferController(
     private val instrumentsMap: Map<String, Instrument>,
     fromSpinner: Spinner,
     fromTextBalance: TextView,
-    fromTextNewBalance: TextView,
+    private val fromTextNewBalance: TextView,
     toSpinner: Spinner,
     toTextBalance: TextView,
-    toTextNewBalance: TextView,
+    private val toTextNewBalance: TextView,
     private val textAmountCode: TextView,
     private val editTransferAmount: EditText,
     private val textAmountBase: TextView,
     private val onChanged: () -> Unit,
-    private val runInBackground: (() -> Unit) -> Unit,
-    private val runOnUiThread: (() -> Unit) -> Unit
+    runInBackground: (() -> Unit) -> Unit,
+    runOnUiThread: (() -> Unit) -> Unit
 ) {
 
-    /**
-     * One side of a transfer, with its current and projected balances. The
-     * From side is credited and the To side debited by the amount entered.
-     */
-    private class Side(
-        val spinner: Spinner,
-        val textBalance: TextView,
-        val textNewBalance: TextView,
-        val isDebit: Boolean,
-        var accounts: List<Account> = emptyList(),
-        var account: Account? = null,
-        var balance: Long = 0L,
-        var instrumentBalance: Long = 0L
-    )
-
-    private val from = Side(fromSpinner, fromTextBalance, fromTextNewBalance, isDebit = false)
-    private val to = Side(toSpinner, toTextBalance, toTextNewBalance, isDebit = true)
+    private val getBalance: (String) -> Pair<Long, Long>? = { id ->
+        viewModel.getBalance(id)?.let { it.balance to it.instrumentBalance }
+    }
 
     /** All accounts loaded, from which [InstrumentTransferBuilder] derives each spinner's options. */
     private var allAccounts: List<Account> = emptyList()
+
+    private val from: AccountSideController = AccountSideController(
+        context = context,
+        instrumentsMap = instrumentsMap,
+        getBalance = getBalance,
+        spinner = fromSpinner,
+        textBalance = fromTextBalance,
+        isDebit = false,
+        onAccountSelected = { account ->
+            textAmountCode.text = account?.instrumentCode?.let { instrumentsMap[it] }?.code ?: ""
+            repopulateToSpinner(account)
+            if (account == null) {
+                fromTextNewBalance.visibility = View.GONE
+                updateAmountBasePreview()
+            }
+        },
+        onBalanceLoaded = {
+            updateNewBalances(from)
+            updateNewBalances(to)
+            updateAmountBasePreview()
+        },
+        runInBackground = runInBackground,
+        runOnUiThread = runOnUiThread
+    )
+
+    private val to: AccountSideController = AccountSideController(
+        context = context,
+        instrumentsMap = instrumentsMap,
+        getBalance = getBalance,
+        spinner = toSpinner,
+        textBalance = toTextBalance,
+        isDebit = true,
+        onAccountSelected = { account ->
+            if (account == null) {
+                toTextNewBalance.visibility = View.GONE
+                updateAmountBasePreview()
+            }
+        },
+        onBalanceLoaded = {
+            updateNewBalances(from)
+            updateNewBalances(to)
+            updateAmountBasePreview()
+        },
+        runInBackground = runInBackground,
+        runOnUiThread = runOnUiThread
+    )
 
     init {
         editTransferAmount.addTextChangedListener(object : TextWatcher {
@@ -77,78 +109,6 @@ class InstrumentTransferController(
                 onChanged()
             }
         })
-        setupSide(from)
-        setupSide(to)
-    }
-
-    private fun setupSide(side: Side) {
-        side.spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>?,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                val account = selectedAccount(side)
-                side.account = account
-                side.balance = 0L
-                side.instrumentBalance = 0L
-                if (side === from) {
-                    textAmountCode.text = account?.instrumentCode?.let { instrumentsMap[it] }?.code ?: ""
-                    repopulateToSpinner(account)
-                }
-                if (account == null) {
-                    hideBalances(side)
-                    updateAmountBasePreview()
-                    return
-                }
-                loadBalance(side, account)
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                side.account = null
-                hideBalances(side)
-                if (side === from) {
-                    textAmountCode.text = ""
-                    repopulateToSpinner(null)
-                }
-                updateAmountBasePreview()
-            }
-        }
-    }
-
-    private fun loadBalance(side: Side, account: Account) {
-        runInBackground {
-            val bal = viewModel.getBalance(account.id)
-            runOnUiThread {
-                // a newer selection may have won the race
-                if (side.account?.id != account.id) return@runOnUiThread
-                side.balance = bal?.balance ?: 0L
-                side.instrumentBalance = bal?.instrumentBalance ?: 0L
-                val instrument = account.instrumentCode?.let { instrumentsMap[it] }
-                side.textBalance.text = if (instrument != null) {
-                    context.getString(
-                        R.string.label_balance_ar_instrument,
-                        TransactionDisplay.formatAmount(side.balance),
-                        TransactionDisplay.formatInstrumentAmount(side.instrumentBalance, instrument)
-                    )
-                } else {
-                    context.getString(
-                        R.string.label_balance_ar,
-                        TransactionDisplay.formatAmount(side.balance)
-                    )
-                }
-                side.textBalance.visibility = View.VISIBLE
-                updateNewBalances(from)
-                updateNewBalances(to)
-                updateAmountBasePreview()
-            }
-        }
-    }
-
-    private fun hideBalances(side: Side) {
-        side.textBalance.visibility = View.GONE
-        side.textNewBalance.visibility = View.GONE
     }
 
     private fun currentInstrument(): Instrument? =
@@ -167,11 +127,12 @@ class InstrumentTransferController(
             instrumentBalance = from.instrumentBalance
         )
 
-    private fun updateNewBalances(side: Side) {
+    private fun updateNewBalances(side: AccountSideController) {
         val account = side.account
         val instrument = currentInstrument()
+        val textNewBalance = if (side === from) fromTextNewBalance else toTextNewBalance
         if (account == null || instrument == null) {
-            side.textNewBalance.visibility = View.GONE
+            textNewBalance.visibility = View.GONE
             return
         }
         val instrumentAmount = parsedInstrumentAmount(instrument)
@@ -189,12 +150,12 @@ class InstrumentTransferController(
             debit = if (side.isDebit) instrumentAmount else 0L,
             credit = if (side.isDebit) 0L else instrumentAmount
         )
-        side.textNewBalance.text = context.getString(
+        textNewBalance.text = context.getString(
             R.string.label_new_balance_ar_instrument,
             TransactionDisplay.formatAmount(newBalance),
             TransactionDisplay.formatInstrumentAmount(newInstrumentBalance, instrument)
         )
-        side.textNewBalance.visibility = View.VISIBLE
+        textNewBalance.visibility = View.VISIBLE
     }
 
     /** Shows the amount typed so far converted to base currency, using the From account's rate. */
@@ -219,37 +180,14 @@ class InstrumentTransferController(
 
     fun populateSpinners(accounts: List<Account>) {
         allAccounts = accounts
-        from.accounts = InstrumentTransferBuilder.selectableFromAccounts(accounts)
-        val names = listOf(context.getString(R.string.spinner_select_account)) +
-                from.accounts.map { it.name }
-        val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, names)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        from.spinner.adapter = adapter
-        from.spinner.setSelection(0)
+        from.populate(InstrumentTransferBuilder.selectableFromAccounts(accounts))
         repopulateToSpinner(null)
     }
 
     private fun repopulateToSpinner(fromAccount: Account?) {
-        to.accounts = InstrumentTransferBuilder.selectableToAccounts(allAccounts, fromAccount)
-        val names = listOf(context.getString(R.string.spinner_select_account)) +
-                to.accounts.map { it.name }
-        val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, names)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        to.spinner.adapter = adapter
-        to.spinner.setSelection(0)
-        to.account = null
-        to.balance = 0L
-        to.instrumentBalance = 0L
-        hideBalances(to)
-    }
-
-    private fun selectedAccount(side: Side): Account? {
-        val position = side.spinner.selectedItemPosition
-        return if (position > 0 && position <= side.accounts.size) {
-            side.accounts[position - 1]
-        } else {
-            null
-        }
+        to.populate(InstrumentTransferBuilder.selectableToAccounts(allAccounts, fromAccount))
+        to.clearSelection()
+        toTextNewBalance.visibility = View.GONE
     }
 
     /** The two entries for this transfer, or null with a Toast already shown if incomplete. */
