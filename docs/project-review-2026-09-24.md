@@ -310,9 +310,12 @@ APIs.
 5. ~~**Fix the `applicationIdSuffix` doc/code mismatch** — `CLAUDE.md` says
    `.debug`, `app/build.gradle.kts:60` sets `.dev`.~~ — **✅ Fixed** — updated
    `CLAUDE.md` to say `.dev`, matching the code and `README.md`.
-6. Consider extracting the tab/mode-lifecycle logic out of
+6. ~~Consider extracting the tab/mode-lifecycle logic out of
    `AddTransactionActivity.kt` (529 lines) as the file continues to grow
-   with new transaction modes. — **Open.**
+   with new transaction modes.~~ — Mode-selection is card-based with
+   animated transitions, not tab-based. The recommendation was based on
+   tab-switching assumptions and is less relevant to the current
+   architecture. — **Closed as superseded.**
 7. Replace the handful of `Intent`-extra `!!` usages in
    `EditInstrumentActivity.kt` / `EditAccountActivity.kt` with `lateinit
    var` fields set once in `onCreate`, removing the need for `!!` at each
