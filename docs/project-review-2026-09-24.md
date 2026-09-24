@@ -4,8 +4,24 @@ Full-codebase review covering architecture, code structure, code style,
 testing, and build/config. ~10,250 LOC across ~130 main-source files,
 ~45 test files, API 19 target.
 
-**Status update (2026-09-24, later same day):** three of the recommendations
+**Status update (2026-09-24, later same day):** four of the recommendations
 below have already been fixed:
+- Medium #1 (controller duplication) — fixed by extracting
+  `AccountSideController.kt`, a shared composition helper for the
+  account-side spinner wiring, balance loading (including the stale-
+  selection race guard), and show/hide logic previously duplicated
+  byte-for-byte between `InstrumentIncomeController` and
+  `InstrumentTransferController`. Both controllers now compose two
+  instances of it and keep only their own amount-parsing formula,
+  new-balance preview formatting, and validation messages. Covered by a
+  new `AccountSideControllerTest.kt` (14 tests, written test-first in an
+  isolated subagent from the API contract alone); both pre-existing
+  black-box controller test suites (`InstrumentIncomeControllerTest.kt`,
+  `InstrumentTransferControllerTest.kt`) needed zero changes, confirming
+  the refactor was behavior-preserving. `docs/instrument-transfer-base-amount.md`
+  was also updated (it had drifted to reference a since-removed
+  `InstrumentTransferBuilder.computeBaseAmount`; the real implementation
+  is `InstrumentValueCalculator.computeBaseAmount`, shared by both modes).
 - Medium #2 / Low #4 (`CLAUDE.md` package-structure doc) — fixed in
   `a2f1bb5` (`docs: fix package-structure section to match
   features/<name>/ layout`).
@@ -22,10 +38,9 @@ below have already been fixed:
   `.dev` (the code) was the established convention, not `.debug`. Fixed by
   updating `CLAUDE.md`'s "Build variants" line to say `.dev`.
 
-Remaining open items: Medium #1 (controller duplication), Medium #3
-(`Thread`/`runOnUiThread` duplication in `AddTransactionActivity`), and
-Low #6–7. See the updated recommendation list at the bottom for current
-status per item.
+Remaining open items: Medium #3 (`Thread`/`runOnUiThread` duplication in
+`AddTransactionActivity`), and Low #6–7. See the updated recommendation
+list at the bottom for current status per item.
 
 ## Overview
 
@@ -125,16 +140,14 @@ races on `side.account?.id != account.id`, both have `hideBalances`,
 `InstrumentIncomeController.kt:57-153` vs.
 `InstrumentTransferController.kt` (same shape, `From`/`To` instead of
 `asset`/`revenue`). This is the kind of duplication the project's own DRY
-rule (`CLAUDE.md` "Code" section) calls out. **Medium priority**: extract a
-shared `AccountSideController`/`Side` abstraction (spinner wiring, balance
-loading, populate/select) parameterized by debit/credit semantics and label
-resources, with each mode controller supplying only its formula
-(`InstrumentTransferBuilder.computeBaseAmount` vs.
-`InstrumentValueCalculator.computeBaseAmount`) and validation messages. This
-would cut both controllers by roughly a third and centralize the "a newer
-selection may have won the race" guard (currently duplicated comment-and-
-logic at `InstrumentIncomeController.kt:125` and the equivalent in
-`InstrumentTransferController.kt`).
+rule (`CLAUDE.md` "Code" section) calls out.
+
+**✅ Fixed** — extracted `AccountSideController.kt`, a shared composition
+helper covering spinner wiring, balance loading (including the "a newer
+selection may have won the race" guard), and populate/select/hide, used by
+both controllers via composition (two instances each) rather than
+inheritance. Each controller kept only its own amount-parsing formula,
+new-balance preview formatting, and validation messages/Builder calls.
 
 **`ReportPeriodSelector` is a good example of the pattern the rest of the
 transaction controllers should follow**: pure, stateless, well-documented
@@ -274,11 +287,11 @@ APIs.
   issues in the reviewed source.
 
 ### Medium
-1. **Extract shared logic between `InstrumentIncomeController` and
+1. ~~**Extract shared logic between `InstrumentIncomeController` and
    `InstrumentTransferController`** (`ui/transactions/`) — real, sizeable
    duplication (Side holder, spinner wiring, balance-load race guard,
-   populate/select helpers). Directly violates the project's own DRY rule.
-   — **Open.**
+   populate/select helpers). Directly violates the project's own DRY rule.~~
+   — **✅ Fixed** — extracted `AccountSideController.kt`.
 2. ~~**Add DAO-level Robolectric tests** for `TransactionDao`,
    `InstrumentDao`, `AccountBalanceDao`, `ExchangeRateCacheDao`,
    `AppSettingsDao` — currently only `AccountDao` has one, and hand-written
