@@ -16,7 +16,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
-import com.google.android.material.tabs.TabLayout
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
@@ -31,10 +30,14 @@ import java.util.UUID
 
 class AddTransactionActivity : AppCompatActivity() {
 
-    /** Data-entry mode selected by the tabs; only the inputs differ, not the saved transaction. */
+    /** Data-entry mode chosen in step 1; only the inputs differ, not the saved transaction. */
     private enum class Mode { CLASSIC, SIMPLE_TRANSFER, INSTRUMENT_TRANSFER, INSTRUMENT_INCOME }
 
+    /** The two-step wizard flow: pick a mode, then fill in its form. */
+    private enum class Step { MODE_SELECTION, TRANSACTION_FORM }
+
     private var mode = Mode.CLASSIC
+    private var step = Step.MODE_SELECTION
 
     private lateinit var viewModel: AddTransactionViewModel
     private lateinit var accounts: List<Account>
@@ -48,6 +51,8 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var editNote: EditText
     private lateinit var entriesContainer: LinearLayout
     private lateinit var textBalanceSummary: TextView
+    private lateinit var stepModeSelection: View
+    private lateinit var stepTransactionForm: View
     private lateinit var modeClassic: View
     private lateinit var modeSimpleTransfer: View
     private lateinit var modeInstrumentTransfer: View
@@ -82,6 +87,8 @@ class AddTransactionActivity : AppCompatActivity() {
         editNote = findViewById(R.id.edit_note)
         entriesContainer = findViewById(R.id.entries_container)
         textBalanceSummary = findViewById(R.id.text_balance_summary)
+        stepModeSelection = findViewById(R.id.step_mode_selection)
+        stepTransactionForm = findViewById(R.id.step_transaction_form)
         modeClassic = findViewById(R.id.mode_classic)
         modeSimpleTransfer = findViewById(R.id.mode_simple_transfer)
         modeInstrumentTransfer = findViewById(R.id.mode_instrument_transfer)
@@ -102,7 +109,7 @@ class AddTransactionActivity : AppCompatActivity() {
             runOnUiThread = { runOnUiThread(it) }
         )
 
-        setupModeTabs(findViewById(R.id.tabs_transaction_mode))
+        setupModeSelection()
 
         updateDatetimeDisplay()
 
@@ -169,40 +176,38 @@ class AddTransactionActivity : AppCompatActivity() {
             this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    confirmDiscardAndFinish()
+                    handleBackNavigation()
                 }
             }
         )
     }
 
-    private fun setupModeTabs(tabLayout: TabLayout) {
-        tabLayout.addTab(tabLayout.newTab().setText(R.string.tab_mode_classic))
-        tabLayout.addTab(
-            tabLayout.newTab().setText(R.string.tab_mode_simple_transfer)
-        )
-        tabLayout.addTab(
-            tabLayout.newTab().setText(R.string.tab_mode_instrument_transfer)
-        )
-        tabLayout.addTab(
-            tabLayout.newTab().setText(R.string.tab_mode_instrument_income)
-        )
-        tabLayout.addOnTabSelectedListener(
-            object : TabLayout.OnTabSelectedListener {
-                override fun onTabSelected(tab: TabLayout.Tab) {
-                    showMode(
-                        when (tab.position) {
-                            1 -> Mode.SIMPLE_TRANSFER
-                            2 -> Mode.INSTRUMENT_TRANSFER
-                            3 -> Mode.INSTRUMENT_INCOME
-                            else -> Mode.CLASSIC
-                        }
-                    )
-                }
+    private fun setupModeSelection() {
+        findViewById<View>(R.id.mode_option_classic).setOnClickListener {
+            selectMode(Mode.CLASSIC)
+        }
+        findViewById<View>(R.id.mode_option_simple_transfer).setOnClickListener {
+            selectMode(Mode.SIMPLE_TRANSFER)
+        }
+        findViewById<View>(R.id.mode_option_instrument_transfer).setOnClickListener {
+            selectMode(Mode.INSTRUMENT_TRANSFER)
+        }
+        findViewById<View>(R.id.mode_option_instrument_income).setOnClickListener {
+            selectMode(Mode.INSTRUMENT_INCOME)
+        }
+    }
 
-                override fun onTabUnselected(tab: TabLayout.Tab) {}
-                override fun onTabReselected(tab: TabLayout.Tab) {}
-            }
-        )
+    private fun selectMode(newMode: Mode) {
+        showMode(newMode)
+        showStep(Step.TRANSACTION_FORM)
+    }
+
+    private fun showStep(newStep: Step) {
+        step = newStep
+        stepModeSelection.visibility =
+            if (newStep == Step.MODE_SELECTION) View.VISIBLE else View.GONE
+        stepTransactionForm.visibility =
+            if (newStep == Step.TRANSACTION_FORM) View.VISIBLE else View.GONE
     }
 
     private fun showMode(newMode: Mode) {
@@ -493,7 +498,7 @@ class AddTransactionActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        confirmDiscardAndFinish()
+        handleBackNavigation()
         return true
     }
 
@@ -509,17 +514,35 @@ class AddTransactionActivity : AppCompatActivity() {
         return entryRows.any { it.hasContent() }
     }
 
-    private fun confirmDiscardAndFinish() {
-        if (!hasUnsavedChanges()) {
+    /**
+     * Step 1 has nothing to lose, so back exits the screen directly. Step 2
+     * returns to step 1 instead of exiting, confirming discard first if the
+     * user has entered data.
+     */
+    private fun handleBackNavigation() {
+        if (step == Step.MODE_SELECTION) {
             finish()
+            return
+        }
+        if (!hasUnsavedChanges()) {
+            returnToModeSelection()
             return
         }
         AlertDialog.Builder(this)
             .setTitle(R.string.dialog_discard_transaction_title)
             .setMessage(R.string.dialog_discard_transaction_message)
-            .setPositiveButton(R.string.action_discard) { _, _ -> finish() }
+            .setPositiveButton(R.string.action_discard) { _, _ -> returnToModeSelection() }
             .setNegativeButton(R.string.action_keep_editing, null)
             .show()
+    }
+
+    private fun returnToModeSelection() {
+        editNote.setText("")
+        entryRows.forEach { it.clear() }
+        transferController.clear()
+        if (::instrumentTransferController.isInitialized) instrumentTransferController.clear()
+        if (::instrumentIncomeController.isInitialized) instrumentIncomeController.clear()
+        showStep(Step.MODE_SELECTION)
     }
 
     companion object {

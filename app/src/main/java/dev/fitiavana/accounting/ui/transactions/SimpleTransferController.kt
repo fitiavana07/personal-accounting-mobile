@@ -184,4 +184,11 @@ class SimpleTransferController(
         editTransferAmount.text.toString().trim().isNotEmpty() ||
                 from.spinner.selectedItemPosition > 0 ||
                 to.spinner.selectedItemPosition > 0
+
+    /** Resets both sides and the amount back to their initial, empty state. */
+    fun clear() {
+        editTransferAmount.text = null
+        from.spinner.setSelection(0)
+        to.spinner.setSelection(0)
+    }
 }

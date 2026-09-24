@@ -279,4 +279,11 @@ class InstrumentIncomeController(
         editIncomeAmount.text.toString().trim().isNotEmpty() ||
                 asset.spinner.selectedItemPosition > 0 ||
                 revenue.spinner.selectedItemPosition > 0
+
+    /** Resets both accounts and the amount back to their initial, empty state. */
+    fun clear() {
+        editIncomeAmount.text = null
+        asset.clearSelection()
+        revenue.clearSelection()
+    }
 }

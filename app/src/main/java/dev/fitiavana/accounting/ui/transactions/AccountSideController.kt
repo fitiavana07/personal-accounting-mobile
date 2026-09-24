@@ -79,11 +79,12 @@ class AccountSideController(
         spinner.setSelection(0)
     }
 
-    /** Clears the selected account/balances and hides the balance text, without touching the adapter. */
+    /** Clears the selected account/balances, resets the spinner to the placeholder, and hides the balance text. */
     fun clearSelection() {
         account = null
         balance = 0L
         instrumentBalance = 0L
+        spinner.setSelection(0)
         hideBalance()
     }
 

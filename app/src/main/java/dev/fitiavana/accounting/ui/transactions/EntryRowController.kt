@@ -376,6 +376,13 @@ class EntryRowController(
         )
     }
 
+    /** Resets this row back to its just-added, empty state. */
+    fun clear() {
+        editDebit.text = null
+        editCredit.text = null
+        spinner.setSelection(0)
+    }
+
     /** Whether the user has typed or selected anything in this row. */
     fun hasContent(): Boolean =
         spinner.selectedItemPosition > 0 ||

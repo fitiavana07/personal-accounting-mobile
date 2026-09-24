@@ -250,4 +250,11 @@ class InstrumentTransferController(
         editTransferAmount.text.toString().trim().isNotEmpty() ||
                 from.spinner.selectedItemPosition > 0 ||
                 to.spinner.selectedItemPosition > 0
+
+    /** Resets both sides and the amount back to their initial, empty state. */
+    fun clear() {
+        editTransferAmount.text = null
+        from.clearSelection()
+        repopulateToSpinner(null)
+    }
 }
