@@ -26,6 +26,7 @@ class SimpleTransferController(
     fromSpinner: Spinner,
     fromTextBalance: TextView,
     fromTextNewBalance: TextView,
+    private val fromTextZeroBalanceError: TextView,
     toSpinner: Spinner,
     toTextBalance: TextView,
     toTextNewBalance: TextView,
@@ -96,6 +97,12 @@ class SimpleTransferController(
                         )
                         side.textBalance.visibility = View.VISIBLE
                         updateNewBalance(side)
+                        if (side === from) {
+                            fromTextZeroBalanceError.text =
+                                context.getString(R.string.error_transfer_from_zero_balance)
+                            fromTextZeroBalanceError.visibility =
+                                if (balance == 0L) View.VISIBLE else View.GONE
+                        }
                     }
                 }
             }
@@ -110,6 +117,7 @@ class SimpleTransferController(
     private fun hideBalances(side: Side) {
         side.textBalance.visibility = View.GONE
         side.textNewBalance.visibility = View.GONE
+        if (side === from) fromTextZeroBalanceError.visibility = View.GONE
     }
 
     private fun updateNewBalance(side: Side) {
@@ -161,6 +169,14 @@ class SimpleTransferController(
             Toast.makeText(
                 context,
                 context.getString(R.string.error_transfer_accounts_required),
+                Toast.LENGTH_SHORT
+            ).show()
+            return null
+        }
+        if (from.balance == 0L) {
+            Toast.makeText(
+                context,
+                context.getString(R.string.error_transfer_from_zero_balance),
                 Toast.LENGTH_SHORT
             ).show()
             return null

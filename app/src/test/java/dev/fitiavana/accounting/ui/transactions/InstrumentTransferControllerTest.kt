@@ -22,6 +22,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowToast
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [21])
@@ -36,6 +37,7 @@ class InstrumentTransferControllerTest {
     private lateinit var fromSpinner: Spinner
     private lateinit var fromTextBalance: TextView
     private lateinit var fromTextNewBalance: TextView
+    private lateinit var fromTextZeroBalanceError: TextView
     private lateinit var toSpinner: Spinner
     private lateinit var toTextBalance: TextView
     private lateinit var toTextNewBalance: TextView
@@ -63,6 +65,7 @@ class InstrumentTransferControllerTest {
         fromSpinner = Spinner(context)
         fromTextBalance = TextView(context)
         fromTextNewBalance = TextView(context)
+        fromTextZeroBalanceError = TextView(context)
         toSpinner = Spinner(context)
         toTextBalance = TextView(context)
         toTextNewBalance = TextView(context)
@@ -79,6 +82,7 @@ class InstrumentTransferControllerTest {
             fromSpinner = fromSpinner,
             fromTextBalance = fromTextBalance,
             fromTextNewBalance = fromTextNewBalance,
+            fromTextZeroBalanceError = fromTextZeroBalanceError,
             toSpinner = toSpinner,
             toTextBalance = toTextBalance,
             toTextNewBalance = toTextNewBalance,
@@ -170,6 +174,10 @@ class InstrumentTransferControllerTest {
         editTransferAmount.setText("1.50")
 
         assertNull(controller.collectEntries())
+        assertEquals(
+            context.getString(R.string.error_transfer_from_zero_balance),
+            ShadowToast.getTextOfLatestToast()
+        )
     }
 
     @Test
@@ -271,6 +279,86 @@ class InstrumentTransferControllerTest {
         editTransferAmount.setText("1.50")
 
         assertEquals(View.GONE, textAmountBase.visibility)
+    }
+
+    @Test
+    fun `selecting a from account with 0 instrument balance shows a persistent red error below the spinner`() {
+        whenever(viewModel.getBalance("usd_savings")).thenReturn(
+            AccountBalance(
+                accountId = "usd_savings",
+                balance = 0L,
+                instrumentBalance = 0L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        controller()
+
+        fromSpinner.setSelection(2) // usd_savings
+
+        assertEquals(View.VISIBLE, fromTextZeroBalanceError.visibility)
+        assertEquals(
+            context.getString(R.string.error_transfer_from_zero_balance),
+            fromTextZeroBalanceError.text.toString()
+        )
+        assertNull(ShadowToast.getLatestToast())
+    }
+
+    @Test
+    fun `selecting a from account with nonzero instrument balance hides the zero-balance error`() {
+        whenever(viewModel.getBalance("usd_savings")).thenReturn(
+            AccountBalance(
+                accountId = "usd_savings",
+                balance = 0L,
+                instrumentBalance = 0L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        whenever(viewModel.getBalance("usd_wallet")).thenReturn(
+            AccountBalance(
+                accountId = "usd_wallet",
+                balance = 400_000L,
+                instrumentBalance = 1000L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        controller()
+        fromSpinner.setSelection(2) // usd_savings, 0 instrument balance
+        assertEquals(View.VISIBLE, fromTextZeroBalanceError.visibility)
+
+        fromSpinner.setSelection(1) // usd_wallet, nonzero instrument balance
+
+        assertEquals(View.GONE, fromTextZeroBalanceError.visibility)
+    }
+
+    @Test
+    fun `selecting a to account with 0 instrument balance does not show the from-balance error`() {
+        whenever(viewModel.getBalance("usd_wallet")).thenReturn(
+            AccountBalance(
+                accountId = "usd_wallet",
+                balance = 400_000L,
+                instrumentBalance = 1000L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        whenever(viewModel.getBalance("usd_savings")).thenReturn(
+            AccountBalance(
+                accountId = "usd_savings",
+                balance = 0L,
+                instrumentBalance = 0L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        controller()
+
+        fromSpinner.setSelection(1) // usd_wallet, nonzero balance
+        toSpinner.setSelection(2) // usd_savings, zero balance
+
+        assertEquals(View.GONE, fromTextZeroBalanceError.visibility)
     }
 
     @Test

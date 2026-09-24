@@ -280,16 +280,6 @@
                 android:background="?attr/selectableItemBackground"
                 android:layout_marginBottom="12dp" />
 
-            <EditText
-                android:id="@+id/edit_note"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/hint_note"
-                android:inputType="textMultiLine"
-                android:minLines="2"
-                android:gravity="top"
-                android:layout_marginBottom="16dp" />
-
             <LinearLayout
                 android:id="@+id/mode_classic"
                 android:layout_width="match_parent"
@@ -387,6 +377,16 @@
                     android:paddingStart="6dp"
                     android:paddingTop="2dp"
                     android:textSize="11sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/text_transfer_from_zero_balance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:paddingTop="2dp"
+                    android:textSize="11sp"
+                    android:textColor="@color/loss"
                     android:visibility="gone" />
 
                 <TextView
@@ -500,6 +500,16 @@
                     android:paddingStart="6dp"
                     android:paddingTop="2dp"
                     android:textSize="11sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/text_instrument_transfer_from_zero_balance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:paddingTop="2dp"
+                    android:textSize="11sp"
+                    android:textColor="@color/loss"
                     android:visibility="gone" />
 
                 <TextView
@@ -705,6 +715,16 @@
                     android:visibility="gone" />
 
             </LinearLayout>
+
+            <EditText
+                android:id="@+id/edit_note"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:hint="@string/hint_note"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:gravity="top" />
 
         </LinearLayout>
 

@@ -34,6 +34,7 @@ class InstrumentTransferController(
     fromSpinner: Spinner,
     fromTextBalance: TextView,
     private val fromTextNewBalance: TextView,
+    private val fromTextZeroBalanceError: TextView,
     toSpinner: Spinner,
     toTextBalance: TextView,
     private val toTextNewBalance: TextView,
@@ -64,6 +65,7 @@ class InstrumentTransferController(
             repopulateToSpinner(account)
             if (account == null) {
                 fromTextNewBalance.visibility = View.GONE
+                fromTextZeroBalanceError.visibility = View.GONE
                 updateAmountBasePreview()
             }
         },
@@ -71,6 +73,10 @@ class InstrumentTransferController(
             updateNewBalances(from)
             updateNewBalances(to)
             updateAmountBasePreview()
+            fromTextZeroBalanceError.text =
+                context.getString(R.string.error_transfer_from_zero_balance)
+            fromTextZeroBalanceError.visibility =
+                if (from.instrumentBalance == 0L) View.VISIBLE else View.GONE
         },
         runInBackground = runInBackground,
         runOnUiThread = runOnUiThread
@@ -220,7 +226,7 @@ class InstrumentTransferController(
         if (baseAmount == null) {
             Toast.makeText(
                 context,
-                context.getString(R.string.error_instrument_transfer_no_rate),
+                context.getString(R.string.error_transfer_from_zero_balance),
                 Toast.LENGTH_SHORT
             ).show()
             return null

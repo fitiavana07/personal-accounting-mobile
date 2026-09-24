@@ -108,6 +108,7 @@ class AddTransactionActivity : AppCompatActivity() {
             fromSpinner = findViewById(R.id.spinner_transfer_from),
             fromTextBalance = findViewById(R.id.text_transfer_from_balance),
             fromTextNewBalance = findViewById(R.id.text_transfer_from_new_balance),
+            fromTextZeroBalanceError = findViewById(R.id.text_transfer_from_zero_balance),
             toSpinner = findViewById(R.id.spinner_transfer_to),
             toTextBalance = findViewById(R.id.text_transfer_to_balance),
             toTextNewBalance = findViewById(R.id.text_transfer_to_new_balance),
@@ -138,6 +139,7 @@ class AddTransactionActivity : AppCompatActivity() {
                     fromSpinner = findViewById(R.id.spinner_instrument_transfer_from),
                     fromTextBalance = findViewById(R.id.text_instrument_transfer_from_balance),
                     fromTextNewBalance = findViewById(R.id.text_instrument_transfer_from_new_balance),
+                    fromTextZeroBalanceError = findViewById(R.id.text_instrument_transfer_from_zero_balance),
                     toSpinner = findViewById(R.id.spinner_instrument_transfer_to),
                     toTextBalance = findViewById(R.id.text_instrument_transfer_to_balance),
                     toTextNewBalance = findViewById(R.id.text_instrument_transfer_to_new_balance),
@@ -534,7 +536,10 @@ class AddTransactionActivity : AppCompatActivity() {
 
         Thread {
             viewModel.saveTransaction(transaction, entries, accountTypesById)
-            runOnUiThread { finish() }
+            runOnUiThread {
+                Toast.makeText(this, R.string.transaction_saved, Toast.LENGTH_SHORT).show()
+                finish()
+            }
         }.start()
     }
 

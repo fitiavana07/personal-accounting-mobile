@@ -39,7 +39,7 @@
     <string name="mode_description_instrument_transfer">Move a stock, crypto, or other instrument between two accounts.</string>
     <string name="mode_description_instrument_income">Record dividends, interest, or other income received as an instrument.</string>
     <string name="error_transfer_accounts_required">Select both the From and To accounts</string>
-    <string name="error_instrument_transfer_no_rate">The From account has no prior balance to transfer from</string>
+    <string name="error_transfer_from_zero_balance">Balance is 0 — can\'t transfer from it</string>
     <string name="error_instrument_transfer_amount_required">Enter an amount</string>
     <string name="label_instrument_income_asset">Asset account</string>
     <string name="label_instrument_income_revenue">Revenue account</string>
@@ -168,4 +168,5 @@
     <string name="title_edit_instrument">Edit Instrument</string>
     <string name="title_new_transaction">New Transaction</string>
     <string name="title_transaction">Transaction</string>
+    <string name="transaction_saved">Transaction saved</string>
 </resources>

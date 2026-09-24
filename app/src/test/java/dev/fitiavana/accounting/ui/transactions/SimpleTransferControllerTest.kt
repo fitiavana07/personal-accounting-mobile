@@ -21,6 +21,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowToast
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [21])
@@ -35,6 +36,7 @@ class SimpleTransferControllerTest {
     private lateinit var fromSpinner: Spinner
     private lateinit var fromTextBalance: TextView
     private lateinit var fromTextNewBalance: TextView
+    private lateinit var fromTextZeroBalanceError: TextView
     private lateinit var toSpinner: Spinner
     private lateinit var toTextBalance: TextView
     private lateinit var toTextNewBalance: TextView
@@ -49,6 +51,7 @@ class SimpleTransferControllerTest {
         fromSpinner = Spinner(context)
         fromTextBalance = TextView(context)
         fromTextNewBalance = TextView(context)
+        fromTextZeroBalanceError = TextView(context)
         toSpinner = Spinner(context)
         toTextBalance = TextView(context)
         toTextNewBalance = TextView(context)
@@ -62,6 +65,7 @@ class SimpleTransferControllerTest {
             fromSpinner = fromSpinner,
             fromTextBalance = fromTextBalance,
             fromTextNewBalance = fromTextNewBalance,
+            fromTextZeroBalanceError = fromTextZeroBalanceError,
             toSpinner = toSpinner,
             toTextBalance = toTextBalance,
             toTextNewBalance = toTextNewBalance,
@@ -117,6 +121,70 @@ class SimpleTransferControllerTest {
         fromSpinner.setSelection(1)
 
         assertEquals(View.VISIBLE, fromTextBalance.visibility)
+    }
+
+    @Test
+    fun `selecting a from account with 0 balance shows a persistent red error below the spinner`() {
+        whenever(viewModel.getBalance("bank")).thenReturn(
+            AccountBalance(accountId = "bank", balance = 0L, updatedAt = 0L, createdAt = 0L)
+        )
+        controller()
+
+        fromSpinner.setSelection(2) // bank
+
+        assertEquals(View.VISIBLE, fromTextZeroBalanceError.visibility)
+        assertEquals(
+            context.getString(R.string.error_transfer_from_zero_balance),
+            fromTextZeroBalanceError.text.toString()
+        )
+        assertNull(ShadowToast.getLatestToast())
+    }
+
+    @Test
+    fun `selecting a from account with nonzero balance hides the zero-balance error`() {
+        whenever(viewModel.getBalance("bank")).thenReturn(
+            AccountBalance(accountId = "bank", balance = 0L, updatedAt = 0L, createdAt = 0L)
+        )
+        whenever(viewModel.getBalance("cash")).thenReturn(
+            AccountBalance(accountId = "cash", balance = 500L, updatedAt = 0L, createdAt = 0L)
+        )
+        controller()
+        fromSpinner.setSelection(2) // bank, 0 balance
+        assertEquals(View.VISIBLE, fromTextZeroBalanceError.visibility)
+
+        fromSpinner.setSelection(1) // cash, nonzero balance
+
+        assertEquals(View.GONE, fromTextZeroBalanceError.visibility)
+    }
+
+    @Test
+    fun `collectEntries blocks and shows an error when the from account has 0 balance`() {
+        whenever(viewModel.getBalance("bank")).thenReturn(
+            AccountBalance(accountId = "bank", balance = 0L, updatedAt = 0L, createdAt = 0L)
+        )
+        val controller = controller()
+
+        fromSpinner.setSelection(2) // bank
+        toSpinner.setSelection(1) // cash
+        editTransferAmount.setText("100")
+
+        assertNull(controller.collectEntries())
+        assertEquals(
+            context.getString(R.string.error_transfer_from_zero_balance),
+            ShadowToast.getTextOfLatestToast()
+        )
+    }
+
+    @Test
+    fun `selecting a to account with 0 balance does not show the from-balance error`() {
+        whenever(viewModel.getBalance("bank")).thenReturn(
+            AccountBalance(accountId = "bank", balance = 0L, updatedAt = 0L, createdAt = 0L)
+        )
+        controller()
+
+        toSpinner.setSelection(2) // bank
+
+        assertEquals(View.GONE, fromTextZeroBalanceError.visibility)
     }
 
     @Test

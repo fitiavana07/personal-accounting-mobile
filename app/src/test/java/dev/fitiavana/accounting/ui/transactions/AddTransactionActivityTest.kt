@@ -4,7 +4,12 @@ import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
 import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.Spinner
+import androidx.test.core.app.ApplicationProvider
+import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.features.accounts.Account
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,6 +20,7 @@ import org.robolectric.android.controller.ActivityController
 import androidx.appcompat.app.AlertDialog
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowDialog
+import org.robolectric.shadows.ShadowToast
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [21])
@@ -25,6 +31,16 @@ class AddTransactionActivityTest {
 
     private fun AddTransactionActivity.step1() = findViewById<View>(R.id.step_mode_selection)
     private fun AddTransactionActivity.step2() = findViewById<View>(R.id.step_transaction_form)
+
+    private fun waitUntil(timeoutMs: Long = 5000, condition: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < deadline) {
+            shadowOf(Looper.getMainLooper()).idle()
+            if (condition()) return
+            Thread.sleep(10)
+        }
+        throw AssertionError("Condition not met within ${timeoutMs}ms")
+    }
 
     @Test
     fun `launches showing step 1 with step 2 hidden`() {
@@ -156,6 +172,37 @@ class AddTransactionActivityTest {
 
         card.performClick()
         assertEquals(View.VISIBLE, activity.step2().visibility)
+    }
+
+    @Test
+    fun `saving a valid classic transaction shows a success toast and closes the screen`() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val accountRepo = AppContainer.getInstance(context).accountRepository
+        Thread {
+            accountRepo.insert(Account(id = "a1", name = "Account A", type = "asset"))
+            accountRepo.insert(Account(id = "a2", name = "Account B", type = "asset"))
+        }.apply { start(); join() }
+
+        val activity = launch().get()
+        activity.findViewById<View>(R.id.mode_option_classic).performClick()
+
+        val entriesContainer = activity.findViewById<LinearLayout>(R.id.entries_container)
+        waitUntil { entriesContainer.childCount == 2 }
+
+        val row0 = entriesContainer.getChildAt(0)
+        val row1 = entriesContainer.getChildAt(1)
+        row0.findViewById<Spinner>(R.id.spinner_account).setSelection(1)
+        row0.findViewById<EditText>(R.id.edit_debit).setText("1000")
+        row1.findViewById<Spinner>(R.id.spinner_account).setSelection(2)
+        row1.findViewById<EditText>(R.id.edit_credit).setText("1000")
+
+        activity.findViewById<View>(R.id.btn_save).performClick()
+        waitUntil { activity.isFinishing }
+
+        assertEquals(
+            activity.getString(R.string.transaction_saved),
+            ShadowToast.getTextOfLatestToast()
+        )
     }
 
     @Test
