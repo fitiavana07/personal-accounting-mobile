@@ -13,7 +13,8 @@ data class HomeMetrics(
     val cashToEquityPercent: Int,
     val monthlyExpenses: Long,
     val cashRunwayMonths: Double,
-    val incomeToExpensesPercent: Int
+    val incomeToExpensesPercent: Int,
+    val averageMonthlyIncome: Long
 )
 
 /** Home screen's top-level "Metrics" block: equity, cash, and emergency fund progress at a glance. */
@@ -41,7 +42,9 @@ object HomeMetricsBuilder {
             monthlyExpenses = monthlyExpenses,
             cashRunwayMonths = cashRunwayMonths(cash, monthlyExpenses),
             incomeToExpensesPercent =
-                incomeToExpensesPercent(monthlyNetIncomes, monthlyExpenses)
+                incomeToExpensesPercent(monthlyNetIncomes, monthlyExpenses),
+            averageMonthlyIncome =
+                IncomeToExpensesBuilder.averageMonthlyIncome(monthlyNetIncomes)
         )
     }
 

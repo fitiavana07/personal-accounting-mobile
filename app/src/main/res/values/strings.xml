@@ -82,10 +82,11 @@
     <string name="home_metrics_header">Metrics</string>
     <string name="home_metric_equity_label">Equity</string>
     <string name="home_metric_cash_label">Cash</string>
-    <string name="home_metric_emergency_fund_label">Cash to Emergency Fund</string>
+    <string name="home_metric_emergency_fund_label">Emergency Fund</string>
     <string name="home_metric_cash_to_equity_label">Cash to Equity</string>
-    <string name="home_metric_income_to_expenses_label">Income to Expenses</string>
-    <string name="home_metric_monthly_expense_label">Monthly Expenses</string>
+    <string name="home_metric_income_to_expenses_label">Income / Spend</string>
+    <string name="home_metric_monthly_expense_label">Mo. Spend</string>
+    <string name="home_metric_avg_income_label">Avg. Income</string>
     <string name="home_metric_cash_runway_label">Cash Runway</string>
     <string name="home_metric_percent_format">%1$d%%</string>
     <string name="home_metric_runway_format">%1$s mo</string>

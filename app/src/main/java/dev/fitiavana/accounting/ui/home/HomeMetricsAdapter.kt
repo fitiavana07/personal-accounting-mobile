@@ -20,7 +20,8 @@ class HomeMetricsAdapter :
         cashToEquityPercent = 0,
         monthlyExpenses = 0,
         cashRunwayMonths = 0.0,
-        incomeToExpensesPercent = 0
+        incomeToExpensesPercent = 0,
+        averageMonthlyIncome = 0
     )
 
     fun submit(metrics: HomeMetrics) {
@@ -54,28 +55,24 @@ class HomeMetricsAdapter :
         )
         private val equityView = equityCash.first
         private val cashView = equityCash.second
-        private val cashToEquityIncome = addPairRow(
+        private val cashRatios = addPairRow(
             R.string.home_metric_cash_to_equity_label,
-            R.string.home_metric_income_to_expenses_label
+            R.string.home_metric_emergency_fund_label
         )
-        private val cashToEquityView = cashToEquityIncome.first
-        private val incomeToExpensesView = cashToEquityIncome.second
-        private val monthlyExpenseView =
-            addRow(R.string.home_metric_monthly_expense_label)
-        private val emergencyFundView =
-            addRow(R.string.home_metric_emergency_fund_label)
-        private val cashRunwayView =
-            addRow(R.string.home_metric_cash_runway_label)
-
-        private fun addRow(@StringRes labelRes: Int): TextView {
-            LayoutInflater.from(context)
-                .inflate(R.layout.item_home_metric_row, container, true)
-            val row =
-                container.getChildAt(container.childCount - 1) as LinearLayout
-            row.findViewById<TextView>(R.id.text_metric_row_label)
-                .setText(labelRes)
-            return row.findViewById(R.id.text_metric_row_value)
-        }
+        private val cashToEquityView = cashRatios.first
+        private val emergencyFundView = cashRatios.second
+        private val incomeSpending = addPairRow(
+            R.string.home_metric_avg_income_label,
+            R.string.home_metric_monthly_expense_label
+        )
+        private val averageIncomeView = incomeSpending.first
+        private val monthlyExpenseView = incomeSpending.second
+        private val conclusions = addPairRow(
+            R.string.home_metric_income_to_expenses_label,
+            R.string.home_metric_cash_runway_label
+        )
+        private val incomeToExpensesView = conclusions.first
+        private val cashRunwayView = conclusions.second
 
         /** Two metrics side by side; the right one is right-aligned. */
         private fun addPairRow(
@@ -124,6 +121,10 @@ class HomeMetricsAdapter :
             monthlyExpenseView.text = context.getString(
                 R.string.amount_ar,
                 CompactNumberFormatter.format(metrics.monthlyExpenses)
+            )
+            averageIncomeView.text = context.getString(
+                R.string.amount_ar,
+                CompactNumberFormatter.format(metrics.averageMonthlyIncome)
             )
             cashRunwayView.text = context.getString(
                 R.string.home_metric_runway_format,

@@ -14,11 +14,7 @@ data class IncomeToExpensesInfo(
 object IncomeToExpensesBuilder {
 
     fun build(monthlyNetIncomes: List<Long>, monthlyExpenses: Long): IncomeToExpensesInfo {
-        val average = if (monthlyNetIncomes.isEmpty()) {
-            0L
-        } else {
-            monthlyNetIncomes.average().roundToLong()
-        }
+        val average = averageMonthlyIncome(monthlyNetIncomes)
 
         return IncomeToExpensesInfo(
             monthlyExpenses = monthlyExpenses,
@@ -27,6 +23,10 @@ object IncomeToExpensesBuilder {
             remaining = (monthlyExpenses - average).coerceAtLeast(0)
         )
     }
+
+    /** Rounded average of [monthlyNetIncomes]; 0 when there are none. */
+    fun averageMonthlyIncome(monthlyNetIncomes: List<Long>): Long =
+        if (monthlyNetIncomes.isEmpty()) 0L else monthlyNetIncomes.average().roundToLong()
 
     private fun percentReached(average: Long, target: Long): Int {
         if (target <= 0) return 100

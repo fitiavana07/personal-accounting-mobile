@@ -45,7 +45,8 @@ class HomeMetricsBuilderTest {
                 cashToEquityPercent = 29,
                 monthlyExpenses = 100_000,
                 cashRunwayMonths = 2.0,
-                incomeToExpensesPercent = 0
+                incomeToExpensesPercent = 0,
+                averageMonthlyIncome = 0
             ),
             result
         )
@@ -174,6 +175,36 @@ class HomeMetricsBuilderTest {
         )
 
         assertEquals(63, result.incomeToExpensesPercent)
+    }
+
+    @Test
+    fun `averageMonthlyIncome is the rounded average of the monthly net incomes`() {
+        val result = HomeMetricsBuilder.build(
+            emptyList(),
+            emptyList(),
+            emergencyFundPercent = 0,
+            monthlyNetIncomes = listOf(100_000, 150_000, 125_001)
+        )
+
+        assertEquals(125_000L, result.averageMonthlyIncome)
+    }
+
+    @Test
+    fun `averageMonthlyIncome can be negative and is zero without monthly net incomes`() {
+        val loss = HomeMetricsBuilder.build(
+            emptyList(),
+            emptyList(),
+            emergencyFundPercent = 0,
+            monthlyNetIncomes = listOf(-50_000, -10_000)
+        )
+        assertEquals(-30_000L, loss.averageMonthlyIncome)
+
+        val none = HomeMetricsBuilder.build(
+            emptyList(),
+            emptyList(),
+            emergencyFundPercent = 0
+        )
+        assertEquals(0L, none.averageMonthlyIncome)
     }
 
     @Test
