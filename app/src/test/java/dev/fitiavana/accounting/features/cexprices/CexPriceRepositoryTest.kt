@@ -11,20 +11,32 @@ import java.io.IOException
 
 class CexPriceRepositoryTest {
 
+    private class FakeStore : CexPairStore {
+        var saved: Pair<String, String>? = null
+        override fun load() = saved
+        override fun save(base: String, quote: String) {
+            saved = base to quote
+        }
+    }
+
+    private val store = FakeStore()
+
+    private fun repository(fetchers: Map<CexId, CexPriceFetcher>) = CexPriceRepository(fetchers, store)
+
     private fun fetcher(block: (String, String) -> Double) = object : CexPriceFetcher {
         override fun fetchPrice(base: String, quote: String) = block(base, quote)
     }
 
     @Test
     fun `returns one entry per cex in enum order`() {
-        val repo = CexPriceRepository(CexId.values().associateWith { fetcher { _, _ -> 1.0 } })
+        val repo = repository(CexId.values().associateWith { fetcher { _, _ -> 1.0 } })
 
         assertEquals(CexId.values().toList(), repo.fetchAll("BTC", "USDT").map { it.cex })
     }
 
     @Test
     fun `successful fetch carries the price`() {
-        val repo = CexPriceRepository(mapOf(CexId.BINANCE to fetcher { b, q -> if (b == "BTC" && q == "USDT") 65000.0 else 0.0 }))
+        val repo = repository(mapOf(CexId.BINANCE to fetcher { b, q -> if (b == "BTC" && q == "USDT") 65000.0 else 0.0 }))
 
         val result = repo.fetchAll("BTC", "USDT").single()
 
@@ -34,7 +46,7 @@ class CexPriceRepositoryTest {
 
     @Test
     fun `failure of one cex does not affect the others`() {
-        val repo = CexPriceRepository(
+        val repo = repository(
             mapOf(
                 CexId.BINANCE to fetcher { _, _ -> 10.0 },
                 CexId.BYBIT to fetcher { _, _ -> throw IOException("boom") },
@@ -60,8 +72,19 @@ class CexPriceRepositoryTest {
             if (!latch.await(2, java.util.concurrent.TimeUnit.SECONDS)) throw IOException("sequential")
             1.0
         }
-        val repo = CexPriceRepository(mapOf(CexId.BINANCE to waiting, CexId.BYBIT to waiting))
+        val repo = repository(mapOf(CexId.BINANCE to waiting, CexId.BYBIT to waiting))
 
         assertEquals(listOf(1.0, 1.0), repo.fetchAll("BTC", "USDT").map { it.price })
+    }
+
+    @Test
+    fun `last pair is persisted through the store`() {
+        val repo = repository(emptyMap())
+        assertNull(repo.getLastPair())
+
+        repo.saveLastPair("BTC", "USDT")
+
+        assertEquals("BTC" to "USDT", repo.getLastPair())
+        assertEquals("BTC" to "USDT", store.saved)
     }
 }

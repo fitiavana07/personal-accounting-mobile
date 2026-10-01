@@ -128,4 +128,47 @@ class CexPricesViewModelTest {
         assertNull(vm.prices.value)
         assertFalse(vm.loading.value!!)
     }
+
+    @Test
+    fun `saves the pair once a valid pair is fetched`() {
+        viewModel.selectBase("BTC")
+        viewModel.selectQuote("USDT")
+
+        verify(cexPriceRepository).saveLastPair("BTC", "USDT")
+    }
+
+    @Test
+    fun `does not save incomplete or degenerate pairs`() {
+        viewModel.selectBase("BTC")
+        viewModel.selectQuote("BTC")
+
+        verify(cexPriceRepository, never()).saveLastPair(any(), any())
+    }
+
+    @Test
+    fun `preferred selection falls back to the saved pair`() {
+        whenever(cexPriceRepository.getLastPair()).thenReturn("ETH" to "USDC")
+        val vm = CexPricesViewModel(instrumentRepository, cexPriceRepository, Executor { it.run() })
+
+        assertEquals("ETH", vm.preferredBase)
+        assertEquals("USDC", vm.preferredQuote)
+        verify(cexPriceRepository, never()).fetchAll(any(), any())
+    }
+
+    @Test
+    fun `preferred selection follows the current selection over the saved pair`() {
+        whenever(cexPriceRepository.getLastPair()).thenReturn("ETH" to "USDC")
+        val vm = CexPricesViewModel(instrumentRepository, cexPriceRepository, Executor { it.run() })
+
+        vm.selectBase("BTC")
+
+        assertEquals("BTC", vm.preferredBase)
+        assertEquals("USDC", vm.preferredQuote)
+    }
+
+    @Test
+    fun `preferred selection is null with nothing selected or saved`() {
+        assertNull(viewModel.preferredBase)
+        assertNull(viewModel.preferredQuote)
+    }
 }

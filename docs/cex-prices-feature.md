@@ -14,7 +14,9 @@ blocks) → `CexPricesActivity` → `CexPricesViewModel` → `CexPriceRepository
   (selection changed mid-flight) are dropped via a request id. The toolbar "Refresh" re-fetches.
 - `CexPriceRepository.fetchAll` queries all exchanges in parallel. A failure or an unlisted pair
   gives `CexPrice(price = null, error = …)`, shown as "N/A"; other exchanges are unaffected.
-- Nothing is persisted: no Room table, no migration, no backup change.
+- Prices are not persisted. The last valid pair is remembered in SharedPreferences (`cex_prices`) via
+  `CexPairStore`, reached through `CexPriceRepository.getLastPair/saveLastPair`; the ViewModel exposes
+  it as `preferredBase/preferredQuote` to pre-select the spinners. No Room table, migration or backup change.
 
 ## Adding an exchange
 

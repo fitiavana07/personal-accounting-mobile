@@ -26,6 +26,11 @@ class CexPricesViewModel(
 
     private var base: String? = null
     private var quote: String? = null
+    private val savedPair = cexPriceRepository.getLastPair()
+
+    /** What the spinners should show: the current selection, else the pair saved last time. */
+    val preferredBase: String? get() = base ?: savedPair?.first
+    val preferredQuote: String? get() = quote ?: savedPair?.second
 
     /** Incremented on every (re)start so results of superseded requests can be dropped. */
     @Volatile
@@ -53,6 +58,7 @@ class CexPricesViewModel(
             _loading.value = false
             return
         }
+        cexPriceRepository.saveLastPair(base, quote)
         _loading.value = true
         executor.execute {
             val result = cexPriceRepository.fetchAll(base, quote)

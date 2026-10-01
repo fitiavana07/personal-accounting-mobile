@@ -10,13 +10,16 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ProgressBar
 import android.widget.Spinner
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.features.cexprices.CexPrice
 import dev.fitiavana.accounting.ui.common.UiUtils
+import java.util.Locale
 
 class CexPricesActivity : AppCompatActivity() {
 
@@ -68,7 +71,7 @@ class CexPricesActivity : AppCompatActivity() {
             showCodes(instruments.map { it.code })
         }
         viewModel.prices.observe(this) { prices ->
-            pricesAdapter.submit(prices)
+            showComparison(prices)
             updateHint()
         }
         viewModel.loading.observe(this) { loading ->
@@ -78,21 +81,38 @@ class CexPricesActivity : AppCompatActivity() {
         }
     }
 
-    /** Fills both spinners, keeping the previous selection when still available. */
+    /** Fills both spinners, preferring the current or last saved pair when still available. */
     private fun showCodes(newCodes: List<String>) {
-        val previousBase = spinnerBase.selectedItem as String?
-        val previousQuote = spinnerQuote.selectedItem as String?
         codes = newCodes
-        setSpinnerItems(spinnerBase, newCodes, newCodes.indexOf(previousBase).takeIf { it >= 0 } ?: 0)
+        setSpinnerItems(spinnerBase, newCodes, newCodes.indexOf(viewModel.preferredBase).takeIf { it >= 0 } ?: 0)
         val defaultQuote = if (newCodes.size > 1) 1 else 0
-        setSpinnerItems(spinnerQuote, newCodes, newCodes.indexOf(previousQuote).takeIf { it >= 0 } ?: defaultQuote)
+        setSpinnerItems(spinnerQuote, newCodes, newCodes.indexOf(viewModel.preferredQuote).takeIf { it >= 0 } ?: defaultQuote)
     }
 
     private fun setSpinnerItems(spinner: Spinner, items: List<String>, selected: Int) {
-        spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, items).also {
+        spinner.adapter = ArrayAdapter(this, R.layout.item_spinner_crypto, items).also {
             it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
         spinner.setSelection(selected)
+    }
+
+    private fun showComparison(prices: List<CexPrice>?) {
+        val card = findViewById<View>(R.id.card_cex_prices)
+        if (prices == null) {
+            card.visibility = View.GONE
+            pricesAdapter.submit(emptyList())
+            return
+        }
+        val comparison = CexPriceComparisonBuilder.build(prices)
+        pricesAdapter.submit(comparison.rows)
+        findViewById<TextView>(R.id.text_cex_pair).text =
+            getString(R.string.cex_pair_format, viewModel.preferredBase, viewModel.preferredQuote)
+        findViewById<TextView>(R.id.text_cex_spread).apply {
+            val spread = comparison.spreadPercent
+            visibility = if (spread == null) View.GONE else View.VISIBLE
+            text = spread?.let { getString(R.string.cex_spread_format, String.format(Locale.US, "%.2f%%", it)) }
+        }
+        card.visibility = View.VISIBLE
     }
 
     private fun updateHint() {

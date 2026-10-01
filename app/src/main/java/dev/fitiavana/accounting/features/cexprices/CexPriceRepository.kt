@@ -8,7 +8,14 @@ import java.util.concurrent.Executors
 /** Outcome for one exchange: either a [price] or the [error] explaining why there is none. */
 data class CexPrice(val cex: CexId, val price: Double?, val error: Exception?)
 
-class CexPriceRepository(private val fetchers: Map<CexId, CexPriceFetcher>) {
+class CexPriceRepository(
+    private val fetchers: Map<CexId, CexPriceFetcher>,
+    private val pairStore: CexPairStore
+) {
+
+    fun getLastPair(): Pair<String, String>? = pairStore.load()
+
+    fun saveLastPair(base: String, quote: String) = pairStore.save(base, quote)
 
     /**
      * Queries every exchange concurrently and returns one result per exchange, in [CexId] order.

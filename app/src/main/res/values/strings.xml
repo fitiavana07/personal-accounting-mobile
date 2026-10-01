@@ -177,5 +177,9 @@
     <string name="label_quote_instrument">Quote</string>
     <string name="cex_price_unavailable">N/A</string>
     <string name="cex_prices_hint">Select two different cryptocurrencies to compare their price across exchanges.</string>
+    <string name="cex_tag_lowest">Lowest</string>
+    <string name="cex_tag_highest">Highest</string>
+    <string name="cex_pair_format">%1$s / %2$s</string>
+    <string name="cex_spread_format">Spread %1$s</string>
     <string name="action_refresh">Refresh</string>
 </resources>

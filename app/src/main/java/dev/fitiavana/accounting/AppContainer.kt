@@ -6,6 +6,7 @@ import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.backup.BackupRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.cexprices.CexPriceRepository
+import dev.fitiavana.accounting.features.cexprices.SharedPreferencesCexPairStore
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
@@ -31,7 +32,12 @@ class AppContainer private constructor(context: Context) {
     )
     val exchangeRateRepository =
         ExchangeRateRepository(database.exchangeRateCacheDao())
-    val cexPriceRepository = CexPriceRepository(HttpCexPriceFetcher.createAll())
+    val cexPriceRepository = CexPriceRepository(
+        HttpCexPriceFetcher.createAll(),
+        SharedPreferencesCexPairStore(
+            context.getSharedPreferences(SharedPreferencesCexPairStore.PREFS_NAME, Context.MODE_PRIVATE)
+        )
+    )
     val settingsRepository = AppSettingsRepository(database.appSettingsDao())
     val backupRepository = BackupRepository(
         database,
