@@ -43,27 +43,31 @@ class HomeP2pPricesAdapter(
         holder.bind(holder.sell, prices?.sell)
     }
 
-    /** One price line: the price and, beside it, the advertiser and order limits. */
-    class Line(val price: TextView, val details: TextView)
+    /** One ad line: the price, then the advertiser name and the order limits. */
+    class Line(val price: TextView, val name: TextView, val limits: TextView)
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val filter: TextView = view.findViewById(R.id.text_p2p_filter)
         val buy = listOf(
-            Line(view.findViewById(R.id.text_p2p_buy_1), view.findViewById(R.id.text_p2p_buy_1_detail)),
-            Line(view.findViewById(R.id.text_p2p_buy_2), view.findViewById(R.id.text_p2p_buy_2_detail)),
-            Line(view.findViewById(R.id.text_p2p_buy_3), view.findViewById(R.id.text_p2p_buy_3_detail))
+            line(view, R.id.text_p2p_buy_1, R.id.text_p2p_buy_1_name, R.id.text_p2p_buy_1_limits),
+            line(view, R.id.text_p2p_buy_2, R.id.text_p2p_buy_2_name, R.id.text_p2p_buy_2_limits),
+            line(view, R.id.text_p2p_buy_3, R.id.text_p2p_buy_3_name, R.id.text_p2p_buy_3_limits)
         )
         val sell = listOf(
-            Line(view.findViewById(R.id.text_p2p_sell_1), view.findViewById(R.id.text_p2p_sell_1_detail)),
-            Line(view.findViewById(R.id.text_p2p_sell_2), view.findViewById(R.id.text_p2p_sell_2_detail)),
-            Line(view.findViewById(R.id.text_p2p_sell_3), view.findViewById(R.id.text_p2p_sell_3_detail))
+            line(view, R.id.text_p2p_sell_1, R.id.text_p2p_sell_1_name, R.id.text_p2p_sell_1_limits),
+            line(view, R.id.text_p2p_sell_2, R.id.text_p2p_sell_2_name, R.id.text_p2p_sell_2_limits),
+            line(view, R.id.text_p2p_sell_3, R.id.text_p2p_sell_3_name, R.id.text_p2p_sell_3_limits)
         )
+
+        private fun line(view: View, price: Int, name: Int, limits: Int) =
+            Line(view.findViewById(price), view.findViewById(name), view.findViewById(limits))
 
         fun bind(lines: List<Line>, ads: List<P2pAd>?) {
             lines.forEachIndexed { i, line ->
                 val ad = ads?.getOrNull(i)
                 line.price.text = ad?.let { TransactionDisplay.formatAmount(Math.round(it.price)) } ?: PLACEHOLDER
-                line.details.text = ad?.let { P2pAdFormatter.details(it) } ?: ""
+                line.name.text = ad?.let { P2pAdFormatter.advertiser(it) } ?: ""
+                line.limits.text = ad?.let { P2pAdFormatter.limits(it) } ?: ""
             }
         }
     }

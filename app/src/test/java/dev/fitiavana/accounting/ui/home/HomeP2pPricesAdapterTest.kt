@@ -1,6 +1,7 @@
 package dev.fitiavana.accounting.ui.home
 
 import android.content.Context
+import android.text.TextUtils
 import android.view.ContextThemeWrapper
 import android.view.View
 import android.widget.FrameLayout
@@ -11,10 +12,12 @@ import dev.fitiavana.accounting.features.p2pprices.P2pPrices
 import dev.fitiavana.accounting.network.p2p.P2pAd
 import dev.fitiavana.accounting.network.p2p.P2pPaymentMethod
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -34,7 +37,7 @@ class HomeP2pPricesAdapterTest {
         adapter.onBindViewHolder(holder, 0)
     }
 
-    private fun ads(vararg prices: Double) = prices.map { P2pAd(it, advertiser = "n$it") }
+    private fun ads(vararg prices: Double) = prices.map { P2pAd(it, minLimit = 1_000, maxLimit = 2_000, advertiser = "n${it.toInt()}") }
 
     private fun text(id: Int) = itemView.findViewById<TextView>(id).text.toString()
 
@@ -105,28 +108,46 @@ class HomeP2pPricesAdapterTest {
     }
 
     @Test
-    fun `each line shows the formatted ad details beside its price`() {
+    fun `each line shows the advertiser and the limits beside its price`() {
         submit(P2pPrices(buy = ads(4600.0, 4601.5, 4602.0), sell = ads(4500.0, 4499.0, 4498.25)))
 
-        assertEquals("n4600.0", text(R.id.text_p2p_buy_1_detail))
-        assertEquals("n4602.0", text(R.id.text_p2p_buy_3_detail))
-        assertEquals("n4499.0", text(R.id.text_p2p_sell_2_detail))
+        assertEquals("n4600", text(R.id.text_p2p_buy_1_name))
+        assertEquals("1.00K–2.00K", text(R.id.text_p2p_buy_1_limits))
+        assertEquals("n4601", text(R.id.text_p2p_buy_2_name))
+        assertEquals("n4602", text(R.id.text_p2p_buy_3_name))
+        assertEquals("n4499", text(R.id.text_p2p_sell_2_name))
+        assertEquals("1.00K–2.00K", text(R.id.text_p2p_sell_3_limits))
     }
 
     @Test
-    fun `lines without an ad have no details`() {
+    fun `lines without an ad have no name or limits`() {
         submit(P2pPrices(buy = ads(4600.0), sell = null))
 
-        assertEquals("", text(R.id.text_p2p_buy_2_detail))
-        assertEquals("", text(R.id.text_p2p_sell_1_detail))
+        assertEquals("", text(R.id.text_p2p_buy_2_name))
+        assertEquals("", text(R.id.text_p2p_buy_2_limits))
+        assertEquals("", text(R.id.text_p2p_sell_1_name))
+        assertEquals("", text(R.id.text_p2p_sell_1_limits))
     }
 
     @Test
-    fun `price and details share one horizontal line that cannot wrap`() {
+    fun `price name and limits share one line, only the name may be cut`() {
         val price = itemView.findViewById<View>(R.id.text_p2p_buy_1)
-        val detail = itemView.findViewById<TextView>(R.id.text_p2p_buy_1_detail)
+        val name = itemView.findViewById<TextView>(R.id.text_p2p_buy_1_name)
+        val limits = itemView.findViewById<TextView>(R.id.text_p2p_buy_1_limits)
 
-        assertEquals(price.parent, detail.parent)
-        assertEquals(1, detail.maxLines)
+        assertEquals(price.parent, name.parent)
+        assertEquals(price.parent, limits.parent)
+        assertEquals(TextUtils.TruncateAt.END, name.ellipsize)
+        assertEquals(1, name.maxLines)
+        assertNull(limits.ellipsize)
+        assertEquals(1, limits.maxLines)
+    }
+
+    @Test
+    fun `amounts are monospace so digits line up across lines`() {
+        for (id in listOf(R.id.text_p2p_buy_1, R.id.text_p2p_sell_3, R.id.text_p2p_buy_2_limits, R.id.text_p2p_sell_1_limits)) {
+            val typeface = itemView.findViewById<TextView>(id).typeface
+            assertEquals("monospace", shadowOf(typeface).fontDescription.familyName)
+        }
     }
 }

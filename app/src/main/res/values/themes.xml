@@ -22,19 +22,31 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:maxLines">1</item>
+        <item name="android:fontFamily">monospace</item>
         <item name="android:textColor">?android:attr/textColorPrimary</item>
         <item name="android:textSize">14sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
-    <!-- Advertiser and order limits beside a price; takes the remaining width and never wraps. -->
-    <style name="HomeP2pDetail">
+    <!-- Advertiser beside a price; takes the remaining width and is the only part that may be cut. -->
+    <style name="HomeP2pName">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_weight">1</item>
         <item name="android:layout_marginStart">6dp</item>
         <item name="android:ellipsize">end</item>
         <item name="android:maxLines">1</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+        <item name="android:textSize">10sp</item>
+    </style>
+
+    <!-- Min-max order limit at the end of the line; never truncated. -->
+    <style name="HomeP2pLimits">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">6dp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:fontFamily">monospace</item>
         <item name="android:textColor">?android:attr/textColorSecondary</item>
         <item name="android:textSize">10sp</item>
     </style>

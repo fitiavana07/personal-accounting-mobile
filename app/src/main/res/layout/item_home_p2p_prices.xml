@@ -73,8 +73,12 @@
                     style="@style/HomeP2pPrice" />
 
                 <TextView
-                    android:id="@+id/text_p2p_buy_1_detail"
-                    style="@style/HomeP2pDetail" />
+                    android:id="@+id/text_p2p_buy_1_name"
+                    style="@style/HomeP2pName" />
+
+                <TextView
+                    android:id="@+id/text_p2p_buy_1_limits"
+                    style="@style/HomeP2pLimits" />
             </LinearLayout>
 
             <LinearLayout style="@style/HomeP2pLine">
@@ -84,8 +88,12 @@
                     style="@style/HomeP2pPrice" />
 
                 <TextView
-                    android:id="@+id/text_p2p_buy_2_detail"
-                    style="@style/HomeP2pDetail" />
+                    android:id="@+id/text_p2p_buy_2_name"
+                    style="@style/HomeP2pName" />
+
+                <TextView
+                    android:id="@+id/text_p2p_buy_2_limits"
+                    style="@style/HomeP2pLimits" />
             </LinearLayout>
 
             <LinearLayout style="@style/HomeP2pLine">
@@ -95,8 +103,12 @@
                     style="@style/HomeP2pPrice" />
 
                 <TextView
-                    android:id="@+id/text_p2p_buy_3_detail"
-                    style="@style/HomeP2pDetail" />
+                    android:id="@+id/text_p2p_buy_3_name"
+                    style="@style/HomeP2pName" />
+
+                <TextView
+                    android:id="@+id/text_p2p_buy_3_limits"
+                    style="@style/HomeP2pLimits" />
             </LinearLayout>
         </LinearLayout>
 
@@ -128,8 +140,12 @@
                     style="@style/HomeP2pPrice" />
 
                 <TextView
-                    android:id="@+id/text_p2p_sell_1_detail"
-                    style="@style/HomeP2pDetail" />
+                    android:id="@+id/text_p2p_sell_1_name"
+                    style="@style/HomeP2pName" />
+
+                <TextView
+                    android:id="@+id/text_p2p_sell_1_limits"
+                    style="@style/HomeP2pLimits" />
             </LinearLayout>
 
             <LinearLayout style="@style/HomeP2pLine">
@@ -139,8 +155,12 @@
                     style="@style/HomeP2pPrice" />
 
                 <TextView
-                    android:id="@+id/text_p2p_sell_2_detail"
-                    style="@style/HomeP2pDetail" />
+                    android:id="@+id/text_p2p_sell_2_name"
+                    style="@style/HomeP2pName" />
+
+                <TextView
+                    android:id="@+id/text_p2p_sell_2_limits"
+                    style="@style/HomeP2pLimits" />
             </LinearLayout>
 
             <LinearLayout style="@style/HomeP2pLine">
@@ -150,8 +170,12 @@
                     style="@style/HomeP2pPrice" />
 
                 <TextView
-                    android:id="@+id/text_p2p_sell_3_detail"
-                    style="@style/HomeP2pDetail" />
+                    android:id="@+id/text_p2p_sell_3_name"
+                    style="@style/HomeP2pName" />
+
+                <TextView
+                    android:id="@+id/text_p2p_sell_3_limits"
+                    style="@style/HomeP2pLimits" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
