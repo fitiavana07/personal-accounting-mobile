@@ -9,9 +9,12 @@ import dev.fitiavana.accounting.features.cexprices.CexPriceRepository
 import dev.fitiavana.accounting.features.cexprices.SharedPreferencesCexPairStore
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
+import dev.fitiavana.accounting.features.p2pprices.P2pPriceRepository
+import dev.fitiavana.accounting.features.p2pprices.SharedPreferencesP2pFilterStore
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
 import dev.fitiavana.accounting.network.cex.HttpCexPriceFetcher
+import dev.fitiavana.accounting.network.p2p.HttpP2pPriceFetcher
 
 /**
  * Builds each repository once from the shared [AppDatabase] instance. Activities and
@@ -36,6 +39,12 @@ class AppContainer private constructor(context: Context) {
         HttpCexPriceFetcher.createAll(),
         SharedPreferencesCexPairStore(
             context.getSharedPreferences(SharedPreferencesCexPairStore.PREFS_NAME, Context.MODE_PRIVATE)
+        )
+    )
+    val p2pPriceRepository = P2pPriceRepository(
+        HttpP2pPriceFetcher(),
+        SharedPreferencesP2pFilterStore(
+            context.getSharedPreferences(SharedPreferencesP2pFilterStore.PREFS_NAME, Context.MODE_PRIVATE)
         )
     )
     val settingsRepository = AppSettingsRepository(database.appSettingsDao())

@@ -66,7 +66,7 @@ class HomeFragmentTest {
     }
 
     @Test
-    fun `shortcuts row sits between the metrics and emergency fund blocks`() {
+    fun `shortcuts row and P2P prices sit between the metrics and emergency fund blocks`() {
         val activity = launchHomeFragment()
         val recycler = layOutRecycler(activity)
 
@@ -75,9 +75,11 @@ class HomeFragmentTest {
         }
         val metrics = indexOf(R.id.container_metrics_rows)
         val shortcuts = indexOf(R.id.button_cex_prices)
+        val p2p = indexOf(R.id.text_p2p_buy_title)
         val emergency = indexOf(R.id.progress_emergency_fund_6month)
 
         assertEquals(metrics + 1, shortcuts)
-        assertEquals(shortcuts + 1, emergency)
+        assertEquals(shortcuts + 1, p2p)
+        assertEquals(p2p + 1, emergency)
     }
 }

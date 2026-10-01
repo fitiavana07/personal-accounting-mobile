@@ -11,6 +11,9 @@ import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
+import dev.fitiavana.accounting.features.p2pprices.P2pPriceRepository
+import dev.fitiavana.accounting.features.p2pprices.P2pPrices
+import dev.fitiavana.accounting.network.p2p.P2pPaymentMethod
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
 import dev.fitiavana.accounting.ui.reports.ReportPeriodSelector
@@ -33,6 +36,7 @@ class HomeViewModelTest {
     private lateinit var instrumentRepository: InstrumentRepository
     private lateinit var exchangeRateRepository: ExchangeRateRepository
     private lateinit var settingsRepository: AppSettingsRepository
+    private lateinit var p2pPriceRepository: P2pPriceRepository
 
     private lateinit var balances: MutableLiveData<List<AccountBalance>>
     private lateinit var accounts: MutableLiveData<List<Account>>
@@ -70,6 +74,7 @@ class HomeViewModelTest {
         instrumentRepository = mock()
         exchangeRateRepository = mock()
         settingsRepository = mock()
+        p2pPriceRepository = mock()
 
         whenever(balanceRepository.getAll()).thenReturn(balances)
         whenever(accountRepository.getAll()).thenReturn(accounts)
@@ -84,12 +89,49 @@ class HomeViewModelTest {
             accountRepository,
             instrumentRepository,
             exchangeRateRepository,
-            settingsRepository
+            settingsRepository,
+            p2pPriceRepository
         )
         // MediatorLiveData only forwards source updates while it has an active observer.
         viewModel.emergencyFund.observeForever {}
         viewModel.metrics.observeForever {}
         return viewModel
+    }
+
+    @Test
+    fun `refreshP2pPrices publishes the repository result`() {
+        val prices = P2pPrices(buy = null, sell = emptyList())
+        whenever(p2pPriceRepository.fetch()).thenReturn(prices)
+        val viewModel = viewModel()
+
+        viewModel.refreshP2pPrices()
+
+        assertEquals(prices, viewModel.p2pPrices.value)
+    }
+
+    @Test
+    fun `selectPaymentMethod saves the choice then refreshes the prices`() {
+        val prices = P2pPrices(buy = emptyList(), sell = emptyList(), filter = P2pPaymentMethod("Mvola", "Mvola"))
+        whenever(p2pPriceRepository.fetch()).thenReturn(prices)
+        val viewModel = viewModel()
+
+        viewModel.selectPaymentMethod("Mvola")
+
+        val inOrder = org.mockito.Mockito.inOrder(p2pPriceRepository)
+        inOrder.verify(p2pPriceRepository).selectMethod("Mvola")
+        inOrder.verify(p2pPriceRepository).fetch()
+        assertEquals(prices, viewModel.p2pPrices.value)
+    }
+
+    @Test
+    fun `payment methods and current selection come from the repository`() {
+        val methods = listOf(P2pPaymentMethod("Mvola", "Mvola"))
+        whenever(p2pPriceRepository.getPaymentMethods()).thenReturn(methods)
+        whenever(p2pPriceRepository.getSelectedMethod()).thenReturn("Mvola")
+        val viewModel = viewModel()
+
+        assertEquals(methods, viewModel.getPaymentMethods())
+        assertEquals("Mvola", viewModel.getSelectedPaymentMethod())
     }
 
     @Test

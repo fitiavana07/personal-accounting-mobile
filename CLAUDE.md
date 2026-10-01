@@ -57,10 +57,12 @@ features/
   exchangerates/  # ExchangeRateCache (@Entity), ExchangeRateCacheDao, ExchangeRateRepository
   reports/        # AccountLines, ReportRow, BalanceSheetBuilder, IncomeStatementBuilder, EquityStatementBuilder
   cexprices/      # CexPrice, CexPriceRepository
+  p2pprices/      # P2pPrices, P2pPriceRepository (Binance P2P USDT/MGA top ads on home)
   settings/       # AppSettings (@Entity), AppSettingsDao, AppSettingsRepository
   backup/         # BackupRepository
 db/               # AppDatabase singleton (Room, migrations)
 network/          # HTTP clients for exchange-rate providers (CoinGecko, Yahoo Finance)
+  p2p/            # Binance P2P ad search (BinanceP2pApi, P2pPriceFetcher)
   cex/            # per-exchange ticker endpoints/parsers (Binance, Bybit, Bitget, OKX, KuCoin, MEXC, Kraken)
 ui/
   accounts/      # AccountsFragment, AccountsViewModel, AccountsAdapter, EditAccountActivity
@@ -92,6 +94,8 @@ amount is calculated in Instrument Transfer transaction creation mode.
 
 See `docs/cex-prices-feature.md` for the CEX pair price comparison feature
 (home shortcut, spinners, per-exchange fetchers).
+
+See `docs/p2p-prices-feature.md` for the Binance P2P prices block on the home screen.
 
 Each CRUD feature: {Feature}Fragment + {Feature}ViewModel + {Feature}Adapter +
 Edit{Feature}Activity + Edit{Feature}ViewModel

@@ -173,6 +173,13 @@
     <string name="title_transaction">Transaction</string>
     <string name="transaction_saved">Transaction saved</string>
     <string name="home_shortcut_cex_prices">CEX Prices</string>
+    <string name="home_p2p_header">Binance P2P · USDT/MGA</string>
+    <string name="home_p2p_buy_title">Buy USDT</string>
+    <string name="home_p2p_sell_title">Sell USDT</string>
+    <string name="home_p2p_filter_all">All methods</string>
+    <string name="home_p2p_filter_format">%1$s ▾</string>
+    <string name="home_p2p_filter_dialog_title">Payment method</string>
+    <string name="home_p2p_filter_unavailable">Could not load payment methods</string>
     <string name="title_cex_prices">CEX Prices</string>
     <string name="label_base_instrument">Base</string>
     <string name="label_quote_instrument">Quote</string>

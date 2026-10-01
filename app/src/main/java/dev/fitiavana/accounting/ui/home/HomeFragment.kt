@@ -29,6 +29,7 @@ class HomeFragment : Fragment() {
     private lateinit var balanceSheetAdapter: ReportAdapter
     private lateinit var pieChartsAdapter: HomePieChartsAdapter
     private lateinit var shortcutsAdapter: HomeShortcutsAdapter
+    private lateinit var p2pPricesAdapter: HomeP2pPricesAdapter
     private lateinit var emergencyFundAdapter: EmergencyFundAdapter
     private lateinit var incomeToExpensesAdapter: IncomeToExpensesAdapter
     private lateinit var noteAdapter: HomeNoteAdapter
@@ -55,7 +56,8 @@ class HomeFragment : Fragment() {
                 accountRepo,
                 instrumentRepo,
                 exchangeRateRepo,
-                settingsRepo
+                settingsRepo,
+                container.p2pPriceRepository
             )
         ).get(HomeViewModel::class.java)
 
@@ -73,6 +75,7 @@ class HomeFragment : Fragment() {
         shortcutsAdapter = HomeShortcutsAdapter {
             startActivity(CexPricesActivity.intent(requireContext()))
         }
+        p2pPricesAdapter = HomeP2pPricesAdapter { showP2pFilterDialog() }
         emergencyFundAdapter =
             EmergencyFundAdapter { showEditMonthlyExpensesDialog() }
         incomeToExpensesAdapter = IncomeToExpensesAdapter()
@@ -83,6 +86,7 @@ class HomeFragment : Fragment() {
             ConcatAdapter(
                 metricsAdapter,
                 shortcutsAdapter,
+                p2pPricesAdapter,
                 emergencyFundAdapter,
                 incomeToExpensesAdapter,
                 pieChartsAdapter,
@@ -126,6 +130,10 @@ class HomeFragment : Fragment() {
             pieChartsAdapter.submitLiquiditySlices(slices)
         }
 
+        viewModel.p2pPrices.observe(viewLifecycleOwner) { prices ->
+            p2pPricesAdapter.submit(prices)
+        }
+
         viewModel.emergencyFund.observe(viewLifecycleOwner) { info ->
             emergencyFundAdapter.submit(info)
         }
@@ -164,10 +172,38 @@ class HomeFragment : Fragment() {
             .show()
     }
 
+    /** Single-choice dialog over "All methods" + the payment methods Binance offers; choosing one refreshes the prices. */
+    private fun showP2pFilterDialog() {
+        Thread {
+            val methods = viewModel.getPaymentMethods()
+            val selected = viewModel.getSelectedPaymentMethod()
+            activity?.runOnUiThread {
+                if (!isAdded) return@runOnUiThread
+                if (methods.isEmpty()) {
+                    Toast.makeText(requireContext(), R.string.home_p2p_filter_unavailable, Toast.LENGTH_SHORT).show()
+                    return@runOnUiThread
+                }
+                val items = (listOf(getString(R.string.home_p2p_filter_all)) + methods.map { it.name }).toTypedArray()
+                val checked = methods.indexOfFirst { it.identifier == selected } + 1
+                AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.home_p2p_filter_dialog_title)
+                    .setSingleChoiceItems(items, checked) { dialog, which ->
+                        dialog.dismiss()
+                        val identifier = methods.getOrNull(which - 1)?.identifier
+                        Thread { viewModel.selectPaymentMethod(identifier) }.start()
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+        }.start()
+    }
+
     private fun refreshRates() {
         swipeRefresh.isRefreshing = true
+        val p2pRefresh = Thread { viewModel.refreshP2pPrices() }.apply { start() }
         Thread {
             val result = viewModel.refreshRates()
+            p2pRefresh.join()
             activity?.runOnUiThread {
                 swipeRefresh.isRefreshing = false
                 if (result.failed.isNotEmpty() && result.succeeded.isEmpty()) {

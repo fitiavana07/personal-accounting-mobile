@@ -13,6 +13,9 @@ import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
 import dev.fitiavana.accounting.features.exchangerates.RefreshResult
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
+import dev.fitiavana.accounting.features.p2pprices.P2pPriceRepository
+import dev.fitiavana.accounting.features.p2pprices.P2pPrices
+import dev.fitiavana.accounting.network.p2p.P2pPaymentMethod
 import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
 import dev.fitiavana.accounting.features.reports.IncomeStatementBuilder
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
@@ -25,7 +28,8 @@ class HomeViewModel(
     private val accountRepository: AccountRepository,
     private val instrumentRepository: InstrumentRepository,
     private val exchangeRateRepository: ExchangeRateRepository,
-    private val settingsRepository: AppSettingsRepository
+    private val settingsRepository: AppSettingsRepository,
+    private val p2pPriceRepository: P2pPriceRepository
 ) : ViewModel() {
 
     private val balances: LiveData<List<AccountBalance>> =
@@ -38,6 +42,9 @@ class HomeViewModel(
 
     private val monthlyNetIncomesLiveData = MutableLiveData<List<Long>>(emptyList())
     val monthlyNetIncomes: LiveData<List<Long>> = monthlyNetIncomesLiveData
+
+    private val p2pPricesLiveData = MutableLiveData<P2pPrices?>(null)
+    val p2pPrices: LiveData<P2pPrices?> = p2pPricesLiveData
 
     val homeItems = MediatorLiveData<List<HomeItem>>().apply {
         var latestBalances: List<AccountBalance> = emptyList()
@@ -241,6 +248,23 @@ class HomeViewModel(
     /** Recomputes and publishes [monthlyNetIncomes]. Synchronous — callers must invoke this off the main thread. */
     fun refreshMonthlyNetIncomesSync() {
         monthlyNetIncomesLiveData.postValue(computeMonthlyNetIncomesSync())
+    }
+
+    /** Fetches and publishes [p2pPrices]. Synchronous — callers must invoke this off the main thread. */
+    fun refreshP2pPrices() {
+        p2pPricesLiveData.postValue(p2pPriceRepository.fetch())
+    }
+
+    /** Payment methods P2P ads can be filtered on. Synchronous — may hit the network; call off the main thread. */
+    fun getPaymentMethods(): List<P2pPaymentMethod> = p2pPriceRepository.getPaymentMethods()
+
+    /** Identifier of the payment method currently filtered on, null when unfiltered. */
+    fun getSelectedPaymentMethod(): String? = p2pPriceRepository.getSelectedMethod()
+
+    /** Filters P2P prices on [identifier] (null = all methods), remembers it and refreshes. Call off the main thread. */
+    fun selectPaymentMethod(identifier: String?) {
+        p2pPriceRepository.selectMethod(identifier)
+        refreshP2pPrices()
     }
 
     /** Synchronous — callers must invoke this off the main thread. */
