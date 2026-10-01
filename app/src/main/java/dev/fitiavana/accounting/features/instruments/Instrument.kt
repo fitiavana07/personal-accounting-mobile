@@ -11,4 +11,8 @@ data class Instrument(
     val decimalPlaces: Int = 0,
     val coingeckoId: String? = null,
     val stockApiSymbol: String? = null
-)
+) {
+    companion object {
+        const val TYPE_CRYPTOCURRENCY = "cryptocurrency"
+    }
+}

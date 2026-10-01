@@ -16,6 +16,9 @@ interface InstrumentDao {
     @Query("SELECT * FROM instruments ORDER BY code ASC")
     fun getAllSync(): List<Instrument>
 
+    @Query("SELECT * FROM instruments WHERE type = :type ORDER BY code ASC")
+    fun getByType(type: String): LiveData<List<Instrument>>
+
     @Query("SELECT * FROM instruments WHERE code = :code")
     fun getByCode(code: String): Instrument?
 

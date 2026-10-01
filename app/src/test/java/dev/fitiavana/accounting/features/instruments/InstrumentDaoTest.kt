@@ -2,6 +2,8 @@ package dev.fitiavana.accounting.features.instruments
 
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Observer
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import dev.fitiavana.accounting.db.AppDatabase
@@ -101,5 +103,33 @@ class InstrumentDaoTest {
         instrumentDao.deleteAll()
 
         assertTrue(instrumentDao.getAllSync().isEmpty())
+    }
+
+    private fun <T> LiveData<T>.getOrAwaitValue(): T {
+        var data: T? = null
+        val observer = Observer<T> { data = it }
+        observeForever(observer)
+        try {
+            @Suppress("UNCHECKED_CAST")
+            return data as T
+        } finally {
+            removeObserver(observer)
+        }
+    }
+
+    @Test
+    fun `getByType returns only instruments of that type ordered by code`() {
+        instrumentDao.insertAll(
+            listOf(
+                Instrument(code = "USD", note = "", type = "currency"),
+                Instrument(code = "USDT", note = "", type = "cryptocurrency"),
+                Instrument(code = "BTC", note = "", type = "cryptocurrency"),
+                Instrument(code = "AAPL", note = "", type = "stock")
+            )
+        )
+
+        val codes = instrumentDao.getByType("cryptocurrency").getOrAwaitValue().map { it.code }
+
+        assertEquals(listOf("BTC", "USDT"), codes)
     }
 }

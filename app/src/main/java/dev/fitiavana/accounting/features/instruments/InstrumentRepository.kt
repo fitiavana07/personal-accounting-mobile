@@ -8,6 +8,7 @@ class InstrumentRepository(
     private val accountDao: AccountDao
 ) {
     fun getAll(): LiveData<List<Instrument>> = dao.getAll()
+    fun getCryptocurrencies(): LiveData<List<Instrument>> = dao.getByType(Instrument.TYPE_CRYPTOCURRENCY)
     fun getAllSync(): List<Instrument> = dao.getAllSync()
     fun getByCode(code: String): Instrument? = dao.getByCode(code)
     fun insert(instrument: Instrument) = dao.insert(instrument)
