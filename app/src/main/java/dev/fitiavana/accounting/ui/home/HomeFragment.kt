@@ -17,6 +17,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.ui.cexprices.CexPricesActivity
 import dev.fitiavana.accounting.ui.common.ReportAdapter
 import dev.fitiavana.accounting.ui.transactions.AddTransactionActivity
 
@@ -27,6 +28,7 @@ class HomeFragment : Fragment() {
     private lateinit var metricsAdapter: HomeMetricsAdapter
     private lateinit var balanceSheetAdapter: ReportAdapter
     private lateinit var pieChartsAdapter: HomePieChartsAdapter
+    private lateinit var shortcutsAdapter: HomeShortcutsAdapter
     private lateinit var emergencyFundAdapter: EmergencyFundAdapter
     private lateinit var incomeToExpensesAdapter: IncomeToExpensesAdapter
     private lateinit var noteAdapter: HomeNoteAdapter
@@ -68,6 +70,9 @@ class HomeFragment : Fragment() {
         metricsAdapter = HomeMetricsAdapter()
         balanceSheetAdapter = ReportAdapter()
         pieChartsAdapter = HomePieChartsAdapter()
+        shortcutsAdapter = HomeShortcutsAdapter {
+            startActivity(CexPricesActivity.intent(requireContext()))
+        }
         emergencyFundAdapter =
             EmergencyFundAdapter { showEditMonthlyExpensesDialog() }
         incomeToExpensesAdapter = IncomeToExpensesAdapter()
@@ -77,6 +82,7 @@ class HomeFragment : Fragment() {
         recycler.adapter =
             ConcatAdapter(
                 metricsAdapter,
+                shortcutsAdapter,
                 emergencyFundAdapter,
                 incomeToExpensesAdapter,
                 pieChartsAdapter,

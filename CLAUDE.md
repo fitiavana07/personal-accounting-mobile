@@ -56,10 +56,12 @@ features/
   instruments/    # Instrument (@Entity), InstrumentDao, InstrumentRepository
   exchangerates/  # ExchangeRateCache (@Entity), ExchangeRateCacheDao, ExchangeRateRepository
   reports/        # AccountLines, ReportRow, BalanceSheetBuilder, IncomeStatementBuilder, EquityStatementBuilder
+  cexprices/      # CexPrice, CexPriceRepository
   settings/       # AppSettings (@Entity), AppSettingsDao, AppSettingsRepository
   backup/         # BackupRepository
 db/               # AppDatabase singleton (Room, migrations)
 network/          # HTTP clients for exchange-rate providers (CoinGecko, Yahoo Finance)
+  cex/            # per-exchange ticker endpoints/parsers (Binance, Bybit, Bitget, OKX, KuCoin, MEXC, Kraken)
 ui/
   accounts/      # AccountsFragment, AccountsViewModel, AccountsAdapter, EditAccountActivity
   balances/      # BalancesFragment, BalancesViewModel, BalancesAdapter
@@ -87,6 +89,9 @@ selection, ViewModel data flow, report builders) before exploring its code.
 
 See `docs/instrument-transfer-base-amount.md` for how the base currency
 amount is calculated in Instrument Transfer transaction creation mode.
+
+See `docs/cex-prices-feature.md` for the CEX pair price comparison feature
+(home shortcut, spinners, per-exchange fetchers).
 
 Each CRUD feature: {Feature}Fragment + {Feature}ViewModel + {Feature}Adapter +
 Edit{Feature}Activity + Edit{Feature}ViewModel

@@ -171,4 +171,11 @@
     <string name="title_new_transaction">New Transaction</string>
     <string name="title_transaction">Transaction</string>
     <string name="transaction_saved">Transaction saved</string>
+    <string name="home_shortcut_cex_prices">CEX Prices</string>
+    <string name="title_cex_prices">CEX Prices</string>
+    <string name="label_base_instrument">Base</string>
+    <string name="label_quote_instrument">Quote</string>
+    <string name="cex_price_unavailable">N/A</string>
+    <string name="cex_prices_hint">Select two different cryptocurrencies to compare their price across exchanges.</string>
+    <string name="action_refresh">Refresh</string>
 </resources>
