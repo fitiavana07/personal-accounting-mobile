@@ -117,6 +117,7 @@ class AddTransactionActivity : AppCompatActivity() {
             toTextBalance = findViewById(R.id.text_transfer_to_balance),
             toTextNewBalance = findViewById(R.id.text_transfer_to_new_balance),
             editTransferAmount = editTransferAmount,
+            buttonAll = findViewById(R.id.btn_transfer_amount_all),
             onChanged = { recalculateBalanceSummary() },
             runInBackground = backgroundRunner,
             runOnUiThread = uiThreadRunner

@@ -6,6 +6,7 @@ import android.text.TextWatcher
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
@@ -31,6 +32,7 @@ class SimpleTransferController(
     toTextBalance: TextView,
     toTextNewBalance: TextView,
     private val editTransferAmount: EditText,
+    buttonAll: Button,
     private val onChanged: () -> Unit,
     private val runInBackground: (() -> Unit) -> Unit,
     private val runOnUiThread: (() -> Unit) -> Unit
@@ -65,8 +67,15 @@ class SimpleTransferController(
                 onChanged()
             }
         })
+        buttonAll.setOnClickListener { fillAmountWithFromBalance() }
         setupSide(from)
         setupSide(to)
+    }
+
+    /** "ALL": sets the amount to the From account's whole balance, if it has one. */
+    private fun fillAmountWithFromBalance() {
+        if (from.account == null || from.balance <= 0L) return
+        editTransferAmount.setText(from.balance.toString())
     }
 
     /** Loads and shows the side's balance whenever its account selection changes. */

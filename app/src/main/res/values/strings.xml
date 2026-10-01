@@ -4,6 +4,7 @@
     <string name="action_add_account">Add account</string>
     <string name="action_add_entry">Add Entry</string>
     <string name="action_add_instrument">Add instrument</string>
+    <string name="action_amount_all">ALL</string>
     <string name="action_backup">Backup</string>
     <string name="action_clear_transactions">Clear all transactions</string>
     <string name="action_delete">Delete</string>
