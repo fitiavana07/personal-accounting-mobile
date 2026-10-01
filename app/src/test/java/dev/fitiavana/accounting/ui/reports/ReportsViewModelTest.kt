@@ -4,6 +4,8 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
+import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.ui.common.ReportDisplayRow
 import dev.fitiavana.accounting.ui.reports.ReportPeriodSelector
 import dev.fitiavana.accounting.ui.reports.ReportType
@@ -28,6 +30,7 @@ class ReportsViewModelTest {
 
     private lateinit var accountRepository: AccountRepository
     private lateinit var balanceRepository: BalanceRepository
+    private lateinit var instrumentRepository: InstrumentRepository
     private lateinit var viewModel: ReportsViewModel
 
     private fun millisFor(year: Int, month: Int, day: Int): Long =
@@ -40,6 +43,7 @@ class ReportsViewModelTest {
     fun setUp() {
         accountRepository = mock()
         balanceRepository = mock()
+        instrumentRepository = mock()
         whenever(accountRepository.getAllSync()).thenReturn(
             listOf(Account(id = "acc1", name = "Cash", type = "asset"))
         )
@@ -47,7 +51,10 @@ class ReportsViewModelTest {
         whenever(balanceRepository.computeBalancesBetween(any(), any())).thenReturn(mapOf("acc1" to 10_000L))
         // Construction alone does no background work; tests call the *Sync methods directly
         // (start() is only invoked by the Fragment) to drive the ViewModel deterministically.
-        viewModel = ReportsViewModel(accountRepository, balanceRepository)
+        whenever(instrumentRepository.getAllSync()).thenReturn(emptyList())
+        whenever(balanceRepository.computeInstrumentBalancesAsOf(any())).thenReturn(emptyMap())
+        whenever(balanceRepository.computeIntermediaryBalancesAsOf(any())).thenReturn(emptyMap())
+        viewModel = ReportsViewModel(accountRepository, balanceRepository, instrumentRepository)
     }
 
     @Test
@@ -339,5 +346,172 @@ class ReportsViewModelTest {
 
         assertEquals(Calendar.JANUARY, viewModel.selectedMonth.value)
         assertEquals("At January 31, 2025", viewModel.asOfDateText.value)
+    }
+
+    // --- Balance Sheet mode (Base / Instrument / Intermediary) ---
+
+    private fun loadWithNativeAccounts() {
+        val usdt = Instrument(code = "USDT", note = "", type = "crypto", decimalPlaces = 2)
+        val usdc = Instrument(code = "USDC", note = "", type = "crypto", decimalPlaces = 2)
+        whenever(instrumentRepository.getAllSync()).thenReturn(listOf(usdt, usdc))
+        whenever(accountRepository.getAllSync()).thenReturn(
+            listOf(
+                Account(id = "acc1", name = "Cash", type = "asset"),
+                Account(id = "acc2", name = "Bybit", type = "asset", instrumentCode = "USDT", intermediaryInstrumentCode = "USDC"),
+                Account(id = "acc3", name = "Binance", type = "asset", instrumentCode = "USDT")
+            )
+        )
+        whenever(balanceRepository.computeBalancesAsOf(any()))
+            .thenReturn(mapOf("acc1" to 20_000L, "acc2" to 50_000L, "acc3" to 30_000L))
+        whenever(balanceRepository.computeInstrumentBalancesAsOf(any()))
+            .thenReturn(mapOf("acc1" to 0L, "acc2" to 1_100L, "acc3" to 700L))
+        whenever(balanceRepository.computeIntermediaryBalancesAsOf(any()))
+            .thenReturn(mapOf("acc1" to 0L, "acc2" to 1_090L, "acc3" to 0L))
+        whenever(balanceRepository.getTransactionDateRange())
+            .thenReturn(millisFor(2026, Calendar.MARCH, 1) to millisFor(2026, Calendar.MARCH, 15))
+        viewModel.loadInitialSync()
+    }
+
+    private fun rows(): List<ReportDisplayRow> = viewModel.balanceSheetRows.value.orEmpty()
+
+    private fun nativeLines(): List<ReportDisplayRow.NativeLine> =
+        rows().filterIsInstance<ReportDisplayRow.NativeLine>()
+
+    private fun accountLine(name: String): ReportDisplayRow.AccountLine =
+        rows().filterIsInstance<ReportDisplayRow.AccountLine>().first { it.name == name }
+
+    @Test
+    fun `balance sheet is collapsed by default and shows base amounts only`() {
+        loadWithNativeAccounts()
+
+        assertTrue(nativeLines().isEmpty())
+        assertEquals("50,000 ", accountLine("Bybit").amountText)
+        assertTrue(accountLine("Bybit").expandable)
+        assertTrue(!accountLine("Bybit").expanded)
+    }
+
+    @Test
+    fun `accounts without an instrument are not expandable`() {
+        loadWithNativeAccounts()
+
+        assertTrue(!accountLine("Cash").expandable)
+    }
+
+    @Test
+    fun `toggleAccount expands to instrument and intermediary sub-rows then collapses`() {
+        loadWithNativeAccounts()
+
+        viewModel.toggleAccount("acc2")
+
+        assertEquals(
+            listOf(
+                ReportDisplayRow.NativeLine("USDT", "11.0 "),
+                ReportDisplayRow.NativeLine("USDC", "10.9 ")
+            ),
+            nativeLines()
+        )
+        assertTrue(accountLine("Bybit").expanded)
+
+        viewModel.toggleAccount("acc2")
+
+        assertTrue(nativeLines().isEmpty())
+    }
+
+    @Test
+    fun `account with an instrument but no intermediary expands to a single sub-row`() {
+        loadWithNativeAccounts()
+
+        viewModel.toggleAccount("acc3")
+
+        assertEquals(listOf(ReportDisplayRow.NativeLine("USDT", "7.0 ")), nativeLines())
+    }
+
+    @Test
+    fun `toggling an account without an instrument changes nothing`() {
+        loadWithNativeAccounts()
+
+        viewModel.toggleAccount("acc1")
+
+        assertTrue(nativeLines().isEmpty())
+    }
+
+    @Test
+    fun `totals stay in base when accounts are expanded`() {
+        loadWithNativeAccounts()
+
+        viewModel.toggleExpandAll()
+
+        val total = rows().filterIsInstance<ReportDisplayRow.TotalLine>().first { it.label == "Total Assets" }
+        assertEquals("Ar 100,000 ", total.amountText)
+    }
+
+    @Test
+    fun `expansion is kept when the period changes`() {
+        loadWithNativeAccounts()
+        viewModel.toggleAccount("acc2")
+
+        viewModel.selectMonthSync(null)
+
+        assertEquals(2, nativeLines().size)
+    }
+
+    @Test
+    fun `toggleExpandAll expands every expandable account then collapses all`() {
+        loadWithNativeAccounts()
+        assertEquals(ExpandToggleState(visible = true, allExpanded = false), viewModel.expandToggle.value)
+
+        viewModel.toggleExpandAll()
+
+        assertEquals(3, nativeLines().size)
+        assertEquals(ExpandToggleState(visible = true, allExpanded = true), viewModel.expandToggle.value)
+
+        viewModel.toggleExpandAll()
+
+        assertTrue(nativeLines().isEmpty())
+        assertEquals(ExpandToggleState(visible = true, allExpanded = false), viewModel.expandToggle.value)
+    }
+
+    @Test
+    fun `toggleExpandAll expands the rest when only some accounts are expanded`() {
+        loadWithNativeAccounts()
+        viewModel.toggleAccount("acc3")
+
+        viewModel.toggleExpandAll()
+
+        assertEquals(3, nativeLines().size)
+    }
+
+    @Test
+    fun `expand toggle is hidden when no account is expandable or the report is not the balance sheet`() {
+        loadWithNativeAccounts()
+        viewModel.selectReportType(ReportType.INCOME_STATEMENT)
+
+        assertEquals(false, viewModel.expandToggle.value?.visible)
+
+        viewModel.selectReportType(ReportType.BALANCE_SHEET)
+
+        assertEquals(true, viewModel.expandToggle.value?.visible)
+    }
+
+    @Test
+    fun `expanding and collapsing does not query repositories again`() {
+        loadWithNativeAccounts()
+
+        viewModel.toggleAccount("acc2")
+        viewModel.toggleExpandAll()
+        viewModel.toggleExpandAll()
+
+        verify(accountRepository, times(1)).getAllSync()
+        verify(balanceRepository, times(1)).computeInstrumentBalancesAsOf(any())
+        verify(balanceRepository, times(1)).computeIntermediaryBalancesAsOf(any())
+    }
+
+    @Test
+    fun `native balances are computed as of the selected period cutoff`() {
+        loadWithNativeAccounts()
+        val cutoff = ReportPeriodSelector.asOfMillis(2026, Calendar.MARCH)
+
+        verify(balanceRepository).computeInstrumentBalancesAsOf(cutoff)
+        verify(balanceRepository).computeIntermediaryBalancesAsOf(cutoff)
     }
 }

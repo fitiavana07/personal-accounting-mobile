@@ -5,10 +5,14 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.accounts.AccountTypes
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
 import dev.fitiavana.accounting.features.reports.EquityStatementBuilder
+import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.reports.IncomeStatementBuilder
+import dev.fitiavana.accounting.features.reports.NativeAmount
 import dev.fitiavana.accounting.ui.common.EquityStatementDisplay
 import dev.fitiavana.accounting.ui.common.EquityStatementPresenter
 import dev.fitiavana.accounting.ui.common.ReportDisplayRow
@@ -16,7 +20,8 @@ import dev.fitiavana.accounting.ui.common.ReportPresenter
 
 class ReportsViewModel(
     private val accountRepository: AccountRepository,
-    private val balanceRepository: BalanceRepository
+    private val balanceRepository: BalanceRepository,
+    private val instrumentRepository: InstrumentRepository
 ) : ViewModel() {
 
     /** All months that have transactions, grouped by year, for populating the year/month pickers. */
@@ -33,6 +38,21 @@ class ReportsViewModel(
 
     /** Per-account balances accrued between [cachedPeriodStartMillis] and [cachedPeriodCutoffMillis], used for the income statement. */
     private var cachedPeriodBalances: Map<String, Long> = emptyMap()
+
+    /** Per-account balances in each account's instrument, as of [cachedPeriodCutoffMillis]. */
+    private var cachedInstrumentBalancesAsOf: Map<String, Long> = emptyMap()
+
+    /** Per-account balances in each account's intermediary instrument, as of [cachedPeriodCutoffMillis]. */
+    private var cachedIntermediaryBalancesAsOf: Map<String, Long> = emptyMap()
+
+    /** Instruments by code, for formatting native amounts with the right decimal places. */
+    private var cachedInstruments: Map<String, Instrument> = emptyMap()
+
+    /** Accounts whose native sub-rows are shown; kept across period and report switches. */
+    private var expandedAccountIds: Set<String> = emptySet()
+
+    /** Accounts with a tappable line in the currently rendered Balance Sheet (excludes the lumped "Other" accounts). */
+    private var cachedExpandableAccountIds: Set<String> = emptySet()
 
     /** End boundary of the selected period: "now" if the month is still in progress, otherwise its last millisecond. */
     private var cachedPeriodCutoffMillis = 0L
@@ -54,6 +74,7 @@ class ReportsViewModel(
 
     val reportTypes: List<ReportType> = ReportType.values().toList()
 
+
     private val _hasTransactions = MutableLiveData<Boolean>()
     val hasTransactions: LiveData<Boolean> = _hasTransactions
 
@@ -72,6 +93,10 @@ class ReportsViewModel(
 
     private val _selectedReportType = MutableLiveData(ReportType.BALANCE_SHEET)
     val selectedReportType: LiveData<ReportType> = _selectedReportType
+
+    /** Visibility/label state of the "Expand all / Collapse all" control. */
+    private val _expandToggle = MutableLiveData(ExpandToggleState(visible = false, allExpanded = false))
+    val expandToggle: LiveData<ExpandToggleState> = _expandToggle
 
     private val _asOfDateText = MutableLiveData<String>()
     val asOfDateText: LiveData<String> = _asOfDateText
@@ -103,6 +128,23 @@ class ReportsViewModel(
     fun selectReportType(type: ReportType) {
         _selectedReportType.value = type
         renderDisplay(type)
+    }
+
+    /** Expands or collapses one Balance Sheet account's native sub-rows; ignored if it isn't expandable. */
+    fun toggleAccount(accountId: String) {
+        if (accountId !in cachedExpandableAccountIds) return
+        expandedAccountIds =
+            if (accountId in expandedAccountIds) expandedAccountIds - accountId
+            else expandedAccountIds + accountId
+        renderDisplay(_selectedReportType.value ?: ReportType.BALANCE_SHEET)
+    }
+
+    /** Expands every expandable account, or collapses them all when they already are all expanded. */
+    fun toggleExpandAll() {
+        expandedAccountIds =
+            if (cachedExpandableAccountIds.all { it in expandedAccountIds }) expandedAccountIds - cachedExpandableAccountIds
+            else expandedAccountIds + cachedExpandableAccountIds
+        renderDisplay(_selectedReportType.value ?: ReportType.BALANCE_SHEET)
     }
 
     /** Synchronous version of the initial load, for use on a background thread (or directly in tests). */
@@ -169,6 +211,9 @@ class ReportsViewModel(
             balanceRepository.computeBalancesBetween(startMs, asOfMs)
         cachedPreviousPeriodEndBalances =
             balanceRepository.computeBalancesAsOf(previousPeriodEndMs)
+        cachedInstrumentBalancesAsOf = balanceRepository.computeInstrumentBalancesAsOf(asOfMs)
+        cachedIntermediaryBalancesAsOf = balanceRepository.computeIntermediaryBalancesAsOf(asOfMs)
+        cachedInstruments = instrumentRepository.getAllSync().associateBy { it.code }
         renderDisplay(_selectedReportType.value ?: ReportType.BALANCE_SHEET)
     }
 
@@ -189,27 +234,43 @@ class ReportsViewModel(
                     )
             }
         )
-        _balanceSheetRows.postValue(
-            when (type) {
-                ReportType.BALANCE_SHEET ->
-                    ReportPresenter.present(
-                        BalanceSheetBuilder.buildMonthly(
-                            cachedAccounts,
-                            cachedBalancesAsOf
-                        )
-                    )
+        val balanceSheetRows = when (type) {
+            ReportType.BALANCE_SHEET ->
+                ReportPresenter.present(
+                    BalanceSheetBuilder.buildMonthly(
+                        cachedAccounts,
+                        cachedBalancesAsOf,
+                        nativeAmountsByAccountId()
+                    ),
+                    cachedInstruments,
+                    expandedAccountIds
+                )
 
-                ReportType.INCOME_STATEMENT ->
-                    ReportPresenter.present(
-                        IncomeStatementBuilder.build(
-                            cachedAccounts,
-                            cachedPeriodBalances
-                        )
+            ReportType.INCOME_STATEMENT ->
+                ReportPresenter.present(
+                    IncomeStatementBuilder.build(
+                        cachedAccounts,
+                        cachedPeriodBalances
                     )
+                )
 
-                ReportType.CHANGES_IN_EQUITY -> emptyList()
-            }
+            ReportType.CHANGES_IN_EQUITY -> emptyList()
+        }
+        if (type == ReportType.BALANCE_SHEET) {
+            cachedExpandableAccountIds = balanceSheetRows
+                .filterIsInstance<ReportDisplayRow.AccountLine>()
+                .filter { it.expandable }
+                .mapNotNull { it.accountId }
+                .toSet()
+        }
+        _expandToggle.postValue(
+            ExpandToggleState(
+                visible = type == ReportType.BALANCE_SHEET && cachedExpandableAccountIds.isNotEmpty(),
+                allExpanded = cachedExpandableAccountIds.isNotEmpty() &&
+                    cachedExpandableAccountIds.all { it in expandedAccountIds }
+            )
         )
+        _balanceSheetRows.postValue(balanceSheetRows)
         _equityStatement.postValue(
             when (type) {
                 ReportType.CHANGES_IN_EQUITY ->
@@ -230,4 +291,25 @@ class ReportsViewModel(
             }
         )
     }
+
+    /**
+     * Native balances per account, instrument first then intermediary: only for account types that can
+     * hold an instrument, and only for the instruments the account actually has set.
+     */
+    private fun nativeAmountsByAccountId(): Map<String, List<NativeAmount>> =
+        cachedAccounts
+            .filter { AccountTypes.supportsInstrument(it.type) && it.instrumentCode != null }
+            .associate { account ->
+                account.id to listOfNotNull(
+                    account.instrumentCode?.let {
+                        NativeAmount(cachedInstrumentBalancesAsOf[account.id] ?: 0L, it)
+                    },
+                    account.intermediaryInstrumentCode?.let {
+                        NativeAmount(cachedIntermediaryBalancesAsOf[account.id] ?: 0L, it)
+                    }
+                )
+            }
 }
+
+/** State of the Balance Sheet's "Expand all / Collapse all" control. */
+data class ExpandToggleState(val visible: Boolean, val allExpanded: Boolean)

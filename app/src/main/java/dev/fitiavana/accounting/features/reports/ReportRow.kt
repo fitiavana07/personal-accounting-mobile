@@ -28,7 +28,14 @@ sealed class ReportRow {
         // lines, used to assign it a distinct color from AssetPalette. Null
         // when the line isn't part of that view (e.g. lines from
         // BalanceSheetBuilder.buildMonthly), so no color is assigned.
-        val assetIndex: Int? = null
+        val assetIndex: Int? = null,
+        // Set only on per-account lines of the monthly Balance Sheet; null on
+        // synthetic lines ("Other", category totals) which are never expandable.
+        val accountId: String? = null,
+        // Account's balance in its instrument, then in its intermediary
+        // instrument (when set). [amount] always stays the base-currency
+        // amount; these are only revealed when the line is expanded.
+        val nativeAmounts: List<NativeAmount> = emptyList()
     ) : ReportRow()
 
     data class TotalLine(
@@ -49,3 +56,6 @@ sealed class ReportRow {
 
     data class DateLine(val timestampMs: Long) : ReportRow()
 }
+
+/** A balance expressed in an instrument (or intermediary instrument) identified by [instrumentCode]. */
+data class NativeAmount(val amount: Long, val instrumentCode: String)

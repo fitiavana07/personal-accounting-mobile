@@ -321,10 +321,10 @@ class BalanceSheetBuilderTest {
         assertEquals(
             listOf(
                 ReportRow.SectionHeader("Assets"),
-                ReportRow.AccountLine("Cash", 10_000),
+                ReportRow.AccountLine("Cash", 10_000, accountId = "a"),
                 ReportRow.TotalLine("Total Assets", 10_000, emphasized = true),
                 ReportRow.SectionHeader("Liabilities"),
-                ReportRow.AccountLine("Loan", 200),
+                ReportRow.AccountLine("Loan", 200, accountId = "l"),
                 ReportRow.TotalLine(
                     "Total Liabilities",
                     200,
@@ -332,7 +332,7 @@ class BalanceSheetBuilderTest {
                 ),
                 ReportRow.SectionHeader("Equity"),
                 ReportRow.SubsectionHeader("Original Equity"),
-                ReportRow.AccountLine("Owner Capital", 500),
+                ReportRow.AccountLine("Owner Capital", 500, accountId = "e"),
                 ReportRow.TotalLine("Total Original Equity", 500),
                 ReportRow.SubsectionHeader("Unclosed Income Statement accounts"),
                 ReportRow.AccountLine("Income", 300),
@@ -423,7 +423,7 @@ class BalanceSheetBuilderTest {
         assertEquals(
             listOf(
                 ReportRow.SectionHeader("Assets"),
-                ReportRow.AccountLine("Bank", 15_000),
+                ReportRow.AccountLine("Bank", 15_000, accountId = "a"),
                 ReportRow.AccountLine("Other", 6_500),
                 ReportRow.TotalLine("Total Assets", 21_500, emphasized = true)
             ),
@@ -532,5 +532,74 @@ class BalanceSheetBuilderTest {
             .amount
 
         assertEquals(totalUnclosedIsLine, BalanceSheetBuilder.unclosedIsBalance(accounts, balances))
+    }
+
+    // --- buildMonthly: native (instrument / intermediary) amounts for tap-to-expand ---
+
+    @Test
+    fun `buildMonthly attaches accountId and native amounts to per-account lines while totals stay in base`() {
+        val result = BalanceSheetBuilder.buildMonthly(
+            accounts = listOf(
+                account("a1", "Bybit", "asset"),
+                account("a2", "Cash", "asset"),
+                account("l1", "Loan", "liability"),
+                account("e1", "Capital", "equity")
+            ),
+            balancesByAccountId = mapOf("a1" to 50_000L, "a2" to 20_000L, "l1" to 5_000L, "e1" to 65_000L),
+            nativeByAccountId = mapOf(
+                "a1" to listOf(NativeAmount(11L, "USDT"), NativeAmount(10L, "USDC")),
+                "l1" to listOf(NativeAmount(2L, "EUR")),
+                "e1" to listOf(NativeAmount(30L, "USD"))
+            )
+        )
+
+        assertEquals(
+            listOf(
+                ReportRow.SectionHeader("Assets"),
+                ReportRow.AccountLine(
+                    "Bybit", 50_000L, accountId = "a1",
+                    nativeAmounts = listOf(NativeAmount(11L, "USDT"), NativeAmount(10L, "USDC"))
+                ),
+                ReportRow.AccountLine("Cash", 20_000L, accountId = "a2"),
+                ReportRow.TotalLine("Total Assets", 70_000L, emphasized = true),
+                ReportRow.SectionHeader("Liabilities"),
+                ReportRow.AccountLine("Loan", 5_000L, accountId = "l1", nativeAmounts = listOf(NativeAmount(2L, "EUR"))),
+                ReportRow.TotalLine("Total Liabilities", 5_000L, emphasized = true),
+                ReportRow.SectionHeader("Equity"),
+                ReportRow.SubsectionHeader("Original Equity"),
+                ReportRow.AccountLine("Capital", 65_000L, accountId = "e1", nativeAmounts = listOf(NativeAmount(30L, "USD"))),
+                ReportRow.TotalLine("Total Original Equity", 65_000L),
+                ReportRow.TotalLine("Total Equity", 65_000L, emphasized = true)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `buildMonthly keeps the lumped Other line and category lines in base without native amounts`() {
+        val result = BalanceSheetBuilder.buildMonthly(
+            accounts = listOf(
+                account("a1", "Small", "asset"),
+                account("x1", "Food", "expense")
+            ),
+            balancesByAccountId = mapOf("a1" to 500L, "x1" to 100L),
+            nativeByAccountId = mapOf(
+                "a1" to listOf(NativeAmount(5L, "USDT")),
+                "x1" to listOf(NativeAmount(1L, "USDT"))
+            )
+        )
+
+        assertTrue(result.contains(ReportRow.AccountLine("Other", 500L)))
+        assertTrue(result.contains(ReportRow.AccountLine("Expense", 100L, contra = true)))
+    }
+
+    @Test
+    fun `buildMonthly without native amounts only adds accountId to lines`() {
+        val result = BalanceSheetBuilder.buildMonthly(
+            listOf(account("a1", "Cash", "asset")),
+            mapOf("a1" to 20_000L)
+        )
+
+        assertEquals(ReportRow.AccountLine("Cash", 20_000L, accountId = "a1"), result[1])
     }
 }

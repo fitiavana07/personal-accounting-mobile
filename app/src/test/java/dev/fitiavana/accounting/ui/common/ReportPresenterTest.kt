@@ -2,7 +2,9 @@ package dev.fitiavana.accounting.ui.common
 
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.balances.AccountBalance
+import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.reports.BalanceSheetBuilder
+import dev.fitiavana.accounting.features.reports.NativeAmount
 import dev.fitiavana.accounting.ui.home.AssetPalette
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -286,6 +288,84 @@ class ReportPresenterTest {
         assertEquals(
             accountLines.indices.map { AssetPalette.colorFor(it) },
             accountLines.map { it.color }
+        )
+    }
+
+    private val usdt = Instrument(code = "USDT", note = "", type = "crypto", decimalPlaces = 2)
+    private val usdc = Instrument(code = "USDC", note = "", type = "crypto", decimalPlaces = 2)
+    private val instruments = mapOf("USDT" to usdt, "USDC" to usdc)
+
+    private fun bybit(vararg native: NativeAmount) =
+        RawRow.AccountLine("Bybit", 50_000L, accountId = "a1", nativeAmounts = native.toList())
+
+    @Test
+    fun `collapsed AccountLine with native amounts is expandable and keeps its base amount`() {
+        val result = ReportPresenter.present(
+            listOf(bybit(NativeAmount(125_050L, "USDT"))),
+            instruments
+        )
+
+        assertEquals(
+            listOf(ReportDisplayRow.AccountLine("Bybit", "50,000 ", null, accountId = "a1", expandable = true, expanded = false)),
+            result
+        )
+    }
+
+    @Test
+    fun `expanded AccountLine is followed by one NativeLine per unit with code and amount`() {
+        val result = ReportPresenter.present(
+            listOf(bybit(NativeAmount(125_050L, "USDT"), NativeAmount(124_810L, "USDC"))),
+            instruments,
+            expandedAccountIds = setOf("a1")
+        )
+
+        assertEquals(
+            listOf(
+                ReportDisplayRow.AccountLine("Bybit", "50,000 ", null, accountId = "a1", expandable = true, expanded = true),
+                ReportDisplayRow.NativeLine("USDT", "1,250.5 "),
+                ReportDisplayRow.NativeLine("USDC", "1,248.1 ")
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `AccountLine with a single native amount expands to one NativeLine`() {
+        val result = ReportPresenter.present(
+            listOf(bybit(NativeAmount(125_050L, "USDT"))),
+            instruments,
+            expandedAccountIds = setOf("a1")
+        )
+
+        assertEquals(2, result.size)
+        assertEquals(ReportDisplayRow.NativeLine("USDT", "1,250.5 "), result[1])
+    }
+
+    @Test
+    fun `AccountLine without native amounts is not expandable even if its id is expanded`() {
+        val result = ReportPresenter.present(
+            listOf(RawRow.AccountLine("Cash", 20_000L, accountId = "a2")),
+            instruments,
+            expandedAccountIds = setOf("a2")
+        )
+
+        assertEquals(
+            listOf(ReportDisplayRow.AccountLine("Cash", "20,000 ", null, accountId = "a2")),
+            result
+        )
+    }
+
+    @Test
+    fun `native amounts of unknown instruments are skipped`() {
+        val result = ReportPresenter.present(
+            listOf(bybit(NativeAmount(5L, "XYZ"))),
+            instruments,
+            expandedAccountIds = setOf("a1")
+        )
+
+        assertEquals(
+            listOf(ReportDisplayRow.AccountLine("Bybit", "50,000 ", null, accountId = "a1")),
+            result
         )
     }
 }

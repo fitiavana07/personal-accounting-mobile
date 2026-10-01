@@ -1,5 +1,7 @@
 package dev.fitiavana.accounting.ui.common
 
+import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.reports.NativeAmount
 import dev.fitiavana.accounting.ui.home.AssetPalette
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -12,38 +14,70 @@ object ReportPresenter {
     private val dateFormat =
         SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
 
-    fun present(rows: List<RawRow>): List<ReportDisplayRow> = rows.map { row ->
+    fun present(
+        rows: List<RawRow>,
+        instruments: Map<String, Instrument> = emptyMap(),
+        expandedAccountIds: Set<String> = emptySet()
+    ): List<ReportDisplayRow> = rows.flatMap { row ->
         when (row) {
-            is RawRow.Title -> ReportDisplayRow.Title(row.text)
-            is RawRow.SectionHeader -> ReportDisplayRow.SectionHeader(row.title)
-            is RawRow.SubsectionHeader -> ReportDisplayRow.SubsectionHeader(
-                row.title,
-                row.assetIndex?.let { AssetPalette.colorFor(it) }
+            is RawRow.Title -> listOf(ReportDisplayRow.Title(row.text))
+            is RawRow.SectionHeader -> listOf(ReportDisplayRow.SectionHeader(row.title))
+            is RawRow.SubsectionHeader -> listOf(
+                ReportDisplayRow.SubsectionHeader(
+                    row.title,
+                    row.assetIndex?.let { AssetPalette.colorFor(it) }
+                )
             )
-            is RawRow.AccountLine -> ReportDisplayRow.AccountLine(
-                row.name,
-                formatAmount(
-                    row.amount,
-                    arPrefixed = row.arPrefixed,
-                    contra = row.contra
-                ),
-                row.assetIndex?.let { AssetPalette.colorFor(it) }
+            is RawRow.AccountLine -> presentAccountLine(row, instruments, expandedAccountIds)
+
+            is RawRow.TotalLine -> listOf(
+                ReportDisplayRow.TotalLine(
+                    row.label,
+                    formatAmount(
+                        row.amount,
+                        arPrefixed = true,
+                        contra = row.contra || (row.parenthesizeNegative && row.amount < 0)
+                    ),
+                    row.emphasized
+                )
             )
 
-            is RawRow.TotalLine -> ReportDisplayRow.TotalLine(
-                row.label,
-                formatAmount(
-                    row.amount,
-                    arPrefixed = true,
-                    contra = row.contra || (row.parenthesizeNegative && row.amount < 0)
-                ),
-                row.emphasized
-            )
-
-            is RawRow.DateLine -> ReportDisplayRow.DateLine(
-                "Balances at ${dateFormat.format(Date(row.timestampMs))}"
+            is RawRow.DateLine -> listOf(
+                ReportDisplayRow.DateLine(
+                    "Balances at ${dateFormat.format(Date(row.timestampMs))}"
+                )
             )
         }
+    }
+
+    /**
+     * The account line, plus its native sub-rows when [expandedAccountIds] contains it. A line is only
+     * expandable when at least one of its native amounts has a known instrument (unknown ones are skipped).
+     */
+    private fun presentAccountLine(
+        row: RawRow.AccountLine,
+        instruments: Map<String, Instrument>,
+        expandedAccountIds: Set<String>
+    ): List<ReportDisplayRow> {
+        val nativeLines = row.nativeAmounts.mapNotNull { native ->
+            instruments[native.instrumentCode]?.let { instrument ->
+                ReportDisplayRow.NativeLine(
+                    native.instrumentCode,
+                    "${TransactionDisplay.formatInstrumentValue(native.amount, instrument)} "
+                )
+            }
+        }
+        val expandable = row.accountId != null && nativeLines.isNotEmpty()
+        val expanded = expandable && row.accountId in expandedAccountIds
+        val line = ReportDisplayRow.AccountLine(
+            row.name,
+            formatAmount(row.amount, arPrefixed = row.arPrefixed, contra = row.contra),
+            row.assetIndex?.let { AssetPalette.colorFor(it) },
+            accountId = row.accountId,
+            expandable = expandable,
+            expanded = expanded
+        )
+        return if (expanded) listOf(line) + nativeLines else listOf(line)
     }
 
     /**

@@ -153,6 +153,8 @@
     <string name="nav_balances">Balances</string>
     <string name="nav_home">Home</string>
     <string name="nav_reports">Reports</string>
+    <string name="expand_all">Expand all</string>
+    <string name="collapse_all">Collapse all</string>
     <string name="nav_transactions">Transactions</string>
     <string name="spinner_no_instrument">None</string>
     <string name="spinner_no_liquidity_level">Not set</string>

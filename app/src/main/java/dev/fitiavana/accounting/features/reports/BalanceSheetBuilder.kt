@@ -93,7 +93,8 @@ object BalanceSheetBuilder {
      */
     fun buildMonthly(
         accounts: List<Account>,
-        balancesByAccountId: Map<String, Long>
+        balancesByAccountId: Map<String, Long>,
+        nativeByAccountId: Map<String, List<NativeAmount>> = emptyMap()
     ): List<ReportRow> {
         val accountMap = accounts.associateBy { it.id }
 
@@ -136,7 +137,7 @@ object BalanceSheetBuilder {
 
             rows += ReportRow.SectionHeader("Assets")
             mainAssetLines.forEach { line ->
-                rows += ReportRow.AccountLine(line.name, line.amount)
+                rows += line.toAccountLine(nativeByAccountId)
             }
             if (otherAssetLines.isNotEmpty()) {
                 rows += ReportRow.AccountLine(
@@ -153,10 +154,7 @@ object BalanceSheetBuilder {
         if (liabilityLines.isNotEmpty()) {
             rows += ReportRow.SectionHeader("Liabilities")
             liabilityLines.forEach {
-                rows += ReportRow.AccountLine(
-                    it.name,
-                    it.amount
-                )
+                rows += it.toAccountLine(nativeByAccountId)
             }
             rows += ReportRow.TotalLine(
                 "Total Liabilities",
@@ -183,10 +181,7 @@ object BalanceSheetBuilder {
             if (equityLines.isNotEmpty()) {
                 rows += ReportRow.SubsectionHeader("Original Equity")
                 equityLines.forEach {
-                    rows += ReportRow.AccountLine(
-                        it.name,
-                        it.amount
-                    )
+                    rows += it.toAccountLine(nativeByAccountId)
                 }
                 rows += ReportRow.TotalLine(
                     "Total Original Equity",
@@ -254,6 +249,14 @@ object BalanceSheetBuilder {
 
         return rows
     }
+
+    private fun NamedAmount.toAccountLine(nativeByAccountId: Map<String, List<NativeAmount>>) =
+        ReportRow.AccountLine(
+            name,
+            amount,
+            accountId = accountId,
+            nativeAmounts = nativeByAccountId[accountId].orEmpty()
+        )
 
     /** Total Equity as of [balancesByAccountId], same formula as the "Total Equity" line in [buildMonthly]. */
     fun totalEquity(

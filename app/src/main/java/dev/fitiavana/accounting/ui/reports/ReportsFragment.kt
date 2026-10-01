@@ -33,8 +33,9 @@ class ReportsFragment : Fragment() {
         val container = AppContainer.getInstance(requireContext())
         val accountRepo = container.accountRepository
         val balanceRepo = container.balanceRepository
+        val instrumentRepo = container.instrumentRepository
 
-        viewModel = ViewModelProvider(this, ReportsViewModelFactory(accountRepo, balanceRepo))
+        viewModel = ViewModelProvider(this, ReportsViewModelFactory(accountRepo, balanceRepo, instrumentRepo))
             .get(ReportsViewModel::class.java)
 
         yearsAdapter = PeriodSelectorAdapter(labelFor = { it.toString() }, onSelected = { viewModel.selectYear(it) })
@@ -47,7 +48,7 @@ class ReportsFragment : Fragment() {
             onSelected = { viewModel.selectReportType(it) },
             iconFor = { it.iconRes }
         )
-        contentAdapter = ReportAdapter()
+        contentAdapter = ReportAdapter(onAccountClick = { viewModel.toggleAccount(it) })
         equityAdapter = EquityStatementAdapter()
 
         view.findViewById<RecyclerView>(R.id.recycler_reports_years).apply {
@@ -74,6 +75,8 @@ class ReportsFragment : Fragment() {
         val contentLayout = view.findViewById<View>(R.id.layout_reports_content)
         val emptyView = view.findViewById<TextView>(R.id.text_empty_reports)
         val asOfDateView = view.findViewById<TextView>(R.id.text_reports_as_of_date)
+        val expandAllView = view.findViewById<TextView>(R.id.text_reports_expand_all)
+        expandAllView.setOnClickListener { viewModel.toggleExpandAll() }
         val contentRecycler = view.findViewById<RecyclerView>(R.id.recycler_reports_content)
         val equityScroll = view.findViewById<View>(R.id.scroll_reports_equity)
 
@@ -92,6 +95,10 @@ class ReportsFragment : Fragment() {
             val isEquityStatement = reportType == ReportType.CHANGES_IN_EQUITY
             contentRecycler.visibility = if (isEquityStatement) View.GONE else View.VISIBLE
             equityScroll.visibility = if (isEquityStatement) View.VISIBLE else View.GONE
+        }
+        viewModel.expandToggle.observe(viewLifecycleOwner) { state ->
+            expandAllView.visibility = if (state.visible) View.VISIBLE else View.GONE
+            expandAllView.setText(if (state.allExpanded) R.string.collapse_all else R.string.expand_all)
         }
         viewModel.asOfDateText.observe(viewLifecycleOwner) { asOfDateView.text = it }
         viewModel.balanceSheetRows.observe(viewLifecycleOwner) { contentAdapter.submitList(it) }

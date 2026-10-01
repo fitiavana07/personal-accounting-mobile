@@ -15,7 +15,7 @@ import dev.fitiavana.accounting.features.balances.AccountBalance
  * A single report row: an account's display [name] paired with its [amount] —
  * a balance on the balance sheet, or a period total on the income statement.
  */
-internal data class NamedAmount(val name: String, val amount: Long)
+internal data class NamedAmount(val accountId: String, val name: String, val amount: Long)
 
 /**
  * Builds the [NamedAmount] rows for accounts of the given [type], resolving
@@ -47,6 +47,6 @@ internal fun linesFor(
     .filter { accountMap.containsKey(it.key) }
     .filter { accountMap.getValue(it.key).type == type }
     .filter { it.value != 0L }
-    .map { NamedAmount(accountMap.getValue(it.key).name, it.value) }
+    .map { NamedAmount(it.key, accountMap.getValue(it.key).name, it.value) }
     .sortedBy { it.name }
     .toList()

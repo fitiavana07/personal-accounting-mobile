@@ -4,12 +4,16 @@ import dev.fitiavana.accounting.features.instruments.Instrument
 
 object TransactionDisplay {
 
-    fun formatInstrumentAmount(amount: Long, instrument: Instrument): String {
+    fun formatInstrumentAmount(amount: Long, instrument: Instrument): String =
+        "${formatInstrumentValue(amount, instrument)} ${instrument.code}"
+
+    /** Like [formatInstrumentAmount] but without the instrument code, e.g. for report columns. */
+    fun formatInstrumentValue(amount: Long, instrument: Instrument): String {
         val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())
         return if (instrument.decimalPlaces > 0) {
-            "${formatDecimalValue(amount / factor, instrument.decimalPlaces)} ${instrument.code}"
+            formatDecimalValue(amount / factor, instrument.decimalPlaces)
         } else {
-            "${formatAmount(amount)} ${instrument.code}"
+            formatAmount(amount)
         }
     }
 

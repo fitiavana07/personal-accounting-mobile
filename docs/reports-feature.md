@@ -140,6 +140,24 @@ the last entry after the real months — no changes needed to
 `PeriodSelectorAdapter` (already generic) or the report builders (already
 period-agnostic).
 
+## Balance Sheet: tap-to-expand native balances
+
+On the Balance Sheet only, an individually listed asset/liability/equity account that has an instrument
+can be tapped to reveal sub-rows with its balance in its instrument and, if set, its intermediary
+instrument (label = instrument code, amount right-aligned in the same column). An "Expand all /
+Collapse all" control (`text_reports_expand_all`) sits under the as-of date.
+
+- Totals, subtotals, the lumped "Other" line and the Income/Expense/Gain/Loss/Drawing lines stay base-only and
+  are not expandable. Revenue/expense/drawing/gain/loss accounts cannot have an instrument
+  (`AccountTypes.supportsInstrument`, enforced in `EditAccountViewModel`/`EditAccountActivity`).
+- Native balances are computed as of the period cutoff like base balances, from the entries'
+  `instrument*`/`intermediary*` amounts (`BalanceRepository.computeInstrumentBalancesAsOf` /
+  `computeIntermediaryBalancesAsOf`); no market value.
+- `ReportsViewModel` caches those maps and keeps `expandedAccountIds` across period/report switches;
+  `toggleAccount`/`toggleExpandAll` re-render from caches (no DB access). `ReportRow.AccountLine` carries
+  `accountId` + `nativeAmounts`; `ReportPresenter` turns them into `expandable`/`expanded` lines followed by
+  `ReportDisplayRow.NativeLine` sub-rows; `ReportAdapter(onAccountClick)` renders the chevron and click.
+
 ## Tests
 
 - `ReportPeriodSelectorTest.kt` — pure date-math unit tests per function

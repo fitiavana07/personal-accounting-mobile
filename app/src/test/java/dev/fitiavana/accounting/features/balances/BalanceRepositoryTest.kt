@@ -229,6 +229,46 @@ class BalanceRepositoryTest {
         assertEquals(emptyMap<String, Long>(), repository.computeBalancesAsOf(500L))
     }
 
+    // --- computeInstrumentBalancesAsOf / computeIntermediaryBalancesAsOf ---
+
+    @Test
+    fun `computeInstrumentBalancesAsOf uses instrument up-to sums with the account type sign`() {
+        whenever(accountDao.getAllSync()).thenReturn(
+            listOf(
+                Account(id = "acc1", name = "Cash", type = "asset"),
+                Account(id = "acc2", name = "Loan", type = "liability")
+            )
+        )
+        whenever(transactionDao.sumInstrumentDebitsForAccountUpTo("acc1", 500L)).thenReturn(50L)
+        whenever(transactionDao.sumInstrumentCreditsForAccountUpTo("acc1", 500L)).thenReturn(20L)
+        whenever(transactionDao.sumInstrumentDebitsForAccountUpTo("acc2", 500L)).thenReturn(5L)
+        whenever(transactionDao.sumInstrumentCreditsForAccountUpTo("acc2", 500L)).thenReturn(80L)
+
+        val result = repository.computeInstrumentBalancesAsOf(500L)
+
+        assertEquals(30L, result["acc1"])
+        assertEquals(75L, result["acc2"])
+    }
+
+    @Test
+    fun `computeIntermediaryBalancesAsOf uses intermediary up-to sums with the account type sign`() {
+        whenever(accountDao.getAllSync()).thenReturn(
+            listOf(
+                Account(id = "acc1", name = "Cash", type = "asset"),
+                Account(id = "acc2", name = "Loan", type = "liability")
+            )
+        )
+        whenever(transactionDao.sumIntermediaryDebitsForAccountUpTo("acc1", 500L)).thenReturn(9L)
+        whenever(transactionDao.sumIntermediaryCreditsForAccountUpTo("acc1", 500L)).thenReturn(4L)
+        whenever(transactionDao.sumIntermediaryDebitsForAccountUpTo("acc2", 500L)).thenReturn(1L)
+        whenever(transactionDao.sumIntermediaryCreditsForAccountUpTo("acc2", 500L)).thenReturn(8L)
+
+        val result = repository.computeIntermediaryBalancesAsOf(500L)
+
+        assertEquals(5L, result["acc1"])
+        assertEquals(7L, result["acc2"])
+    }
+
     // --- getTransactionDateRange ---
 
     @Test

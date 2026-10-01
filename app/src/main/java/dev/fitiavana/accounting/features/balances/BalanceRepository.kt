@@ -67,20 +67,41 @@ class BalanceRepository(
         return transactionDao.countEntriesForAccount(accountId) > 0
     }
 
-    fun computeBalancesAsOf(asOfMs: Long): Map<String, Long> {
-        val accounts = accountDao.getAllSync()
-        return accounts.associate { account ->
-            val debits =
-                transactionDao.sumDebitsForAccountUpTo(account.id, asOfMs)
-            val credits =
-                transactionDao.sumCreditsForAccountUpTo(account.id, asOfMs)
+    fun computeBalancesAsOf(asOfMs: Long): Map<String, Long> =
+        computeAsOf(
+            transactionDao::sumDebitsForAccountUpTo,
+            transactionDao::sumCreditsForAccountUpTo,
+            asOfMs
+        )
+
+    /** Same as [computeBalancesAsOf], but in each account's own instrument (instrumentDebit/CreditAmount). */
+    fun computeInstrumentBalancesAsOf(asOfMs: Long): Map<String, Long> =
+        computeAsOf(
+            transactionDao::sumInstrumentDebitsForAccountUpTo,
+            transactionDao::sumInstrumentCreditsForAccountUpTo,
+            asOfMs
+        )
+
+    /** Same as [computeBalancesAsOf], but in each account's intermediary instrument (intermediaryDebit/CreditAmount). */
+    fun computeIntermediaryBalancesAsOf(asOfMs: Long): Map<String, Long> =
+        computeAsOf(
+            transactionDao::sumIntermediaryDebitsForAccountUpTo,
+            transactionDao::sumIntermediaryCreditsForAccountUpTo,
+            asOfMs
+        )
+
+    private fun computeAsOf(
+        sumDebits: (accountId: String, asOfMs: Long) -> Long,
+        sumCredits: (accountId: String, asOfMs: Long) -> Long,
+        asOfMs: Long
+    ): Map<String, Long> =
+        accountDao.getAllSync().associate { account ->
             account.id to BalanceCalculator.compute(
                 account.type,
-                debits,
-                credits
+                sumDebits(account.id, asOfMs),
+                sumCredits(account.id, asOfMs)
             )
         }
-    }
 
     fun computeBalancesBetween(startMs: Long, endMs: Long): Map<String, Long> {
         val accounts = accountDao.getAllSync()

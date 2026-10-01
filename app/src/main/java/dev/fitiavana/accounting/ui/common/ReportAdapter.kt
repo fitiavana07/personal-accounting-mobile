@@ -13,7 +13,13 @@ import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
 import java.util.Locale
 
-class ReportAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+/**
+ * @param onAccountClick called with the account id when an expandable [ReportDisplayRow.AccountLine] is tapped;
+ * when null (e.g. Home), account lines are not clickable.
+ */
+class ReportAdapter(
+    private val onAccountClick: ((String) -> Unit)? = null
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var rows: List<ReportDisplayRow> = emptyList()
 
@@ -45,7 +51,8 @@ class ReportAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             is ReportDisplayRow.DateLine -> (holder as DateViewHolder).bind(row)
             is ReportDisplayRow.SectionHeader -> (holder as RowViewHolder).bindHeader(row)
             is ReportDisplayRow.SubsectionHeader -> (holder as RowViewHolder).bindSubsectionHeader(row)
-            is ReportDisplayRow.AccountLine -> (holder as RowViewHolder).bindAccount(row)
+            is ReportDisplayRow.AccountLine -> (holder as RowViewHolder).bindAccount(row, onAccountClick)
+            is ReportDisplayRow.NativeLine -> (holder as RowViewHolder).bindNative(row)
             is ReportDisplayRow.TotalLine -> (holder as RowViewHolder).bindTotal(row)
         }
     }
@@ -82,6 +89,7 @@ class ReportAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             setTextColor(ContextCompat.getColor(context, R.color.report_header_text))
             setContentVerticalPadding(10f)
             root.setBackgroundColor(ContextCompat.getColor(context, R.color.report_section_header_bg))
+            resetClick()
             divider.visibility = View.GONE
             setColorDot(null)
         }
@@ -94,12 +102,20 @@ class ReportAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             setTextColor(secondaryTextColor())
             setContentVerticalPadding(6f)
             root.setBackgroundColor(0)
+            resetClick()
             divider.visibility = View.GONE
             setColorDot(row.color)
         }
 
-        fun bindAccount(row: ReportDisplayRow.AccountLine) {
-            labelView.text = row.name
+        fun bindAccount(row: ReportDisplayRow.AccountLine, onAccountClick: ((String) -> Unit)?) {
+            val accountId = row.accountId
+            labelView.text =
+                if (row.expandable) "${row.name} ${if (row.expanded) CHEVRON_EXPANDED else CHEVRON_COLLAPSED}" else row.name
+            if (row.expandable && accountId != null && onAccountClick != null) {
+                root.setOnClickListener { onAccountClick(accountId) }
+            } else {
+                resetClick()
+            }
             amountView.text = row.amountText
             setBold(false, 15f)
             setLabelIndent(labelIndentPadding)
@@ -108,6 +124,20 @@ class ReportAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             root.setBackgroundColor(0)
             divider.visibility = View.GONE
             setColorDot(row.color)
+        }
+
+        /** Sub-row of an expanded account: instrument code as label, amount in the same right-aligned column. */
+        fun bindNative(row: ReportDisplayRow.NativeLine) {
+            labelView.text = row.code
+            amountView.text = row.amountText
+            setBold(false, 14f)
+            setLabelIndent(labelIndentPadding + dpToPx(16f))
+            setTextColor(secondaryTextColor())
+            setContentVerticalPadding(2f)
+            root.setBackgroundColor(0)
+            resetClick()
+            divider.visibility = View.GONE
+            setColorDot(null)
         }
 
         private fun setColorDot(color: Int?) {
@@ -135,8 +165,14 @@ class ReportAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             root.setBackgroundColor(
                 if (row.emphasized) ContextCompat.getColor(context, R.color.report_grand_total_bg) else 0
             )
+            resetClick()
             divider.visibility = View.VISIBLE
             setColorDot(null)
+        }
+
+        private fun resetClick() {
+            root.setOnClickListener(null)
+            root.isClickable = false
         }
 
         private fun setLabelIndent(startPadding: Int) {
@@ -189,5 +225,7 @@ class ReportAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private const val VIEW_TYPE_TITLE = 0
         private const val VIEW_TYPE_ROW = 1
         private const val VIEW_TYPE_DATE = 2
+        private const val CHEVRON_COLLAPSED = "▸"
+        private const val CHEVRON_EXPANDED = "▾"
     }
 }

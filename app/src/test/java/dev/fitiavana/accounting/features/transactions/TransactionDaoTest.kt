@@ -67,14 +67,27 @@ class TransactionDaoTest {
         note = "note-$id"
     )
 
-    private fun entry(id: String, transactionId: String, accountId: String, debit: Long? = null, credit: Long? = null) =
-        TransactionEntry(
-            id = id,
-            transactionId = transactionId,
-            accountId = accountId,
-            debitAmount = debit,
-            creditAmount = credit
-        )
+    private fun entry(
+        id: String,
+        transactionId: String,
+        accountId: String,
+        debit: Long? = null,
+        credit: Long? = null,
+        instrumentDebit: Long? = null,
+        instrumentCredit: Long? = null,
+        intermediaryDebit: Long? = null,
+        intermediaryCredit: Long? = null
+    ) = TransactionEntry(
+        id = id,
+        transactionId = transactionId,
+        accountId = accountId,
+        debitAmount = debit,
+        creditAmount = credit,
+        instrumentDebitAmount = instrumentDebit,
+        instrumentCreditAmount = instrumentCredit,
+        intermediaryDebitAmount = intermediaryDebit,
+        intermediaryCreditAmount = intermediaryCredit
+    )
 
     // getFilteredWithEntries
 
@@ -184,6 +197,47 @@ class TransactionDaoTest {
 
         assertEquals(100L, transactionDao.sumDebitsForAccountUpTo("acc1", asOfMs = 1_000L))
         assertEquals(300L, transactionDao.sumDebitsForAccountUpTo("acc1", asOfMs = 2_000L))
+    }
+
+    // sumInstrument*/sumIntermediary*ForAccountUpTo (date-cutoff aggregation of native amounts)
+
+    @Test
+    fun `sumInstrumentDebitsForAccountUpTo includes entries at or before the cutoff, excludes after`() {
+        transactionDao.insert(transaction("t1", 1_000L))
+        transactionDao.insert(transaction("t2", 2_000L))
+        transactionDao.insertEntry(entry("e1", "t1", "acc1", instrumentDebit = 10L))
+        transactionDao.insertEntry(entry("e2", "t2", "acc1", instrumentDebit = 20L))
+
+        assertEquals(10L, transactionDao.sumInstrumentDebitsForAccountUpTo("acc1", asOfMs = 1_000L))
+        assertEquals(30L, transactionDao.sumInstrumentDebitsForAccountUpTo("acc1", asOfMs = 2_000L))
+    }
+
+    @Test
+    fun `sumInstrumentCreditsForAccountUpTo ignores other accounts and other columns`() {
+        transactionDao.insert(transaction("t1", 1_000L))
+        transactionDao.insertEntry(entry("e1", "t1", "acc1", credit = 500L, instrumentCredit = 7L, intermediaryCredit = 9L))
+        transactionDao.insertEntry(entry("e2", "t1", "acc2", instrumentCredit = 100L))
+
+        assertEquals(7L, transactionDao.sumInstrumentCreditsForAccountUpTo("acc1", asOfMs = 1_000L))
+    }
+
+    @Test
+    fun `sumIntermediaryDebitsForAccountUpTo includes entries at or before the cutoff, excludes after`() {
+        transactionDao.insert(transaction("t1", 1_000L))
+        transactionDao.insert(transaction("t2", 2_000L))
+        transactionDao.insertEntry(entry("e1", "t1", "acc1", intermediaryDebit = 11L))
+        transactionDao.insertEntry(entry("e2", "t2", "acc1", intermediaryDebit = 22L))
+
+        assertEquals(11L, transactionDao.sumIntermediaryDebitsForAccountUpTo("acc1", asOfMs = 1_999L))
+        assertEquals(33L, transactionDao.sumIntermediaryDebitsForAccountUpTo("acc1", asOfMs = 2_000L))
+    }
+
+    @Test
+    fun `sumIntermediaryCreditsForAccountUpTo returns zero when no matching entries`() {
+        transactionDao.insert(transaction("t1", 5_000L))
+        transactionDao.insertEntry(entry("e1", "t1", "acc1", intermediaryCredit = 40L))
+
+        assertEquals(0L, transactionDao.sumIntermediaryCreditsForAccountUpTo("acc1", asOfMs = 1_000L))
     }
 
     // MIN/MAX transactionDatetime

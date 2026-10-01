@@ -77,6 +77,42 @@ interface TransactionDao {
 
     @Query(
         """
+        SELECT COALESCE(SUM(te.instrumentDebitAmount), 0) FROM transaction_entries te
+        JOIN transactions t ON t.id = te.transactionId
+        WHERE te.accountId = :accountId AND t.transactionDatetime <= :asOfMs
+    """
+    )
+    fun sumInstrumentDebitsForAccountUpTo(accountId: String, asOfMs: Long): Long
+
+    @Query(
+        """
+        SELECT COALESCE(SUM(te.instrumentCreditAmount), 0) FROM transaction_entries te
+        JOIN transactions t ON t.id = te.transactionId
+        WHERE te.accountId = :accountId AND t.transactionDatetime <= :asOfMs
+    """
+    )
+    fun sumInstrumentCreditsForAccountUpTo(accountId: String, asOfMs: Long): Long
+
+    @Query(
+        """
+        SELECT COALESCE(SUM(te.intermediaryDebitAmount), 0) FROM transaction_entries te
+        JOIN transactions t ON t.id = te.transactionId
+        WHERE te.accountId = :accountId AND t.transactionDatetime <= :asOfMs
+    """
+    )
+    fun sumIntermediaryDebitsForAccountUpTo(accountId: String, asOfMs: Long): Long
+
+    @Query(
+        """
+        SELECT COALESCE(SUM(te.intermediaryCreditAmount), 0) FROM transaction_entries te
+        JOIN transactions t ON t.id = te.transactionId
+        WHERE te.accountId = :accountId AND t.transactionDatetime <= :asOfMs
+    """
+    )
+    fun sumIntermediaryCreditsForAccountUpTo(accountId: String, asOfMs: Long): Long
+
+    @Query(
+        """
         SELECT COALESCE(SUM(te.debitAmount), 0) FROM transaction_entries te
         JOIN transactions t ON t.id = te.transactionId
         WHERE te.accountId = :accountId AND t.transactionDatetime >= :startMs AND t.transactionDatetime <= :endMs
