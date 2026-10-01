@@ -48,12 +48,18 @@ class HomeMetricsAdapter :
             view.findViewById(R.id.container_metrics_rows)
         private val context = view.context
 
-        private val equityView = addRow(R.string.home_metric_equity_label)
-        private val cashView = addRow(R.string.home_metric_cash_label)
-        private val cashToEquityView =
-            addRow(R.string.home_metric_cash_to_equity_label)
-        private val incomeToExpensesView =
-            addRow(R.string.home_metric_income_to_expenses_label)
+        private val equityCash = addPairRow(
+            R.string.home_metric_equity_label,
+            R.string.home_metric_cash_label
+        )
+        private val equityView = equityCash.first
+        private val cashView = equityCash.second
+        private val cashToEquityIncome = addPairRow(
+            R.string.home_metric_cash_to_equity_label,
+            R.string.home_metric_income_to_expenses_label
+        )
+        private val cashToEquityView = cashToEquityIncome.first
+        private val incomeToExpensesView = cashToEquityIncome.second
         private val monthlyExpenseView =
             addRow(R.string.home_metric_monthly_expense_label)
         private val emergencyFundView =
@@ -69,6 +75,29 @@ class HomeMetricsAdapter :
             row.findViewById<TextView>(R.id.text_metric_row_label)
                 .setText(labelRes)
             return row.findViewById(R.id.text_metric_row_value)
+        }
+
+        /** Two metrics side by side; the right one is right-aligned. */
+        private fun addPairRow(
+            @StringRes leftLabelRes: Int,
+            @StringRes rightLabelRes: Int
+        ): Pair<TextView, TextView> {
+            LayoutInflater.from(context)
+                .inflate(R.layout.item_home_metric_pair_row, container, true)
+            val row =
+                container.getChildAt(container.childCount - 1) as LinearLayout
+            val left = bindCell(row.findViewById(R.id.metric_cell_left), leftLabelRes)
+            val right = bindCell(row.findViewById(R.id.metric_cell_right), rightLabelRes)
+            return left.second to right.second
+        }
+
+        private fun bindCell(
+            cell: View,
+            @StringRes labelRes: Int
+        ): Pair<TextView, TextView> {
+            val label = cell.findViewById<TextView>(R.id.text_metric_row_label)
+            label.setText(labelRes)
+            return label to cell.findViewById(R.id.text_metric_row_value)
         }
 
         fun bind(metrics: HomeMetrics) {
