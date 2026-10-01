@@ -69,12 +69,37 @@ class EditAccountViewModelTest {
 
     @Test
     fun `new account fields are set correctly`() {
-        viewModel.saveAccount(id = null, name = "Revenue", type = "revenue", instrumentCode = "EUR", intermediaryInstrumentCode = null)
+        viewModel.saveAccount(id = null, name = "Bank", type = "liability", instrumentCode = "EUR", intermediaryInstrumentCode = "USD")
 
         val captor = argumentCaptor<Account>()
         verify(accountRepository).insert(captor.capture())
-        assertEquals("revenue", captor.firstValue.type)
+        assertEquals("liability", captor.firstValue.type)
         assertEquals("EUR", captor.firstValue.instrumentCode)
+        assertEquals("USD", captor.firstValue.intermediaryInstrumentCode)
+    }
+
+    @Test
+    fun `new income statement or drawing account drops instrument and intermediary`() {
+        listOf("revenue", "expense", "drawing", "gain", "loss").forEach { type ->
+            viewModel.saveAccount(id = null, name = type, type = type, instrumentCode = "EUR", intermediaryInstrumentCode = "USD")
+        }
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository, org.mockito.kotlin.times(5)).insert(captor.capture())
+        captor.allValues.forEach {
+            assertNull(it.type, it.instrumentCode)
+            assertNull(it.type, it.intermediaryInstrumentCode)
+        }
+    }
+
+    @Test
+    fun `updating an expense account drops instrument and intermediary`() {
+        viewModel.saveAccount(id = "1", name = "Food", type = "expense", instrumentCode = "EUR", intermediaryInstrumentCode = "USD")
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).update(captor.capture())
+        assertNull(captor.firstValue.instrumentCode)
+        assertNull(captor.firstValue.intermediaryInstrumentCode)
     }
 
     // --- saveAccount: existing account ---

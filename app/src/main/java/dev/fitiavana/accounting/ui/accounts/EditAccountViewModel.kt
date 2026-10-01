@@ -3,6 +3,7 @@ package dev.fitiavana.accounting.ui.accounts
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.accounts.AccountTypes
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.accounts.AccountRepository
@@ -30,14 +31,17 @@ class EditAccountViewModel(
         liquidityLevel: String? = null
     ) {
         val trimmed = name.trim()
+        val supportsInstrument = AccountTypes.supportsInstrument(type)
+        val savedInstrumentCode = instrumentCode.takeIf { supportsInstrument }
+        val savedIntermediaryCode = intermediaryInstrumentCode.takeIf { supportsInstrument }
         if (id == null) {
             repository.insert(
                 Account(
                     id = UUID.randomUUID().toString(),
                     name = trimmed,
                     type = type,
-                    instrumentCode = instrumentCode,
-                    intermediaryInstrumentCode = intermediaryInstrumentCode,
+                    instrumentCode = savedInstrumentCode,
+                    intermediaryInstrumentCode = savedIntermediaryCode,
                     liquidityLevel = liquidityLevel
                 )
             )
@@ -47,8 +51,8 @@ class EditAccountViewModel(
                     id = id,
                     name = trimmed,
                     type = type,
-                    instrumentCode = instrumentCode,
-                    intermediaryInstrumentCode = intermediaryInstrumentCode,
+                    instrumentCode = savedInstrumentCode,
+                    intermediaryInstrumentCode = savedIntermediaryCode,
                     liquidityLevel = liquidityLevel
                 )
             )

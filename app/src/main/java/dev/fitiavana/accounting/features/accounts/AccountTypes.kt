@@ -11,4 +11,8 @@ object AccountTypes {
     const val LOSS = "loss"
 
     val VALUES = listOf(ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE, DRAWING, GAIN, LOSS)
+
+    /** Only balance-sheet accounts can hold an instrument; income statement and drawing accounts are base-only. */
+    fun supportsInstrument(type: String): Boolean =
+        type == ASSET || type == LIABILITY || type == EQUITY
 }

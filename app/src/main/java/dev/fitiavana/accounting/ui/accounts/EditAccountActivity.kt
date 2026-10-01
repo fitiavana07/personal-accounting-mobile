@@ -115,12 +115,32 @@ class EditAccountActivity : AppCompatActivity() {
                     id: Long
                 ) {
                     updateLiquidityLevelVisibility()
+                    updateInstrumentSpinnersForType()
                 }
 
                 override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {
                     updateLiquidityLevelVisibility()
+                    updateInstrumentSpinnersForType()
                 }
             }
+    }
+
+    private fun selectedTypeSupportsInstrument(): Boolean =
+        AccountTypes.VALUES.getOrNull(typeSpinner.selectedItemPosition)
+            ?.let(AccountTypes::supportsInstrument) ?: true
+
+    /** Income statement and drawing accounts are base-only: clear and lock both instrument spinners. */
+    private fun updateInstrumentSpinnersForType() {
+        if (!selectedTypeSupportsInstrument()) {
+            instrumentSpinner.setSelection(0)
+        }
+        updateInstrumentSpinnerEnabled()
+        updateIntermediarySpinnerEnabled()
+    }
+
+    private fun updateInstrumentSpinnerEnabled() {
+        instrumentSpinner.isEnabled =
+            selectedTypeSupportsInstrument() && (!isLocked || instrumentInitiallyUnset)
     }
 
     private fun setupLiquidityLevelSpinner() {
@@ -267,8 +287,7 @@ class EditAccountActivity : AppCompatActivity() {
                 }
                 isLocked = locked
                 typeSpinner.isEnabled = !locked
-                instrumentSpinner.isEnabled =
-                    !locked || instrumentInitiallyUnset
+                updateInstrumentSpinnerEnabled()
                 updateIntermediarySpinnerEnabled()
             }
         }.start()
@@ -308,7 +327,7 @@ class EditAccountActivity : AppCompatActivity() {
     private fun updateIntermediarySpinnerEnabled() {
         val canEdit = !isLocked || intermediaryInitiallyUnset
         intermediaryInstrumentSpinner.isEnabled =
-            canEdit && instrumentSpinner.selectedItemPosition > 0
+            canEdit && selectedTypeSupportsInstrument() && instrumentSpinner.selectedItemPosition > 0
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
