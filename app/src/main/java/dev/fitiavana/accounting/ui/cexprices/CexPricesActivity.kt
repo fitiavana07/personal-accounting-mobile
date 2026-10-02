@@ -3,18 +3,16 @@ package dev.fitiavana.accounting.ui.cexprices
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.ProgressBar
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.cexprices.CexPrice
@@ -30,6 +28,7 @@ class CexPricesActivity : AppCompatActivity() {
     private lateinit var viewModel: CexPricesViewModel
     private lateinit var spinnerBase: Spinner
     private lateinit var spinnerQuote: Spinner
+    private lateinit var swipeRefresh: SwipeRefreshLayout
     private val pricesAdapter = CexPricesAdapter()
     private var codes: List<String> = emptyList()
 
@@ -47,6 +46,8 @@ class CexPricesActivity : AppCompatActivity() {
 
         spinnerBase = findViewById(R.id.spinner_base)
         spinnerQuote = findViewById(R.id.spinner_quote)
+        swipeRefresh = findViewById(R.id.swipe_refresh_cex_prices)
+        swipeRefresh.setOnRefreshListener { viewModel.refresh() }
         findViewById<RecyclerView>(R.id.recycler_cex_prices).apply {
             layoutManager = LinearLayoutManager(this@CexPricesActivity)
             adapter = pricesAdapter
@@ -75,8 +76,7 @@ class CexPricesActivity : AppCompatActivity() {
             updateHint()
         }
         viewModel.loading.observe(this) { loading ->
-            findViewById<ProgressBar>(R.id.progress_cex_prices).visibility =
-                if (loading) View.VISIBLE else View.INVISIBLE
+            swipeRefresh.isRefreshing = loading
             updateHint()
         }
     }
@@ -119,19 +119,6 @@ class CexPricesActivity : AppCompatActivity() {
         val showHint = viewModel.prices.value == null && viewModel.loading.value != true
         findViewById<View>(R.id.text_cex_hint).visibility = if (showHint) View.VISIBLE else View.GONE
     }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_cex_prices, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean =
-        if (item.itemId == R.id.action_refresh) {
-            viewModel.refresh()
-            true
-        } else {
-            super.onOptionsItemSelected(item)
-        }
 
     override fun onSupportNavigateUp(): Boolean {
         finish()

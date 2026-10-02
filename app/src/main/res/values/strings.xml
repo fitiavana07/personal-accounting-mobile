@@ -190,5 +190,4 @@
     <string name="cex_tag_highest">Highest</string>
     <string name="cex_pair_format">%1$s / %2$s</string>
     <string name="cex_spread_format">Spread %1$s</string>
-    <string name="action_refresh">Refresh</string>
 </resources>

@@ -7,7 +7,10 @@ import androidx.test.core.app.ApplicationProvider
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.instruments.Instrument
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,6 +35,15 @@ class CexPricesActivityTest {
 
     private fun Spinner.items(): List<String> =
         (0 until adapter.count).map { adapter.getItem(it).toString() }
+
+    @Test
+    fun `has pull-to-refresh and no refresh menu item`() {
+        val activity = Robolectric.buildActivity(CexPricesActivity::class.java).setup().get()
+        val swipe = activity.findViewById<SwipeRefreshLayout>(R.id.swipe_refresh_cex_prices)
+
+        assertNotNull(swipe)
+        assertEquals(0, shadowOf(activity).optionsMenu?.size() ?: 0)
+    }
 
     @Test
     fun `base and quote spinners list only cryptocurrency instruments`() {
