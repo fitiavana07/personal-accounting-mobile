@@ -24,10 +24,22 @@ class PeriodSelectorAdapter<T>(
     private var items: List<T> = emptyList()
     private var selected: T? = null
 
+    private var recyclerView: RecyclerView? = null
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        this.recyclerView = recyclerView
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        this.recyclerView = null
+    }
+
     fun submitList(items: List<T>, selected: T?) {
         this.items = items
         this.selected = selected
         notifyDataSetChanged()
+        // Minimal scroll: brings the selected item fully into view (e.g. current month)
+        items.indexOf(selected).takeIf { it >= 0 }?.let { recyclerView?.scrollToPosition(it) }
     }
 
     override fun getItemCount() = items.size
