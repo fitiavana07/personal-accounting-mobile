@@ -16,6 +16,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.any
+import org.mockito.Mockito.atLeastOnce
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.timeout
 import org.mockito.kotlin.times
@@ -168,7 +169,8 @@ class ReportsViewModelTest {
 
         val expectedStart = ReportPeriodSelector.startOfMonthMillis(2026, Calendar.MARCH)
         val expectedEnd = ReportPeriodSelector.endOfMonthMillis(2026, Calendar.MARCH)
-        verify(balanceRepository).computeBalancesBetween(expectedStart, expectedEnd)
+        // The trend chart also queries this month's range, so it is called more than once.
+        verify(balanceRepository, atLeastOnce()).computeBalancesBetween(expectedStart, expectedEnd)
     }
 
     @Test
@@ -513,5 +515,67 @@ class ReportsViewModelTest {
 
         verify(balanceRepository).computeInstrumentBalancesAsOf(cutoff)
         verify(balanceRepository).computeIntermediaryBalancesAsOf(cutoff)
+    }
+
+    @Test
+    fun `loadInitialSync builds one trend point per month in chronological order`() {
+        whenever(balanceRepository.getTransactionDateRange())
+            .thenReturn(millisFor(2025, Calendar.JANUARY, 1) to millisFor(2025, Calendar.MARCH, 15))
+
+        viewModel.loadInitialSync()
+
+        assertEquals(
+            listOf(YearMonth(2025, 0), YearMonth(2025, 1), YearMonth(2025, 2)),
+            viewModel.trendPoints.value?.map { it.yearMonth }
+        )
+    }
+
+    @Test
+    fun `trend points use total equity as of the month and the month's net income`() {
+        whenever(balanceRepository.getTransactionDateRange())
+            .thenReturn(millisFor(2025, Calendar.JANUARY, 1) to millisFor(2025, Calendar.JANUARY, 20))
+        whenever(accountRepository.getAllSync()).thenReturn(
+            listOf(
+                Account(id = "cap", name = "Capital", type = "equity"),
+                Account(id = "sal", name = "Salary", type = "revenue")
+            )
+        )
+        val asOf = ReportPeriodSelector.asOfMillis(2025, Calendar.JANUARY)
+        val start = ReportPeriodSelector.startOfMonthMillis(2025, Calendar.JANUARY)
+        whenever(balanceRepository.computeBalancesAsOf(asOf))
+            .thenReturn(mapOf("cap" to 1_000L, "sal" to 250L))
+        whenever(balanceRepository.computeBalancesBetween(start, asOf))
+            .thenReturn(mapOf("sal" to 250L))
+
+        viewModel.loadInitialSync()
+
+        val point = viewModel.trendPoints.value?.single()
+        assertEquals(1_250L, point?.netWorth)
+        assertEquals(250L, point?.netIncome)
+    }
+
+    @Test
+    fun `trend points are limited to the most recent months`() {
+        whenever(balanceRepository.getTransactionDateRange())
+            .thenReturn(millisFor(2023, Calendar.JANUARY, 1) to millisFor(2025, Calendar.MARCH, 15))
+
+        viewModel.loadInitialSync()
+
+        val points = viewModel.trendPoints.value.orEmpty()
+        assertEquals(TrendSeriesBuilder.MAX_MONTHS, points.size)
+        assertEquals(YearMonth(2025, 2), points.last().yearMonth)
+        assertEquals(YearMonth(2024, 3), points.first().yearMonth)
+    }
+
+    @Test
+    fun `trend points stay the same when another period is selected`() {
+        whenever(balanceRepository.getTransactionDateRange())
+            .thenReturn(millisFor(2025, Calendar.JANUARY, 1) to millisFor(2025, Calendar.MARCH, 15))
+        viewModel.loadInitialSync()
+        val before = viewModel.trendPoints.value
+
+        viewModel.selectMonthSync(Calendar.JANUARY)
+
+        assertEquals(before, viewModel.trendPoints.value)
     }
 }

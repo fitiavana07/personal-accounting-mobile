@@ -9,6 +9,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.charts.LineChart
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.ui.common.EquityStatementAdapter
@@ -85,6 +87,8 @@ class ReportsFragment : Fragment() {
             startActivity(AddTransactionActivity.intent(requireContext()))
         }
 
+        setUpTrendCharts(view)
+
         reportTypeAdapter.submitList(viewModel.reportTypes, viewModel.selectedReportType.value)
 
         viewModel.hasTransactions.observe(viewLifecycleOwner) { hasTransactions ->
@@ -110,5 +114,22 @@ class ReportsFragment : Fragment() {
         viewModel.equityStatement.observe(viewLifecycleOwner) { equityAdapter.submitList(it) }
 
         viewModel.start()
+    }
+
+    /** Net worth and net income charts above the period selector; they scroll away with the screen. */
+    private fun setUpTrendCharts(view: View) {
+        val chartsBlock = view.findViewById<View>(R.id.layout_trend_charts)
+        val netWorthChart = view.findViewById<LineChart>(R.id.chart_net_worth)
+        val netIncomeChart = view.findViewById<BarChart>(R.id.chart_net_income)
+        TrendChartRenderer.configureLine(netWorthChart)
+        TrendChartRenderer.configureBar(netIncomeChart)
+
+        viewModel.trendPoints.observe(viewLifecycleOwner) { points ->
+            chartsBlock.visibility = if (TrendChartRenderer.hasEnoughData(points)) View.VISIBLE else View.GONE
+            if (TrendChartRenderer.hasEnoughData(points)) {
+                TrendChartRenderer.renderNetWorth(netWorthChart, points)
+                TrendChartRenderer.renderNetIncome(netIncomeChart, points)
+            }
+        }
     }
 }

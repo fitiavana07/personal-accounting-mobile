@@ -109,6 +109,10 @@ class ReportsViewModel(
         MutableLiveData(EquityStatementDisplay(emptyList(), emptyList()))
     val equityStatement: LiveData<EquityStatementDisplay> = _equityStatement
 
+    /** Net worth and net income of the most recent months, for the trend charts above the period selector. */
+    private val _trendPoints = MutableLiveData<List<TrendPoint>>(emptyList())
+    val trendPoints: LiveData<List<TrendPoint>> = _trendPoints
+
     /** Kicks off the initial background load. Safe to call from every onViewCreated — a no-op after the first call. */
     fun start() {
         if (started) return
@@ -168,6 +172,28 @@ class ReportsViewModel(
         _selectedYear.postValue(lastYear)
         _selectedMonth.postValue(lastMonth)
         recomputeSync(lastYear, lastMonth)
+        loadTrendSync(months.takeLast(TrendSeriesBuilder.MAX_MONTHS))
+    }
+
+    /** Net worth and net income for [months]; independent of the selected report period. */
+    private fun loadTrendSync(months: List<YearMonth>) {
+        _trendPoints.postValue(
+            TrendSeriesBuilder.build(
+                months = months,
+                accounts = cachedAccounts,
+                balancesAsOf = {
+                    balanceRepository.computeBalancesAsOf(
+                        ReportPeriodSelector.asOfMillis(it.year, it.month)
+                    )
+                },
+                balancesBetween = {
+                    balanceRepository.computeBalancesBetween(
+                        ReportPeriodSelector.startOfMonthMillis(it.year, it.month),
+                        ReportPeriodSelector.asOfMillis(it.year, it.month)
+                    )
+                }
+            )
+        )
     }
 
     /** Synchronous version of [selectYear], for use on a background thread (or directly in tests). */

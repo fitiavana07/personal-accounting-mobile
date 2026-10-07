@@ -75,6 +75,8 @@
     <string name="empty_accounts_filtered">No accounts match the current filters</string>
     <string name="empty_balances">No balances yet</string>
     <string name="empty_reports">No transactions yet</string>
+    <string name="trend_net_worth_title">Net worth</string>
+    <string name="trend_net_income_title">Net income</string>
     <string name="empty_home">No cryptocurrency positions with an intermediary instrument yet</string>
     <string name="home_rate_updated_at">Price as of %1$s</string>
     <string name="home_rate_never_updated">Price not fetched yet</string>

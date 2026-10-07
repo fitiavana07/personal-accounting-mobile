@@ -158,8 +158,23 @@ Collapse all" control (`text_reports_expand_all`) sits under the as-of date.
   `accountId` + `nativeAmounts`; `ReportPresenter` turns them into `expandable`/`expanded` lines followed by
   `ReportDisplayRow.NativeLine` sub-rows; `ReportAdapter(onAccountClick)` renders the chevron and click.
 
+## Trend charts (above the period selector)
+
+- A "Trends" block at the top of `fragment_reports.xml` is always shown (no collapse control) and displays two charts at once: net worth
+  (`LineChart`) and net income (`BarChart`, coloured by sign), for the last `TrendSeriesBuilder.MAX_MONTHS` (12)
+  months that have transactions. The whole screen sits in a `NestedScrollView`, so the charts scroll away and the
+  report list does not scroll by itself.
+- `TrendSeriesBuilder` (pure) reuses the report builders: net worth = `BalanceSheetBuilder.totalEquity` over
+  `computeBalancesAsOf(asOfMillis)`, net income = `IncomeStatementBuilder.netIncome` (the Income Statement's
+  Net Income row) over `computeBalancesBetween(startOfMonth, asOfMillis)`; the current month is "as of now".
+- `ReportsViewModel.trendPoints` is loaded once by `loadInitialSync` (after the first `recomputeSync`, which fills
+  the cached accounts) and does not change when the period changes. The block is hidden with fewer than 2 points.
+- Rendering lives in `TrendChartRenderer` (MPAndroidChart, same approach as the Home `PieChartRenderer`).
+
 ## Tests
 
+- `TrendSeriesBuilderTest`, `TrendChartRendererTest`, plus the trend cases in `ReportsViewModelTest` /
+  `ReportsFragmentTest`.
 - `ReportPeriodSelectorTest.kt` — pure date-math unit tests per function
   (including the year-level functions above).
 - `ReportsViewModelTest.kt` — mocks `AccountRepository`/`BalanceRepository`
