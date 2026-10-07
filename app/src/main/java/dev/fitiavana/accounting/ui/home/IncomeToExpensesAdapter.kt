@@ -37,8 +37,8 @@ class IncomeToExpensesAdapter :
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        private val amountView: TextView =
-            view.findViewById(R.id.text_income_to_expenses_amount)
+        private val targetView: TextView =
+            view.findViewById(R.id.text_income_to_expenses_target)
         private val percentView: TextView =
             view.findViewById(R.id.text_income_to_expenses_percent)
         private val remainingView: TextView =
@@ -48,7 +48,7 @@ class IncomeToExpensesAdapter :
         private val context = view.context
 
         fun bind(info: IncomeToExpensesInfo) {
-            amountView.text =
+            targetView.text =
                 UiUtils.formatAmountAr(context, info.monthlyExpenses)
 
             percentView.text = context.getString(

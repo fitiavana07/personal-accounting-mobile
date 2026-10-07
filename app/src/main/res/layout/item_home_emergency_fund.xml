@@ -26,28 +26,36 @@
 
         <TextView
             android:id="@+id/text_emergency_fund_6month_caption"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
+            android:gravity="center_horizontal"
             android:text="@string/home_emergency_fund_6_month_caption"
             android:textSize="13sp"
             android:textColor="?android:attr/textColorSecondary" />
 
-        <TextView
-            android:id="@+id/text_emergency_fund_6month_amount"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:textColor="?android:attr/textColorPrimary" />
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/text_emergency_fund_6month_percent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textSize="13sp" />
+            <TextView
+                android:id="@+id/text_emergency_fund_6month_percent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/text_emergency_fund_6month_target"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:textSize="13sp"
+                android:textColor="?android:attr/textColorSecondary" />
+
+        </LinearLayout>
 
         <ProgressBar
             android:id="@+id/progress_emergency_fund_6month"

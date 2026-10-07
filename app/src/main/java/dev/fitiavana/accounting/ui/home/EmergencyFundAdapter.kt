@@ -42,8 +42,8 @@ class EmergencyFundAdapter(
         RecyclerView.ViewHolder(view) {
         private val monthlyExpensesView: TextView =
             view.findViewById(R.id.text_monthly_expenses)
-        private val amountView: TextView =
-            view.findViewById(R.id.text_emergency_fund_6month_amount)
+        private val targetView: TextView =
+            view.findViewById(R.id.text_emergency_fund_6month_target)
         private val percentView: TextView =
             view.findViewById(R.id.text_emergency_fund_6month_percent)
         private val remainingView: TextView =
@@ -64,7 +64,7 @@ class EmergencyFundAdapter(
                 UiUtils.formatAmountAr(context, info.monthlyExpenses)
             )
 
-            amountView.text =
+            targetView.text =
                 UiUtils.formatAmountAr(context, info.sixMonthTarget)
 
             percentView.text = context.getString(
