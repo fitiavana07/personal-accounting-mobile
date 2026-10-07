@@ -11,6 +11,14 @@
     <string name="action_recalculate">Recalculate</string>
     <string name="action_restore">Restore</string>
     <string name="action_save">Save</string>
+    <string name="action_auto_backup">Auto-backup</string>
+    <string name="auto_backup_title">Automatic daily backup</string>
+    <string name="auto_backup_switch">Back up once a day</string>
+    <string name="auto_backup_last">Last backup: %1$s</string>
+    <string name="auto_backup_last_never">Last backup: never</string>
+    <string name="auto_backup_folder">Folder: %1$s</string>
+    <string name="auto_backup_folder_unknown">Folder: unavailable</string>
+    <string name="auto_backup_hint">The newest 7 backups are kept. They are deleted if the app is uninstalled, so use Backup now and then to keep a copy elsewhere.</string>
     <string name="backup_default_filename">accounting_backup_%1$s.json</string>
     <string name="backup_failed">Backup failed: %1$s</string>
     <string name="backup_success">Backup saved</string>

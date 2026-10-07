@@ -5,22 +5,28 @@ import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import dev.fitiavana.accounting.features.backup.BackupRepository
 import dev.fitiavana.accounting.features.backup.RestoreResult
 import dev.fitiavana.accounting.ui.common.UiUtils
 import dev.fitiavana.accounting.ui.accounts.AccountsFragment
+import dev.fitiavana.accounting.ui.backup.AutoBackupViewModel
+import dev.fitiavana.accounting.ui.backup.AutoBackupViewModelFactory
 import dev.fitiavana.accounting.ui.balances.BalancesActivity
 import dev.fitiavana.accounting.ui.home.HomeFragment
 import dev.fitiavana.accounting.ui.instruments.InstrumentsActivity
 import dev.fitiavana.accounting.ui.reports.ReportsFragment
 import dev.fitiavana.accounting.ui.transactions.TransactionsFragment
+import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -28,6 +34,7 @@ import java.util.Locale
 class MainActivity : AppCompatActivity() {
 
     private lateinit var backupRepository: BackupRepository
+    private lateinit var autoBackupViewModel: AutoBackupViewModel
     private var pendingRestoreUri: Uri? = null
     private var operationInProgress = false
 
@@ -45,7 +52,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        backupRepository = AppContainer.getInstance(this).backupRepository
+        val container = AppContainer.getInstance(this)
+        backupRepository = container.backupRepository
+        autoBackupViewModel = ViewModelProvider(this, AutoBackupViewModelFactory(container.autoBackupManager))
+            .get(AutoBackupViewModel::class.java)
+        // Catch up on a daily backup whose alarm never fired (e.g. force-stopped app), and re-arm it.
+        if (savedInstanceState == null) autoBackupViewModel.runCatchUp()
 
         UiUtils.setupActionBar(this, displayHomeAsUp = false)
         supportActionBar?.title =
@@ -113,6 +125,11 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
 
+            R.id.action_auto_backup -> {
+                showAutoBackupDialog()
+                return true
+            }
+
             R.id.action_restore -> {
                 openRestoreDocument.launch(arrayOf("*/*"))
                 return true
@@ -129,6 +146,28 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    /** Switch for the daily automatic backup, plus when it last ran and where the files are. */
+    private fun showAutoBackupDialog() {
+        val status = autoBackupViewModel.status()
+        val view = layoutInflater.inflate(R.layout.dialog_auto_backup, null)
+        view.findViewById<SwitchCompat>(R.id.switch_auto_backup).apply {
+            isChecked = status.enabled
+            setOnCheckedChangeListener { _, checked -> autoBackupViewModel.setEnabled(checked) }
+        }
+        view.findViewById<TextView>(R.id.text_auto_backup_last).text =
+            status.lastBackupAt?.let {
+                getString(R.string.auto_backup_last, DateFormat.getDateTimeInstance().format(Date(it)))
+            } ?: getString(R.string.auto_backup_last_never)
+        view.findViewById<TextView>(R.id.text_auto_backup_folder).text =
+            status.folderPath?.let { getString(R.string.auto_backup_folder, it) }
+                ?: getString(R.string.auto_backup_folder_unknown)
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_backup_title)
+            .setView(view)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun setOperationInProgress(inProgress: Boolean) {

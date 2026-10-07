@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".AccountingApplication"
@@ -54,6 +55,18 @@
             android:name=".ui.cexprices.CexPricesActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
+
+        <receiver
+            android:name=".features.backup.AutoBackupReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".features.backup.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

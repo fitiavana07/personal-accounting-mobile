@@ -8,6 +8,11 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_auto_backup"
+        android:title="@string/action_auto_backup"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_restore"
         android:title="@string/action_restore"
         app:showAsAction="never" />

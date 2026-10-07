@@ -97,6 +97,9 @@ See `docs/cex-prices-feature.md` for the CEX pair price comparison feature
 
 See `docs/p2p-prices-feature.md` for the Binance P2P prices block on the home screen.
 
+See `docs/auto-backup-feature.md` for the automatic daily backup (AlarmManager,
+receivers, where files go) and how to test it.
+
 Each CRUD feature: {Feature}Fragment + {Feature}ViewModel + {Feature}Adapter +
 Edit{Feature}Activity + Edit{Feature}ViewModel
 

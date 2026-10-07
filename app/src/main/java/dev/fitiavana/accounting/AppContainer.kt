@@ -3,7 +3,10 @@ package dev.fitiavana.accounting
 import android.content.Context
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.backup.AlarmManagerBackupScheduler
+import dev.fitiavana.accounting.features.backup.AutoBackupManager
 import dev.fitiavana.accounting.features.backup.BackupRepository
+import dev.fitiavana.accounting.features.backup.SharedPreferencesBackupPrefsStore
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.cexprices.CexPriceRepository
 import dev.fitiavana.accounting.features.cexprices.SharedPreferencesCexPairStore
@@ -13,6 +16,7 @@ import dev.fitiavana.accounting.features.p2pprices.P2pPriceRepository
 import dev.fitiavana.accounting.features.p2pprices.SharedPreferencesP2pFilterStore
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
+import java.io.File
 import dev.fitiavana.accounting.network.cex.HttpCexPriceFetcher
 import dev.fitiavana.accounting.network.p2p.HttpP2pPriceFetcher
 
@@ -58,7 +62,21 @@ class AppContainer private constructor(context: Context) {
         database.appSettingsDao()
     )
 
+    val autoBackupManager = AutoBackupManager(
+        export = backupRepository::export,
+        backupDir = {
+            // App-specific external dir needs no permission; fall back to internal storage if unmounted.
+            context.getExternalFilesDir(AUTO_BACKUP_DIR) ?: File(context.filesDir, AUTO_BACKUP_DIR)
+        },
+        store = SharedPreferencesBackupPrefsStore(
+            context.getSharedPreferences(SharedPreferencesBackupPrefsStore.PREFS_NAME, Context.MODE_PRIVATE)
+        ),
+        scheduler = AlarmManagerBackupScheduler(context)
+    )
+
     companion object {
+        private const val AUTO_BACKUP_DIR = "backups"
+
         @Volatile
         private var instance: AppContainer? = null
 
