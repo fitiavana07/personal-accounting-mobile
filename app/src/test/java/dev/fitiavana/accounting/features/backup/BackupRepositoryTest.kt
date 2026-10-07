@@ -15,6 +15,11 @@ import dev.fitiavana.accounting.features.backup.BackupRepository
 import dev.fitiavana.accounting.features.backup.RestoreResult
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.settings.AppSettingsDao
+import dev.fitiavana.accounting.features.templates.TemplateDao
+import dev.fitiavana.accounting.features.templates.TemplateEntry
+import dev.fitiavana.accounting.features.templates.TemplateModes
+import dev.fitiavana.accounting.features.templates.TemplateSlots
+import dev.fitiavana.accounting.features.templates.TransactionTemplate
 import dev.fitiavana.accounting.db.AppDatabase
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -43,6 +48,7 @@ class BackupRepositoryTest {
     private lateinit var balanceDao: AccountBalanceDao
     private lateinit var exchangeRateCacheDao: ExchangeRateCacheDao
     private lateinit var appSettingsDao: AppSettingsDao
+    private lateinit var templateDao: TemplateDao
     private lateinit var repository: BackupRepository
 
     private val instrument = Instrument(
@@ -76,6 +82,15 @@ class BackupRepositoryTest {
         rate = 12345.0, fetchedAt = 400L
     )
     private val appSettings = AppSettings(monthlyLivingExpenses = 150000L)
+    private val template = TransactionTemplate(
+        id = "tpl1", name = "Withdraw", mode = TemplateModes.SIMPLE_TRANSFER, createdAt = 500L
+    )
+    private val templateEntryFrom = TemplateEntry(
+        id = "te1", templateId = "tpl1", accountId = "acc1", slot = TemplateSlots.FROM, position = 0
+    )
+    private val templateEntryTo = TemplateEntry(
+        id = "te2", templateId = "tpl1", accountId = "acc2", slot = TemplateSlots.TO, position = 1
+    )
 
     @Before
     fun setUp() {
@@ -86,10 +101,13 @@ class BackupRepositoryTest {
         balanceDao = mock()
         exchangeRateCacheDao = mock()
         appSettingsDao = mock()
+        templateDao = mock()
         repository = BackupRepository(
             database, accountDao, instrumentDao, transactionDao, balanceDao,
-            exchangeRateCacheDao, appSettingsDao
+            exchangeRateCacheDao, appSettingsDao, templateDao
         )
+        whenever(templateDao.getAllTemplatesSync()).thenReturn(listOf(template))
+        whenever(templateDao.getAllEntriesSync()).thenReturn(listOf(templateEntryFrom, templateEntryTo))
 
         whenever(database.runInTransaction(any<Runnable>())).thenAnswer { invocation ->
             (invocation.arguments[0] as Runnable).run()
@@ -190,6 +208,52 @@ class BackupRepositoryTest {
         order.verify(transactionDao).insertAllEntries(any())
         order.verify(balanceDao).insertAll(any())
         order.verify(exchangeRateCacheDao).insertAll(any())
+    }
+
+    // --- templates ---
+
+    @Test
+    fun `export includes templates and their entries`() {
+        val json = JSONObject(repository.export())
+
+        assertEquals(1, json.getJSONArray("transactionTemplates").length())
+        assertEquals(2, json.getJSONArray("templateEntries").length())
+        assertEquals("Withdraw", json.getJSONArray("transactionTemplates").getJSONObject(0).getString("name"))
+        assertEquals(TemplateSlots.FROM, json.getJSONArray("templateEntries").getJSONObject(0).getString("slot"))
+    }
+
+    @Test
+    fun `restore round trip reproduces templates and entries`() {
+        val result = repository.restore(repository.export())
+
+        assertEquals(RestoreResult.Success, result)
+        verify(templateDao).insertTemplates(listOf(template))
+        verify(templateDao).insertEntries(listOf(templateEntryFrom, templateEntryTo))
+    }
+
+    @Test
+    fun `restore deletes templates before accounts and inserts them after accounts`() {
+        repository.restore(repository.export())
+
+        val order = inOrder(templateDao, accountDao)
+        order.verify(templateDao).deleteAllEntries()
+        order.verify(templateDao).deleteAllTemplates()
+        order.verify(accountDao).deleteAll()
+        order.verify(accountDao).insertAll(any())
+        order.verify(templateDao).insertTemplates(any())
+        order.verify(templateDao).insertEntries(any())
+    }
+
+    @Test
+    fun `restore tolerates a backup without template arrays`() {
+        val json = JSONObject(repository.export())
+        json.remove("transactionTemplates")
+        json.remove("templateEntries")
+
+        val result = repository.restore(json.toString())
+
+        assertEquals(RestoreResult.Success, result)
+        verify(templateDao).insertTemplates(emptyList())
     }
 
     // --- restore: schema mismatch ---

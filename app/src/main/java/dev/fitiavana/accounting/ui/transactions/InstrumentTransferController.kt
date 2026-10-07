@@ -12,6 +12,9 @@ import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.balances.BalanceCalculator
 import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.templates.TemplateSlot
+import dev.fitiavana.accounting.features.templates.TemplateSlots
+import dev.fitiavana.accounting.features.templates.TemplateWithEntries
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import kotlin.math.pow
 import kotlin.math.roundToLong
@@ -194,6 +197,40 @@ class InstrumentTransferController(
         to.populate(InstrumentTransferBuilder.selectableToAccounts(allAccounts, fromAccount))
         to.clearSelection()
         toTextNewBalance.visibility = View.GONE
+        // A template's TO account can only be picked once FROM has narrowed the list, which happens
+        // asynchronously on a real device, so it waits here instead of being selected up front.
+        pendingToAccountId?.let {
+            pendingToAccountId = null
+            to.select(it)
+        }
+    }
+
+    /** The TO account of a template being applied, selected once FROM's choice has repopulated the TO list. */
+    private var pendingToAccountId: String? = null
+
+    /** The chosen FROM and TO accounts for saving as a template, or null until both are picked. */
+    fun templateSlots(): List<TemplateSlot>? {
+        val fromId = from.selectedAccountId() ?: return null
+        val toId = to.selectedAccountId() ?: return null
+        return listOf(TemplateSlot(TemplateSlots.FROM, fromId), TemplateSlot(TemplateSlots.TO, toId))
+    }
+
+    /** Selects the template's accounts; false, changing nothing, when one is gone or TO no longer fits FROM. */
+    fun applyTemplate(template: TemplateWithEntries): Boolean {
+        val fromId = template.accountFor(TemplateSlots.FROM) ?: return false
+        val toId = template.accountFor(TemplateSlots.TO) ?: return false
+        val fromAccount = from.accounts.firstOrNull { it.id == fromId } ?: return false
+        val allowedTo = InstrumentTransferBuilder.selectableToAccounts(allAccounts, fromAccount)
+        if (allowedTo.none { it.id == toId }) return false
+
+        pendingToAccountId = toId
+        if (from.selectedAccountId() == fromId) {
+            // No selection change means no listener callback, so repopulate TO directly.
+            repopulateToSpinner(fromAccount)
+        } else {
+            from.select(fromId)
+        }
+        return true
     }
 
     /** The two entries for this transfer, or null with a Toast already shown if incomplete. */

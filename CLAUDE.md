@@ -59,7 +59,8 @@ features/
   cexprices/      # CexPrice, CexPriceRepository
   p2pprices/      # P2pPrices, P2pPriceRepository (Binance P2P USDT/MGA top ads on home)
   settings/       # AppSettings (@Entity), AppSettingsDao, AppSettingsRepository
-  backup/         # BackupRepository
+  backup/         # BackupRepository, AutoBackupManager (daily backups)
+  templates/      # TransactionTemplate/TemplateEntry (@Entity), TemplateDao, TemplateRepository
 db/               # AppDatabase singleton (Room, migrations)
 network/          # HTTP clients for exchange-rate providers (CoinGecko, Yahoo Finance)
   p2p/            # Binance P2P ad search (BinanceP2pApi, P2pPriceFetcher)
@@ -99,6 +100,10 @@ See `docs/p2p-prices-feature.md` for the Binance P2P prices block on the home sc
 
 See `docs/auto-backup-feature.md` for the automatic daily backup (AlarmManager,
 receivers, where files go) and how to test it.
+
+See `docs/transaction-templates-feature.md` for transaction templates (saved
+mode + accounts for Add Transaction): data model, slots, and how templates are
+applied per mode.
 
 Each CRUD feature: {Feature}Fragment + {Feature}ViewModel + {Feature}Adapter +
 Edit{Feature}Activity + Edit{Feature}ViewModel

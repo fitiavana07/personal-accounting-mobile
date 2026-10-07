@@ -15,6 +15,7 @@ import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.p2pprices.P2pPriceRepository
 import dev.fitiavana.accounting.features.p2pprices.SharedPreferencesP2pFilterStore
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
+import dev.fitiavana.accounting.features.templates.TemplateRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
 import java.io.File
 import dev.fitiavana.accounting.network.cex.HttpCexPriceFetcher
@@ -59,8 +60,10 @@ class AppContainer private constructor(context: Context) {
         database.transactionDao(),
         database.accountBalanceDao(),
         database.exchangeRateCacheDao(),
-        database.appSettingsDao()
+        database.appSettingsDao(),
+        database.templateDao()
     )
+    val templateRepository = TemplateRepository(database.templateDao())
 
     val autoBackupManager = AutoBackupManager(
         export = backupRepository::export,

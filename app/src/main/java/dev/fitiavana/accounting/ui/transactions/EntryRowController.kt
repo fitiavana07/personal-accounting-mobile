@@ -164,6 +164,18 @@ class EntryRowController(
         }
     }
 
+    /** The account picked in this row's spinner, or null while it is on the placeholder. */
+    fun selectedAccountId(): String? =
+        spinner.selectedItemPosition.let { if (it > 0 && it <= accounts.size) accounts[it - 1].id else null }
+
+    /** Picks [accountId] in this row; false (selection untouched) when it is not one of the offered accounts. */
+    fun selectAccount(accountId: String): Boolean {
+        val index = accounts.indexOfFirst { it.id == accountId }
+        if (index < 0) return false
+        spinner.setSelection(index + 1)
+        return true
+    }
+
     private fun onAccountSelected(position: Int) {
         val account =
             if (position > 0 && position <= accounts.size) accounts[position - 1] else null

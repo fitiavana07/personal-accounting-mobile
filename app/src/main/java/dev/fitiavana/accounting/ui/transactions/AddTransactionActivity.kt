@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -26,6 +27,10 @@ import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.templates.TemplateModes
+import dev.fitiavana.accounting.features.templates.TemplateSlot
+import dev.fitiavana.accounting.features.templates.TemplateSlots
+import dev.fitiavana.accounting.features.templates.TemplateWithEntries
 import dev.fitiavana.accounting.features.transactions.Transaction
 import dev.fitiavana.accounting.features.transactions.TransactionEntry
 import dev.fitiavana.accounting.ui.common.UiUtils
@@ -64,6 +69,8 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var modeSimpleTransfer: View
     private lateinit var modeInstrumentTransfer: View
     private lateinit var modeInstrumentIncome: View
+    private lateinit var sectionTemplates: View
+    private lateinit var listTemplates: LinearLayout
     private lateinit var editTransferAmount: EditText
     private lateinit var transferController: SimpleTransferController
     private lateinit var instrumentTransferController: InstrumentTransferController
@@ -89,7 +96,8 @@ class AddTransactionActivity : AppCompatActivity() {
                 container.transactionRepository,
                 container.accountRepository,
                 container.balanceRepository,
-                container.instrumentRepository
+                container.instrumentRepository,
+                container.templateRepository
             )
         )
             .get(AddTransactionViewModel::class.java)
@@ -105,6 +113,8 @@ class AddTransactionActivity : AppCompatActivity() {
         modeSimpleTransfer = findViewById(R.id.mode_simple_transfer)
         modeInstrumentTransfer = findViewById(R.id.mode_instrument_transfer)
         modeInstrumentIncome = findViewById(R.id.mode_instrument_income)
+        sectionTemplates = findViewById(R.id.section_templates)
+        listTemplates = findViewById(R.id.list_templates)
         editTransferAmount = findViewById(R.id.edit_transfer_amount)
         transferController = SimpleTransferController(
             context = this,
@@ -133,6 +143,7 @@ class AddTransactionActivity : AppCompatActivity() {
             val loaded = viewModel.loadAccountsAndInstruments()
             accounts = loaded.accounts
             instrumentsMap = loaded.instrumentsByCode
+            val templates = viewModel.loadTemplates()
             runOnUiThread {
                 addEntryRow()
                 addEntryRow()
@@ -175,6 +186,11 @@ class AddTransactionActivity : AppCompatActivity() {
                 )
                 instrumentIncomeController.populateSpinners(accounts)
                 recalculateBalanceSummary()
+                // Templates need the controllers above, so they are shown (and can be applied) only now.
+                showTemplates(templates)
+                intent.getStringExtra(EXTRA_TEMPLATE_ID)?.let { id ->
+                    templates.firstOrNull { it.template.id == id }?.let { applyTemplate(it) }
+                }
             }
         }.start()
 
@@ -185,6 +201,9 @@ class AddTransactionActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btn_save).setOnClickListener {
             saveTransaction()
+        }
+        findViewById<Button>(R.id.btn_save_template).setOnClickListener {
+            promptSaveTemplate()
         }
 
         onBackPressedDispatcher.addCallback(
@@ -596,8 +615,149 @@ class AddTransactionActivity : AppCompatActivity() {
         showStep(Step.MODE_SELECTION)
     }
 
+    // --- templates ---
+
+    private fun Mode.templateMode(): String = when (this) {
+        Mode.CLASSIC -> TemplateModes.CLASSIC
+        Mode.SIMPLE_TRANSFER -> TemplateModes.SIMPLE_TRANSFER
+        Mode.INSTRUMENT_TRANSFER -> TemplateModes.INSTRUMENT_TRANSFER
+        Mode.INSTRUMENT_INCOME -> TemplateModes.INSTRUMENT_INCOME
+    }
+
+    private fun modeOf(templateMode: String): Mode? =
+        Mode.values().firstOrNull { it.templateMode() == templateMode }
+
+    private fun Mode.titleRes(): Int = when (this) {
+        Mode.CLASSIC -> R.string.mode_title_classic
+        Mode.SIMPLE_TRANSFER -> R.string.mode_title_simple_transfer
+        Mode.INSTRUMENT_TRANSFER -> R.string.mode_title_instrument_transfer
+        Mode.INSTRUMENT_INCOME -> R.string.mode_title_instrument_income
+    }
+
+    private fun Mode.iconRes(): Int = when (this) {
+        Mode.CLASSIC -> R.drawable.ic_mode_classic
+        Mode.SIMPLE_TRANSFER -> R.drawable.ic_mode_simple_transfer
+        Mode.INSTRUMENT_TRANSFER -> R.drawable.ic_mode_instrument_transfer
+        Mode.INSTRUMENT_INCOME -> R.drawable.ic_mode_instrument_income
+    }
+
+    /** Lists the saved templates under the mode cards; the whole section is hidden when there are none. */
+    private fun showTemplates(templates: List<TemplateWithEntries>) {
+        listTemplates.removeAllViews()
+        templates.forEach { template ->
+            val templateMode = modeOf(template.template.mode) ?: return@forEach
+            val row = layoutInflater.inflate(R.layout.item_template, listTemplates, false)
+            row.findViewById<TextView>(R.id.text_template_name).text = template.template.name
+            row.findViewById<TextView>(R.id.text_template_mode).setText(templateMode.titleRes())
+            row.findViewById<ImageView>(R.id.image_template_mode).setImageResource(templateMode.iconRes())
+            row.setOnClickListener { applyTemplate(template) }
+            row.findViewById<View>(R.id.btn_delete_template).setOnClickListener { confirmDeleteTemplate(template) }
+            listTemplates.addView(row)
+        }
+        sectionTemplates.visibility = if (listTemplates.childCount == 0) View.GONE else View.VISIBLE
+    }
+
+    /** Opens the template's mode with its accounts selected; amounts and note stay empty. */
+    private fun applyTemplate(template: TemplateWithEntries) {
+        val templateMode = modeOf(template.template.mode) ?: return
+        showMode(templateMode)
+        val applied = when (templateMode) {
+            Mode.CLASSIC -> applyClassicTemplate(template.rowAccountIds())
+            Mode.SIMPLE_TRANSFER -> transferController.applyTemplate(template)
+            Mode.INSTRUMENT_TRANSFER ->
+                ::instrumentTransferController.isInitialized && instrumentTransferController.applyTemplate(template)
+            Mode.INSTRUMENT_INCOME ->
+                ::instrumentIncomeController.isInitialized && instrumentIncomeController.applyTemplate(template)
+        }
+        showStep(Step.TRANSACTION_FORM)
+        if (!applied) {
+            Toast.makeText(this, R.string.template_accounts_unavailable, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    /** Matches the number of entry rows to the template (never below the usual two) and selects each account. */
+    private fun applyClassicTemplate(accountIds: List<String>): Boolean {
+        while (entryRows.size < accountIds.size) addEntryRow()
+        while (entryRows.size > maxOf(MIN_CLASSIC_ROWS, accountIds.size)) removeEntryRow(entryRows.last())
+        var allFound = true
+        accountIds.forEachIndexed { index, accountId ->
+            if (!entryRows[index].selectAccount(accountId)) allFound = false
+        }
+        return allFound
+    }
+
+    /** The accounts chosen in the active mode, or null with a Toast when they are not all picked and different. */
+    private fun collectTemplateSlots(): List<TemplateSlot>? {
+        val slots = when (mode) {
+            Mode.CLASSIC -> {
+                val ids = entryRows.map { it.selectedAccountId() }
+                if (ids.size < MIN_CLASSIC_ROWS || ids.any { it == null }) null
+                else ids.filterNotNull().map { TemplateSlot(TemplateSlots.ROW, it) }
+            }
+            Mode.SIMPLE_TRANSFER -> transferController.templateSlots()
+            Mode.INSTRUMENT_TRANSFER ->
+                if (::instrumentTransferController.isInitialized) instrumentTransferController.templateSlots() else null
+            Mode.INSTRUMENT_INCOME ->
+                if (::instrumentIncomeController.isInitialized) instrumentIncomeController.templateSlots() else null
+        }
+        if (slots == null || slots.map { it.accountId }.distinct().size != slots.size) {
+            Toast.makeText(this, R.string.error_template_accounts_required, Toast.LENGTH_SHORT).show()
+            return null
+        }
+        return slots
+    }
+
+    private fun promptSaveTemplate() {
+        val slots = collectTemplateSlots() ?: return
+        val view = layoutInflater.inflate(R.layout.dialog_save_template, null)
+        val nameInput = view.findViewById<EditText>(R.id.edit_template_name)
+        AlertDialog.Builder(this)
+            .setTitle(R.string.dialog_save_template_title)
+            .setView(view)
+            .setPositiveButton(R.string.action_save) { _, _ -> saveTemplate(nameInput.text.toString().trim(), slots) }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun saveTemplate(name: String, slots: List<TemplateSlot>) {
+        if (name.isEmpty()) {
+            Toast.makeText(this, R.string.error_template_name_required, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val templateMode = mode.templateMode()
+        Thread {
+            viewModel.saveTemplate(name, templateMode, slots)
+            val templates = viewModel.loadTemplates()
+            runOnUiThread {
+                Toast.makeText(this, R.string.template_saved, Toast.LENGTH_SHORT).show()
+                showTemplates(templates)
+            }
+        }.start()
+    }
+
+    private fun confirmDeleteTemplate(template: TemplateWithEntries) {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.dialog_delete_template_title)
+            .setMessage(getString(R.string.dialog_delete_template_message, template.template.name))
+            .setPositiveButton(R.string.action_delete) { _, _ ->
+                Thread {
+                    viewModel.deleteTemplate(template.template.id)
+                    val templates = viewModel.loadTemplates()
+                    runOnUiThread { showTemplates(templates) }
+                }.start()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
     companion object {
-        fun intent(context: Context) =
-            Intent(context, AddTransactionActivity::class.java)
+        private const val EXTRA_TEMPLATE_ID = "template_id"
+        private const val MIN_CLASSIC_ROWS = 2
+
+        /** @param templateId a saved template to open straight into its form, pre-filled */
+        fun intent(context: Context, templateId: String? = null) =
+            Intent(context, AddTransactionActivity::class.java).apply {
+                templateId?.let { putExtra(EXTRA_TEMPLATE_ID, it) }
+            }
     }
 }

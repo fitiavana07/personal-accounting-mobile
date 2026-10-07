@@ -14,6 +14,9 @@ import android.widget.Toast
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.balances.BalanceCalculator
+import dev.fitiavana.accounting.features.templates.TemplateSlot
+import dev.fitiavana.accounting.features.templates.TemplateSlots
+import dev.fitiavana.accounting.features.templates.TemplateWithEntries
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 
 /**
@@ -169,6 +172,29 @@ class SimpleTransferController(
             null
         }
     }
+
+    /** The chosen FROM and TO accounts for saving as a template, or null until both are picked. */
+    fun templateSlots(): List<TemplateSlot>? {
+        val fromAccount = selectedAccount(from.spinner) ?: return null
+        val toAccount = selectedAccount(to.spinner) ?: return null
+        return listOf(
+            TemplateSlot(TemplateSlots.FROM, fromAccount.id),
+            TemplateSlot(TemplateSlots.TO, toAccount.id)
+        )
+    }
+
+    /** Selects the template's accounts; false, changing nothing, when one is no longer offered. */
+    fun applyTemplate(template: TemplateWithEntries): Boolean {
+        val fromIndex = indexOfAccount(template.accountFor(TemplateSlots.FROM))
+        val toIndex = indexOfAccount(template.accountFor(TemplateSlots.TO))
+        if (fromIndex < 0 || toIndex < 0) return false
+        from.spinner.setSelection(fromIndex + 1)
+        to.spinner.setSelection(toIndex + 1)
+        return true
+    }
+
+    private fun indexOfAccount(accountId: String?): Int =
+        if (accountId == null) -1 else transferAccounts.indexOfFirst { it.id == accountId }
 
     /** The two entries for this transfer, or null with a Toast already shown if incomplete. */
     fun collectEntries(): List<TransactionValidator.EntryData>? {

@@ -88,6 +88,17 @@ class AccountSideController(
         hideBalance()
     }
 
+    /** The account currently picked in the spinner, read from the spinner itself so it is never stale. */
+    fun selectedAccountId(): String? = selectedAccount()?.id
+
+    /** Picks [accountId] in the spinner; false (selection untouched) when it is not one of the offered accounts. */
+    fun select(accountId: String): Boolean {
+        val index = accounts.indexOfFirst { it.id == accountId }
+        if (index < 0) return false
+        spinner.setSelection(index + 1)
+        return true
+    }
+
     fun hideBalance() {
         textBalance.visibility = View.GONE
     }

@@ -12,6 +12,9 @@ import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.balances.BalanceCalculator
 import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.templates.TemplateSlot
+import dev.fitiavana.accounting.features.templates.TemplateSlots
+import dev.fitiavana.accounting.features.templates.TemplateWithEntries
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import kotlin.math.pow
 import kotlin.math.roundToLong
@@ -209,6 +212,23 @@ class InstrumentIncomeController(
     fun populateSpinners(accounts: List<Account>) {
         asset.populate(InstrumentIncomeBuilder.selectableAssetAccounts(accounts))
         revenue.populate(InstrumentIncomeBuilder.selectableRevenueAccounts(accounts))
+    }
+
+    /** The chosen ASSET and REVENUE accounts for saving as a template, or null until both are picked. */
+    fun templateSlots(): List<TemplateSlot>? {
+        val assetId = asset.selectedAccountId() ?: return null
+        val revenueId = revenue.selectedAccountId() ?: return null
+        return listOf(TemplateSlot(TemplateSlots.ASSET, assetId), TemplateSlot(TemplateSlots.REVENUE, revenueId))
+    }
+
+    /** Selects the template's accounts; false, changing nothing, when one is no longer offered. */
+    fun applyTemplate(template: TemplateWithEntries): Boolean {
+        val assetId = template.accountFor(TemplateSlots.ASSET) ?: return false
+        val revenueId = template.accountFor(TemplateSlots.REVENUE) ?: return false
+        if (asset.accounts.none { it.id == assetId } || revenue.accounts.none { it.id == revenueId }) return false
+        asset.select(assetId)
+        revenue.select(revenueId)
+        return true
     }
 
     /** The two entries for this income, or null with a Toast already shown if incomplete. */

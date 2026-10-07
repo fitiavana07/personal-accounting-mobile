@@ -181,6 +181,17 @@
     <string name="title_new_transaction">New Transaction</string>
     <string name="title_transaction">Transaction</string>
     <string name="transaction_saved">Transaction saved</string>
+    <string name="templates_title">Templates</string>
+    <string name="action_save_as_template">Save as template</string>
+    <string name="dialog_save_template_title">Save as template</string>
+    <string name="hint_template_name">Template name</string>
+    <string name="template_saved">Template saved</string>
+    <string name="template_accounts_unavailable">Some of this template\'s accounts are no longer available. Please pick them again.</string>
+    <string name="error_template_accounts_required">Pick every account, all different, before saving a template</string>
+    <string name="error_template_name_required">Enter a name for the template</string>
+    <string name="dialog_delete_template_title">Delete template</string>
+    <string name="dialog_delete_template_message">Delete \"%1$s\"? Transactions already made are not affected.</string>
+    <string name="cd_delete_template">Delete template</string>
     <string name="home_shortcut_cex_prices">CEX Prices</string>
     <string name="home_shortcut_monthly_expenses">Mo. Expenses</string>
     <string name="home_p2p_header">Binance P2P · USDT/MGA</string>

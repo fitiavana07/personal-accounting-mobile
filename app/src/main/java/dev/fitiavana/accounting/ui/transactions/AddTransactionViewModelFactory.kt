@@ -5,13 +5,15 @@ import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
+import dev.fitiavana.accounting.features.templates.TemplateRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
 
 class AddTransactionViewModelFactory(
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
     private val balanceRepository: BalanceRepository,
-    private val instrumentRepository: InstrumentRepository
+    private val instrumentRepository: InstrumentRepository,
+    private val templateRepository: TemplateRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
@@ -19,7 +21,8 @@ class AddTransactionViewModelFactory(
             transactionRepository,
             accountRepository,
             balanceRepository,
-            instrumentRepository
+            instrumentRepository,
+            templateRepository
         ) as T
     }
 }

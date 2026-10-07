@@ -16,13 +16,17 @@ import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.instruments.InstrumentDao
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.settings.AppSettingsDao
+import dev.fitiavana.accounting.features.templates.TemplateDao
+import dev.fitiavana.accounting.features.templates.TemplateEntry
+import dev.fitiavana.accounting.features.templates.TransactionTemplate
 import dev.fitiavana.accounting.features.transactions.Transaction
 import dev.fitiavana.accounting.features.transactions.TransactionDao
 import dev.fitiavana.accounting.features.transactions.TransactionEntry
 
 @Database(
     entities = [Account::class, Transaction::class, TransactionEntry::class,
-        AccountBalance::class, Instrument::class, ExchangeRateCache::class, AppSettings::class],
+        AccountBalance::class, Instrument::class, ExchangeRateCache::class, AppSettings::class,
+        TransactionTemplate::class, TemplateEntry::class],
     version = AppDatabase.SCHEMA_VERSION
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -32,9 +36,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun instrumentDao(): InstrumentDao
     abstract fun exchangeRateCacheDao(): ExchangeRateCacheDao
     abstract fun appSettingsDao(): AppSettingsDao
+    abstract fun templateDao(): TemplateDao
 
     companion object {
-        const val SCHEMA_VERSION = 17
+        const val SCHEMA_VERSION = 18
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -262,6 +267,35 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** Adds transaction templates. Internal so its SQL can be checked against Room's generated schema. */
+        internal val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `transaction_templates` (" +
+                            "`id` TEXT NOT NULL, " +
+                            "`name` TEXT NOT NULL, " +
+                            "`mode` TEXT NOT NULL, " +
+                            "`createdAt` INTEGER NOT NULL, " +
+                            "PRIMARY KEY(`id`))"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `template_entries` (" +
+                            "`id` TEXT NOT NULL, " +
+                            "`templateId` TEXT NOT NULL, " +
+                            "`accountId` TEXT NOT NULL, " +
+                            "`slot` TEXT NOT NULL, " +
+                            "`position` INTEGER NOT NULL, " +
+                            "PRIMARY KEY(`id`), " +
+                            "FOREIGN KEY(`templateId`) REFERENCES `transaction_templates`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                            "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_template_entries_templateId` ON `template_entries` (`templateId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_template_entries_accountId` ON `template_entries` (`accountId`)")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -285,7 +319,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_13_14,
                         MIGRATION_14_15,
                         MIGRATION_15_16,
-                        MIGRATION_16_17
+                        MIGRATION_16_17,
+                        MIGRATION_17_18
                     )
                     .build().also { instance = it }
             }

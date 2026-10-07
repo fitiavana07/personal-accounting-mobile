@@ -11,6 +11,9 @@ import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.settings.AppSettings
+import dev.fitiavana.accounting.features.templates.TemplateDao
+import dev.fitiavana.accounting.features.templates.TemplateEntry
+import dev.fitiavana.accounting.features.templates.TransactionTemplate
 import dev.fitiavana.accounting.features.transactions.Transaction
 import dev.fitiavana.accounting.features.transactions.TransactionEntry
 import dev.fitiavana.accounting.db.AppDatabase
@@ -40,7 +43,8 @@ class BackupRepository(
     private val transactionDao: TransactionDao,
     private val balanceDao: AccountBalanceDao,
     private val exchangeRateCacheDao: ExchangeRateCacheDao,
-    private val appSettingsDao: AppSettingsDao
+    private val appSettingsDao: AppSettingsDao,
+    private val templateDao: TemplateDao
 ) {
 
     fun export(): String {
@@ -66,6 +70,12 @@ class BackupRepository(
         root.put(
             KEY_EXCHANGE_RATE_CACHE,
             exchangeRateCacheDao.getAllSync().toJsonArray { it.toJson() })
+        root.put(
+            KEY_TEMPLATES,
+            templateDao.getAllTemplatesSync().toJsonArray { it.toJson() })
+        root.put(
+            KEY_TEMPLATE_ENTRIES,
+            templateDao.getAllEntriesSync().toJsonArray { it.toJson() })
         val settings = appSettingsDao.getSync()
         if (settings != null) {
             root.put(KEY_APP_SETTINGS, settings.toJson())
@@ -101,6 +111,8 @@ class BackupRepository(
         val balances: List<AccountBalance>
         val rates: List<ExchangeRateCache>
         val settings: AppSettings?
+        val templates: List<TransactionTemplate>
+        val templateEntries: List<TemplateEntry>
         try {
             instruments = root.getJSONArray(KEY_INSTRUMENTS)
                 .toList { instrumentFromJson(it) }
@@ -114,6 +126,11 @@ class BackupRepository(
                 .toList { accountBalanceFromJson(it) }
             rates = root.getJSONArray(KEY_EXCHANGE_RATE_CACHE)
                 .toList { exchangeRateCacheFromJson(it) }
+            // Optional so a hand-edited backup without templates still restores.
+            templates = (root.optJSONArray(KEY_TEMPLATES) ?: JSONArray())
+                .toList { templateFromJson(it) }
+            templateEntries = (root.optJSONArray(KEY_TEMPLATE_ENTRIES) ?: JSONArray())
+                .toList { templateEntryFromJson(it) }
             settings = if (root.has(KEY_APP_SETTINGS)) {
                 appSettingsFromJson(root.getJSONObject(KEY_APP_SETTINGS))
             } else {
@@ -125,6 +142,8 @@ class BackupRepository(
 
         database.runInTransaction {
             // Delete children before parents to respect RESTRICT foreign keys.
+            templateDao.deleteAllEntries()
+            templateDao.deleteAllTemplates()
             transactionDao.deleteAllEntries()
             transactionDao.deleteAll()
             balanceDao.deleteAll()
@@ -139,6 +158,8 @@ class BackupRepository(
             transactionDao.insertAllEntries(entries)
             balanceDao.insertAll(balances)
             exchangeRateCacheDao.insertAll(rates)
+            templateDao.insertTemplates(templates)
+            templateDao.insertEntries(templateEntries)
             if (settings != null) {
                 appSettingsDao.upsert(settings)
             }
@@ -157,6 +178,8 @@ class BackupRepository(
         private const val KEY_ACCOUNT_BALANCES = "accountBalances"
         private const val KEY_EXCHANGE_RATE_CACHE = "exchangeRateCache"
         private const val KEY_APP_SETTINGS = "appSettings"
+        private const val KEY_TEMPLATES = "transactionTemplates"
+        private const val KEY_TEMPLATE_ENTRIES = "templateEntries"
 
         private inline fun <T> List<T>.toJsonArray(toJson: (T) -> JSONObject): JSONArray {
             val array = JSONArray()
@@ -224,6 +247,36 @@ class BackupRepository(
             createdAt = json.getLong("createdAt"),
             transactionDatetime = json.getLong("transactionDatetime"),
             note = json.getString("note")
+        )
+
+        private fun TransactionTemplate.toJson() = JSONObject().apply {
+            put("id", id)
+            put("name", name)
+            put("mode", mode)
+            put("createdAt", createdAt)
+        }
+
+        private fun templateFromJson(json: JSONObject) = TransactionTemplate(
+            id = json.getString("id"),
+            name = json.getString("name"),
+            mode = json.getString("mode"),
+            createdAt = json.getLong("createdAt")
+        )
+
+        private fun TemplateEntry.toJson() = JSONObject().apply {
+            put("id", id)
+            put("templateId", templateId)
+            put("accountId", accountId)
+            put("slot", slot)
+            put("position", position)
+        }
+
+        private fun templateEntryFromJson(json: JSONObject) = TemplateEntry(
+            id = json.getString("id"),
+            templateId = json.getString("templateId"),
+            accountId = json.getString("accountId"),
+            slot = json.getString("slot"),
+            position = json.getInt("position")
         )
 
         private fun TransactionEntry.toJson() = JSONObject().apply {

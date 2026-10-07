@@ -59,7 +59,7 @@ class BackupRepositoryInstrumentedTest {
             .build()
         repository = BackupRepository(
             db, db.accountDao(), db.instrumentDao(), db.transactionDao(),
-            db.accountBalanceDao(), db.exchangeRateCacheDao()
+            db.accountBalanceDao(), db.exchangeRateCacheDao(), db.appSettingsDao(), db.templateDao()
         )
 
         db.instrumentDao().insert(instrument)

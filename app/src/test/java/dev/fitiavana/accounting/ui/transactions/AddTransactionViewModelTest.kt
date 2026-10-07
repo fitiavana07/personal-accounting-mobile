@@ -6,6 +6,12 @@ import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
+import dev.fitiavana.accounting.features.templates.TemplateModes
+import dev.fitiavana.accounting.features.templates.TemplateRepository
+import dev.fitiavana.accounting.features.templates.TemplateSlot
+import dev.fitiavana.accounting.features.templates.TemplateSlots
+import dev.fitiavana.accounting.features.templates.TemplateWithEntries
+import dev.fitiavana.accounting.features.templates.TransactionTemplate
 import dev.fitiavana.accounting.features.transactions.Transaction
 import dev.fitiavana.accounting.features.transactions.TransactionEntry
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
@@ -22,6 +28,7 @@ class AddTransactionViewModelTest {
     private lateinit var accountRepository: AccountRepository
     private lateinit var balanceRepository: BalanceRepository
     private lateinit var instrumentRepository: InstrumentRepository
+    private lateinit var templateRepository: TemplateRepository
     private lateinit var viewModel: AddTransactionViewModel
 
     private val cashAccount = Account(id = "cash", name = "Cash", type = "asset")
@@ -35,11 +42,13 @@ class AddTransactionViewModelTest {
         accountRepository = mock()
         balanceRepository = mock()
         instrumentRepository = mock()
+        templateRepository = mock()
         viewModel = AddTransactionViewModel(
             transactionRepository,
             accountRepository,
             balanceRepository,
-            instrumentRepository
+            instrumentRepository,
+            templateRepository
         )
     }
 
@@ -102,5 +111,45 @@ class AddTransactionViewModelTest {
         verify(transactionRepository).insertEntry(entries[1])
         verify(balanceRepository).recalculateForAccount("cash", "asset")
         verify(balanceRepository).recalculateForAccount("rev", "revenue")
+    }
+
+    // --- templates ---
+
+    @Test
+    fun `loadTemplates returns the repository's templates`() {
+        val template = TemplateWithEntries(
+            TransactionTemplate("t1", "Withdraw", TemplateModes.SIMPLE_TRANSFER, 1L),
+            emptyList()
+        )
+        whenever(templateRepository.getAll()).thenReturn(listOf(template))
+
+        assertEquals(listOf(template), viewModel.loadTemplates())
+    }
+
+    @Test
+    fun `saveTemplate delegates to the repository`() {
+        val slots = listOf(TemplateSlot(TemplateSlots.FROM, "cash"), TemplateSlot(TemplateSlots.TO, "rev"))
+
+        viewModel.saveTemplate("Withdraw", TemplateModes.SIMPLE_TRANSFER, slots)
+
+        verify(templateRepository).save("Withdraw", TemplateModes.SIMPLE_TRANSFER, slots)
+    }
+
+    @Test
+    fun `deleteTemplate delegates to the repository`() {
+        viewModel.deleteTemplate("t1")
+
+        verify(templateRepository).delete("t1")
+    }
+
+    @Test
+    fun `loadTemplate delegates to the repository`() {
+        val template = TemplateWithEntries(
+            TransactionTemplate("t1", "Withdraw", TemplateModes.SIMPLE_TRANSFER, 1L),
+            emptyList()
+        )
+        whenever(templateRepository.get("t1")).thenReturn(template)
+
+        assertEquals(template, viewModel.loadTemplate("t1"))
     }
 }
