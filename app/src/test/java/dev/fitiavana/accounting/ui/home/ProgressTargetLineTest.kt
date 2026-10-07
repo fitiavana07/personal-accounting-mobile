@@ -60,7 +60,7 @@ class ProgressTargetLineTest {
 
     @Test
     fun emergencyFundTargetIsOnPercentLine() {
-        val adapter = EmergencyFundAdapter {}
+        val adapter = EmergencyFundAdapter()
         val holder = adapter.onCreateViewHolder(FrameLayout(context), 0)
         adapter.submit(EmergencyFundInfo(100_000, 600_000, 300_000, 50, 300_000))
         adapter.onBindViewHolder(holder, 0)

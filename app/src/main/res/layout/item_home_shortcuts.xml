@@ -36,4 +36,34 @@
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="12sp" />
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/button_monthly_expenses"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_horizontal"
+        android:minWidth="72dp"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_home_monthly_expenses"
+            android:tint="?attr/colorControlNormal" />
+
+        <TextView
+            android:id="@+id/text_shortcut_monthly_expenses"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/home_shortcut_monthly_expenses"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="12sp" />
+    </LinearLayout>
 </LinearLayout>

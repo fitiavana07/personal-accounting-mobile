@@ -72,12 +72,14 @@ class HomeFragment : Fragment() {
         metricsAdapter = HomeMetricsAdapter()
         balanceSheetAdapter = ReportAdapter()
         pieChartsAdapter = HomePieChartsAdapter()
-        shortcutsAdapter = HomeShortcutsAdapter {
-            startActivity(CexPricesActivity.intent(requireContext()))
-        }
+        shortcutsAdapter = HomeShortcutsAdapter(
+            onCexPricesClick = {
+                startActivity(CexPricesActivity.intent(requireContext()))
+            },
+            onMonthlyExpensesClick = { showEditMonthlyExpensesDialog() }
+        )
         p2pPricesAdapter = HomeP2pPricesAdapter { showP2pFilterDialog() }
-        emergencyFundAdapter =
-            EmergencyFundAdapter { showEditMonthlyExpensesDialog() }
+        emergencyFundAdapter = EmergencyFundAdapter()
         incomeToExpensesAdapter = IncomeToExpensesAdapter()
         noteAdapter = HomeNoteAdapter()
         val recycler = view.findViewById<RecyclerView>(R.id.recycler_home)

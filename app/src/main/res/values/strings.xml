@@ -97,8 +97,6 @@
     <string name="home_progress_percent_reached">%1$s · %2$d%% reached</string>
     <string name="home_progress_remaining">%1$s to go</string>
     <string name="home_progress_goal_reached">Goal reached</string>
-    <string name="home_monthly_expenses">Monthly Expenses: %1$s</string>
-    <string name="edit_monthly_expenses">Edit monthly expenses</string>
     <string name="dialog_edit_monthly_expenses_title">Monthly Living Expenses (Ar)</string>
     <string name="title_home_detail">Position Details</string>
     <string name="home_detail_label_balance">Balance</string>
@@ -174,6 +172,7 @@
     <string name="title_transaction">Transaction</string>
     <string name="transaction_saved">Transaction saved</string>
     <string name="home_shortcut_cex_prices">CEX Prices</string>
+    <string name="home_shortcut_monthly_expenses">Mo. Expenses</string>
     <string name="home_p2p_header">Binance P2P · USDT/MGA</string>
     <string name="home_p2p_buy_title">Buy USDT</string>
     <string name="home_p2p_sell_title">Sell USDT</string>

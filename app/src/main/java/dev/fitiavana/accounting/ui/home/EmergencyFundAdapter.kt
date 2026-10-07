@@ -3,7 +3,6 @@ package dev.fitiavana.accounting.ui.home
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -12,9 +11,7 @@ import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.ui.common.UiUtils
 
 /** Single-row header (above the pie chart) showing monthly expenses and the 6-month emergency fund target. */
-class EmergencyFundAdapter(
-    private val onEditClick: () -> Unit
-) : RecyclerView.Adapter<EmergencyFundAdapter.ViewHolder>() {
+class EmergencyFundAdapter : RecyclerView.Adapter<EmergencyFundAdapter.ViewHolder>() {
 
     private var info = EmergencyFundInfo(0, 0, 0, 100, 0)
 
@@ -31,17 +28,14 @@ class EmergencyFundAdapter(
     ): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_home_emergency_fund, parent, false)
-        return ViewHolder(view, onEditClick)
+        return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(info)
     }
 
-    class ViewHolder(view: View, onEditClick: () -> Unit) :
-        RecyclerView.ViewHolder(view) {
-        private val monthlyExpensesView: TextView =
-            view.findViewById(R.id.text_monthly_expenses)
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val targetView: TextView =
             view.findViewById(R.id.text_emergency_fund_6month_target)
         private val percentView: TextView =
@@ -50,20 +44,9 @@ class EmergencyFundAdapter(
             view.findViewById(R.id.text_emergency_fund_6month_remaining)
         private val progress: ProgressBar =
             view.findViewById(R.id.progress_emergency_fund_6month)
-        private val editButton: ImageView =
-            view.findViewById(R.id.button_edit_monthly_expenses)
         private val context = view.context
 
-        init {
-            editButton.setOnClickListener { onEditClick() }
-        }
-
         fun bind(info: EmergencyFundInfo) {
-            monthlyExpensesView.text = context.getString(
-                R.string.home_monthly_expenses,
-                UiUtils.formatAmountAr(context, info.monthlyExpenses)
-            )
-
             targetView.text =
                 UiUtils.formatAmountAr(context, info.sixMonthTarget)
 
