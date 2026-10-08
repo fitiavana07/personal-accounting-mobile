@@ -119,14 +119,16 @@ class ReportsFragment : Fragment() {
     /** Net worth and net income charts above the period selector; they scroll away with the screen. */
     private fun setUpTrendCharts(view: View) {
         val chartsBlock = view.findViewById<View>(R.id.layout_trend_charts)
+        val progress = view.findViewById<View>(R.id.progress_trend)
         val netWorthChart = view.findViewById<LineChart>(R.id.chart_net_worth)
         val netIncomeChart = view.findViewById<BarChart>(R.id.chart_net_income)
         TrendChartRenderer.configureLine(netWorthChart)
         TrendChartRenderer.configureBar(netIncomeChart)
 
         viewModel.trendPoints.observe(viewLifecycleOwner) { points ->
-            chartsBlock.visibility = if (TrendChartRenderer.hasEnoughData(points)) View.VISIBLE else View.GONE
-            if (TrendChartRenderer.hasEnoughData(points)) {
+            chartsBlock.visibility = TrendChartRenderer.blockVisibility(points)
+            progress.visibility = TrendChartRenderer.loadingVisibility(points)
+            if (points != null && TrendChartRenderer.hasEnoughData(points)) {
                 TrendChartRenderer.renderNetWorth(netWorthChart, points)
                 TrendChartRenderer.renderNetIncome(netIncomeChart, points)
             }

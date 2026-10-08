@@ -11,6 +11,7 @@ import dev.fitiavana.accounting.ui.reports.ReportPeriodSelector
 import dev.fitiavana.accounting.ui.reports.ReportType
 import dev.fitiavana.accounting.ui.reports.ReportsViewModel
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -531,6 +532,11 @@ class ReportsViewModelTest {
 
         assertTrue(viewModel.balanceSheetRows.value.orEmpty().contains(ReportDisplayRow.AprLine("5.5% ")))
         assertEquals(true, viewModel.expandToggle.value?.visible)
+    }
+
+    @Test
+    fun `trend points are null until the trend has been loaded`() {
+        assertNull(viewModel.trendPoints.value)
     }
 
     @Test

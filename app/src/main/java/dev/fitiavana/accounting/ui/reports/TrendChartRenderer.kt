@@ -3,6 +3,7 @@ package dev.fitiavana.accounting.ui.reports
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
+import android.view.View
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
@@ -26,6 +27,20 @@ object TrendChartRenderer {
 
     /** A trend needs at least two months to be worth drawing. */
     fun hasEnoughData(points: List<TrendPoint>): Boolean = points.size >= MIN_POINTS
+
+    /**
+     * Visibility of the charts block. While the trend is still loading ([points] null) the block is
+     * INVISIBLE, not GONE, so it keeps its height and the report below does not jump when it arrives.
+     */
+    fun blockVisibility(points: List<TrendPoint>?): Int = when {
+        points == null -> View.INVISIBLE
+        hasEnoughData(points) -> View.VISIBLE
+        else -> View.GONE
+    }
+
+    /** The spinner centered over the reserved chart space: shown only until the trend has loaded. */
+    fun loadingVisibility(points: List<TrendPoint>?): Int =
+        if (points == null) View.VISIBLE else View.GONE
 
     fun configureLine(chart: LineChart) = configureCommon(chart)
 

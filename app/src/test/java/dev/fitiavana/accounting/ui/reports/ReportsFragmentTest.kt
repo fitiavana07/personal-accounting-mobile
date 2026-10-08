@@ -38,9 +38,20 @@ class ReportsFragmentTest {
         assertNotNull(activity.findViewById<View>(R.id.chart_net_worth))
         assertNotNull(activity.findViewById<View>(R.id.chart_net_income))
         val content = activity.findViewById<ViewGroup>(R.id.layout_reports_content)
-        val charts = activity.findViewById<View>(R.id.layout_trend_charts)
+        val trend = activity.findViewById<View>(R.id.layout_trend)
         val years = activity.findViewById<View>(R.id.recycler_reports_years)
-        assertTrue(content.indexOfChild(charts) < content.indexOfChild(years))
+        assertTrue(content.indexOfChild(trend) < content.indexOfChild(years))
+    }
+
+    @Test
+    fun `a loading indicator sits in the same container as the trend charts`() {
+        val activity = launch()
+
+        val trend = activity.findViewById<ViewGroup>(R.id.layout_trend)
+        val progress = activity.findViewById<View>(R.id.progress_trend)
+        val charts = activity.findViewById<View>(R.id.layout_trend_charts)
+        assertEquals(trend, progress.parent)
+        assertEquals(trend, charts.parent)
     }
 
     @Test

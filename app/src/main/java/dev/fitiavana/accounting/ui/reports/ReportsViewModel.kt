@@ -109,9 +109,12 @@ class ReportsViewModel(
         MutableLiveData(EquityStatementDisplay(emptyList(), emptyList()))
     val equityStatement: LiveData<EquityStatementDisplay> = _equityStatement
 
-    /** Net worth and net income of the most recent months, for the trend charts above the period selector. */
-    private val _trendPoints = MutableLiveData<List<TrendPoint>>(emptyList())
-    val trendPoints: LiveData<List<TrendPoint>> = _trendPoints
+    /**
+     * Net worth and net income of the most recent months, for the trend charts above the period selector.
+     * `null` until the trend has been loaded, so the UI can reserve the charts' space meanwhile.
+     */
+    private val _trendPoints = MutableLiveData<List<TrendPoint>?>(null)
+    val trendPoints: LiveData<List<TrendPoint>?> = _trendPoints
 
     /** Kicks off the initial background load. Safe to call from every onViewCreated — a no-op after the first call. */
     fun start() {

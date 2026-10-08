@@ -172,7 +172,9 @@ Collapse all" control (`text_reports_expand_all`) sits under the as-of date.
   `computeBalancesAsOf(asOfMillis)`, net income = `IncomeStatementBuilder.netIncome` (the Income Statement's
   Net Income row) over `computeBalancesBetween(startOfMonth, asOfMillis)`; the current month is "as of now".
 - `ReportsViewModel.trendPoints` is loaded once by `loadInitialSync` (after the first `recomputeSync`, which fills
-  the cached accounts) and does not change when the period changes. The block is hidden with fewer than 2 points.
+  the cached accounts) and does not change when the period changes. `trendPoints` is `null` until loaded: the
+  block is then `INVISIBLE` (keeps its height, so the report below does not jump when the charts arrive), and
+  becomes `GONE` only if the loaded trend has fewer than 2 points (`TrendChartRenderer.blockVisibility`).
 - Rendering lives in `TrendChartRenderer` (MPAndroidChart, same approach as the Home `PieChartRenderer`).
 
 ## Tests

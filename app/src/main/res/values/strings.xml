@@ -83,6 +83,7 @@
     <string name="empty_accounts_filtered">No accounts match the current filters</string>
     <string name="empty_balances">No balances yet</string>
     <string name="empty_reports">No transactions yet</string>
+    <string name="trend_loading">Loading trends</string>
     <string name="trend_net_worth_title">Net worth</string>
     <string name="trend_net_income_title">Net income</string>
     <string name="empty_home">No cryptocurrency positions with an intermediary instrument yet</string>
@@ -162,7 +163,7 @@
     <string name="report_apr_label">APR</string>
     <string name="title_earn">Earn</string>
     <string name="earn_empty">No Earn accounts yet. Open an asset account and set its yearly interest (APR) to see the projected interest here.</string>
-    <string name="earn_total_title">Total interest (base currency)</string>
+    <string name="earn_total_title">Total interest</string>
     <string name="earn_balance">Balance: %1$s</string>
     <string name="earn_daily">Daily: %1$s</string>
     <string name="earn_monthly">Monthly: %1$s</string>
