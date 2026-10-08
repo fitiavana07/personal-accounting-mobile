@@ -63,7 +63,9 @@
             android:minWidth="0dp"
             android:minHeight="0dp"
             android:padding="4dp"
-            android:src="@android:drawable/ic_delete"
+            android:alpha="0.6"
+            android:src="@drawable/ic_delete"
+            android:tint="?attr/colorControlNormal"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_remove_entry"
             android:visibility="gone" />
