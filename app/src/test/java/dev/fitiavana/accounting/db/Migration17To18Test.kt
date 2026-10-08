@@ -96,12 +96,10 @@ class Migration17To18Test {
     private fun generatedDb(): SupportSQLiteDatabase = generated.openHelper.writableDatabase
 
     @Test
-    fun `accounts gain the aprPercent column Room expects`() {
-        val expected = columns(generatedDb(), "accounts").filter { it[0] == "aprPercent" }
-        val actual = columns(migrated, "accounts").filter { it[0] == "aprPercent" }
-
-        assertEquals(1, expected.size)
-        assertEquals(expected, actual)
+    fun `17 to 18 leaves accounts alone, because version 18 already shipped without an APR`() {
+        // Devices that installed the templates build are on version 18 without aprPercent; changing what
+        // 17 to 18 does would make Room reject their database. The APR column comes in 18 to 19.
+        assertEquals(listOf("id"), columns(migrated, "accounts").map { it[0] })
     }
 
     @Test

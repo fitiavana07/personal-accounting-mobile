@@ -11,8 +11,15 @@ type, like the liquidity level). Leave it empty for "no interest". A comma is ac
 `EditAccountViewModel.saveAccount` keeps the value only for asset accounts and treats zero or a negative rate as
 none, so a rate typed and then switched to another type is not saved.
 
-Data: `Account.aprPercent: Double?` (column `accounts.aprPercent`, added by `MIGRATION_17_18`, which also creates
-the template tables). `BackupRepository` writes and reads it (omitted when null).
+Data: `Account.aprPercent: Double?` (column `accounts.aprPercent`, added by `MIGRATION_18_19`, schema v19).
+`BackupRepository` writes and reads it (omitted when null).
+
+**Why 18 to 19 and not 17 to 18:** version 18 had already shipped with only the template tables, so a phone on
+that build has a v18 database without the column. Adding the column to `MIGRATION_17_18` afterwards made Room
+reject that database on launch ("Room cannot verify the data integrity ... identity hash"). Rule: once a schema
+version has been installed anywhere, never edit its migration; add a new version. `MIGRATION_18_19` also skips the
+`ALTER` if the column already exists. A backup made on v18 cannot be restored on v19 (the app only restores
+a backup of the same schema version).
 
 ## The calculation (`features/balances/YieldCalculator`)
 
@@ -59,7 +66,8 @@ intermediary (the last two null when the account has none).
 ## Tests
 
 `YieldCalculatorTest`, `EarnItemBuilderTest`, `EarnViewModelTest`, `EarnAdapterTest`, `EarnActivityTest`,
-`AccountDaoTest` (APR round trip), `Migration17To18Test` (the new column matches Room's schema),
+`AccountDaoTest` (APR round trip), `Migration18To19Test` (the new column matches Room's schema, also upgrading
+from 17, and re-running is harmless), `Migration17To18Test` (leaves `accounts` untouched),
 `BackupRepositoryTest`, `EditAccountViewModelTest`, `EditAccountActivityTest`, `AccountsAdapterAprTest`,
 `BalanceSheetBuilderTest` / `ReportPresenterTest` / `ReportAdapterTest` / `ReportsViewModelTest` (APR row),
 `TransactionDisplayTest`, `HomeShortcutsAdapterTest` and `HomeFragmentTest` (the Earn button).

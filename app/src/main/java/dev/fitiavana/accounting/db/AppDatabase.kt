@@ -39,7 +39,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun templateDao(): TemplateDao
 
     companion object {
-        const val SCHEMA_VERSION = 18
+        const val SCHEMA_VERSION = 19
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -268,12 +268,12 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         /**
-         * Adds transaction templates and the accounts' APR. Internal so its SQL can be checked against
+         * Adds transaction templates. Version 18 shipped with exactly this, so never change it: a database
+         * already on 18 would no longer match what Room expects. Internal so its SQL can be checked against
          * Room's generated schema.
          */
         internal val MIGRATION_17_18 = object : Migration(17, 18) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE `accounts` ADD COLUMN `aprPercent` REAL")
                 db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `transaction_templates` (" +
                             "`id` TEXT NOT NULL, " +
@@ -297,6 +297,21 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_template_entries_templateId` ON `template_entries` (`templateId`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_template_entries_accountId` ON `template_entries` (`accountId`)")
+            }
+        }
+
+        /** Adds the accounts' APR (Earn). Internal so it can be checked against Room's generated schema. */
+        internal val MIGRATION_18_19 = object : Migration(18, 19) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Skip if a development build already added the column, so the upgrade can't fail with "duplicate column".
+                val hasColumn = db.query("PRAGMA table_info(`accounts`)").use { cursor ->
+                    var found = false
+                    while (cursor.moveToNext()) {
+                        if (cursor.getString(1) == "aprPercent") found = true
+                    }
+                    found
+                }
+                if (!hasColumn) db.execSQL("ALTER TABLE `accounts` ADD COLUMN `aprPercent` REAL")
             }
         }
 
@@ -324,7 +339,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_14_15,
                         MIGRATION_15_16,
                         MIGRATION_16_17,
-                        MIGRATION_17_18
+                        MIGRATION_17_18,
+                        MIGRATION_18_19
                     )
                     .build().also { instance = it }
             }
