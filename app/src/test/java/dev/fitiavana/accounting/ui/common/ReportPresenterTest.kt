@@ -341,6 +341,61 @@ class ReportPresenterTest {
         assertEquals(ReportDisplayRow.NativeLine("USDT", "1,250.5 "), result[1])
     }
 
+    private fun earn(apr: Double?, vararg native: NativeAmount) =
+        RawRow.AccountLine("Earn", 50_000L, accountId = "a1", nativeAmounts = native.toList(), aprPercent = apr)
+
+    @Test
+    fun `AccountLine with an APR but no instrument is expandable`() {
+        val result = ReportPresenter.present(listOf(earn(5.5)), instruments)
+
+        assertEquals(
+            listOf(ReportDisplayRow.AccountLine("Earn", "50,000 ", null, accountId = "a1", expandable = true, expanded = false)),
+            result
+        )
+    }
+
+    @Test
+    fun `expanded AccountLine with an APR is followed by an APR line`() {
+        val result = ReportPresenter.present(listOf(earn(5.5)), instruments, expandedAccountIds = setOf("a1"))
+
+        assertEquals(
+            listOf(
+                ReportDisplayRow.AccountLine("Earn", "50,000 ", null, accountId = "a1", expandable = true, expanded = true),
+                ReportDisplayRow.AprLine("5.5% ")
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `the APR line comes after the native lines`() {
+        val result = ReportPresenter.present(
+            listOf(earn(12.0, NativeAmount(125_050L, "USDT"))),
+            instruments,
+            expandedAccountIds = setOf("a1")
+        )
+
+        assertEquals(
+            listOf(
+                ReportDisplayRow.AccountLine("Earn", "50,000 ", null, accountId = "a1", expandable = true, expanded = true),
+                ReportDisplayRow.NativeLine("USDT", "1,250.5 "),
+                ReportDisplayRow.AprLine("12% ")
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `a line without an APR gets no APR line`() {
+        val result = ReportPresenter.present(
+            listOf(bybit(NativeAmount(125_050L, "USDT"))),
+            instruments,
+            expandedAccountIds = setOf("a1")
+        )
+
+        assertEquals(2, result.size)
+    }
+
     @Test
     fun `AccountLine without native amounts is not expandable even if its id is expanded`() {
         val result = ReportPresenter.present(

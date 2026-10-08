@@ -71,6 +71,13 @@ object TransactionDisplay {
         return formatInstrumentRate(fromInstrument, rate, toInstrument)
     }
 
+    /** An APR as a plain decimal without trailing zeros ("5.5", "12"), e.g. for an edit field. */
+    fun formatApr(percent: Double): String =
+        java.math.BigDecimal.valueOf(percent).stripTrailingZeros().toPlainString()
+
+    /** An APR with its sign, e.g. "5.5%". */
+    fun formatAprPercent(percent: Double): String = "${formatApr(percent)}%"
+
     /** Formats an already-computed rate (e.g. a live fetched price), not derived from balances. */
     fun formatInstrumentRate(fromInstrument: Instrument, rate: Double, toInstrument: Instrument): String {
         val rateText = if (toInstrument.decimalPlaces > 0) {

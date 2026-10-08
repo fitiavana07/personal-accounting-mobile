@@ -102,6 +102,27 @@
             android:layout_below="@id/label_intermediary_instrument"
             android:layout_marginTop="4dp" />
 
+        <TextView
+            android:id="@+id/label_apr"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/spinner_intermediary_instrument"
+            android:layout_marginTop="16dp"
+            android:text="@string/label_apr"
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:visibility="gone" />
+
+        <EditText
+            android:id="@+id/input_apr"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/label_apr"
+            android:hint="@string/hint_apr"
+            android:inputType="numberDecimal"
+            android:maxLines="1"
+            android:visibility="gone" />
+
         <Button
             android:id="@+id/button_save"
             android:layout_width="match_parent"

@@ -51,8 +51,9 @@ object ReportPresenter {
     }
 
     /**
-     * The account line, plus its native sub-rows when [expandedAccountIds] contains it. A line is only
-     * expandable when at least one of its native amounts has a known instrument (unknown ones are skipped).
+     * The account line, plus its sub-rows when [expandedAccountIds] contains it: the native amounts, then the APR.
+     * A line is only expandable when it has at least one sub-row: a native amount with a known instrument
+     * (unknown ones are skipped) or an APR.
      */
     private fun presentAccountLine(
         row: RawRow.AccountLine,
@@ -67,7 +68,12 @@ object ReportPresenter {
                 )
             }
         }
-        val expandable = row.accountId != null && nativeLines.isNotEmpty()
+        // Same trailing space as the native amounts so the values stay right-aligned together.
+        val aprLines = listOfNotNull(
+            row.aprPercent?.let { ReportDisplayRow.AprLine("${TransactionDisplay.formatAprPercent(it)} ") }
+        )
+        val subRows = nativeLines + aprLines
+        val expandable = row.accountId != null && subRows.isNotEmpty()
         val expanded = expandable && row.accountId in expandedAccountIds
         val line = ReportDisplayRow.AccountLine(
             row.name,
@@ -77,7 +83,7 @@ object ReportPresenter {
             expandable = expandable,
             expanded = expanded
         )
-        return if (expanded) listOf(line) + nativeLines else listOf(line)
+        return if (expanded) listOf(line) + subRows else listOf(line)
     }
 
     /**

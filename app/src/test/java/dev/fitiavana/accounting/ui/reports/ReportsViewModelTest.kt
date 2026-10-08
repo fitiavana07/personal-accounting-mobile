@@ -518,6 +518,22 @@ class ReportsViewModelTest {
     }
 
     @Test
+    fun `an asset with an APR but no instrument can be expanded to show its rate`() {
+        whenever(balanceRepository.getTransactionDateRange())
+            .thenReturn(millisFor(2025, Calendar.JANUARY, 1) to millisFor(2025, Calendar.JANUARY, 20))
+        whenever(accountRepository.getAllSync()).thenReturn(
+            listOf(Account(id = "earn", name = "Earn", type = "asset", aprPercent = 5.5))
+        )
+        whenever(balanceRepository.computeBalancesAsOf(any())).thenReturn(mapOf("earn" to 500_000L))
+        viewModel.loadInitialSync()
+
+        viewModel.toggleAccount("earn")
+
+        assertTrue(viewModel.balanceSheetRows.value.orEmpty().contains(ReportDisplayRow.AprLine("5.5% ")))
+        assertEquals(true, viewModel.expandToggle.value?.visible)
+    }
+
+    @Test
     fun `loadInitialSync builds one trend point per month in chronological order`() {
         whenever(balanceRepository.getTransactionDateRange())
             .thenReturn(millisFor(2025, Calendar.JANUARY, 1) to millisFor(2025, Calendar.MARCH, 15))

@@ -233,4 +233,29 @@ class TransactionDisplayTest {
             TransactionDisplay.formatInstrumentExchangeRate(2, nvda, 26490, usd)
         )
     }
+
+    // --- formatApr ---
+
+    @Test
+    fun `APR keeps its decimals`() {
+        assertEquals("5.5", TransactionDisplay.formatApr(5.5))
+        assertEquals("3.25", TransactionDisplay.formatApr(3.25))
+    }
+
+    @Test
+    fun `APR drops a trailing zero fraction`() {
+        assertEquals("12", TransactionDisplay.formatApr(12.0))
+        assertEquals("5.5", TransactionDisplay.formatApr(5.50))
+    }
+
+    @Test
+    fun `APR is never written in scientific notation`() {
+        assertEquals("0.0001", TransactionDisplay.formatApr(0.0001))
+        assertEquals("1000000", TransactionDisplay.formatApr(1_000_000.0))
+    }
+
+    @Test
+    fun `APR percent label adds the sign`() {
+        assertEquals("5.5%", TransactionDisplay.formatAprPercent(5.5))
+    }
 }

@@ -150,6 +150,28 @@ class BackupRepositoryTest {
     }
 
     @Test
+    fun `export writes an account's APR and omits it when there is none`() {
+        val earn = Account(id = "earn", name = "Earn", type = "asset", aprPercent = 5.5)
+        whenever(accountDao.getAllSync()).thenReturn(listOf(earn, accountNoInstrument))
+
+        val accounts = JSONObject(repository.export()).getJSONArray("accounts")
+
+        assertEquals(5.5, accounts.getJSONObject(0).getDouble("aprPercent"), 0.0)
+        assertTrue(!accounts.getJSONObject(1).has("aprPercent"))
+    }
+
+    @Test
+    fun `restore round trip keeps an account's APR`() {
+        val earn = Account(id = "earn", name = "Earn", type = "asset", aprPercent = 5.5)
+        whenever(accountDao.getAllSync()).thenReturn(listOf(earn, accountNoInstrument))
+
+        val result = repository.restore(repository.export())
+
+        assertEquals(RestoreResult.Success, result)
+        verify(accountDao).insertAll(listOf(earn, accountNoInstrument))
+    }
+
+    @Test
     fun `export includes monthly living expenses from app settings`() {
         val json = JSONObject(repository.export())
         assertEquals(150000L, json.getJSONObject("appSettings").getLong("monthlyLivingExpenses"))

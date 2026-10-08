@@ -96,6 +96,15 @@ class Migration17To18Test {
     private fun generatedDb(): SupportSQLiteDatabase = generated.openHelper.writableDatabase
 
     @Test
+    fun `accounts gain the aprPercent column Room expects`() {
+        val expected = columns(generatedDb(), "accounts").filter { it[0] == "aprPercent" }
+        val actual = columns(migrated, "accounts").filter { it[0] == "aprPercent" }
+
+        assertEquals(1, expected.size)
+        assertEquals(expected, actual)
+    }
+
+    @Test
     fun `template tables have the same columns as Room generates`() {
         templateTables.forEach { table ->
             assertEquals(table, columns(generatedDb(), table), columns(migrated, table))

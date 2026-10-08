@@ -19,6 +19,7 @@ import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.AccountTypes
 import dev.fitiavana.accounting.features.accounts.LiquidityLevels
 import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import dev.fitiavana.accounting.ui.common.UiUtils
 
 class EditAccountActivity : AppCompatActivity() {
@@ -42,6 +43,8 @@ class EditAccountActivity : AppCompatActivity() {
     private lateinit var liquidityLevelLabel: TextView
     private lateinit var liquidityLevelSpinner: Spinner
     private lateinit var liquidityLevelDescription: TextView
+    private lateinit var aprLabel: TextView
+    private lateinit var aprInput: EditText
     private var accountId: String? = null
 
     private var instruments: List<Instrument> = emptyList()
@@ -93,6 +96,8 @@ class EditAccountActivity : AppCompatActivity() {
         liquidityLevelSpinner = findViewById(R.id.spinner_liquidity_level)
         liquidityLevelDescription =
             findViewById(R.id.text_liquidity_level_description)
+        aprLabel = findViewById(R.id.label_apr)
+        aprInput = findViewById(R.id.input_apr)
         saveButton = findViewById(R.id.button_save)
     }
 
@@ -181,6 +186,9 @@ class EditAccountActivity : AppCompatActivity() {
         liquidityLevelDescription.visibility =
             if (isAsset) liquidityLevelDescription.visibility else View.GONE
         if (isAsset) updateLiquidityLevelDescription()
+        // Like the liquidity level, interest only applies to asset accounts.
+        aprLabel.visibility = visibility
+        aprInput.visibility = visibility
     }
 
     private fun updateLiquidityLevelDescription() {
@@ -283,6 +291,7 @@ class EditAccountActivity : AppCompatActivity() {
                     val liquidityIndex =
                         LiquidityLevels.VALUES.indexOf(account.liquidityLevel)
                     liquidityLevelSpinner.setSelection(if (liquidityIndex >= 0) liquidityIndex + 1 else 0)
+                    account.aprPercent?.let { aprInput.setText(TransactionDisplay.formatApr(it)) }
                     updateLiquidityLevelVisibility()
                 }
                 isLocked = locked
@@ -309,6 +318,8 @@ class EditAccountActivity : AppCompatActivity() {
                 val liquidityPos = liquidityLevelSpinner.selectedItemPosition
                 val selectedLiquidityLevel =
                     if (selectedType != "asset" || liquidityPos == 0) null else LiquidityLevels.VALUES[liquidityPos - 1]
+                // Accept a comma as the decimal separator, which some keyboards produce.
+                val selectedApr = aprInput.text.toString().trim().replace(',', '.').toDoubleOrNull()
                 Thread {
                     viewModel.saveAccount(
                         accountId,
@@ -316,7 +327,8 @@ class EditAccountActivity : AppCompatActivity() {
                         selectedType,
                         selectedInstrumentCode,
                         selectedIntermediaryCode,
-                        selectedLiquidityLevel
+                        selectedLiquidityLevel,
+                        selectedApr
                     )
                     runOnUiThread { finish() }
                 }.start()

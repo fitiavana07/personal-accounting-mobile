@@ -576,6 +576,20 @@ class BalanceSheetBuilderTest {
     }
 
     @Test
+    fun `buildMonthly attaches an account's APR to its line`() {
+        val result = BalanceSheetBuilder.buildMonthly(
+            accounts = listOf(
+                Account(id = "a1", name = "Earn", type = "asset", aprPercent = 5.5),
+                account("a2", "Cash", "asset")
+            ),
+            balancesByAccountId = mapOf("a1" to 50_000L, "a2" to 20_000L)
+        )
+
+        assertTrue(result.contains(ReportRow.AccountLine("Earn", 50_000L, accountId = "a1", aprPercent = 5.5)))
+        assertTrue(result.contains(ReportRow.AccountLine("Cash", 20_000L, accountId = "a2")))
+    }
+
+    @Test
     fun `buildMonthly keeps the lumped Other line and category lines in base without native amounts`() {
         val result = BalanceSheetBuilder.buildMonthly(
             accounts = listOf(

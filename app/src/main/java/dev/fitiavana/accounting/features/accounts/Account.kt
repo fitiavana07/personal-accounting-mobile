@@ -30,5 +30,7 @@ data class Account(
     val type: String,
     val instrumentCode: String? = null,
     val intermediaryInstrumentCode: String? = null,
-    val liquidityLevel: String? = null
+    val liquidityLevel: String? = null,
+    /** Yearly interest rate in percent for Earn-style asset accounts; null when the account earns nothing. */
+    val aprPercent: Double? = null
 )

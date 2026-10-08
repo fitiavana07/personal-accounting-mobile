@@ -9,7 +9,9 @@ import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.db.AppDatabase
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -109,5 +111,32 @@ class AccountDaoTest {
         instrumentDao.insert(Instrument(code = "USD", note = "US Dollar", type = "currency", decimalPlaces = 2))
         accountDao.insert(Account(id = "1", name = "Cash", type = "asset", instrumentCode = "USD", intermediaryInstrumentCode = null))
         assertFalse(accountDao.hasAccountsWithIntermediaryInstrument("USD"))
+    }
+
+    // aprPercent
+
+    @Test
+    fun `an account saved with an APR is read back with it`() {
+        accountDao.insert(Account(id = "1", name = "Earn", type = "asset", aprPercent = 5.5))
+
+        assertEquals(5.5, accountDao.getById("1")?.aprPercent)
+    }
+
+    @Test
+    fun `an account saved without an APR reads back with none`() {
+        accountDao.insert(Account(id = "1", name = "Cash", type = "asset"))
+
+        assertNull(accountDao.getById("1")?.aprPercent)
+    }
+
+    @Test
+    fun `updating an account can set and clear its APR`() {
+        accountDao.insert(Account(id = "1", name = "Earn", type = "asset"))
+
+        accountDao.update(Account(id = "1", name = "Earn", type = "asset", aprPercent = 3.25))
+        assertEquals(3.25, accountDao.getById("1")?.aprPercent)
+
+        accountDao.update(Account(id = "1", name = "Earn", type = "asset", aprPercent = null))
+        assertNull(accountDao.getById("1")?.aprPercent)
     }
 }

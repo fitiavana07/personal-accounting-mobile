@@ -35,7 +35,10 @@ sealed class ReportRow {
         // Account's balance in its instrument, then in its intermediary
         // instrument (when set). [amount] always stays the base-currency
         // amount; these are only revealed when the line is expanded.
-        val nativeAmounts: List<NativeAmount> = emptyList()
+        val nativeAmounts: List<NativeAmount> = emptyList(),
+        // Yearly interest rate (percent) of an Earn-style asset account; shown as an extra sub-row
+        // when the line is expanded. Null for accounts that earn nothing.
+        val aprPercent: Double? = null
     ) : ReportRow()
 
     data class TotalLine(

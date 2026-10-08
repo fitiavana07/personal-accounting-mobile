@@ -52,7 +52,9 @@ class ReportAdapter(
             is ReportDisplayRow.SectionHeader -> (holder as RowViewHolder).bindHeader(row)
             is ReportDisplayRow.SubsectionHeader -> (holder as RowViewHolder).bindSubsectionHeader(row)
             is ReportDisplayRow.AccountLine -> (holder as RowViewHolder).bindAccount(row, onAccountClick)
-            is ReportDisplayRow.NativeLine -> (holder as RowViewHolder).bindNative(row)
+            is ReportDisplayRow.NativeLine -> (holder as RowViewHolder).bindNative(row.code, row.amountText)
+            is ReportDisplayRow.AprLine ->
+                (holder as RowViewHolder).bindNative(holder.itemView.context.getString(R.string.report_apr_label), row.amountText)
             is ReportDisplayRow.TotalLine -> (holder as RowViewHolder).bindTotal(row)
         }
     }
@@ -126,10 +128,10 @@ class ReportAdapter(
             setColorDot(row.color)
         }
 
-        /** Sub-row of an expanded account: instrument code as label, amount in the same right-aligned column. */
-        fun bindNative(row: ReportDisplayRow.NativeLine) {
-            labelView.text = row.code
-            amountView.text = row.amountText
+        /** Sub-row of an expanded account (an instrument's amount or the APR): [label] and [amountText] in the same right-aligned column. */
+        fun bindNative(label: String, amountText: String) {
+            labelView.text = label
+            amountView.text = amountText
             setBold(false, 14f)
             setLabelIndent(labelIndentPadding + dpToPx(16f))
             setTextColor(secondaryTextColor())

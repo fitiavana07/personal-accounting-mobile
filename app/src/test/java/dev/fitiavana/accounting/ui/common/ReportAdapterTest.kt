@@ -110,4 +110,14 @@ class ReportAdapterTest {
         assertEquals("1,250.5 ", amount(h).text.toString())
         assertFalse(h.itemView.isClickable)
     }
+
+    @Test
+    fun `APR line shows APR on the left and the rate on the right`() {
+        val adapter = ReportAdapter()
+        val h = bind(adapter, listOf(ReportDisplayRow.AprLine("5.5% ")), 0)
+
+        assertEquals("APR", label(h).text.toString())
+        assertEquals("5.5% ", amount(h).text.toString())
+        assertFalse(h.itemView.isClickable)
+    }
 }

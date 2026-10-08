@@ -157,6 +157,10 @@ Collapse all" control (`text_reports_expand_all`) sits under the as-of date.
   `toggleAccount`/`toggleExpandAll` re-render from caches (no DB access). `ReportRow.AccountLine` carries
   `accountId` + `nativeAmounts`; `ReportPresenter` turns them into `expandable`/`expanded` lines followed by
   `ReportDisplayRow.NativeLine` sub-rows; `ReportAdapter(onAccountClick)` renders the chevron and click.
+- **APR sub-row:** an asset account with an APR (see `docs/earn-feature.md`) is also expandable, even with no
+  instrument. `BalanceSheetBuilder.buildMonthly` copies `Account.aprPercent` to `ReportRow.AccountLine.aprPercent`;
+  `ReportPresenter` appends a `ReportDisplayRow.AprLine` (e.g. `5.5% `) after the native sub-rows, and
+  `ReportAdapter` renders it as an "APR" row in the same column.
 
 ## Trend charts (above the period selector)
 

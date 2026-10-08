@@ -28,12 +28,15 @@ class EditAccountViewModel(
         type: String,
         instrumentCode: String?,
         intermediaryInstrumentCode: String?,
-        liquidityLevel: String? = null
+        liquidityLevel: String? = null,
+        aprPercent: Double? = null
     ) {
         val trimmed = name.trim()
         val supportsInstrument = AccountTypes.supportsInstrument(type)
         val savedInstrumentCode = instrumentCode.takeIf { supportsInstrument }
         val savedIntermediaryCode = intermediaryInstrumentCode.takeIf { supportsInstrument }
+        // Only asset accounts earn interest, and a zero or negative rate means "none".
+        val savedApr = aprPercent.takeIf { type == AccountTypes.ASSET && it != null && it > 0.0 }
         if (id == null) {
             repository.insert(
                 Account(
@@ -42,7 +45,8 @@ class EditAccountViewModel(
                     type = type,
                     instrumentCode = savedInstrumentCode,
                     intermediaryInstrumentCode = savedIntermediaryCode,
-                    liquidityLevel = liquidityLevel
+                    liquidityLevel = liquidityLevel,
+                    aprPercent = savedApr
                 )
             )
         } else {
@@ -53,7 +57,8 @@ class EditAccountViewModel(
                     type = type,
                     instrumentCode = savedInstrumentCode,
                     intermediaryInstrumentCode = savedIntermediaryCode,
-                    liquidityLevel = liquidityLevel
+                    liquidityLevel = liquidityLevel,
+                    aprPercent = savedApr
                 )
             )
         }

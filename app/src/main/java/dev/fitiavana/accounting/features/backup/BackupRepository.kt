@@ -224,6 +224,7 @@ class BackupRepository(
                 intermediaryInstrumentCode
             )
             if (liquidityLevel != null) put("liquidityLevel", liquidityLevel)
+            if (aprPercent != null) put("aprPercent", aprPercent)
         }
 
         private fun accountFromJson(json: JSONObject) = Account(
@@ -232,7 +233,8 @@ class BackupRepository(
             type = json.getString("type"),
             instrumentCode = json.optStringOrNull("instrumentCode"),
             intermediaryInstrumentCode = json.optStringOrNull("intermediaryInstrumentCode"),
-            liquidityLevel = json.optStringOrNull("liquidityLevel")
+            liquidityLevel = json.optStringOrNull("liquidityLevel"),
+            aprPercent = if (json.has("aprPercent") && !json.isNull("aprPercent")) json.getDouble("aprPercent") else null
         )
 
         private fun Transaction.toJson() = JSONObject().apply {

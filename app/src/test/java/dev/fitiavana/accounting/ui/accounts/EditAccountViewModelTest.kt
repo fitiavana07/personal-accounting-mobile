@@ -220,6 +220,71 @@ class EditAccountViewModelTest {
         assertNull(captor.firstValue.liquidityLevel)
     }
 
+    // --- saveAccount: APR ---
+
+    @Test
+    fun `new asset account saves its APR`() {
+        viewModel.saveAccount(
+            id = null, name = "Earn", type = "asset", instrumentCode = null,
+            intermediaryInstrumentCode = null, aprPercent = 5.5
+        )
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).insert(captor.capture())
+        assertEquals(5.5, captor.firstValue.aprPercent)
+    }
+
+    @Test
+    fun `existing asset account updates its APR`() {
+        viewModel.saveAccount(
+            id = "1", name = "Earn", type = "asset", instrumentCode = null,
+            intermediaryInstrumentCode = null, aprPercent = 3.25
+        )
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).update(captor.capture())
+        assertEquals(3.25, captor.firstValue.aprPercent)
+    }
+
+    @Test
+    fun `APR defaults to none`() {
+        viewModel.saveAccount(id = null, name = "Cash", type = "asset", instrumentCode = null, intermediaryInstrumentCode = null)
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).insert(captor.capture())
+        assertNull(captor.firstValue.aprPercent)
+    }
+
+    @Test
+    fun `only asset accounts keep an APR`() {
+        listOf("liability", "equity", "revenue", "expense", "drawing", "gain", "loss").forEach { type ->
+            viewModel.saveAccount(
+                id = null, name = "X", type = type, instrumentCode = null,
+                intermediaryInstrumentCode = null, aprPercent = 5.0
+            )
+        }
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository, org.mockito.kotlin.times(7)).insert(captor.capture())
+        assertTrue(captor.allValues.all { it.aprPercent == null })
+    }
+
+    @Test
+    fun `a zero or negative APR is stored as none`() {
+        viewModel.saveAccount(
+            id = null, name = "A", type = "asset", instrumentCode = null,
+            intermediaryInstrumentCode = null, aprPercent = 0.0
+        )
+        viewModel.saveAccount(
+            id = null, name = "B", type = "asset", instrumentCode = null,
+            intermediaryInstrumentCode = null, aprPercent = -2.0
+        )
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository, org.mockito.kotlin.times(2)).insert(captor.capture())
+        assertTrue(captor.allValues.all { it.aprPercent == null })
+    }
+
     // --- deleteAccount ---
 
     @Test

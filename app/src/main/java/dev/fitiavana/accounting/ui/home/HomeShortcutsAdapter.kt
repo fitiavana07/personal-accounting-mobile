@@ -9,7 +9,8 @@ import dev.fitiavana.accounting.R
 /** Single-row set of shortcut buttons shown between the metrics and emergency fund blocks. */
 class HomeShortcutsAdapter(
     private val onCexPricesClick: () -> Unit,
-    private val onMonthlyExpensesClick: () -> Unit
+    private val onMonthlyExpensesClick: () -> Unit,
+    private val onEarnClick: () -> Unit
 ): RecyclerView.Adapter<HomeShortcutsAdapter.ViewHolder>() {
 
     override fun getItemCount() = 1
@@ -20,6 +21,7 @@ class HomeShortcutsAdapter(
         view.findViewById<View>(R.id.button_cex_prices).setOnClickListener { onCexPricesClick() }
         view.findViewById<View>(R.id.button_monthly_expenses)
             .setOnClickListener { onMonthlyExpensesClick() }
+        view.findViewById<View>(R.id.button_earn).setOnClickListener { onEarnClick() }
         return ViewHolder(view)
     }
 

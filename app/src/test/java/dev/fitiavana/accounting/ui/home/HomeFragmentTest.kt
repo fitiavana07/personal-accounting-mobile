@@ -6,6 +6,7 @@ import androidx.fragment.app.FragmentActivity
 import dev.fitiavana.accounting.R
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.ui.cexprices.CexPricesActivity
+import dev.fitiavana.accounting.ui.earn.EarnActivity
 import dev.fitiavana.accounting.ui.transactions.AddTransactionActivity
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -63,6 +64,17 @@ class HomeFragmentTest {
 
         val started = shadowOf(activity).nextStartedActivity
         assertEquals(CexPricesActivity::class.java.name, started.component?.className)
+    }
+
+    @Test
+    fun `tapping the Earn shortcut opens EarnActivity`() {
+        val activity = launchHomeFragment()
+        layOutRecycler(activity)
+
+        activity.findViewById<View>(R.id.button_earn).performClick()
+
+        val started = shadowOf(activity).nextStartedActivity
+        assertEquals(EarnActivity::class.java.name, started.component?.className)
     }
 
     @Test

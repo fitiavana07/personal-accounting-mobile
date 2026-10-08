@@ -18,6 +18,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.ui.cexprices.CexPricesActivity
+import dev.fitiavana.accounting.ui.earn.EarnActivity
 import dev.fitiavana.accounting.ui.common.ReportAdapter
 import dev.fitiavana.accounting.ui.transactions.AddTransactionActivity
 
@@ -76,7 +77,8 @@ class HomeFragment : Fragment() {
             onCexPricesClick = {
                 startActivity(CexPricesActivity.intent(requireContext()))
             },
-            onMonthlyExpensesClick = { showEditMonthlyExpensesDialog() }
+            onMonthlyExpensesClick = { showEditMonthlyExpensesDialog() },
+            onEarnClick = { startActivity(EarnActivity.intent(requireContext())) }
         )
         p2pPricesAdapter = HomeP2pPricesAdapter { showP2pFilterDialog() }
         emergencyFundAdapter = EmergencyFundAdapter()

@@ -137,7 +137,7 @@ object BalanceSheetBuilder {
 
             rows += ReportRow.SectionHeader("Assets")
             mainAssetLines.forEach { line ->
-                rows += line.toAccountLine(nativeByAccountId)
+                rows += line.toAccountLine(nativeByAccountId, accountMap)
             }
             if (otherAssetLines.isNotEmpty()) {
                 rows += ReportRow.AccountLine(
@@ -154,7 +154,7 @@ object BalanceSheetBuilder {
         if (liabilityLines.isNotEmpty()) {
             rows += ReportRow.SectionHeader("Liabilities")
             liabilityLines.forEach {
-                rows += it.toAccountLine(nativeByAccountId)
+                rows += it.toAccountLine(nativeByAccountId, accountMap)
             }
             rows += ReportRow.TotalLine(
                 "Total Liabilities",
@@ -181,7 +181,7 @@ object BalanceSheetBuilder {
             if (equityLines.isNotEmpty()) {
                 rows += ReportRow.SubsectionHeader("Original Equity")
                 equityLines.forEach {
-                    rows += it.toAccountLine(nativeByAccountId)
+                    rows += it.toAccountLine(nativeByAccountId, accountMap)
                 }
                 rows += ReportRow.TotalLine(
                     "Total Original Equity",
@@ -250,13 +250,16 @@ object BalanceSheetBuilder {
         return rows
     }
 
-    private fun NamedAmount.toAccountLine(nativeByAccountId: Map<String, List<NativeAmount>>) =
-        ReportRow.AccountLine(
-            name,
-            amount,
-            accountId = accountId,
-            nativeAmounts = nativeByAccountId[accountId].orEmpty()
-        )
+    private fun NamedAmount.toAccountLine(
+        nativeByAccountId: Map<String, List<NativeAmount>>,
+        accountMap: Map<String, Account>
+    ) = ReportRow.AccountLine(
+        name,
+        amount,
+        accountId = accountId,
+        nativeAmounts = nativeByAccountId[accountId].orEmpty(),
+        aprPercent = accountMap[accountId]?.aprPercent
+    )
 
     /** Total Equity as of [balancesByAccountId], same formula as the "Total Equity" line in [buildMonthly]. */
     fun totalEquity(

@@ -51,7 +51,7 @@ app/src/main/java/dev/fitiavana/accounting/db/AppDatabase.kt
 ```
 features/
   accounts/       # Account (@Entity), AccountDao, AccountRepository, AccountTypes, LiquidityLevels
-  balances/       # AccountBalance (@Entity), AccountBalanceDao, BalanceRepository, BalanceCalculator, GainLossCalculator
+  balances/       # AccountBalance (@Entity), AccountBalanceDao, BalanceRepository, BalanceCalculator, GainLossCalculator, YieldCalculator
   transactions/   # Transaction/TransactionEntry (@Entity), TransactionDao, TransactionRepository, TransactionWithEntries
   instruments/    # Instrument (@Entity), InstrumentDao, InstrumentRepository
   exchangerates/  # ExchangeRateCache (@Entity), ExchangeRateCacheDao, ExchangeRateRepository
@@ -72,6 +72,7 @@ ui/
   instruments/   # InstrumentsFragment, InstrumentsViewModel
   reports/       # ReportsFragment, ReportsViewModel, ReportPeriodSelector
   home/          # HomeFragment, HomeViewModel (dashboard/metrics)
+  earn/          # EarnActivity, EarnViewModel, EarnAdapter (interest on accounts with an APR)
   common/        # shared presenters/adapters (UiUtils, ReportPresenter, TransactionDisplay)
 ```
 
@@ -104,6 +105,9 @@ receivers, where files go) and how to test it.
 See `docs/transaction-templates-feature.md` for transaction templates (saved
 mode + accounts for Add Transaction): data model, slots, and how templates are
 applied per mode.
+
+See `docs/earn-feature.md` for Earn (an APR on asset accounts, projected
+interest, the Earn screen and the Balance Sheet APR row).
 
 Each CRUD feature: {Feature}Fragment + {Feature}ViewModel + {Feature}Adapter +
 Edit{Feature}Activity + Edit{Feature}ViewModel

@@ -24,9 +24,52 @@ class HomeShortcutsAdapterTest {
 
     private fun inflate(
         onCex: () -> Unit = {},
-        onExpenses: () -> Unit = {}
-    ) = HomeShortcutsAdapter(onCex, onExpenses)
+        onExpenses: () -> Unit = {},
+        onEarn: () -> Unit = {}
+    ) = HomeShortcutsAdapter(onCex, onExpenses, onEarn)
         .let { it.onCreateViewHolder(FrameLayout(context), 0).itemView }
+
+    @Test
+    fun earnButtonInvokesCallback() {
+        var clicks = 0
+        val view = inflate(onEarn = { clicks++ })
+
+        view.findViewById<android.view.View>(R.id.button_earn).performClick()
+
+        assertEquals(1, clicks)
+    }
+
+    @Test
+    fun otherButtonsDoNotTriggerEarn() {
+        var clicks = 0
+        val view = inflate(onEarn = { clicks++ })
+
+        view.findViewById<android.view.View>(R.id.button_cex_prices).performClick()
+        view.findViewById<android.view.View>(R.id.button_monthly_expenses).performClick()
+
+        assertEquals(0, clicks)
+    }
+
+    @Test
+    fun earnButtonIsLabelled() {
+        val view = inflate()
+        val label = view.findViewById<android.view.View>(R.id.button_earn)
+            .findViewById<TextView>(R.id.text_shortcut_earn)
+
+        assertEquals("Earn", label.text.toString())
+    }
+
+    @Test
+    fun earnButtonComesAfterMonthlyExpenses() {
+        val row = inflate() as android.view.ViewGroup
+
+        val ids = (0 until row.childCount).map { row.getChildAt(it).id }
+
+        assertEquals(
+            listOf(R.id.button_cex_prices, R.id.button_monthly_expenses, R.id.button_earn),
+            ids
+        )
+    }
 
     @Test
     fun monthlyExpensesButtonInvokesCallback() {

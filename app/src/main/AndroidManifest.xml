@@ -55,6 +55,10 @@
             android:name=".ui.cexprices.CexPricesActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
+        <activity
+            android:name=".ui.earn.EarnActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
 
         <receiver
             android:name=".features.backup.AutoBackupReceiver"

@@ -267,9 +267,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        /** Adds transaction templates. Internal so its SQL can be checked against Room's generated schema. */
+        /**
+         * Adds transaction templates and the accounts' APR. Internal so its SQL can be checked against
+         * Room's generated schema.
+         */
         internal val MIGRATION_17_18 = object : Migration(17, 18) {
             override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `accounts` ADD COLUMN `aprPercent` REAL")
                 db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `transaction_templates` (" +
                             "`id` TEXT NOT NULL, " +

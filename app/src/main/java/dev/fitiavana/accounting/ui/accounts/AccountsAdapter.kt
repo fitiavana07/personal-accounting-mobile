@@ -49,6 +49,8 @@ class AccountsAdapter(
             view.findViewById(R.id.text_account_type)
         private val liquidityLevelView: TextView =
             view.findViewById(R.id.text_account_liquidity_level)
+        private val aprView: TextView =
+            view.findViewById(R.id.text_account_apr)
         private val amountView: TextView =
             view.findViewById(R.id.text_account_balance_amount)
         private val instrumentAmountView: TextView =
@@ -88,6 +90,16 @@ class AccountsAdapter(
                 liquidityLevelView.visibility = View.VISIBLE
             } else {
                 liquidityLevelView.visibility = View.GONE
+            }
+
+            if (account.aprPercent != null) {
+                aprView.text = aprView.context.getString(
+                    R.string.account_apr,
+                    TransactionDisplay.formatApr(account.aprPercent)
+                )
+                aprView.visibility = View.VISIBLE
+            } else {
+                aprView.visibility = View.GONE
             }
 
             amountView.text =
