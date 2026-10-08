@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    android:background="@drawable/bg_section_card"
+    android:background="@drawable/bg_metrics_card"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -11,8 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/earn_total_title"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="16sp"
+        android:textColor="@color/metrics_card_label"
+        android:textSize="18sp"
         android:textStyle="bold" />
 
     <TextView
@@ -20,7 +20,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:textColor="?android:attr/textColorPrimary"
+        android:textColor="@color/metrics_card_value"
         android:textSize="14sp" />
 
     <TextView
@@ -28,7 +28,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:textColor="?android:attr/textColorPrimary"
+        android:textColor="@color/metrics_card_value"
         android:textSize="14sp" />
 
     <TextView
@@ -36,7 +36,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:textColor="?android:attr/textColorPrimary"
+        android:textColor="@color/metrics_card_value"
         android:textSize="14sp" />
 
 </LinearLayout>
