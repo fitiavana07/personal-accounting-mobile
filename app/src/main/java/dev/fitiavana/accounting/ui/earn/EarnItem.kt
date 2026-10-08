@@ -19,7 +19,9 @@ data class EarnItem(
     val intermediaryInstrument: Instrument?,
     val daily: YieldAmounts,
     val monthly: YieldAmounts,
-    val yearly: YieldAmounts
+    val yearly: YieldAmounts,
+    /** This account's share of the total yearly base interest, 0 to 100. */
+    val yearlySharePercent: Int = 0
 )
 
 /** Base-currency interest summed over every Earn account, per period. */
@@ -39,16 +41,20 @@ object EarnItemBuilder {
         val items = accounts
             .filter { it.type == AccountTypes.ASSET && (it.aprPercent ?: 0.0) > 0.0 }
             .map { account -> toItem(account, balanceByAccountId[account.id], instruments) }
-            .sortedWith(compareByDescending<EarnItem> { it.balance }.thenBy { it.account.name })
+            .sortedWith(compareByDescending<EarnItem> { it.yearly.base }.thenBy { it.account.name })
+        val totals = EarnTotals(
+            daily = items.sumOf { it.daily.base },
+            monthly = items.sumOf { it.monthly.base },
+            yearly = items.sumOf { it.yearly.base }
+        )
         return EarnState(
-            items = items,
-            totals = EarnTotals(
-                daily = items.sumOf { it.daily.base },
-                monthly = items.sumOf { it.monthly.base },
-                yearly = items.sumOf { it.yearly.base }
-            )
+            items = items.map { it.copy(yearlySharePercent = sharePercent(it.yearly.base, totals.yearly)) },
+            totals = totals
         )
     }
+
+    private fun sharePercent(part: Long, total: Long): Int =
+        if (total <= 0L) 0 else Math.round(part * 100.0 / total).toInt()
 
     private fun toItem(account: Account, balance: AccountBalance?, instruments: Map<String, Instrument>): EarnItem {
         val apr = account.aprPercent ?: 0.0

@@ -51,7 +51,7 @@ class EarnItemBuilderTest {
     }
 
     @Test
-    fun `items are ordered by base balance, largest first`() {
+    fun `items are ordered by yearly interest, largest first`() {
         val accounts = listOf(
             Account(id = "small", name = "Small", type = "asset", aprPercent = 5.0),
             Account(id = "big", name = "Big", type = "asset", aprPercent = 5.0)
@@ -60,6 +60,49 @@ class EarnItemBuilderTest {
         val state = build(accounts, listOf(balance("small", 10_000L), balance("big", 900_000L)))
 
         assertEquals(listOf("big", "small"), state.items.map { it.account.id })
+    }
+
+    @Test
+    fun `a higher APR on a smaller balance can earn more and then comes first`() {
+        val accounts = listOf(
+            Account(id = "big_low", name = "A", type = "asset", aprPercent = 1.0),
+            Account(id = "small_high", name = "B", type = "asset", aprPercent = 20.0)
+        )
+
+        val state = build(accounts, listOf(balance("big_low", 1_000_000L), balance("small_high", 500_000L)))
+
+        assertEquals(listOf("small_high", "big_low"), state.items.map { it.account.id })
+    }
+
+    @Test
+    fun `equal interest is ordered by name`() {
+        val accounts = listOf(
+            Account(id = "b", name = "Bravo", type = "asset", aprPercent = 5.0),
+            Account(id = "a", name = "Alpha", type = "asset", aprPercent = 5.0)
+        )
+
+        val state = build(accounts, listOf(balance("a", 100_000L), balance("b", 100_000L)))
+
+        assertEquals(listOf("a", "b"), state.items.map { it.account.id })
+    }
+
+    @Test
+    fun `each item carries its share of the total yearly interest in percent`() {
+        val accounts = listOf(
+            Account(id = "three", name = "Three", type = "asset", aprPercent = 10.0),
+            Account(id = "one", name = "One", type = "asset", aprPercent = 10.0)
+        )
+
+        val state = build(accounts, listOf(balance("three", 300_000L), balance("one", 100_000L)))
+
+        assertEquals(listOf(75, 25), state.items.map { it.yearlySharePercent })
+    }
+
+    @Test
+    fun `the share is zero when nothing is earned`() {
+        val state = build(listOf(Account(id = "earn", name = "Earn", type = "asset", aprPercent = 5.0)), emptyList())
+
+        assertEquals(0, state.items.single().yearlySharePercent)
     }
 
     @Test

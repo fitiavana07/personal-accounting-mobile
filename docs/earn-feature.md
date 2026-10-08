@@ -51,16 +51,22 @@ intermediary (the last two null when the account has none).
   `BalanceSheetBuilder.buildMonthly` puts the rate on `ReportRow.AccountLine.aprPercent`; `ReportPresenter` adds a
   `ReportDisplayRow.AprLine`; `ReportAdapter` renders it like a native row.
 - **Earn screen** (`ui/earn/`), opened from the **Earn** button on the Home shortcuts row (after CEX Prices and
-  Mo. Expenses; `ic_home_earn` is a coin with an up arrow). It lists every asset account with an APR, largest
-  balance first, each with its balance and daily / monthly / yearly interest in base currency and, when it has them,
-  in the instrument and intermediary instrument. A totals card on top sums the **base-currency** interest of all
-  accounts. With no Earn account it shows a hint on how to set one.
+  Mo. Expenses; `ic_home_earn` is a coin with an up arrow). It lists every asset account with an APR, **largest
+  yearly interest first** (then by name). With no Earn account it shows a hint on how to set one.
+  - **Totals card** (tinted): the total *monthly* base-currency interest as a large number, with
+    `Ar x / day · Ar y / year` under it.
+  - **Account card**: name and APR, a balance line (base, then instrument and intermediary amounts), then a
+    Day / Month / Year row of **base-currency** interest only (so the columns line up between cards; Month is bold).
+    A thin bar at the bottom shows the account's share of the total yearly interest (`EarnItem.yearlySharePercent`).
+  - **Tap** an account that has an instrument to show its interest in the instrument's (and intermediary's) own
+    units, one `Day:` / `Month:` / `Year:` line each; tap again to hide. Open cards stay open across data refreshes
+    (the adapter keeps the set of open account ids). Accounts without an instrument are not tappable.
 
 ## Code map
 
 - `EarnItemBuilder` (pure) builds `EarnState(items, totals)` from accounts, balances and instruments.
 - `EarnViewModel` merges the accounts, balances and instruments LiveData (like `AccountsViewModel`), so the screen
-  stays current; `EarnAdapter` renders the totals card and one card per account; `EarnActivity` hosts them.
+  stays current; `EarnAdapter` renders the totals card and one card per account (and owns the open/closed state); `EarnActivity` hosts them.
 - `TransactionDisplay.formatApr` / `formatAprPercent` format a rate without trailing zeros ("5.5", "12", "5.5%").
 
 ## Tests

@@ -1,9 +1,9 @@
 package dev.fitiavana.accounting.ui.earn
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
@@ -12,11 +12,16 @@ import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import dev.fitiavana.accounting.ui.common.UiUtils
 
-/** A totals card (base-currency interest of every account) followed by one card per Earn account. */
+/**
+ * A totals card (monthly base-currency interest of every account) followed by one card per Earn account.
+ * Tapping an account with an instrument reveals its interest in the instrument's own units.
+ */
 class EarnAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var totals: EarnTotals? = null
     private var items: List<EarnItem> = emptyList()
+    /** Accounts whose native-instrument interest is open; kept here so it survives rebinding and data refreshes. */
+    private val expanded = mutableSetOf<String>()
 
     fun submit(state: EarnState) {
         items = state.items
@@ -33,7 +38,7 @@ class EarnAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         return if (viewType == VIEW_TYPE_TOTALS) {
             TotalsViewHolder(inflater.inflate(R.layout.item_earn_totals, parent, false))
         } else {
-            ItemViewHolder(inflater.inflate(R.layout.item_earn, parent, false))
+            ItemViewHolder(inflater.inflate(R.layout.item_earn, parent, false), expanded)
         }
     }
 
@@ -47,54 +52,56 @@ class EarnAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     class TotalsViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         fun bind(totals: EarnTotals) {
             val context = itemView.context
-            itemView.findViewById<TextView>(R.id.text_earn_totals_daily).text =
-                context.getString(R.string.earn_daily, UiUtils.formatAmountAr(context, totals.daily))
             itemView.findViewById<TextView>(R.id.text_earn_totals_monthly).text =
-                context.getString(R.string.earn_monthly, UiUtils.formatAmountAr(context, totals.monthly))
-            itemView.findViewById<TextView>(R.id.text_earn_totals_yearly).text =
-                context.getString(R.string.earn_yearly, UiUtils.formatAmountAr(context, totals.yearly))
+                UiUtils.formatAmountAr(context, totals.monthly)
+            itemView.findViewById<TextView>(R.id.text_earn_totals_secondary).text = listOf(
+                context.getString(R.string.earn_per_day, UiUtils.formatAmountAr(context, totals.daily)),
+                context.getString(R.string.earn_per_year, UiUtils.formatAmountAr(context, totals.yearly))
+            ).joinToString(SEPARATOR)
         }
     }
 
-    class ItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    class ItemViewHolder(view: View, private val expanded: MutableSet<String>) : RecyclerView.ViewHolder(view) {
+        private val nativeView = itemView.findViewById<TextView>(R.id.text_earn_native)
+
         fun bind(item: EarnItem) {
             val context = itemView.context
             itemView.findViewById<TextView>(R.id.text_earn_name).text = item.account.name
             itemView.findViewById<TextView>(R.id.text_earn_apr).text =
                 context.getString(R.string.account_apr, TransactionDisplay.formatApr(item.aprPercent))
-            itemView.findViewById<TextView>(R.id.text_earn_balance).text = context.getString(
-                R.string.earn_balance,
-                joinAmounts(
-                    context, item,
-                    base = item.balance,
-                    instrument = item.instrumentBalance,
-                    intermediary = item.intermediaryBalance
-                )
+            val balanceParts = listOf(UiUtils.formatAmountAr(context, item.balance)) + nativeParts(
+                item, item.instrumentBalance, item.intermediaryBalance
             )
-            itemView.findViewById<TextView>(R.id.text_earn_daily).text =
-                context.getString(R.string.earn_daily, joinAmounts(context, item, item.daily))
-            itemView.findViewById<TextView>(R.id.text_earn_monthly).text =
-                context.getString(R.string.earn_monthly, joinAmounts(context, item, item.monthly))
-            itemView.findViewById<TextView>(R.id.text_earn_yearly).text =
-                context.getString(R.string.earn_yearly, joinAmounts(context, item, item.yearly))
+            itemView.findViewById<TextView>(R.id.text_earn_balance).text =
+                context.getString(R.string.earn_balance, balanceParts.joinToString(SEPARATOR))
+            itemView.findViewById<TextView>(R.id.text_earn_daily).text = UiUtils.formatAmountAr(context, item.daily.base)
+            itemView.findViewById<TextView>(R.id.text_earn_monthly).text = UiUtils.formatAmountAr(context, item.monthly.base)
+            itemView.findViewById<TextView>(R.id.text_earn_yearly).text = UiUtils.formatAmountAr(context, item.yearly.base)
+            itemView.findViewById<ProgressBar>(R.id.progress_earn_share).progress = item.yearlySharePercent
+
+            nativeView.text = listOf(
+                context.getString(R.string.earn_native_day, nativeParts(item, item.daily).joinToString(SEPARATOR)),
+                context.getString(R.string.earn_native_month, nativeParts(item, item.monthly).joinToString(SEPARATOR)),
+                context.getString(R.string.earn_native_year, nativeParts(item, item.yearly).joinToString(SEPARATOR))
+            ).joinToString("\n")
+            val expandable = item.instrument != null
+            nativeView.visibility = if (expandable && item.account.id in expanded) View.VISIBLE else View.GONE
+            itemView.setOnClickListener(if (expandable) View.OnClickListener { toggle(item.account.id) } else null)
+            // setOnClickListener always makes a view clickable, so undo that for rows with nothing to expand.
+            itemView.isClickable = expandable
         }
 
-        private fun joinAmounts(context: Context, item: EarnItem, amounts: YieldAmounts): String =
-            joinAmounts(context, item, amounts.base, amounts.instrument, amounts.intermediary)
-
-        /** "Ar 1,200 · 0.5 BTC · 100 USD": base first, then the instrument and intermediary amounts when the account has them. */
-        private fun joinAmounts(
-            context: Context,
-            item: EarnItem,
-            base: Long,
-            instrument: Long?,
-            intermediary: Long?
-        ): String {
-            val parts = mutableListOf(UiUtils.formatAmountAr(context, base))
-            formatNative(instrument, item.instrument)?.let { parts += it }
-            formatNative(intermediary, item.intermediaryInstrument)?.let { parts += it }
-            return parts.joinToString(SEPARATOR)
+        private fun toggle(accountId: String) {
+            if (!expanded.remove(accountId)) expanded.add(accountId)
+            nativeView.visibility = if (accountId in expanded) View.VISIBLE else View.GONE
         }
+
+        private fun nativeParts(item: EarnItem, amounts: YieldAmounts): List<String> =
+            nativeParts(item, amounts.instrument, amounts.intermediary)
+
+        /** The instrument then the intermediary amount, each only when the account has that instrument. */
+        private fun nativeParts(item: EarnItem, instrument: Long?, intermediary: Long?): List<String> =
+            listOfNotNull(formatNative(instrument, item.instrument), formatNative(intermediary, item.intermediaryInstrument))
 
         private fun formatNative(amount: Long?, instrument: Instrument?): String? =
             if (amount != null && instrument != null) TransactionDisplay.formatInstrumentAmount(amount, instrument) else null

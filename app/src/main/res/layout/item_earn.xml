@@ -2,10 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
+    android:layout_marginBottom="8dp"
     android:background="@drawable/bg_section_card"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -36,32 +36,80 @@
         android:id="@+id/text_earn_balance"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:textColor="?android:attr/textColorSecondary"
         android:textSize="13sp" />
 
-    <TextView
-        android:id="@+id/text_earn_daily"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="14sp" />
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/EarnPeriodLabel"
+                android:text="@string/earn_day" />
+
+            <TextView
+                android:id="@+id/text_earn_daily"
+                style="@style/EarnPeriodValue" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/EarnPeriodLabel"
+                android:text="@string/earn_month" />
+
+            <TextView
+                android:id="@+id/text_earn_monthly"
+                style="@style/EarnPeriodValue"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/EarnPeriodLabel"
+                android:text="@string/earn_year" />
+
+            <TextView
+                android:id="@+id/text_earn_yearly"
+                style="@style/EarnPeriodValue" />
+        </LinearLayout>
+
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/text_earn_monthly"
+        android:id="@+id/text_earn_native"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="14sp" />
+        android:layout_marginTop="8dp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="13sp"
+        android:visibility="gone" />
 
-    <TextView
-        android:id="@+id/text_earn_yearly"
+    <ProgressBar
+        android:id="@+id/progress_earn_share"
+        style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="14sp" />
+        android:layout_height="4dp"
+        android:layout_marginTop="10dp"
+        android:max="100"
+        android:progressDrawable="@drawable/progress_earn_share" />
 
 </LinearLayout>
