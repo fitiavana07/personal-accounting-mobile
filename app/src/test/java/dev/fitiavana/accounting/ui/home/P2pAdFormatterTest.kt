@@ -12,8 +12,8 @@ class P2pAdFormatterTest {
     }
 
     @Test
-    fun `long advertiser names are truncated with dots`() {
-        assertEquals("Wicken...", P2pAdFormatter.advertiser(P2pAd(1.0, advertiser = "Wickendo man")))
+    fun `long advertiser names are truncated with a single dot`() {
+        assertEquals("Wickendo.", P2pAdFormatter.advertiser(P2pAd(1.0, advertiser = "Wickendo man")))
     }
 
     @Test

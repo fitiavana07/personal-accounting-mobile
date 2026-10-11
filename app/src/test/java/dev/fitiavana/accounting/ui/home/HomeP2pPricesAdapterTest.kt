@@ -1,7 +1,6 @@
 package dev.fitiavana.accounting.ui.home
 
 import android.content.Context
-import android.text.TextUtils
 import android.view.ContextThemeWrapper
 import android.view.View
 import android.widget.FrameLayout
@@ -130,14 +129,14 @@ class HomeP2pPricesAdapterTest {
     }
 
     @Test
-    fun `price name and limits share one line, only the name may be cut`() {
+    fun `price name and limits share one line, never ellipsized`() {
         val price = itemView.findViewById<View>(R.id.text_p2p_buy_1)
         val name = itemView.findViewById<TextView>(R.id.text_p2p_buy_1_name)
         val limits = itemView.findViewById<TextView>(R.id.text_p2p_buy_1_limits)
 
         assertEquals(price.parent, name.parent)
         assertEquals(price.parent, limits.parent)
-        assertEquals(TextUtils.TruncateAt.END, name.ellipsize)
+        assertNull(name.ellipsize)
         assertEquals(1, name.maxLines)
         assertNull(limits.ellipsize)
         assertEquals(1, limits.maxLines)

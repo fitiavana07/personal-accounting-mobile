@@ -24,17 +24,16 @@
         <item name="android:maxLines">1</item>
         <item name="android:fontFamily">monospace</item>
         <item name="android:textColor">?android:attr/textColorPrimary</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">12sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
-    <!-- Advertiser beside a price; takes the remaining width and is the only part that may be cut. -->
+    <!-- Advertiser beside a price; takes the remaining width. Not ellipsized: P2pAdFormatter already shortens it with a single dot. -->
     <style name="HomeP2pName">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_weight">1</item>
-        <item name="android:layout_marginStart">6dp</item>
-        <item name="android:ellipsize">end</item>
+        <item name="android:layout_marginStart">4dp</item>
         <item name="android:maxLines">1</item>
         <item name="android:textColor">?android:attr/textColorSecondary</item>
         <item name="android:textSize">10sp</item>
@@ -44,11 +43,11 @@
     <style name="HomeP2pLimits">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginStart">6dp</item>
+        <item name="android:layout_marginStart">4dp</item>
         <item name="android:maxLines">1</item>
         <item name="android:fontFamily">monospace</item>
         <item name="android:textColor">?android:attr/textColorSecondary</item>
-        <item name="android:textSize">10sp</item>
+        <item name="android:textSize">11sp</item>
     </style>
 
     <style name="TextAppearance.Accounting.Toolbar.Title" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">

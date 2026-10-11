@@ -4,11 +4,11 @@ import dev.fitiavana.accounting.network.p2p.P2pAd
 
 /** Texts shown beside an ad's price: a short advertiser name and the compact MGA order limit range. */
 object P2pAdFormatter {
-    private const val MAX_NAME_LENGTH = 6
+    private const val MAX_NAME_LENGTH = 8
 
     fun advertiser(ad: P2pAd): String {
         val name = ad.advertiser ?: return ""
-        return if (name.length > MAX_NAME_LENGTH) name.take(MAX_NAME_LENGTH).trimEnd() + "..." else name
+        return if (name.length > MAX_NAME_LENGTH) name.take(MAX_NAME_LENGTH).trimEnd() + "." else name
     }
 
     fun limits(ad: P2pAd): String {

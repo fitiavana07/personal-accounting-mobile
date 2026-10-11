@@ -19,7 +19,7 @@ USDT/MGA on Binance P2P.
 ## Ad line
 
 One line per ad: price (bold), advertiser name, then `min–max` (compact MGA limits) at the end of the line. The
-advertiser name is cut to 6 characters + `...` and is the only part that is ellipsized if space runs out; the limits
+advertiser name is cut to 8 characters + `.` and takes the remaining width (not ellipsized by the view); the limits
 are never truncated. The max is `dynamicMaxSingleTransAmount`
 (configured max capped by the ad's remaining stock — what Binance's app shows), falling back to
 `maxSingleTransAmount`.
