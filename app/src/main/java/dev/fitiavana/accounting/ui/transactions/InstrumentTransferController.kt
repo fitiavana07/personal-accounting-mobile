@@ -160,7 +160,7 @@ class InstrumentTransferController(
         textNewBalance.text = context.getString(
             R.string.label_new_balance_ar_instrument,
             TransactionDisplay.formatAmount(newBalance),
-            TransactionDisplay.formatInstrumentAmount(newInstrumentBalance, instrument)
+            TransactionDisplay.formatInstrumentAmountNoWrap(newInstrumentBalance, instrument)
         )
         textNewBalance.visibility = View.VISIBLE
     }

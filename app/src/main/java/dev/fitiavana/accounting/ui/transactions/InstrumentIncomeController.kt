@@ -180,7 +180,7 @@ class InstrumentIncomeController(
                 credit = 0L
             )
             val formattedBase = TransactionDisplay.formatAmount(newBalance)
-            val formattedInstrument = TransactionDisplay.formatInstrumentAmount(newInstrumentBalance, instrument)
+            val formattedInstrument = TransactionDisplay.formatInstrumentAmountNoWrap(newInstrumentBalance, instrument)
             val intermediary = intermediaryInstrument()
             textNewBalance.text = if (intermediary != null) {
                 val newIntermediaryBalance = BalanceCalculator.project(
@@ -193,7 +193,7 @@ class InstrumentIncomeController(
                     R.string.label_new_balance_ar_instrument_intermediary,
                     formattedBase,
                     formattedInstrument,
-                    TransactionDisplay.formatInstrumentAmount(newIntermediaryBalance, intermediary)
+                    TransactionDisplay.formatInstrumentAmountNoWrap(newIntermediaryBalance, intermediary)
                 )
             } else {
                 context.getString(R.string.label_new_balance_ar_instrument, formattedBase, formattedInstrument)
@@ -231,7 +231,7 @@ class InstrumentIncomeController(
             return
         }
         val formattedBase = TransactionDisplay.formatAmount(baseAmount)
-        val formattedInstrument = TransactionDisplay.formatInstrumentAmount(instrumentAmount, instrument)
+        val formattedInstrument = TransactionDisplay.formatInstrumentAmountNoWrap(instrumentAmount, instrument)
         val intermediary = intermediaryInstrument()
         val intermediaryAmount = computedIntermediaryAmount(instrument)
         textAmountBase.text = if (intermediary != null && intermediaryAmount != null) {
@@ -239,7 +239,7 @@ class InstrumentIncomeController(
                 R.string.label_amount_plus_ar_instrument_intermediary,
                 formattedBase,
                 formattedInstrument,
-                TransactionDisplay.formatInstrumentAmount(intermediaryAmount, intermediary)
+                TransactionDisplay.formatInstrumentAmountNoWrap(intermediaryAmount, intermediary)
             )
         } else {
             context.getString(R.string.label_amount_plus_ar_instrument, formattedBase, formattedInstrument)

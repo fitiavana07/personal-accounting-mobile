@@ -207,7 +207,7 @@ class InstrumentTransferControllerTest {
 
         assertEquals(View.VISIBLE, fromTextBalance.visibility)
         assertEquals(
-            "Balance: 400,000 Ar · 10.0 USD",
+            "Balance: 400,000 Ar · 10.0\u00A0USD",
             fromTextBalance.text.toString()
         )
     }
@@ -240,12 +240,12 @@ class InstrumentTransferControllerTest {
 
         assertEquals(View.VISIBLE, fromTextNewBalance.visibility)
         assertEquals(
-            "New balance: 340,000 Ar · 8.5 USD",
+            "New balance: 340,000 Ar · 8.5\u00A0USD",
             fromTextNewBalance.text.toString()
         )
         assertEquals(View.VISIBLE, toTextNewBalance.visibility)
         assertEquals(
-            "New balance: 60,000 Ar · 1.5 USD",
+            "New balance: 60,000 Ar · 1.5\u00A0USD",
             toTextNewBalance.text.toString()
         )
 

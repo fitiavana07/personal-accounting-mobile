@@ -124,14 +124,14 @@ class AccountSideController(
                     context.getString(
                         R.string.label_balance_ar_instrument_intermediary,
                         TransactionDisplay.formatAmount(balance),
-                        TransactionDisplay.formatInstrumentAmount(instrumentBalance, instrument),
-                        TransactionDisplay.formatInstrumentAmount(intermediaryBalance, intermediary)
+                        TransactionDisplay.formatInstrumentAmountNoWrap(instrumentBalance, instrument),
+                        TransactionDisplay.formatInstrumentAmountNoWrap(intermediaryBalance, intermediary)
                     )
                 } else if (instrument != null) {
                     context.getString(
                         R.string.label_balance_ar_instrument,
                         TransactionDisplay.formatAmount(balance),
-                        TransactionDisplay.formatInstrumentAmount(instrumentBalance, instrument)
+                        TransactionDisplay.formatInstrumentAmountNoWrap(instrumentBalance, instrument)
                     )
                 } else {
                     context.getString(

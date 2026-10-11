@@ -105,6 +105,12 @@ class TransactionDisplayTest {
     }
 
     @Test
+    fun `no-wrap variant joins the amount and the code with a non-breaking space`() {
+        val btc = Instrument(code = "BTC", note = "", type = "crypto", decimalPlaces = 8)
+        assertEquals("0.12345678 BTC", TransactionDisplay.formatInstrumentAmountNoWrap(12_345_678, btc))
+    }
+
+    @Test
     fun `two decimal places with whole number strips trailing zeros then adds zero after dot`() {
         val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
         assertEquals("1.0 USD", TransactionDisplay.formatInstrumentAmount(100, usd))

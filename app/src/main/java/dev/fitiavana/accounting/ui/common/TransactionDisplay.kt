@@ -7,6 +7,14 @@ object TransactionDisplay {
     fun formatInstrumentAmount(amount: Long, instrument: Instrument): String =
         "${formatInstrumentValue(amount, instrument)} ${instrument.code}"
 
+    /**
+     * Like [formatInstrumentAmount] but joins the amount and the code with a
+     * non-breaking space, so a wrapping text line never strands the code
+     * alone on the next line (e.g. long 8-decimal balances).
+     */
+    fun formatInstrumentAmountNoWrap(amount: Long, instrument: Instrument): String =
+        "${formatInstrumentValue(amount, instrument)} ${instrument.code}"
+
     /** Like [formatInstrumentAmount] but without the instrument code, e.g. for report columns. */
     fun formatInstrumentValue(amount: Long, instrument: Instrument): String {
         val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())

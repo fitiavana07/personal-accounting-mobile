@@ -179,7 +179,7 @@ class AccountSideControllerTest {
             context.getString(
                 R.string.label_balance_ar_instrument,
                 TransactionDisplay.formatAmount(2000L),
-                TransactionDisplay.formatInstrumentAmount(20L, usd)
+                TransactionDisplay.formatInstrumentAmountNoWrap(20L, usd)
             ),
             textBalance.text.toString()
         )
@@ -219,7 +219,7 @@ class AccountSideControllerTest {
 
         select(spinner, 1)
 
-        assertEquals("Balance: 2,000 Ar · 0.2 USD · 7.5 EUR", textBalance.text.toString())
+        assertEquals("Balance: 2,000 Ar · 0.2\u00A0USD · 7.5\u00A0EUR", textBalance.text.toString())
     }
 
     @Test
@@ -356,7 +356,7 @@ class AccountSideControllerTest {
             context.getString(
                 R.string.label_balance_ar_instrument,
                 TransactionDisplay.formatAmount(222L),
-                TransactionDisplay.formatInstrumentAmount(222L, usd)
+                TransactionDisplay.formatInstrumentAmountNoWrap(222L, usd)
             ),
             textBalance.text.toString()
         )
