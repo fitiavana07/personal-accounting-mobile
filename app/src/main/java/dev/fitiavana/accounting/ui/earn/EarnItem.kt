@@ -31,7 +31,7 @@ data class EarnState(val items: List<EarnItem>, val totals: EarnTotals)
 
 object EarnItemBuilder {
 
-    /** Earn accounts are the asset accounts that have a positive APR. */
+    /** Earn accounts are the asset accounts that have a positive APR and a non-zero base balance. */
     fun build(
         accounts: List<Account>,
         balances: List<AccountBalance>,
@@ -40,6 +40,7 @@ object EarnItemBuilder {
         val balanceByAccountId = balances.associateBy { it.accountId }
         val items = accounts
             .filter { it.type == AccountTypes.ASSET && (it.aprPercent ?: 0.0) > 0.0 }
+            .filter { (balanceByAccountId[it.id]?.balance ?: 0L) != 0L }
             .map { account -> toItem(account, balanceByAccountId[account.id], instruments) }
             .sortedWith(compareByDescending<EarnItem> { it.yearly.base }.thenBy { it.account.name })
         val totals = EarnTotals(

@@ -7,7 +7,9 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ApplicationProvider
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.balances.AccountBalance
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -63,6 +65,9 @@ class EarnActivityTest {
         Thread {
             AppContainer.getInstance(context).accountRepository
                 .insert(Account(id = "earn_act", name = "Earn Activity Account", type = "asset", aprPercent = 8.0))
+            AppDatabase.getInstance(context).accountBalanceDao().insert(
+                AccountBalance(accountId = "earn_act", balance = 1_000_000L, updatedAt = 0L, createdAt = 0L)
+            )
         }.apply { start(); join() }
         val activity = launch()
 

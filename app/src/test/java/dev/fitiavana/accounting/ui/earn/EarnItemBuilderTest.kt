@@ -99,19 +99,32 @@ class EarnItemBuilderTest {
     }
 
     @Test
-    fun `the share is zero when nothing is earned`() {
-        val state = build(listOf(Account(id = "earn", name = "Earn", type = "asset", aprPercent = 5.0)), emptyList())
+    fun `the share is zero when the interest rounds to nothing`() {
+        val state = build(
+            listOf(Account(id = "earn", name = "Earn", type = "asset", aprPercent = 5.0)),
+            listOf(balance("earn", 1L))
+        )
 
         assertEquals(0, state.items.single().yearlySharePercent)
     }
 
     @Test
-    fun `an account without a balance row earns nothing but is still listed`() {
+    fun `an account without a balance row is not listed`() {
         val state = build(listOf(Account(id = "earn", name = "Earn", type = "asset", aprPercent = 5.0)), emptyList())
 
-        val item = state.items.single()
-        assertEquals(0L, item.balance)
-        assertEquals(0L, item.yearly.base)
+        assertTrue(state.items.isEmpty())
+    }
+
+    @Test
+    fun `an account with a zero base balance is not listed`() {
+        val accounts = listOf(
+            Account(id = "empty", name = "Empty", type = "asset", instrumentCode = "BTC", aprPercent = 5.0),
+            Account(id = "funded", name = "Funded", type = "asset", aprPercent = 5.0)
+        )
+
+        val state = build(accounts, listOf(balance("empty", 0L, instrument = 100L), balance("funded", 1_000L)))
+
+        assertEquals(listOf("funded"), state.items.map { it.account.id })
     }
 
     @Test

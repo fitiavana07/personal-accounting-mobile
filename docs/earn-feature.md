@@ -51,7 +51,7 @@ intermediary (the last two null when the account has none).
   `BalanceSheetBuilder.buildMonthly` puts the rate on `ReportRow.AccountLine.aprPercent`; `ReportPresenter` adds a
   `ReportDisplayRow.AprLine`; `ReportAdapter` renders it like a native row.
 - **Earn screen** (`ui/earn/`), opened from the **Earn** button on the Home shortcuts row (after CEX Prices and
-  Mo. Expenses; `ic_home_earn` is a coin with an up arrow). It lists every asset account with an APR, **largest
+  Mo. Expenses; `ic_home_earn` is a coin with an up arrow). It lists every asset account with an APR **and a non-zero base-currency balance**, **largest
   yearly interest first** (then by name). With no Earn account it shows a hint on how to set one.
   - **Totals card** (tinted): the total *monthly* base-currency interest as a large number, with
     `Ar x / day · Ar y / year` under it.
