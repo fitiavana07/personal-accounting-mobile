@@ -1,5 +1,6 @@
 package dev.fitiavana.accounting.ui.reports
 
+import android.content.res.ColorStateList
 import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.View
@@ -7,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
 
@@ -68,7 +70,7 @@ class PeriodSelectorAdapter<T>(
             val iconRes = iconFor?.invoke(value)
             if (iconRes != null) {
                 iconView.setImageResource(iconRes)
-                iconView.imageTintList = android.content.res.ColorStateList.valueOf(tint)
+                ImageViewCompat.setImageTintList(iconView, ColorStateList.valueOf(tint))
                 iconView.visibility = View.VISIBLE
             } else {
                 iconView.visibility = View.GONE
