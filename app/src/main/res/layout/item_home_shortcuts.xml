@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/container_home_shortcuts"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -25,8 +26,8 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:importantForAccessibility="no"
-            android:src="@drawable/ic_home_cex_prices"
-            android:tint="?attr/colorControlNormal" />
+            app:srcCompat="@drawable/ic_home_cex_prices"
+            app:tint="?attr/colorControlNormal" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -54,8 +55,8 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:importantForAccessibility="no"
-            android:src="@drawable/ic_home_monthly_expenses"
-            android:tint="?attr/colorControlNormal" />
+            app:srcCompat="@drawable/ic_home_monthly_expenses"
+            app:tint="?attr/colorControlNormal" />
 
         <TextView
             android:id="@+id/text_shortcut_monthly_expenses"
@@ -84,8 +85,8 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:importantForAccessibility="no"
-            android:src="@drawable/ic_home_earn"
-            android:tint="?attr/colorControlNormal" />
+            app:srcCompat="@drawable/ic_home_earn"
+            app:tint="?attr/colorControlNormal" />
 
         <TextView
             android:id="@+id/text_shortcut_earn"
