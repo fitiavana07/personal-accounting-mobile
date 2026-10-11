@@ -2,6 +2,8 @@
     <string name="accounts">Accounts</string>
     <string name="action_add">Add</string>
     <string name="action_add_account">Add account</string>
+    <string name="action_search_accounts">Search accounts</string>
+    <string name="hint_search_accounts">Search by name</string>
     <string name="action_add_entry">Add Entry</string>
     <string name="action_add_instrument">Add instrument</string>
     <string name="action_amount_all">ALL</string>

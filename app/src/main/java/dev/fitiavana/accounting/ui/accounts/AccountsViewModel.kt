@@ -22,6 +22,7 @@ class AccountsViewModel(
     private val instruments: LiveData<List<Instrument>> = instrumentRepository.getAll()
     val typeFilter = MutableLiveData<String?>(null)
     val hideZeroBalance = MutableLiveData(true)
+    val searchQuery = MutableLiveData("")
 
     val accounts: LiveData<List<AccountListItem>> =
         MediatorLiveData<List<AccountListItem>>().apply {
@@ -31,8 +32,11 @@ class AccountsViewModel(
 
             fun update() {
                 val type = typeFilter.value
-                val filteredAccounts =
-                    if (type == null) latestAccounts else latestAccounts.filter { it.type == type }
+                val query = searchQuery.value.orEmpty().trim()
+                val filteredAccounts = latestAccounts.filter {
+                    (type == null || it.type == type) &&
+                        it.name.contains(query, ignoreCase = true)
+                }
                 val items = AccountListItemBuilder.build(
                     filteredAccounts,
                     latestBalances,
@@ -55,6 +59,7 @@ class AccountsViewModel(
             }
             addSource(typeFilter) { update() }
             addSource(hideZeroBalance) { update() }
+            addSource(searchQuery) { update() }
         }
 
     fun setTypeFilter(type: String?) {
@@ -63,5 +68,9 @@ class AccountsViewModel(
 
     fun setHideZeroBalance(hide: Boolean) {
         hideZeroBalance.value = hide
+    }
+
+    fun setSearchQuery(query: String) {
+        searchQuery.value = query
     }
 }

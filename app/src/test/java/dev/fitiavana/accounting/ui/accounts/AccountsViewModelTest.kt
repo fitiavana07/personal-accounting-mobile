@@ -89,4 +89,61 @@ class AccountsViewModelTest {
 
         assertEquals(true, viewModel.accounts.value?.isEmpty())
     }
+
+    private fun names() = viewModel.accounts.value?.map { it.account.name }
+
+    @Test
+    fun `search query defaults to empty and does not filter`() {
+        assertEquals("", viewModel.searchQuery.value)
+        assertEquals(listOf("Cash"), names())
+    }
+
+    @Test
+    fun `search matches name as a case-insensitive substring`() {
+        viewModel.setHideZeroBalance(false)
+
+        viewModel.setSearchQuery("ZERO")
+
+        assertEquals(listOf("Zeroed Out"), names())
+
+        viewModel.setSearchQuery("account")
+
+        assertEquals(listOf("New Account"), names())
+    }
+
+    @Test
+    fun `search query is trimmed and blank query shows everything`() {
+        viewModel.setHideZeroBalance(false)
+
+        viewModel.setSearchQuery("  cash ")
+        assertEquals(listOf("Cash"), names())
+
+        viewModel.setSearchQuery("   ")
+        assertEquals(listOf("Cash", "Zeroed Out", "New Account"), names())
+    }
+
+    @Test
+    fun `search respects hideZeroBalance`() {
+        viewModel.setSearchQuery("zero")
+        assertEquals(true, viewModel.accounts.value?.isEmpty())
+
+        viewModel.setHideZeroBalance(false)
+        assertEquals(listOf("Zeroed Out"), names())
+    }
+
+    @Test
+    fun `search is scoped to the selected type and survives type changes`() {
+        viewModel.setHideZeroBalance(false)
+        viewModel.setSearchQuery("cash")
+
+        viewModel.setTypeFilter("asset")
+        assertEquals(listOf("Cash"), names())
+
+        viewModel.setTypeFilter("liability")
+        assertEquals(true, viewModel.accounts.value?.isEmpty())
+        assertEquals("cash", viewModel.searchQuery.value)
+
+        viewModel.setTypeFilter(null)
+        assertEquals(listOf("Cash"), names())
+    }
 }

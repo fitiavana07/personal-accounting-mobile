@@ -106,6 +106,9 @@ See `docs/transaction-templates-feature.md` for transaction templates (saved
 mode + accounts for Add Transaction): data model, slots, and how templates are
 applied per mode.
 
+See `docs/accounts-search.md` for the Accounts screen name search (scoped to
+the selected type tab, combined with the hide-zero-balance toggle).
+
 See `docs/earn-feature.md` for Earn (an APR on asset accounts, projected
 interest, the Earn screen and the Balance Sheet APR row).
 

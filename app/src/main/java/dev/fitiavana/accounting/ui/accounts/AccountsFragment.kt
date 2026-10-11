@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
 import android.widget.TextView
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -82,7 +83,8 @@ class AccountsFragment : Fragment() {
             if (accounts.isEmpty()) {
                 emptyView.visibility = View.VISIBLE
                 val hasFilter = viewModel.typeFilter.value != null ||
-                    viewModel.hideZeroBalance.value == true
+                    viewModel.hideZeroBalance.value == true ||
+                    viewModel.searchQuery.value.orEmpty().isNotBlank()
                 emptyView.setText(
                     if (hasFilter) R.string.empty_accounts_filtered
                     else R.string.empty_accounts
@@ -122,6 +124,26 @@ class AccountsFragment : Fragment() {
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.menu_accounts, menu)
+        setupSearch(menu.findItem(R.id.action_search))
+    }
+
+    private fun setupSearch(item: MenuItem) {
+        val searchView = item.actionView as SearchView
+        searchView.queryHint = getString(R.string.hint_search_accounts)
+        // Restore after recreation, before attaching the listener so it isn't echoed back.
+        val query = viewModel.searchQuery.value.orEmpty()
+        if (query.isNotEmpty()) {
+            item.expandActionView()
+            searchView.setQuery(query, false)
+        }
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextChange(newText: String): Boolean {
+                viewModel.setSearchQuery(newText)
+                return true
+            }
+
+            override fun onQueryTextSubmit(query: String): Boolean = true
+        })
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
