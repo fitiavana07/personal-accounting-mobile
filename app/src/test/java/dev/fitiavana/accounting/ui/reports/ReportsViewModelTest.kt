@@ -124,6 +124,49 @@ class ReportsViewModelTest {
     }
 
     @Test
+    fun `refreshSync reloads balances for the selected period after new transactions`() {
+        val min = millisFor(2026, Calendar.JANUARY, 1)
+        val max = millisFor(2026, Calendar.MARCH, 15)
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(min to max)
+        viewModel.loadInitialSync()
+        viewModel.selectMonthSync(Calendar.FEBRUARY)
+        val before = viewModel.balanceSheetRows.value
+        whenever(balanceRepository.computeBalancesAsOf(any())).thenReturn(mapOf("acc1" to 99_000L))
+
+        viewModel.refreshSync()
+
+        assertEquals(Calendar.FEBRUARY, viewModel.selectedMonth.value)
+        assertTrue(before != viewModel.balanceSheetRows.value)
+    }
+
+    @Test
+    fun `refreshSync extends the available months when a later transaction was added`() {
+        whenever(balanceRepository.getTransactionDateRange())
+            .thenReturn(millisFor(2026, Calendar.JANUARY, 1) to millisFor(2026, Calendar.JANUARY, 15))
+        viewModel.loadInitialSync()
+        whenever(balanceRepository.getTransactionDateRange())
+            .thenReturn(millisFor(2026, Calendar.JANUARY, 1) to millisFor(2026, Calendar.FEBRUARY, 15))
+
+        viewModel.refreshSync()
+
+        assertEquals(listOf(Calendar.JANUARY, Calendar.FEBRUARY, null), viewModel.availableMonths.value)
+        assertEquals(Calendar.JANUARY, viewModel.selectedMonth.value)
+    }
+
+    @Test
+    fun `refreshSync loads the first report when the first transaction was just added`() {
+        whenever(balanceRepository.getTransactionDateRange()).thenReturn(null)
+        viewModel.loadInitialSync()
+        whenever(balanceRepository.getTransactionDateRange())
+            .thenReturn(millisFor(2026, Calendar.MARCH, 1) to millisFor(2026, Calendar.MARCH, 15))
+
+        viewModel.refreshSync()
+
+        assertEquals(true, viewModel.hasTransactions.value)
+        assertEquals(Calendar.MARCH, viewModel.selectedMonth.value)
+    }
+
+    @Test
     fun `start triggers the initial load exactly once even when called repeatedly`() {
         whenever(balanceRepository.getTransactionDateRange()).thenReturn(null)
 

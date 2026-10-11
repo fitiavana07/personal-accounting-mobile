@@ -19,6 +19,8 @@ import dev.fitiavana.accounting.ui.transactions.AddTransactionActivity
 
 class ReportsFragment : Fragment() {
 
+    private var resumedBefore = false
+
     private lateinit var viewModel: ReportsViewModel
     private lateinit var contentAdapter: ReportAdapter
     private lateinit var equityAdapter: EquityStatementAdapter
@@ -114,6 +116,13 @@ class ReportsFragment : Fragment() {
         viewModel.equityStatement.observe(viewLifecycleOwner) { equityAdapter.submitList(it) }
 
         viewModel.start()
+    }
+
+    /** Reloads the reports on returning from another screen (e.g. Add Transaction); the first resume follows the initial load. */
+    override fun onResume() {
+        super.onResume()
+        if (resumedBefore) viewModel.refresh()
+        resumedBefore = true
     }
 
     /** Net worth and net income charts above the period selector; they scroll away with the screen. */

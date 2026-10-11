@@ -154,8 +154,22 @@ class ReportsViewModel(
         renderDisplay(_selectedReportType.value ?: ReportType.BALANCE_SHEET)
     }
 
+    /**
+     * Reloads the reports in the background, e.g. when returning from Add Transaction.
+     * Before the first load completes it is a no-op, since [start] will load everything anyway.
+     */
+    fun refresh() {
+        if (!started) return
+        Thread { refreshSync() }.start()
+    }
+
     /** Synchronous version of the initial load, for use on a background thread (or directly in tests). */
-    internal fun loadInitialSync() {
+    internal fun loadInitialSync() = loadSync(keepSelection = false)
+
+    /** Reloads data, keeping the selected period when it still exists; for a background thread (or tests). */
+    internal fun refreshSync() = loadSync(keepSelection = true)
+
+    private fun loadSync(keepSelection: Boolean) {
         val range = balanceRepository.getTransactionDateRange()
         if (range == null) {
             _hasTransactions.postValue(false)
@@ -166,15 +180,20 @@ class ReportsViewModel(
             ReportPeriodSelector.monthsBetween(range.first, range.second)
         monthsByYear = months.groupBy({ it.year }, { it.month })
         val years = monthsByYear.keys.sorted()
-        val lastYear = years.last()
-        val lastMonth = monthsByYear.getValue(lastYear).max()
+
+        val previousYear = _selectedYear.value.takeIf { keepSelection }
+        val year = previousYear?.takeIf { it in monthsByYear } ?: years.last()
+        val yearMonths = monthsByYear.getValue(year)
+        val month: Int? =
+            if (year == previousYear && _selectedMonth.value.let { it == null || it in yearMonths }) _selectedMonth.value
+            else yearMonths.max()
 
         _hasTransactions.postValue(true)
         _availableYears.postValue(years)
-        _availableMonths.postValue(monthsByYear.getValue(lastYear) + null)
-        _selectedYear.postValue(lastYear)
-        _selectedMonth.postValue(lastMonth)
-        recomputeSync(lastYear, lastMonth)
+        _availableMonths.postValue(yearMonths + null)
+        _selectedYear.postValue(year)
+        _selectedMonth.postValue(month)
+        recomputeSync(year, month)
         loadTrendSync(months.takeLast(TrendSeriesBuilder.MAX_MONTHS))
     }
 
