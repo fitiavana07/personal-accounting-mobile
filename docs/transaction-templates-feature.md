@@ -12,8 +12,8 @@ notes are never stored.
 - **Use:** the mode-selection step lists saved templates under the four mode cards (newest first; the section
   is hidden when there are none). Tap one: the form opens in that mode with the accounts already selected.
 - **Delete:** the trash icon on a template row, with a confirmation. Transactions already made are not affected.
-- If an account in a template can no longer be picked (for example an instrument account that now has an
-  intermediary instrument, or the TO account no longer fits the FROM account's instrument), the form still opens
+- If an account in a template can no longer be picked (for example, in Instrument Transfer, an instrument
+  account that now has an intermediary instrument, or the TO account no longer fits the FROM account's instrument), the form still opens
   and a message asks you to pick the missing accounts again.
 
 ## Data model (`features/templates/`, schema v18)

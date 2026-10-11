@@ -36,12 +36,44 @@ class InstrumentIncomeBuilderTest {
     private val loan = Account(id = "loan", name = "Loan", type = "liability")
 
     @Test
-    fun `selectableAssetAccounts keeps only asset accounts with an instrument and no intermediary`() {
+    fun `selectableAssetAccounts keeps only asset accounts with an instrument, with or without intermediary`() {
         val result = InstrumentIncomeBuilder.selectableAssetAccounts(
             listOf(cash, usdWallet, btcWalletWithIntermediary, salesRevenue, loan)
         )
 
-        assertEquals(listOf(usdWallet), result)
+        assertEquals(listOf(usdWallet, btcWalletWithIntermediary), result)
+    }
+
+    @Test
+    fun `buildEntries debits the intermediary amount on the asset entry only`() {
+        val entries = InstrumentIncomeBuilder.buildEntries(
+            assetAccountId = "btc_wallet",
+            revenueAccountId = "sales_revenue",
+            instrumentAmount = 150L,
+            baseAmount = 60_000L,
+            intermediaryAmount = 4_000L
+        )
+
+        assertEquals(4_000L, entries[0].intermediaryDebitAmount)
+        assertEquals(null, entries[0].intermediaryCreditAmount)
+        assertEquals(null, entries[1].intermediaryDebitAmount)
+        assertEquals(
+            TransactionValidator.ValidationResult.Valid,
+            TransactionValidator.validate(entries)
+        )
+    }
+
+    @Test
+    fun `buildEntries drops a non-positive intermediary amount`() {
+        val entries = InstrumentIncomeBuilder.buildEntries(
+            assetAccountId = "btc_wallet",
+            revenueAccountId = "sales_revenue",
+            instrumentAmount = 150L,
+            baseAmount = 60_000L,
+            intermediaryAmount = 0L
+        )
+
+        assertEquals(null, entries[0].intermediaryDebitAmount)
     }
 
     @Test

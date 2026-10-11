@@ -49,9 +49,7 @@ class InstrumentTransferController(
     runOnUiThread: (() -> Unit) -> Unit
 ) {
 
-    private val getBalance: (String) -> Pair<Long, Long>? = { id ->
-        viewModel.getBalance(id)?.let { it.balance to it.instrumentBalance }
-    }
+    private val getBalance: (String) -> SideBalance? = { id -> viewModel.getBalance(id)?.toSideBalance() }
 
     /** All accounts loaded, from which [InstrumentTransferBuilder] derives each spinner's options. */
     private var allAccounts: List<Account> = emptyList()

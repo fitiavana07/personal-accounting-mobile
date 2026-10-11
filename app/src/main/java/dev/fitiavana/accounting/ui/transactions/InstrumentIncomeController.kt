@@ -52,9 +52,7 @@ class InstrumentIncomeController(
     runOnUiThread: (() -> Unit) -> Unit
 ) {
 
-    private val getBalance: (String) -> Pair<Long, Long>? = { id ->
-        viewModel.getBalance(id)?.let { it.balance to it.instrumentBalance }
-    }
+    private val getBalance: (String) -> SideBalance? = { id -> viewModel.getBalance(id)?.toSideBalance() }
 
     private val asset: AccountSideController = AccountSideController(
         context = context,
@@ -139,6 +137,23 @@ class InstrumentIncomeController(
             instrumentBalance = asset.instrumentBalance
         )
 
+    private fun intermediaryInstrument(): Instrument? =
+        asset.account?.intermediaryInstrumentCode?.let { instrumentsMap[it] }
+
+    /**
+     * The intermediary instrument units received, derived like the base amount
+     * from the asset's own prior ratio (intermediary balance per instrument
+     * unit). Null when the asset has no intermediary instrument or no rate.
+     */
+    private fun computedIntermediaryAmount(instrument: Instrument): Long? {
+        if (intermediaryInstrument() == null) return null
+        return InstrumentValueCalculator.computeBaseAmount(
+            instrumentAmount = transactionInstrumentAmount(instrument),
+            balance = asset.intermediaryBalance,
+            instrumentBalance = asset.instrumentBalance
+        )
+    }
+
     private fun updateNewBalances(side: AccountSideController) {
         val account = side.account
         val instrument = currentInstrument()
@@ -164,11 +179,25 @@ class InstrumentIncomeController(
                 debit = instrumentAmount,
                 credit = 0L
             )
-            textNewBalance.text = context.getString(
-                R.string.label_new_balance_ar_instrument,
-                TransactionDisplay.formatAmount(newBalance),
-                TransactionDisplay.formatInstrumentAmount(newInstrumentBalance, instrument)
-            )
+            val formattedBase = TransactionDisplay.formatAmount(newBalance)
+            val formattedInstrument = TransactionDisplay.formatInstrumentAmount(newInstrumentBalance, instrument)
+            val intermediary = intermediaryInstrument()
+            textNewBalance.text = if (intermediary != null) {
+                val newIntermediaryBalance = BalanceCalculator.project(
+                    accountType = account.type,
+                    currentBalance = side.intermediaryBalance,
+                    debit = computedIntermediaryAmount(instrument) ?: 0L,
+                    credit = 0L
+                )
+                context.getString(
+                    R.string.label_new_balance_ar_instrument_intermediary,
+                    formattedBase,
+                    formattedInstrument,
+                    TransactionDisplay.formatInstrumentAmount(newIntermediaryBalance, intermediary)
+                )
+            } else {
+                context.getString(R.string.label_new_balance_ar_instrument, formattedBase, formattedInstrument)
+            }
         } else {
             textNewBalance.text = context.getString(
                 R.string.label_new_balance_ar,
@@ -201,11 +230,20 @@ class InstrumentIncomeController(
             textAmountBase.visibility = View.GONE
             return
         }
-        textAmountBase.text = context.getString(
-            R.string.label_amount_plus_ar_instrument,
-            TransactionDisplay.formatAmount(baseAmount),
-            TransactionDisplay.formatInstrumentAmount(instrumentAmount, instrument)
-        )
+        val formattedBase = TransactionDisplay.formatAmount(baseAmount)
+        val formattedInstrument = TransactionDisplay.formatInstrumentAmount(instrumentAmount, instrument)
+        val intermediary = intermediaryInstrument()
+        val intermediaryAmount = computedIntermediaryAmount(instrument)
+        textAmountBase.text = if (intermediary != null && intermediaryAmount != null) {
+            context.getString(
+                R.string.label_amount_plus_ar_instrument_intermediary,
+                formattedBase,
+                formattedInstrument,
+                TransactionDisplay.formatInstrumentAmount(intermediaryAmount, intermediary)
+            )
+        } else {
+            context.getString(R.string.label_amount_plus_ar_instrument, formattedBase, formattedInstrument)
+        }
         textAmountBase.visibility = View.VISIBLE
     }
 
@@ -278,7 +316,8 @@ class InstrumentIncomeController(
             assetAccountId = assetAccount.id,
             revenueAccountId = revenueAccount.id,
             instrumentAmount = instrumentAmount,
-            baseAmount = baseAmount
+            baseAmount = baseAmount,
+            intermediaryAmount = instrument?.let { computedIntermediaryAmount(it) }
         )
     }
 
@@ -291,7 +330,8 @@ class InstrumentIncomeController(
             assetAccountId = asset.account?.id ?: "",
             revenueAccountId = revenue.account?.id ?: "",
             instrumentAmount = instrumentAmount,
-            baseAmount = baseAmount
+            baseAmount = baseAmount,
+            intermediaryAmount = instrument?.let { computedIntermediaryAmount(it) }
         )
     }
 

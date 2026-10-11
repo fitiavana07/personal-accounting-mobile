@@ -8,8 +8,14 @@ import android.widget.Spinner
 import android.widget.TextView
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
+
+/** An account's current balances: base currency, instrument and (when it has one) intermediary instrument. */
+data class SideBalance(val balance: Long, val instrumentBalance: Long, val intermediaryBalance: Long = 0L)
+
+fun AccountBalance.toSideBalance() = SideBalance(balance, instrumentBalance, intermediaryBalance)
 
 /**
  * One selectable account side of an instrument-aware transaction: a spinner
@@ -22,7 +28,7 @@ import dev.fitiavana.accounting.ui.common.TransactionDisplay
 class AccountSideController(
     private val context: Context,
     private val instrumentsMap: Map<String, Instrument>,
-    private val getBalance: (accountId: String) -> Pair<Long, Long>?,
+    private val getBalance: (accountId: String) -> SideBalance?,
     val spinner: Spinner,
     val textBalance: TextView,
     val isDebit: Boolean,
@@ -39,6 +45,8 @@ class AccountSideController(
         private set
     var instrumentBalance: Long = 0L
         private set
+    var intermediaryBalance: Long = 0L
+        private set
 
     init {
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -50,8 +58,7 @@ class AccountSideController(
             ) {
                 val selected = selectedAccount()
                 account = selected
-                balance = 0L
-                instrumentBalance = 0L
+                resetBalances()
                 onAccountSelected(selected)
                 if (selected == null) {
                     hideBalance()
@@ -82,8 +89,7 @@ class AccountSideController(
     /** Clears the selected account/balances, resets the spinner to the placeholder, and hides the balance text. */
     fun clearSelection() {
         account = null
-        balance = 0L
-        instrumentBalance = 0L
+        resetBalances()
         spinner.setSelection(0)
         hideBalance()
     }
@@ -109,10 +115,19 @@ class AccountSideController(
             runOnUiThread {
                 // a newer selection may have won the race
                 if (this.account?.id != account.id) return@runOnUiThread
-                balance = bal?.first ?: 0L
-                instrumentBalance = bal?.second ?: 0L
+                balance = bal?.balance ?: 0L
+                instrumentBalance = bal?.instrumentBalance ?: 0L
+                intermediaryBalance = bal?.intermediaryBalance ?: 0L
                 val instrument = account.instrumentCode?.let { instrumentsMap[it] }
-                textBalance.text = if (instrument != null) {
+                val intermediary = account.intermediaryInstrumentCode?.let { instrumentsMap[it] }
+                textBalance.text = if (instrument != null && intermediary != null) {
+                    context.getString(
+                        R.string.label_balance_ar_instrument_intermediary,
+                        TransactionDisplay.formatAmount(balance),
+                        TransactionDisplay.formatInstrumentAmount(instrumentBalance, instrument),
+                        TransactionDisplay.formatInstrumentAmount(intermediaryBalance, intermediary)
+                    )
+                } else if (instrument != null) {
                     context.getString(
                         R.string.label_balance_ar_instrument,
                         TransactionDisplay.formatAmount(balance),
@@ -128,6 +143,12 @@ class AccountSideController(
                 onBalanceLoaded()
             }
         }
+    }
+
+    private fun resetBalances() {
+        balance = 0L
+        instrumentBalance = 0L
+        intermediaryBalance = 0L
     }
 
     private fun selectedAccount(): Account? {

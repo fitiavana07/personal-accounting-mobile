@@ -11,6 +11,7 @@ import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -53,6 +54,10 @@ class InstrumentIncomeControllerTest {
     private val eurWallet = Account(
         id = "eur_wallet", name = "EUR Wallet", type = "asset", instrumentCode = "EUR"
     )
+    private val usdViaEurWallet = Account(
+        id = "usd_via_eur", name = "USD via EUR", type = "asset",
+        instrumentCode = "USD", intermediaryInstrumentCode = "EUR"
+    )
     private val salesRevenue = Account(id = "sales_revenue", name = "Sales Revenue", type = "revenue")
     private val otherRevenue = Account(id = "other_revenue", name = "Other Revenue", type = "revenue")
 
@@ -87,7 +92,7 @@ class InstrumentIncomeControllerTest {
             onChanged = onChanged,
             runInBackground = { it() },
             runOnUiThread = { it() }
-        ).also { it.populateSpinners(listOf(usdWallet, eurWallet, salesRevenue, otherRevenue)) }
+        ).also { it.populateSpinners(listOf(usdWallet, eurWallet, usdViaEurWallet, salesRevenue, otherRevenue)) }
 
     @Test
     fun `no accounts selected produces no entries`() {
@@ -135,10 +140,75 @@ class InstrumentIncomeControllerTest {
     fun `asset spinner only offers eligible asset accounts`() {
         val controller = controller()
 
-        // placeholder + usd_wallet + eur_wallet
-        assertEquals(3, assetSpinner.adapter.count)
+        // placeholder + usd_wallet + eur_wallet + usd_via_eur (intermediary accounts are offered too)
+        assertEquals(4, assetSpinner.adapter.count)
         assertEquals(usdWallet.name, assetSpinner.adapter.getItem(1))
         assertEquals(eurWallet.name, assetSpinner.adapter.getItem(2))
+        assertEquals(usdViaEurWallet.name, assetSpinner.adapter.getItem(3))
+    }
+
+    private fun stubBalance(id: String, balance: Long, instrument: Long, intermediary: Long = 0L) {
+        whenever(viewModel.getBalance(id)).thenReturn(
+            AccountBalance(
+                accountId = id,
+                balance = balance,
+                instrumentBalance = instrument,
+                intermediaryBalance = intermediary,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+    }
+
+    @Test
+    fun `an asset with an intermediary gets a proportionally derived intermediary debit`() {
+        stubBalance("usd_via_eur", balance = 400_000L, instrument = 1000L, intermediary = 500L)
+        stubBalance("sales_revenue", balance = 0L, instrument = 0L)
+        val controller = controller()
+
+        assetSpinner.setSelection(3) // usd_via_eur
+        revenueSpinner.setSelection(1)
+        editIncomeAmount.setText("11.50") // delta 150 instrument units
+
+        val asset = controller.collectEntries()!!.first { it.accountId == "usd_via_eur" }
+        assertEquals(75L, asset.intermediaryDebitAmount) // 150 * 500 / 1000
+        assertNull(asset.intermediaryCreditAmount)
+    }
+
+    @Test
+    fun `the amount preview appends the intermediary delta after the instrument delta`() {
+        stubBalance("usd_via_eur", balance = 400_000L, instrument = 1000L, intermediary = 500L)
+        controller()
+
+        assetSpinner.setSelection(3)
+        editIncomeAmount.setText("11.50") // +1.5 USD, +0.75 EUR, +60,000 Ar
+
+        assertEquals("+ 60,000 Ar · 1.5 USD · 0.75 EUR", textAmountBase.text.toString())
+    }
+
+    @Test
+    fun `an asset without an intermediary records no intermediary amount or balance part`() {
+        stubBalance("usd_wallet", balance = 400_000L, instrument = 1000L, intermediary = 500L)
+        stubBalance("sales_revenue", balance = 0L, instrument = 0L)
+        val controller = controller()
+
+        assetSpinner.setSelection(1) // usd_wallet
+        revenueSpinner.setSelection(1)
+        editIncomeAmount.setText("11.50")
+
+        assertNull(controller.collectEntries()!!.first { it.accountId == "usd_wallet" }.intermediaryDebitAmount)
+        assertEquals("New balance: 460,000 Ar · 11.5 USD", assetTextNewBalance.text.toString())
+    }
+
+    @Test
+    fun `the new balance line ends with the new intermediary balance`() {
+        stubBalance("usd_via_eur", balance = 400_000L, instrument = 1000L, intermediary = 500L)
+        controller()
+
+        assetSpinner.setSelection(3)
+        editIncomeAmount.setText("11.50") // +150 -> intermediary +75: 5.00 -> 5.75
+
+        assertEquals("New balance: 460,000 Ar · 11.5 USD · 5.75 EUR", assetTextNewBalance.text.toString())
     }
 
     @Test

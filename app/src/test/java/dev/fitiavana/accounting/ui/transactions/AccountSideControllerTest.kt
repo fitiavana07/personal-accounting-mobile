@@ -49,7 +49,7 @@ class AccountSideControllerTest {
 
     private fun controller(
         instrumentsMap: Map<String, Instrument> = this.instrumentsMap,
-        getBalance: (String) -> Pair<Long, Long>? = { null },
+        getBalance: (String) -> SideBalance? = { null },
         spinner: Spinner = Spinner(context),
         textBalance: TextView = TextView(context),
         isDebit: Boolean = true,
@@ -140,7 +140,7 @@ class AccountSideControllerTest {
         val sut = controller(
             spinner = spinner,
             textBalance = textBalance,
-            getBalance = { id -> if (id == accountNoInstrument.id) Pair(1000L, 1000L) else null },
+            getBalance = { id -> if (id == accountNoInstrument.id) SideBalance(1000L, 1000L) else null },
             onAccountSelected = { selectedNotified = it },
             onBalanceLoaded = { balanceLoadedCalled = true }
         )
@@ -167,7 +167,7 @@ class AccountSideControllerTest {
         val sut = controller(
             spinner = spinner,
             textBalance = textBalance,
-            getBalance = { id -> if (id == accountUsd.id) Pair(2000L, 20L) else null }
+            getBalance = { id -> if (id == accountUsd.id) SideBalance(2000L, 20L) else null }
         )
         sut.populate(listOf(accountUsd))
 
@@ -187,13 +187,49 @@ class AccountSideControllerTest {
     }
 
     @Test
+    fun selectingAccount_exposesTheIntermediaryBalance() {
+        val spinner = Spinner(context)
+        val sut = controller(
+            spinner = spinner,
+            getBalance = { id -> if (id == accountUsd.id) SideBalance(2000L, 20L, 7L) else null }
+        )
+        sut.populate(listOf(accountUsd))
+
+        select(spinner, 1)
+
+        assertEquals(7L, sut.intermediaryBalance)
+    }
+
+    @Test
+    fun selectingAccount_withIntermediaryInstrument_appendsTheIntermediaryBalance() {
+        val eur = Instrument(code = "EUR", note = "", type = "fiat", decimalPlaces = 2)
+        val usdViaEur = Account(
+            id = "a4", name = "USD via EUR", type = "asset",
+            instrumentCode = "USD", intermediaryInstrumentCode = "EUR"
+        )
+        val spinner = Spinner(context)
+        val textBalance = TextView(context)
+        val sut = controller(
+            instrumentsMap = mapOf("USD" to usd, "EUR" to eur),
+            spinner = spinner,
+            textBalance = textBalance,
+            getBalance = { SideBalance(2000L, 20L, 750L) }
+        )
+        sut.populate(listOf(usdViaEur))
+
+        select(spinner, 1)
+
+        assertEquals("Balance: 2,000 Ar · 0.2 USD · 7.5 EUR", textBalance.text.toString())
+    }
+
+    @Test
     fun selectingAccount_withInstrumentCodeNotInMap_fallsBackToPlainBalanceText() {
         val spinner = Spinner(context)
         val textBalance = TextView(context)
         val sut = controller(
             spinner = spinner,
             textBalance = textBalance,
-            getBalance = { id -> if (id == accountUnknownInstrument.id) Pair(500L, 500L) else null }
+            getBalance = { id -> if (id == accountUnknownInstrument.id) SideBalance(500L, 500L) else null }
         )
         sut.populate(listOf(accountUnknownInstrument))
 
@@ -244,7 +280,7 @@ class AccountSideControllerTest {
             textBalance = textBalance,
             getBalance = { id ->
                 getBalanceCallCount++
-                if (id == accountNoInstrument.id) Pair(1000L, 1000L) else null
+                if (id == accountNoInstrument.id) SideBalance(1000L, 1000L) else null
             },
             onAccountSelected = { lastNotified = it }
         )
@@ -269,7 +305,7 @@ class AccountSideControllerTest {
         val sut = controller(
             spinner = spinner,
             textBalance = textBalance,
-            getBalance = { Pair(1000L, 1000L) },
+            getBalance = { SideBalance(1000L, 1000L) },
             onAccountSelected = { lastNotified = it }
         )
         sut.populate(listOf(accountNoInstrument))
@@ -290,8 +326,8 @@ class AccountSideControllerTest {
         val spinner = Spinner(context)
         val textBalance = TextView(context)
         val results = mapOf(
-            accountNoInstrument.id to Pair(111L, 111L),
-            accountUsd.id to Pair(222L, 222L)
+            accountNoInstrument.id to SideBalance(111L, 111L),
+            accountUsd.id to SideBalance(222L, 222L)
         )
         var firstCallHandled = false
         lateinit var sut: AccountSideController
@@ -348,7 +384,7 @@ class AccountSideControllerTest {
         val sut = controller(
             spinner = spinner,
             textBalance = textBalance,
-            getBalance = { Pair(1000L, 1000L) }
+            getBalance = { SideBalance(1000L, 1000L) }
         )
         val accounts = listOf(accountNoInstrument)
         sut.populate(accounts)

@@ -70,6 +70,28 @@ the **asset** side's `balance`/`instrumentBalance` and the inferred
 delta-from-typed-new-balance as `instrumentAmount` (see
 `InstrumentIncomeController.transactionInstrumentAmount`).
 
+### Income with an intermediary instrument
+
+Income also accepts asset accounts that have an intermediary instrument
+(e.g. BTC via USDT). The intermediary amount is never typed: it is derived
+with the same function and the same instrument delta, using the asset's
+`intermediaryBalance` as the numerator:
+
+```kotlin
+val intermediaryAmount = InstrumentValueCalculator.computeBaseAmount(
+    instrumentAmount = delta,
+    balance = asset.intermediaryBalance,
+    instrumentBalance = asset.instrumentBalance
+)
+```
+
+It is saved as `intermediaryDebitAmount` on the asset entry (omitted when
+the account has no intermediary or the result is not positive). The
+intermediary balance is appended as a third part to the asset's "Balance:"
+line (`AccountSideController`), its "New balance:" line, and the "+ … Ar ·
+… · …" delta line below the new balance field. Instrument Transfer still
+excludes accounts with an intermediary.
+
 ## Notes
 
 - The rate is always taken from the **From** account (Transfer) or the

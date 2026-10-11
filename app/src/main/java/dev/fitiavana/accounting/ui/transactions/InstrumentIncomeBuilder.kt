@@ -17,12 +17,11 @@ object InstrumentIncomeBuilder {
 
     /**
      * The accounts offered in the asset spinner: asset accounts with an
-     * instrument and no intermediary instrument. Input order is preserved.
+     * instrument (with or without an intermediary instrument). Input order is
+     * preserved.
      */
     fun selectableAssetAccounts(accounts: List<Account>): List<Account> =
-        accounts.filter {
-            it.type == AccountTypes.ASSET && it.instrumentCode != null && it.intermediaryInstrumentCode == null
-        }
+        accounts.filter { it.type == AccountTypes.ASSET && it.instrumentCode != null }
 
     /**
      * The accounts offered in the revenue spinner: revenue accounts with no
@@ -39,13 +38,16 @@ object InstrumentIncomeBuilder {
      * base-currency units, and [revenueAccountId] credited by [baseAmount]
      * base-currency units only (revenue accounts hold no instrument). A null
      * or non-positive [instrumentAmount]/[baseAmount] yields null amounts,
-     * which [TransactionValidator.validate] reports as incomplete.
+     * which [TransactionValidator.validate] reports as incomplete. A positive
+     * [intermediaryAmount] is also debited on the asset entry (the asset
+     * account's intermediary instrument units).
      */
     fun buildEntries(
         assetAccountId: String,
         revenueAccountId: String,
         instrumentAmount: Long?,
-        baseAmount: Long?
+        baseAmount: Long?,
+        intermediaryAmount: Long? = null
     ): List<TransactionValidator.EntryData> {
         val instrumentValue = instrumentAmount?.takeIf { it > 0L }
         val baseValue = baseAmount?.takeIf { it > 0L }
@@ -55,7 +57,8 @@ object InstrumentIncomeBuilder {
                 debitAmount = baseValue,
                 creditAmount = null,
                 instrumentDebitAmount = instrumentValue,
-                instrumentCreditAmount = null
+                instrumentCreditAmount = null,
+                intermediaryDebitAmount = intermediaryAmount?.takeIf { it > 0L }
             ),
             TransactionValidator.EntryData(
                 accountId = revenueAccountId,
