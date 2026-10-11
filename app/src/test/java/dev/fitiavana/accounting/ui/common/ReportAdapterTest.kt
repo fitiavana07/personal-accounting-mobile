@@ -44,7 +44,7 @@ class ReportAdapterTest {
             0
         )
 
-        assertEquals("Bybit ▸", label(h).text.toString())
+        assertEquals("Bybit ►", label(h).text.toString())
         h.itemView.performClick()
         assertEquals("a1", clicked)
     }
@@ -58,7 +58,7 @@ class ReportAdapterTest {
             0
         )
 
-        assertEquals("Bybit ▾", label(h).text.toString())
+        assertEquals("Bybit ▼", label(h).text.toString())
     }
 
     @Test

@@ -227,7 +227,8 @@ class ReportAdapter(
         private const val VIEW_TYPE_TITLE = 0
         private const val VIEW_TYPE_ROW = 1
         private const val VIEW_TYPE_DATE = 2
-        private const val CHEVRON_COLLAPSED = "▸"
-        private const val CHEVRON_EXPANDED = "▾"
+        // ▸/▾ (U+25B8/U+25BE) are missing from API 19's system font; ►/▼ render everywhere.
+        private const val CHEVRON_COLLAPSED = "►"
+        private const val CHEVRON_EXPANDED = "▼"
     }
 }
