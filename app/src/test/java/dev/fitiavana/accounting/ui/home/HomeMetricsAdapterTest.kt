@@ -75,7 +75,7 @@ class HomeMetricsAdapterTest {
 
     @Test
     fun `avg income and monthly expenses share one row`() {
-        assertSame(rowOf("Avg. Income"), rowOf("Mo. Spend"))
+        assertSame(rowOf("Average Income"), rowOf("Monthly Spend"))
     }
 
     @Test
@@ -86,20 +86,20 @@ class HomeMetricsAdapterTest {
     @Test
     fun `rows are ordered by theme with income left of expenses and ratio left of runway`() {
         val container = itemView.findViewById<ViewGroup>(R.id.container_metrics_rows)
-        val order = listOf("Equity", "Cash to Equity", "Avg. Income", "Income / Spend")
+        val order = listOf("Equity", "Cash to Equity", "Average Income", "Income / Spend")
             .map { container.indexOfChild(rowOf(it)) }
         assertEquals(order.sorted(), order)
         assertEquals(4, order.toSet().size)
 
-        assertEquals(0, cellIndexOf("Avg. Income"))
-        assertEquals(1, cellIndexOf("Mo. Spend"))
+        assertEquals(0, cellIndexOf("Average Income"))
+        assertEquals(1, cellIndexOf("Monthly Spend"))
         assertEquals(0, cellIndexOf("Income / Spend"))
         assertEquals(1, cellIndexOf("Cash Runway"))
     }
 
     @Test
     fun `avg income shows the compact base-currency amount`() {
-        val row = rowOf("Avg. Income")
+        val row = rowOf("Average Income")
         val values = ArrayList<View>()
         row.findViewsWithText(values, "150", View.FIND_VIEWS_WITH_TEXT)
         assertEquals(1, values.size)
