@@ -2,6 +2,7 @@ package dev.fitiavana.accounting.features.sync
 
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.db.inMemoryDatabase
+import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
@@ -19,7 +20,10 @@ class SyncDevice(val id: String, var now: Long = 1_000L, failOnRecalculate: Bool
     val templates = TemplateRepository(db.templateDao(), tracker, clock = { 1L }, idGenerator = IdSequence(id)::next)
     val settings = AppSettingsRepository(db.appSettingsDao(), tracker)
     val balances = BalanceRepository(db.accountDao(), db.accountBalanceDao(), db.transactionDao())
-    val sync = SyncRepository(
+    val sync = syncRepository(AppDatabase.SCHEMA_VERSION, failOnRecalculate)
+
+    /** The sync repository of this device, optionally claiming another database version. */
+    fun syncRepository(schemaVersion: Int, failOnRecalculate: Boolean = false) = SyncRepository(
         tracker = tracker,
         metaDao = db.syncMetaDao(),
         syncDao = db.syncDao(),
@@ -28,9 +32,23 @@ class SyncDevice(val id: String, var now: Long = 1_000L, failOnRecalculate: Bool
         transactionDao = db.transactionDao(),
         templateDao = db.templateDao(),
         appSettingsDao = db.appSettingsDao(),
-        schemaVersion = AppDatabase.SCHEMA_VERSION,
+        schemaVersion = schemaVersion,
         recalculateBalances = if (failOnRecalculate) ({ error("balances failed") }) else balances::recalculateAll,
     )
+
+    /** An instrument, two accounts and a transaction of 100 between them. */
+    fun seedLedger() {
+        instruments.insert(SyncFixtures.instrument("USD"))
+        accounts.insert(Account("a1", "Bank a1", "asset"))
+        accounts.insert(Account("a2", "Revenue a2", "revenue"))
+        transactions.save(
+            SyncFixtures.transaction("t1"),
+            listOf(
+                SyncFixtures.entry("e1", "t1", "a1", debit = 100, credit = null),
+                SyncFixtures.entry("e2", "t1", "a2", debit = null, credit = 100),
+            ),
+        )
+    }
 
     private class IdSequence(private val prefix: String) {
         private var n = 0

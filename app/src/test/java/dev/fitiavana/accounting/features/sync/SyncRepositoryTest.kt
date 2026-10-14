@@ -51,15 +51,7 @@ class SyncRepositoryTest {
     private fun assertInSync() = assertEquals(a.state(), b.state())
 
     /** An instrument, two accounts and a transaction of 100 between them, recorded on [device]. */
-    private fun seedLedger(device: SyncDevice) {
-        device.instruments.insert(instrument("USD"))
-        device.accounts.insert(bank("a1"))
-        device.accounts.insert(revenue("a2"))
-        device.transactions.save(
-            transaction("t1"),
-            listOf(entry("e1", "t1", "a1", debit = 100, credit = null), entry("e2", "t1", "a2", debit = null, credit = 100)),
-        )
-    }
+    private fun seedLedger(device: SyncDevice) = device.seedLedger()
 
     // --- snapshot ---
 
