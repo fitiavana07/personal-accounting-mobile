@@ -81,6 +81,12 @@ android {
     }
 }
 
+// The Android Conscrypt AAR's native library can't load on the JVM, and Robolectric
+// supplies its own Conscrypt; keep the AAR out of the unit-test runtime.
+configurations.matching { it.name.endsWith("UnitTestRuntimeClasspath") }.configureEach {
+    exclude(group = "org.conscrypt", module = "conscrypt-android")
+}
+
 dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
@@ -104,6 +110,7 @@ dependencies {
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.okhttp)
+    implementation(libs.conscrypt)
     implementation(libs.androidx.multidex)
     implementation(libs.mpandroidchart)
     implementation(libs.bouncycastle)
