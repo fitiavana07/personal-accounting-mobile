@@ -6,6 +6,9 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import javax.crypto.Cipher
+import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 class SyncCryptoTest {
     private val identity = SyncIdentity.RELEASE
@@ -27,6 +30,25 @@ class SyncCryptoTest {
         val plain = "the ledger".toByteArray()
 
         assertArrayEquals(plain, crypto.decrypt(crypto.encrypt(plain)))
+    }
+
+    @Test
+    fun theWireFormIsStandardAesGcmSoItIsIndependentOfThePlatformProvider() {
+        val plain = "the ledger".toByteArray()
+        val data = crypto.encrypt(plain)
+        val key = SecretKeySpec(
+            SyncCrypto.pbkdf2Sha256(
+                "correct horse battery".toByteArray(),
+                identity.cryptoNamespace.toByteArray(),
+                100_000,
+                32,
+            ),
+            "AES",
+        )
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(128, data.copyOfRange(0, 12)))
+
+        assertArrayEquals(plain, cipher.doFinal(data, 12, data.size - 12))
     }
 
     @Test

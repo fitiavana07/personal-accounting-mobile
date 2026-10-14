@@ -1,13 +1,15 @@
 package dev.fitiavana.accounting.features.sync
 
+import org.bouncycastle.crypto.InvalidCipherTextException
 import org.bouncycastle.crypto.digests.SHA256Digest
+import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.generators.PKCS5S2ParametersGenerator
+import org.bouncycastle.crypto.modes.GCMBlockCipher
+import org.bouncycastle.crypto.modes.GCMModeCipher
+import org.bouncycastle.crypto.params.AEADParameters
 import org.bouncycastle.crypto.params.KeyParameter
-import java.security.GeneralSecurityException
 import java.security.SecureRandom
-import javax.crypto.Cipher
 import javax.crypto.Mac
-import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
@@ -48,20 +50,28 @@ class SyncCrypto(passphrase: String, identity: SyncIdentity) {
     /** The nonce followed by the ciphertext and its authentication tag. */
     fun encrypt(plain: ByteArray): ByteArray {
         val nonce = ByteArray(NONCE_BYTES).also(random::nextBytes)
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(TAG_BITS, nonce))
-        return nonce + cipher.doFinal(plain)
+        return nonce + gcm(true, nonce).process(plain, 0, plain.size)
     }
 
     fun decrypt(data: ByteArray): ByteArray {
         if (data.size < NONCE_BYTES + TAG_BITS / 8) throw AuthenticationException("The message is too short")
         return try {
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_BITS, data.copyOfRange(0, NONCE_BYTES)))
-            cipher.doFinal(data, NONCE_BYTES, data.size - NONCE_BYTES)
-        } catch (e: GeneralSecurityException) {
+            gcm(false, data.copyOfRange(0, NONCE_BYTES)).process(data, NONCE_BYTES, data.size - NONCE_BYTES)
+        } catch (e: InvalidCipherTextException) {
             throw AuthenticationException("The message could not be authenticated")
         }
+    }
+
+    /** Bouncy Castle's own GCM: the platform provider rejects GCMParameterSpec before API 21. */
+    private fun gcm(encrypt: Boolean, nonce: ByteArray) = GCMBlockCipher.newInstance(AESEngine.newInstance()).apply {
+        init(encrypt, AEADParameters(KeyParameter(key.encoded), TAG_BITS, nonce))
+    }
+
+    private fun GCMModeCipher.process(input: ByteArray, offset: Int, length: Int): ByteArray {
+        val out = ByteArray(getOutputSize(length))
+        val written = processBytes(input, offset, length, out, 0)
+        doFinal(out, written)
+        return out
     }
 
     companion object {
