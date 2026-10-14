@@ -18,6 +18,7 @@ import dev.fitiavana.accounting.features.templates.TemplateSlot
 import dev.fitiavana.accounting.features.templates.TemplateSlots
 import dev.fitiavana.accounting.features.templates.TemplateWithEntries
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.enableAmountFormatting
 
 /**
  * Owns the Simple Transfer mode's two account sides and shared amount field:
@@ -61,6 +62,7 @@ class SimpleTransferController(
     private var transferAccounts: List<Account> = emptyList()
 
     init {
+        editTransferAmount.enableAmountFormatting()
         editTransferAmount.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
             override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}

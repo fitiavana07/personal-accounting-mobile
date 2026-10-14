@@ -21,6 +21,8 @@ import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.balances.BalanceCalculator
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.enableAmountFormatting
+import dev.fitiavana.accounting.ui.common.plainText
 import kotlin.math.pow
 import kotlin.math.roundToLong
 
@@ -113,6 +115,12 @@ class EntryRowController(
                 clearAccountDependentState()
             }
         }
+
+        editDebit.enableAmountFormatting()
+        editCredit.enableAmountFormatting()
+        listOf(
+            editInstrumentDebit, editInstrumentCredit, editIntermediaryDebit, editIntermediaryCredit
+        ).forEach { it.enableAmountFormatting(allowDecimal = true) }
 
         editInstrumentDebit.addTextChangedListener(
             mutuallyExclusiveWatcher(editInstrumentCredit) { updateNewInstrumentBalance() }
@@ -292,9 +300,9 @@ class EntryRowController(
             return
         }
         val factor = 10.0.pow(instrument.decimalPlaces)
-        val debit = editInstrumentDebit.text.toString().trim()
+        val debit = editInstrumentDebit.plainText()
             .toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
-        val credit = editInstrumentCredit.text.toString().trim()
+        val credit = editInstrumentCredit.plainText()
             .toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
         val newBalance = BalanceCalculator.project(
             accountType = currentAccountType,
@@ -314,9 +322,9 @@ class EntryRowController(
             return
         }
         val factor = 10.0.pow(instrument.decimalPlaces)
-        val debit = editIntermediaryDebit.text.toString().trim()
+        val debit = editIntermediaryDebit.plainText()
             .toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
-        val credit = editIntermediaryCredit.text.toString().trim()
+        val credit = editIntermediaryCredit.plainText()
             .toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
         val newBalance = BalanceCalculator.project(
             accountType = currentAccountType,
@@ -346,8 +354,8 @@ class EntryRowController(
         if (accountPos <= 0 || accountPos > accounts.size) return EntryResult.Incomplete
         val account = accounts[accountPos - 1]
         val instrument = account.instrumentCode?.let { instrumentsMap[it] }
-        val debit = editDebit.text.toString().trim().toLongOrNull()
-        val credit = editCredit.text.toString().trim().toLongOrNull()
+        val debit = editDebit.plainText().toLongOrNull()
+        val credit = editCredit.plainText().toLongOrNull()
 
         var instrumentDebit: Long? = null
         var instrumentCredit: Long? = null
@@ -355,8 +363,8 @@ class EntryRowController(
         var intermediaryCredit: Long? = null
 
         if (instrument != null) {
-            val parsedDebit = editInstrumentDebit.text.toString().trim().toDoubleOrNull()
-            val parsedCredit = editInstrumentCredit.text.toString().trim().toDoubleOrNull()
+            val parsedDebit = editInstrumentDebit.plainText().toDoubleOrNull()
+            val parsedCredit = editInstrumentCredit.plainText().toDoubleOrNull()
             if (parsedDebit == null && parsedCredit == null) {
                 return EntryResult.InstrumentAmountRequired(instrument.code)
             }
@@ -368,9 +376,9 @@ class EntryRowController(
                 account.intermediaryInstrumentCode?.let { instrumentsMap[it] }
             if (intermediaryInstrument != null) {
                 val interFactor = 10.0.pow(intermediaryInstrument.decimalPlaces)
-                intermediaryDebit = editIntermediaryDebit.text.toString().trim()
+                intermediaryDebit = editIntermediaryDebit.plainText()
                     .toDoubleOrNull()?.let { (it * interFactor).roundToLong() }
-                intermediaryCredit = editIntermediaryCredit.text.toString().trim()
+                intermediaryCredit = editIntermediaryCredit.plainText()
                     .toDoubleOrNull()?.let { (it * interFactor).roundToLong() }
             }
         }
@@ -400,13 +408,13 @@ class EntryRowController(
         spinner.selectedItemPosition > 0 ||
                 editDebit.text.toString().trim().isNotEmpty() ||
                 editCredit.text.toString().trim().isNotEmpty() ||
-                editInstrumentDebit.text.toString().trim().isNotEmpty() ||
-                editInstrumentCredit.text.toString().trim().isNotEmpty() ||
-                editIntermediaryDebit.text.toString().trim().isNotEmpty() ||
-                editIntermediaryCredit.text.toString().trim().isNotEmpty()
+                editInstrumentDebit.plainText().isNotEmpty() ||
+                editInstrumentCredit.plainText().isNotEmpty() ||
+                editIntermediaryDebit.plainText().isNotEmpty() ||
+                editIntermediaryCredit.plainText().isNotEmpty()
 
     companion object {
         fun parseAmount(edit: EditText): Long =
-            edit.text.toString().trim().replace(",", "").toLongOrNull() ?: 0L
+            edit.plainText().toLongOrNull() ?: 0L
     }
 }

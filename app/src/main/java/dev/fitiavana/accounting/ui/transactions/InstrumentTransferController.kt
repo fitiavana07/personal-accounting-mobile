@@ -16,6 +16,8 @@ import dev.fitiavana.accounting.features.templates.TemplateSlot
 import dev.fitiavana.accounting.features.templates.TemplateSlots
 import dev.fitiavana.accounting.features.templates.TemplateWithEntries
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.enableAmountFormatting
+import dev.fitiavana.accounting.ui.common.plainText
 import kotlin.math.pow
 import kotlin.math.roundToLong
 
@@ -106,6 +108,7 @@ class InstrumentTransferController(
     )
 
     init {
+        editTransferAmount.enableAmountFormatting(allowDecimal = true)
         editTransferAmount.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
             override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
@@ -123,7 +126,7 @@ class InstrumentTransferController(
 
     private fun parsedInstrumentAmount(instrument: Instrument): Long {
         val factor = 10.0.pow(instrument.decimalPlaces)
-        return editTransferAmount.text.toString().trim()
+        return editTransferAmount.plainText()
             .toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
     }
 

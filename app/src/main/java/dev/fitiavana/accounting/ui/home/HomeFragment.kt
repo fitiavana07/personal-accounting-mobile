@@ -20,6 +20,8 @@ import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.ui.cexprices.CexPricesActivity
 import dev.fitiavana.accounting.ui.earn.EarnActivity
 import dev.fitiavana.accounting.ui.common.ReportAdapter
+import dev.fitiavana.accounting.ui.common.enableAmountFormatting
+import dev.fitiavana.accounting.ui.common.plainText
 import dev.fitiavana.accounting.ui.transactions.AddTransactionActivity
 
 class HomeFragment : Fragment() {
@@ -160,6 +162,7 @@ class HomeFragment : Fragment() {
         val input =
             dialogView.findViewById<EditText>(R.id.input_monthly_expenses)
                 .apply {
+                    enableAmountFormatting()
                     setText(currentValue.toString())
                     setSelection(text.length)
                 }
@@ -167,7 +170,7 @@ class HomeFragment : Fragment() {
             .setTitle(R.string.dialog_edit_monthly_expenses_title)
             .setView(dialogView)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                val amount = input.text.toString().trim().toLongOrNull()
+                val amount = input.plainText().toLongOrNull()
                 if (amount != null) {
                     Thread { viewModel.setMonthlyLivingExpenses(amount) }.start()
                 }
