@@ -63,6 +63,23 @@ class SyncActivityTest {
     }
 
     @Test
+    fun `the passphrase is hidden until the eye is pressed and hidden again after`() {
+        val activity = launch()
+        val input = activity.findViewById<EditText>(R.id.edit_sync_passphrase)
+        val eye = activity.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.layout_sync_passphrase)
+            .findViewById<View>(com.google.android.material.R.id.text_input_end_icon)
+        input.setText("correct horse")
+
+        assertTrue(input.transformationMethod is android.text.method.PasswordTransformationMethod)
+
+        eye.performClick()
+        assertFalse(input.transformationMethod is android.text.method.PasswordTransformationMethod)
+
+        eye.performClick()
+        assertTrue(input.transformationMethod is android.text.method.PasswordTransformationMethod)
+    }
+
+    @Test
     fun `shows this device's name`() {
         val activity = launch()
 
