@@ -215,7 +215,10 @@ class SyncCoordinator(
     private fun record(deviceId: String, result: SessionResult, version: Long) {
         when (result) {
             is SessionResult.Synced -> {
-                syncedVersion.merge(deviceId, version, ::maxOf)
+                // Not Map.merge: it needs API 24.
+                synchronized(syncedVersion) {
+                    syncedVersion[deviceId] = maxOf(syncedVersion[deviceId] ?: 0L, version)
+                }
                 mutableState.update { it.copy(lastSyncedAt = now()) }
                 setStatus(deviceId, PeerSync.Synced(now(), result.changed))
             }
