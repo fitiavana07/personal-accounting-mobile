@@ -16,6 +16,7 @@ import dev.fitiavana.accounting.features.p2pprices.P2pPriceRepository
 import dev.fitiavana.accounting.features.p2pprices.SharedPreferencesP2pFilterStore
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
 import dev.fitiavana.accounting.features.sync.ChangeTracker
+import dev.fitiavana.accounting.features.sync.SyncRepository
 import dev.fitiavana.accounting.features.sync.SyncSettingsStore
 import dev.fitiavana.accounting.features.templates.TemplateRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
@@ -74,6 +75,19 @@ class AppContainer private constructor(context: Context) {
         changeTracker
     )
     val templateRepository = TemplateRepository(database.templateDao(), changeTracker)
+
+    val syncRepository = SyncRepository(
+        tracker = changeTracker,
+        metaDao = database.syncMetaDao(),
+        syncDao = database.syncDao(),
+        instrumentDao = database.instrumentDao(),
+        accountDao = database.accountDao(),
+        transactionDao = database.transactionDao(),
+        templateDao = database.templateDao(),
+        appSettingsDao = database.appSettingsDao(),
+        schemaVersion = AppDatabase.SCHEMA_VERSION,
+        recalculateBalances = balanceRepository::recalculateAll
+    )
 
     val autoBackupManager = AutoBackupManager(
         export = backupRepository::export,

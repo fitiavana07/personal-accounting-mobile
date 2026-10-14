@@ -16,6 +16,7 @@ import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.instruments.InstrumentDao
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.settings.AppSettingsDao
+import dev.fitiavana.accounting.features.sync.SyncDao
 import dev.fitiavana.accounting.features.sync.SyncMetaDao
 import dev.fitiavana.accounting.features.sync.SyncMetaRow
 import dev.fitiavana.accounting.features.templates.TemplateDao
@@ -40,6 +41,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun appSettingsDao(): AppSettingsDao
     abstract fun templateDao(): TemplateDao
     abstract fun syncMetaDao(): SyncMetaDao
+    abstract fun syncDao(): SyncDao
 
     companion object {
         const val SCHEMA_VERSION = 20
