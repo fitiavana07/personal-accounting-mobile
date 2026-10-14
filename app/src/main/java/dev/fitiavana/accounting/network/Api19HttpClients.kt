@@ -4,11 +4,8 @@ import android.os.Build
 import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
 import okhttp3.TlsVersion
-import java.security.KeyStore
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManagerFactory
-import javax.net.ssl.X509TrustManager
 
 /**
  * Builds an [OkHttpClient] that works against modern HTTPS endpoints on API 19-20 devices,
@@ -21,9 +18,7 @@ object Api19HttpClients {
             .readTimeout(15, TimeUnit.SECONDS)
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-            trustManagerFactory.init(null as KeyStore?)
-            val trustManager = trustManagerFactory.trustManagers[0] as X509TrustManager
+            val trustManager = Api19Trust.trustManager()
 
             val sslContext = SSLContext.getInstance("TLSv1.2")
             sslContext.init(null, arrayOf(trustManager), null)
