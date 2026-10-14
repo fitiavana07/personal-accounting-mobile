@@ -1,5 +1,6 @@
 package dev.fitiavana.accounting.features.p2pprices
 
+import android.util.Log
 import dev.fitiavana.accounting.network.p2p.P2pAd
 import dev.fitiavana.accounting.network.p2p.P2pPaymentMethod
 import dev.fitiavana.accounting.network.p2p.P2pPriceFetcher
@@ -55,7 +56,14 @@ class P2pPriceRepository(
         try {
             val results = executor.invokeAll(
                 P2pSide.values().map { side ->
-                    Callable { try { fetcher.fetchTopPrices(side, payType) } catch (e: Exception) { null } }
+                    Callable {
+                        try {
+                            fetcher.fetchTopPrices(side, payType)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to fetch P2P $side prices", e)
+                            null
+                        }
+                    }
                 }
             ).map { it.get() }
             return P2pPrices(buy = results[P2pSide.BUY.ordinal], sell = results[P2pSide.SELL.ordinal])
@@ -69,6 +77,11 @@ class P2pPriceRepository(
         try {
             fetcher.fetchPaymentMethods().takeIf { it.isNotEmpty() }?.also { store.saveMethods(it) }
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to fetch P2P payment methods", e)
             null
         }
+
+    private companion object {
+        const val TAG = "P2pPriceRepository"
+    }
 }
