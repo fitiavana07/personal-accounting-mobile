@@ -11,6 +11,9 @@ import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.settings.AppSettings
+import dev.fitiavana.accounting.features.sync.ChangeTracker
+import dev.fitiavana.accounting.features.sync.RecordKey
+import dev.fitiavana.accounting.features.sync.SyncKind
 import dev.fitiavana.accounting.features.templates.TemplateDao
 import dev.fitiavana.accounting.features.templates.TemplateEntry
 import dev.fitiavana.accounting.features.templates.TransactionTemplate
@@ -44,7 +47,8 @@ class BackupRepository(
     private val balanceDao: AccountBalanceDao,
     private val exchangeRateCacheDao: ExchangeRateCacheDao,
     private val appSettingsDao: AppSettingsDao,
-    private val templateDao: TemplateDao
+    private val templateDao: TemplateDao,
+    private val tracker: ChangeTracker
 ) {
 
     fun export(): String {
@@ -163,6 +167,19 @@ class BackupRepository(
             if (settings != null) {
                 appSettingsDao.upsert(settings)
             }
+
+            // A restore is a bulk local write: restamp what it brought and tombstone what it replaced,
+            // otherwise the next sync would bring the old data back.
+            tracker.replaceAll(
+                (instruments.map { RecordKey(SyncKind.INSTRUMENT, it.code) } +
+                        accounts.map { RecordKey(SyncKind.ACCOUNT, it.id) } +
+                        transactions.map { RecordKey(SyncKind.TRANSACTION, it.id) } +
+                        templates.map { RecordKey(SyncKind.TEMPLATE, it.id) } +
+                        listOfNotNull(
+                            appSettingsDao.getSync()
+                                ?.let { RecordKey(SyncKind.SETTINGS, AppSettings.SINGLETON_ID.toString()) }
+                        )).toSet()
+            )
         }
 
         return RestoreResult.Success

@@ -15,6 +15,8 @@ import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.p2pprices.P2pPriceRepository
 import dev.fitiavana.accounting.features.p2pprices.SharedPreferencesP2pFilterStore
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
+import dev.fitiavana.accounting.features.sync.ChangeTracker
+import dev.fitiavana.accounting.features.sync.SyncSettingsStore
 import dev.fitiavana.accounting.features.templates.TemplateRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
 import java.io.File
@@ -28,11 +30,18 @@ import dev.fitiavana.accounting.network.p2p.HttpP2pPriceFetcher
 class AppContainer private constructor(context: Context) {
     private val database = AppDatabase.getInstance(context)
 
-    val accountRepository = AccountRepository(database.accountDao())
+    val syncSettingsStore = SyncSettingsStore(
+        context.getSharedPreferences(SyncSettingsStore.PREFS_NAME, Context.MODE_PRIVATE)
+    )
+
+    /** Versions every local write for P2P sync; the device id is read once, as the first write needs it. */
+    val changeTracker = ChangeTracker.forDatabase(database, syncSettingsStore.deviceId())
+
+    val accountRepository = AccountRepository(database.accountDao(), changeTracker)
     val instrumentRepository =
-        InstrumentRepository(database.instrumentDao(), database.accountDao())
+        InstrumentRepository(database.instrumentDao(), database.accountDao(), changeTracker)
     val transactionRepository =
-        TransactionRepository(database.transactionDao())
+        TransactionRepository(database.transactionDao(), changeTracker)
     val balanceRepository = BalanceRepository(
         database.accountDao(),
         database.accountBalanceDao(),
@@ -52,7 +61,7 @@ class AppContainer private constructor(context: Context) {
             context.getSharedPreferences(SharedPreferencesP2pFilterStore.PREFS_NAME, Context.MODE_PRIVATE)
         )
     )
-    val settingsRepository = AppSettingsRepository(database.appSettingsDao())
+    val settingsRepository = AppSettingsRepository(database.appSettingsDao(), changeTracker)
     val backupRepository = BackupRepository(
         database,
         database.accountDao(),
@@ -61,9 +70,10 @@ class AppContainer private constructor(context: Context) {
         database.accountBalanceDao(),
         database.exchangeRateCacheDao(),
         database.appSettingsDao(),
-        database.templateDao()
+        database.templateDao(),
+        changeTracker
     )
-    val templateRepository = TemplateRepository(database.templateDao())
+    val templateRepository = TemplateRepository(database.templateDao(), changeTracker)
 
     val autoBackupManager = AutoBackupManager(
         export = backupRepository::export,

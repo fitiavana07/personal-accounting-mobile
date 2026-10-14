@@ -4,6 +4,7 @@ import dev.fitiavana.accounting.features.balances.AccountBalanceDao
 import dev.fitiavana.accounting.features.accounts.AccountDao
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
 import dev.fitiavana.accounting.features.instruments.InstrumentDao
+import dev.fitiavana.accounting.features.sync.inlineTracker
 import dev.fitiavana.accounting.features.transactions.TransactionDao
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.balances.AccountBalance
@@ -104,7 +105,7 @@ class BackupRepositoryTest {
         templateDao = mock()
         repository = BackupRepository(
             database, accountDao, instrumentDao, transactionDao, balanceDao,
-            exchangeRateCacheDao, appSettingsDao, templateDao
+            exchangeRateCacheDao, appSettingsDao, templateDao, inlineTracker()
         )
         whenever(templateDao.getAllTemplatesSync()).thenReturn(listOf(template))
         whenever(templateDao.getAllEntriesSync()).thenReturn(listOf(templateEntryFrom, templateEntryTo))

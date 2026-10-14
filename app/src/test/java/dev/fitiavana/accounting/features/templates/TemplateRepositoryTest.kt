@@ -1,5 +1,6 @@
 package dev.fitiavana.accounting.features.templates
 
+import dev.fitiavana.accounting.features.sync.inlineTracker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -19,7 +20,7 @@ class TemplateRepositoryTest {
     @Before
     fun setUp() {
         dao = mock()
-        repository = TemplateRepository(dao, clock = { 1_000L }, idGenerator = IdSequence()::next)
+        repository = TemplateRepository(dao, inlineTracker(), clock = { 1_000L }, idGenerator = IdSequence()::next)
     }
 
     private class IdSequence {

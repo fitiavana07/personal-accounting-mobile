@@ -112,9 +112,4 @@ class Migration18To19Test {
             assertEquals(true, c.isNull(0))
         }
     }
-
-    @Test
-    fun `the schema version is 19`() {
-        assertEquals(19, AppDatabase.SCHEMA_VERSION)
-    }
 }

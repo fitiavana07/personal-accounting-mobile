@@ -16,6 +16,8 @@ import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.instruments.InstrumentDao
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.settings.AppSettingsDao
+import dev.fitiavana.accounting.features.sync.SyncMetaDao
+import dev.fitiavana.accounting.features.sync.SyncMetaRow
 import dev.fitiavana.accounting.features.templates.TemplateDao
 import dev.fitiavana.accounting.features.templates.TemplateEntry
 import dev.fitiavana.accounting.features.templates.TransactionTemplate
@@ -26,7 +28,7 @@ import dev.fitiavana.accounting.features.transactions.TransactionEntry
 @Database(
     entities = [Account::class, Transaction::class, TransactionEntry::class,
         AccountBalance::class, Instrument::class, ExchangeRateCache::class, AppSettings::class,
-        TransactionTemplate::class, TemplateEntry::class],
+        TransactionTemplate::class, TemplateEntry::class, SyncMetaRow::class],
     version = AppDatabase.SCHEMA_VERSION
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -37,9 +39,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun exchangeRateCacheDao(): ExchangeRateCacheDao
     abstract fun appSettingsDao(): AppSettingsDao
     abstract fun templateDao(): TemplateDao
+    abstract fun syncMetaDao(): SyncMetaDao
 
     companion object {
-        const val SCHEMA_VERSION = 19
+        const val SCHEMA_VERSION = 20
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -315,6 +318,24 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Adds the sync stamps (P2P sync). Existing rows get no stamp: a row without one reads as older
+         * than any real write. Internal so it can be checked against Room's generated schema.
+         */
+        internal val MIGRATION_19_20 = object : Migration(19, 20) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sync_meta` (" +
+                            "`kind` TEXT NOT NULL, " +
+                            "`id` TEXT NOT NULL, " +
+                            "`stampTime` INTEGER NOT NULL, " +
+                            "`stampDevice` TEXT NOT NULL, " +
+                            "`deleted` INTEGER NOT NULL, " +
+                            "PRIMARY KEY(`kind`, `id`))"
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -340,7 +361,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_15_16,
                         MIGRATION_16_17,
                         MIGRATION_17_18,
-                        MIGRATION_18_19
+                        MIGRATION_18_19,
+                        MIGRATION_19_20
                     )
                     .build().also { instance = it }
             }

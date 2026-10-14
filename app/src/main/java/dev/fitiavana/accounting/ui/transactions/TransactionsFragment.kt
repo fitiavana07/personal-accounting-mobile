@@ -72,7 +72,7 @@ class TransactionsFragment : Fragment() {
         val accountRepo = container.accountRepository
         viewModel = ViewModelProvider(
             this,
-            TransactionsViewModelFactory(transactionRepo, accountRepo)
+            TransactionsViewModelFactory(transactionRepo, accountRepo, container.balanceRepository)
         ).get(TransactionsViewModel::class.java)
 
         adapter = TransactionsAdapter { item ->

@@ -106,9 +106,7 @@ class AddTransactionViewModelTest {
 
         viewModel.saveTransaction(transaction, entries, accountTypesById)
 
-        verify(transactionRepository).insert(transaction)
-        verify(transactionRepository).insertEntry(entries[0])
-        verify(transactionRepository).insertEntry(entries[1])
+        verify(transactionRepository).save(transaction, entries)
         verify(balanceRepository).recalculateForAccount("cash", "asset")
         verify(balanceRepository).recalculateForAccount("rev", "revenue")
     }

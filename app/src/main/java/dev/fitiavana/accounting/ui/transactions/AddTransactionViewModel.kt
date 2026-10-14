@@ -58,8 +58,7 @@ class AddTransactionViewModel(
         entries: List<TransactionEntry>,
         accountTypesById: Map<String, String>
     ) {
-        transactionRepository.insert(transaction)
-        entries.forEach { transactionRepository.insertEntry(it) }
+        transactionRepository.save(transaction, entries)
         entries.forEach { entry ->
             val type = accountTypesById.getValue(entry.accountId)
             balanceRepository.recalculateForAccount(entry.accountId, type)

@@ -24,6 +24,9 @@ interface TransactionDao {
     @Query("SELECT * FROM transaction_entries")
     fun getAllEntriesSync(): List<TransactionEntry>
 
+    @Query("SELECT id FROM transactions")
+    fun getAllIds(): List<String>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insert(transaction: Transaction)
 

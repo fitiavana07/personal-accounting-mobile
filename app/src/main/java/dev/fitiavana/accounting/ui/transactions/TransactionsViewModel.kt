@@ -8,6 +8,7 @@ import androidx.lifecycle.switchMap
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.transactions.TransactionWithEntries
 import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
 import java.util.Calendar
 
@@ -19,7 +20,9 @@ data class TransactionFilter(
 
 class TransactionsViewModel(
     private val transactionRepository: TransactionRepository,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val balanceRepository: BalanceRepository,
+    private val runInBackground: (() -> Unit) -> Unit = { Thread(it).start() }
 ) : ViewModel() {
 
     val accounts: LiveData<List<Account>> = accountRepository.getAll()
@@ -32,7 +35,10 @@ class TransactionsViewModel(
         }
 
     fun clearAllTransactions() {
-        Thread { transactionRepository.clearAll() }.start()
+        runInBackground {
+            transactionRepository.clearAll()
+            balanceRepository.recalculateAll()
+        }
     }
 
     val combined = MediatorLiveData<Pair<List<TransactionWithEntries>, List<Account>>>().apply {
