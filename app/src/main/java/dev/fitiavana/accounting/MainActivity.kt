@@ -60,7 +60,11 @@ class MainActivity : AppCompatActivity() {
         // Catch up on a daily backup whose alarm never fired (e.g. force-stopped app), and re-arm it.
         if (savedInstanceState == null) autoBackupViewModel.runCatchUp()
 
-        UiUtils.setupActionBar(this, displayHomeAsUp = false)
+        UiUtils.setupActionBar(
+            this,
+            displayHomeAsUp = false,
+            padForNavigationBar = false
+        )
         supportActionBar?.title =
             getString(R.string.app_name_with_version, BuildConfig.VERSION_NAME)
 

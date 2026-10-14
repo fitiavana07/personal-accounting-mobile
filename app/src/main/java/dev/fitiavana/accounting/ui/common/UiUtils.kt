@@ -3,6 +3,7 @@ package dev.fitiavana.accounting.ui.common
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
@@ -15,7 +16,9 @@ class UiUtils {
     companion object {
         fun setupActionBar(
             activity: AppCompatActivity,
-            displayHomeAsUp: Boolean = true
+            displayHomeAsUp: Boolean = true,
+            // false when the screen pads its own bottom bar (MainActivity's bottom nav)
+            padForNavigationBar: Boolean = true
         ) {
             val toolbar = activity.findViewById<Toolbar>(R.id.toolbar)
             activity.setSupportActionBar(toolbar)
@@ -34,6 +37,17 @@ class UiUtils {
                         insets.getInsets(WindowInsetsCompat.Type.statusBars())
                     view.setPadding(0, statusBar.top, 0, 0)
                     insets
+                }
+
+                if (padForNavigationBar) {
+                    val content =
+                        activity.findViewById<View>(android.R.id.content)
+                    ViewCompat.setOnApplyWindowInsetsListener(content) { view, insets ->
+                        val navBar =
+                            insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+                        view.setPadding(0, 0, 0, navBar.bottom)
+                        insets
+                    }
                 }
 
                 val isNightMode = (activity.resources.configuration.uiMode and
