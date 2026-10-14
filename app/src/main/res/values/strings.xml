@@ -233,4 +233,40 @@
     <string name="cex_tag_highest">Highest</string>
     <string name="cex_pair_format">%1$s / %2$s</string>
     <string name="cex_spread_format">Spread %1$s</string>
+
+    <!-- Sync with other devices -->
+    <string name="action_sync">Sync with other devices</string>
+    <string name="title_sync">Sync</string>
+    <string name="sync_this_device">This device</string>
+    <string name="sync_passphrase_title">Passphrase</string>
+    <string name="sync_passphrase_hint">Passphrase</string>
+    <string name="sync_passphrase_help">Enter the same passphrase, at least 8 characters, on every device you want to keep in step. Devices only find each other on the same Wi-Fi.</string>
+    <string name="sync_passphrase_too_short">Use at least 8 characters.</string>
+    <string name="sync_save_passphrase">Save passphrase</string>
+    <string name="sync_passphrase_set">Passphrase is set.</string>
+    <string name="sync_change">Change</string>
+    <string name="sync_cancel">Cancel</string>
+    <string name="sync_remove_passphrase">Remove passphrase</string>
+    <string name="sync_remove_title">Remove the passphrase?</string>
+    <string name="sync_remove_message">This device stops syncing until you enter a passphrase again. Your data stays on every device.</string>
+    <string name="sync_auto">Sync automatically</string>
+    <string name="sync_auto_help">Changes are sent to your other devices a few seconds after you make them.</string>
+    <string name="sync_devices">Devices on this Wi-Fi</string>
+    <string name="sync_all">Sync all</string>
+    <string name="sync_refresh">Refresh</string>
+    <string name="sync_empty">No other devices found. Open this screen on another device with the same passphrase, on the same Wi-Fi.</string>
+    <string name="sync_empty_no_passphrase">Set a passphrase to find your other devices.</string>
+    <string name="sync_last_synced">Last synced: %1$s</string>
+    <string name="sync_never">never</string>
+    <string name="sync_status_idle">Tap to sync</string>
+    <string name="sync_status_syncing">Syncing…</string>
+    <string name="sync_status_synced">Synced at %1$s</string>
+    <string name="sync_status_synced_changed">Synced at %1$s · data updated</string>
+    <string name="sync_failure_no_answer">No answer. Is it using another passphrase?</string>
+    <string name="sync_failure_wrong_passphrase">Wrong passphrase.</string>
+    <string name="sync_failure_incompatible">Incompatible app version: %1$s</string>
+    <string name="sync_failure_refused">Refused: %1$s</string>
+    <string name="sync_failure_invalid">Invalid reply: %1$s</string>
+    <string name="sync_failure_network">Network problem: %1$s</string>
+    <string name="sync_network_error">Wi-Fi problem: %1$s. Tap Refresh to try again.</string>
 </resources>

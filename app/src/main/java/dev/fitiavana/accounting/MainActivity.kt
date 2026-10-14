@@ -25,6 +25,7 @@ import dev.fitiavana.accounting.ui.balances.BalancesActivity
 import dev.fitiavana.accounting.ui.home.HomeFragment
 import dev.fitiavana.accounting.ui.instruments.InstrumentsActivity
 import dev.fitiavana.accounting.ui.reports.ReportsFragment
+import dev.fitiavana.accounting.ui.sync.SyncActivity
 import dev.fitiavana.accounting.ui.transactions.TransactionsFragment
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -132,6 +133,11 @@ class MainActivity : AppCompatActivity() {
 
             R.id.action_restore -> {
                 openRestoreDocument.launch(arrayOf("*/*"))
+                return true
+            }
+
+            R.id.action_sync -> {
+                startActivity(SyncActivity.intent(this))
                 return true
             }
 
