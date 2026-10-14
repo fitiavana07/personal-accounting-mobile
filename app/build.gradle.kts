@@ -106,4 +106,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.androidx.multidex)
     implementation(libs.mpandroidchart)
+    implementation(libs.bouncycastle)
+    implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
