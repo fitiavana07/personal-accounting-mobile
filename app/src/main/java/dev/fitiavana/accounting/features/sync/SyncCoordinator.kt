@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
@@ -69,7 +70,8 @@ class SyncCoordinator(
 
     private val mutableState = MutableStateFlow(SyncState())
     private val statuses = MutableStateFlow<Map<String, PeerSync>>(emptyMap())
-    private val inFlight = ConcurrentHashMap.newKeySet<String>()
+    // ConcurrentHashMap.newKeySet() is API 24+; this is the API 19 equivalent.
+    private val inFlight = Collections.newSetFromMap(ConcurrentHashMap<String, Boolean>())
 
     /** Bumped to open the network again after it failed to open. */
     private val retry = MutableStateFlow(0)
