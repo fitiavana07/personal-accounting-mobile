@@ -16,7 +16,13 @@ import dev.fitiavana.accounting.features.p2pprices.P2pPriceRepository
 import dev.fitiavana.accounting.features.p2pprices.SharedPreferencesP2pFilterStore
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
 import dev.fitiavana.accounting.features.sync.ChangeTracker
+import dev.fitiavana.accounting.features.sync.SyncCoordinator
+import dev.fitiavana.accounting.features.sync.SyncIdentity
 import dev.fitiavana.accounting.features.sync.SyncRepository
+import dev.fitiavana.accounting.features.sync.WifiDiscoveryChannels
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import dev.fitiavana.accounting.features.sync.SyncSettingsStore
 import dev.fitiavana.accounting.features.templates.TemplateRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
@@ -87,6 +93,18 @@ class AppContainer private constructor(context: Context) {
         appSettingsDao = database.appSettingsDao(),
         schemaVersion = AppDatabase.SCHEMA_VERSION,
         recalculateBalances = balanceRepository::recalculateAll
+    )
+
+    private val syncIdentity = SyncIdentity.forBuild()
+
+    /** Finds the user's other devices on the Wi-Fi and keeps the ledger in step, while the app is on screen. */
+    val syncCoordinator = SyncCoordinator(
+        scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+        repository = syncRepository,
+        settings = syncSettingsStore,
+        changes = changeTracker.changes,
+        identity = syncIdentity,
+        newChannel = WifiDiscoveryChannels(context, syncIdentity)::open
     )
 
     val autoBackupManager = AutoBackupManager(
