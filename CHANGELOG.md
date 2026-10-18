@@ -7,6 +7,12 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.51] - 2026-10-18
+
+### Added
+
+- transactions: emphasize income amounts in Instrument Income
+
 ## [1.50] - 2026-10-18
 
 ### Added
@@ -422,7 +428,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.50...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.51...HEAD
+[1.51]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.50...v1.51
 [1.50]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.49...v1.50
 [1.49]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.48...v1.49
 [1.48]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.47...v1.48
