@@ -114,9 +114,9 @@ class AddTransactionTemplatesTest {
 
     @Test
     fun `saved templates are listed below the mode cards, newest first`() {
-        saveTemplate("Older", TemplateModes.SIMPLE_TRANSFER, TemplateSlots.FROM to "tpl_bank", TemplateSlots.TO to "tpl_cash")
+        saveTemplate("Older", TemplateModes.TRANSFER, TemplateSlots.FROM to "tpl_bank", TemplateSlots.TO to "tpl_cash")
         Thread.sleep(5)
-        saveTemplate("Newer", TemplateModes.SIMPLE_TRANSFER, TemplateSlots.FROM to "tpl_cash", TemplateSlots.TO to "tpl_bank")
+        saveTemplate("Newer", TemplateModes.TRANSFER, TemplateSlots.FROM to "tpl_cash", TemplateSlots.TO to "tpl_bank")
         val activity = launch().get()
 
         waitUntil { activity.templateList().childCount == 2 }
@@ -131,8 +131,8 @@ class AddTransactionTemplatesTest {
     // --- using a template ---
 
     @Test
-    fun `tapping a simple transfer template opens that mode with both accounts selected`() {
-        saveTemplate("Withdraw", TemplateModes.SIMPLE_TRANSFER, TemplateSlots.FROM to "tpl_bank", TemplateSlots.TO to "tpl_cash")
+    fun `tapping a transfer template opens that mode with both accounts selected`() {
+        saveTemplate("Withdraw", TemplateModes.TRANSFER, TemplateSlots.FROM to "tpl_bank", TemplateSlots.TO to "tpl_cash")
         val activity = launch().get()
         waitUntil { activity.templateList().childCount == 1 }
 
@@ -182,7 +182,7 @@ class AddTransactionTemplatesTest {
 
     @Test
     fun `launching with a template id goes straight to its form`() {
-        saveTemplate("Withdraw", TemplateModes.SIMPLE_TRANSFER, TemplateSlots.FROM to "tpl_bank", TemplateSlots.TO to "tpl_cash")
+        saveTemplate("Withdraw", TemplateModes.TRANSFER, TemplateSlots.FROM to "tpl_bank", TemplateSlots.TO to "tpl_cash")
         var id: String? = null
         onBackground { id = container.templateRepository.getAll().first().template.id }
 
@@ -199,7 +199,7 @@ class AddTransactionTemplatesTest {
 
     @Test
     fun `deleting a template asks for confirmation and then removes it from the list`() {
-        saveTemplate("Withdraw", TemplateModes.SIMPLE_TRANSFER, TemplateSlots.FROM to "tpl_bank", TemplateSlots.TO to "tpl_cash")
+        saveTemplate("Withdraw", TemplateModes.TRANSFER, TemplateSlots.FROM to "tpl_bank", TemplateSlots.TO to "tpl_cash")
         val activity = launch().get()
         waitUntil { activity.templateList().childCount == 1 }
 
@@ -215,7 +215,7 @@ class AddTransactionTemplatesTest {
 
     @Test
     fun `cancelling the delete confirmation keeps the template`() {
-        saveTemplate("Withdraw", TemplateModes.SIMPLE_TRANSFER, TemplateSlots.FROM to "tpl_bank", TemplateSlots.TO to "tpl_cash")
+        saveTemplate("Withdraw", TemplateModes.TRANSFER, TemplateSlots.FROM to "tpl_bank", TemplateSlots.TO to "tpl_cash")
         val activity = launch().get()
         waitUntil { activity.templateList().childCount == 1 }
 

@@ -12,17 +12,7 @@ import dev.fitiavana.accounting.features.accounts.Account
 object TemplateModes {
     const val CLASSIC = "classic"
     const val TRANSFER = "transfer"
-
-    /** Legacy: saved before Simple and Instrument Transfer merged into [TRANSFER]; still read as [TRANSFER]. */
-    const val SIMPLE_TRANSFER = "simple_transfer"
-
-    /** Legacy: see [SIMPLE_TRANSFER]. */
-    const val INSTRUMENT_TRANSFER = "instrument_transfer"
     const val INSTRUMENT_INCOME = "instrument_income"
-
-    /** Whether [mode] is the merged transfer mode or one of the two legacy values it replaced. */
-    fun isTransfer(mode: String): Boolean =
-        mode == TRANSFER || mode == SIMPLE_TRANSFER || mode == INSTRUMENT_TRANSFER
 }
 
 /**
@@ -94,7 +84,7 @@ data class TemplateWithEntries(
 
     /** False when an account was deleted and the template can no longer fill its mode's form. */
     fun isComplete(): Boolean = when {
-        TemplateModes.isTransfer(template.mode) ->
+        template.mode == TemplateModes.TRANSFER ->
             accountFor(TemplateSlots.FROM) != null && accountFor(TemplateSlots.TO) != null
 
         template.mode == TemplateModes.INSTRUMENT_INCOME ->

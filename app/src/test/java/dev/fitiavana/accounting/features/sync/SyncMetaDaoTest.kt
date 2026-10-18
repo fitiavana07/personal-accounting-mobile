@@ -79,8 +79,8 @@ class SyncMetaDaoTest {
         db.accountDao().insert(Account("acc3", "Other", "asset"))
         db.transactionDao() // keep the schema warm
         val templates = db.templateDao()
-        templates.insertTemplate(TransactionTemplate("t1", "One", TemplateModes.SIMPLE_TRANSFER, 1))
-        templates.insertTemplate(TransactionTemplate("t2", "Two", TemplateModes.SIMPLE_TRANSFER, 2))
+        templates.insertTemplate(TransactionTemplate("t1", "One", TemplateModes.TRANSFER, 1))
+        templates.insertTemplate(TransactionTemplate("t2", "Two", TemplateModes.TRANSFER, 2))
         templates.insertEntries(
             listOf(
                 TemplateEntry("e1", "t1", "acc1", TemplateSlots.FROM, 0),

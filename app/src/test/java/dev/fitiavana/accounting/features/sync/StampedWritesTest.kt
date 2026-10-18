@@ -120,7 +120,7 @@ class StampedWritesTest {
     fun `a deleted account leaves a tombstone and restamps the templates that picked it`() {
         accounts.insert(account("a1"))
         accounts.insert(account("a2"))
-        templates.save("Move", TemplateModes.SIMPLE_TRANSFER, listOf(TemplateSlot(TemplateSlots.FROM, "a1"), TemplateSlot(TemplateSlots.TO, "a2")))
+        templates.save("Move", TemplateModes.TRANSFER, listOf(TemplateSlot(TemplateSlots.FROM, "a1"), TemplateSlot(TemplateSlots.TO, "a2")))
         val templateId = db.templateDao().getAllTemplatesSync().single().id
         val templateStamp = stampOf(SyncKind.TEMPLATE, templateId)
 
@@ -190,7 +190,7 @@ class StampedWritesTest {
     fun `a saved template is stamped and a deleted one leaves a tombstone`() {
         accounts.insert(account("a1"))
         accounts.insert(account("a2"))
-        templates.save("Move", TemplateModes.SIMPLE_TRANSFER, listOf(TemplateSlot(TemplateSlots.FROM, "a1"), TemplateSlot(TemplateSlots.TO, "a2")))
+        templates.save("Move", TemplateModes.TRANSFER, listOf(TemplateSlot(TemplateSlots.FROM, "a1"), TemplateSlot(TemplateSlots.TO, "a2")))
         val templateId = db.templateDao().getAllTemplatesSync().single().id
         assertTrue(!meta.getValue(key(SyncKind.TEMPLATE, templateId)).deleted)
 

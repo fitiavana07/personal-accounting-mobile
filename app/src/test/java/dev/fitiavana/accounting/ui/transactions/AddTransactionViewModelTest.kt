@@ -120,7 +120,7 @@ class AddTransactionViewModelTest {
     @Test
     fun `loadTemplates returns the repository's templates`() {
         val template = TemplateWithEntries(
-            TransactionTemplate("t1", "Withdraw", TemplateModes.SIMPLE_TRANSFER, 1L),
+            TransactionTemplate("t1", "Withdraw", TemplateModes.TRANSFER, 1L),
             emptyList()
         )
         whenever(templateRepository.getAll()).thenReturn(listOf(template))
@@ -132,9 +132,9 @@ class AddTransactionViewModelTest {
     fun `saveTemplate delegates to the repository`() {
         val slots = listOf(TemplateSlot(TemplateSlots.FROM, "cash"), TemplateSlot(TemplateSlots.TO, "rev"))
 
-        viewModel.saveTemplate("Withdraw", TemplateModes.SIMPLE_TRANSFER, slots)
+        viewModel.saveTemplate("Withdraw", TemplateModes.TRANSFER, slots)
 
-        verify(templateRepository).save("Withdraw", TemplateModes.SIMPLE_TRANSFER, slots)
+        verify(templateRepository).save("Withdraw", TemplateModes.TRANSFER, slots)
     }
 
     @Test
@@ -147,7 +147,7 @@ class AddTransactionViewModelTest {
     @Test
     fun `loadTemplate delegates to the repository`() {
         val template = TemplateWithEntries(
-            TransactionTemplate("t1", "Withdraw", TemplateModes.SIMPLE_TRANSFER, 1L),
+            TransactionTemplate("t1", "Withdraw", TemplateModes.TRANSFER, 1L),
             emptyList()
         )
         whenever(templateRepository.get("t1")).thenReturn(template)

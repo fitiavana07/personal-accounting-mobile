@@ -84,7 +84,7 @@ class BackupRepositoryTest {
     )
     private val appSettings = AppSettings(monthlyLivingExpenses = 150000L)
     private val template = TransactionTemplate(
-        id = "tpl1", name = "Withdraw", mode = TemplateModes.SIMPLE_TRANSFER, createdAt = 500L
+        id = "tpl1", name = "Withdraw", mode = TemplateModes.TRANSFER, createdAt = 500L
     )
     private val templateEntryFrom = TemplateEntry(
         id = "te1", templateId = "tpl1", accountId = "acc1", slot = TemplateSlots.FROM, position = 0

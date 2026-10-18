@@ -42,7 +42,7 @@ class TemplateDaoTest {
         db.close()
     }
 
-    private fun template(id: String, name: String, mode: String = TemplateModes.SIMPLE_TRANSFER, createdAt: Long = 1L) =
+    private fun template(id: String, name: String, mode: String = TemplateModes.TRANSFER, createdAt: Long = 1L) =
         TransactionTemplate(id = id, name = name, mode = mode, createdAt = createdAt)
 
     private fun entry(id: String, templateId: String, accountId: String, slot: String, position: Int) =

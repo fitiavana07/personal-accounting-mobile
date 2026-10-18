@@ -133,8 +133,8 @@ class ChangeTrackerTest {
     fun `deleting an account tombstones it and restamps the templates that pick it`() {
         db.accountDao().insert(Account("acc1", "Cash", "asset"))
         db.accountDao().insert(Account("acc2", "Bank", "asset"))
-        db.templateDao().insertTemplate(TransactionTemplate("t1", "One", TemplateModes.SIMPLE_TRANSFER, 1))
-        db.templateDao().insertTemplate(TransactionTemplate("t2", "Two", TemplateModes.SIMPLE_TRANSFER, 2))
+        db.templateDao().insertTemplate(TransactionTemplate("t1", "One", TemplateModes.TRANSFER, 1))
+        db.templateDao().insertTemplate(TransactionTemplate("t2", "Two", TemplateModes.TRANSFER, 2))
         db.templateDao().insertEntries(
             listOf(
                 TemplateEntry("e1", "t1", "acc1", TemplateSlots.FROM, 0),

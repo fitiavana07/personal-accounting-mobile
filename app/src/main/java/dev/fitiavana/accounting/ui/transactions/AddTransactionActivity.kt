@@ -593,13 +593,8 @@ class AddTransactionActivity : AppCompatActivity() {
         Mode.INSTRUMENT_INCOME -> TemplateModes.INSTRUMENT_INCOME
     }
 
-    /** Templates saved before the transfer modes merged carry a legacy mode value, still read as [Mode.TRANSFER]. */
     private fun modeOf(templateMode: String): Mode? =
-        if (TemplateModes.isTransfer(templateMode)) {
-            Mode.TRANSFER
-        } else {
-            Mode.values().firstOrNull { it.templateMode() == templateMode }
-        }
+        Mode.values().firstOrNull { it.templateMode() == templateMode }
 
     private fun Mode.titleRes(): Int = when (this) {
         Mode.CLASSIC -> R.string.mode_title_classic

@@ -36,7 +36,7 @@ object SyncFixtures {
     fun entry(id: String, transactionId: String, accountId: String, debit: Long? = 10L, credit: Long? = null) =
         TransactionEntry(id, transactionId, accountId, debit, credit)
 
-    fun template(id: String) = TransactionTemplate(id, "Template $id", TemplateModes.SIMPLE_TRANSFER, 5L)
+    fun template(id: String) = TransactionTemplate(id, "Template $id", TemplateModes.TRANSFER, 5L)
 
     fun templateEntry(id: String, templateId: String, accountId: String, slot: String = TemplateSlots.FROM, position: Int = 0) =
         TemplateEntry(id, templateId, accountId, slot, position)

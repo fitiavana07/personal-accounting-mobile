@@ -23,9 +23,7 @@ notes are never stored.
 | `transaction_templates` | `id`, `name`, `mode`, `createdAt` |
 | `template_entries` | `id`, `templateId` (FK, cascade), `accountId` (FK to `accounts`, cascade), `slot`, `position` |
 
-- `mode` is one of `TemplateModes` (`classic`, `transfer`, `instrument_income`). Templates saved before Simple and Instrument Transfer merged hold
-  `simple_transfer` / `instrument_transfer`; both are still read as `transfer` (`TemplateModes.isTransfer`), so no
-  migration was needed, and new ones are saved as `transfer`.
+- `mode` is one of `TemplateModes` (`classic`, `transfer`, `instrument_income`).
 - `slot` says which account picker an entry belongs to (`TemplateSlots`): `from`/`to` for the two transfer modes,
   `asset`/`revenue` for Instrument Income, `row` for Classic.
 - **The debit or credit side is not stored.** It follows from the slot (`from` is credited, `to` is debited, as
@@ -61,7 +59,7 @@ notes are never stored.
 
 `TemplateDaoTest` (in-memory Room: cascade, ordering), `TemplateRepositoryTest` (save, ordering, completeness per
 mode), `BackupRepositoryTest` (round trip, ordering), `Migration17To18Test`, `AddTransactionViewModelTest`,
-`TransferInstrumentTemplateTest`, `InstrumentIncomeTemplateTest`,
+`TransferTemplateTest`, `InstrumentIncomeTemplateTest`,
 `EntryRowTemplateTest`, and `AddTransactionTemplatesTest` (list, apply per mode, unavailable account, intent
 extra, delete and cancel, save with name, validation, blank name, Classic needs two different accounts).
 

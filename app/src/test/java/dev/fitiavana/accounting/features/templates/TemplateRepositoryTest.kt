@@ -45,14 +45,14 @@ class TemplateRepositoryTest {
     fun `save inserts the template and one entry per slot in order`() {
         repository.save(
             name = "Withdraw",
-            mode = TemplateModes.SIMPLE_TRANSFER,
+            mode = TemplateModes.TRANSFER,
             slots = listOf(TemplateSlot(TemplateSlots.FROM, "bank"), TemplateSlot(TemplateSlots.TO, "cash"))
         )
 
         val templateCaptor = argumentCaptor<TransactionTemplate>()
         verify(dao).insertTemplate(templateCaptor.capture())
         assertEquals("Withdraw", templateCaptor.firstValue.name)
-        assertEquals(TemplateModes.SIMPLE_TRANSFER, templateCaptor.firstValue.mode)
+        assertEquals(TemplateModes.TRANSFER, templateCaptor.firstValue.mode)
         assertEquals(1_000L, templateCaptor.firstValue.createdAt)
 
         val entriesCaptor = argumentCaptor<List<TemplateEntry>>()
@@ -78,7 +78,7 @@ class TemplateRepositoryTest {
     @Test
     fun `getAll returns complete templates with entries ordered by position`() {
         val unordered = TemplateWithEntries(
-            TransactionTemplate("t1", "N", TemplateModes.SIMPLE_TRANSFER, 1L),
+            TransactionTemplate("t1", "N", TemplateModes.TRANSFER, 1L),
             listOf(
                 TemplateEntry("e2", "t1", "cash", TemplateSlots.TO, 1),
                 TemplateEntry("e1", "t1", "bank", TemplateSlots.FROM, 0)
@@ -94,12 +94,12 @@ class TemplateRepositoryTest {
     @Test
     fun `getAll hides templates that lost an account`() {
         val complete = withEntries(
-            TemplateModes.SIMPLE_TRANSFER,
+            TemplateModes.TRANSFER,
             TemplateSlots.FROM to "bank",
             TemplateSlots.TO to "cash",
             id = "ok"
         )
-        val missingTo = withEntries(TemplateModes.SIMPLE_TRANSFER, TemplateSlots.FROM to "bank", id = "broken")
+        val missingTo = withEntries(TemplateModes.TRANSFER, TemplateSlots.FROM to "bank", id = "broken")
         whenever(dao.getAllWithEntriesSync()).thenReturn(listOf(complete, missingTo))
 
         assertEquals(listOf("ok"), repository.getAll().map { it.template.id })
@@ -108,14 +108,11 @@ class TemplateRepositoryTest {
     // --- completeness per mode ---
 
     @Test
-    fun `transfer, and its legacy simple and instrument values, need FROM and TO`() {
-        listOf(TemplateModes.TRANSFER, TemplateModes.SIMPLE_TRANSFER, TemplateModes.INSTRUMENT_TRANSFER)
-            .forEach { mode ->
-                assertTrue(
-                    withEntries(mode, TemplateSlots.FROM to "a", TemplateSlots.TO to "b").isComplete()
-                )
-                assertEquals(false, withEntries(mode, TemplateSlots.TO to "b").isComplete())
-            }
+    fun `transfer needs FROM and TO`() {
+        assertTrue(
+            withEntries(TemplateModes.TRANSFER, TemplateSlots.FROM to "a", TemplateSlots.TO to "b").isComplete()
+        )
+        assertEquals(false, withEntries(TemplateModes.TRANSFER, TemplateSlots.TO to "b").isComplete())
     }
 
     @Test
