@@ -7,6 +7,20 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.46] - 2026-10-18
+
+### Added
+
+- transactions: merge Simple and Instrument Transfer into one Transfer mode
+- ui: move add-transaction button to the center of the bottom navigation bar
+- accounts: record instrument income on the intermediary instrument per account
+- release: generate CHANGELOG.md sections from commits on release, add one-off backfill script
+- changelog: add release notes screen from the bundled CHANGELOG.md
+
+### Changed
+
+- templates: drop fallbacks for the old transfer template modes
+
 ## [1.45] - 2026-10-18
 
 ### Added
@@ -378,7 +392,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.45...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.46...HEAD
+[1.46]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.45...v1.46
 [1.45]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.44...v1.45
 [1.44]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.43...v1.44
 [1.43]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.42...v1.43
