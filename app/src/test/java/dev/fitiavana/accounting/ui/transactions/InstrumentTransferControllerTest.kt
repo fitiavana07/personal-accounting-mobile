@@ -59,6 +59,12 @@ class InstrumentTransferControllerTest {
         id = "eur_wallet", name = "EUR Wallet", type = "asset", instrumentCode = "EUR"
     )
 
+    private val usdViaEur = Account(
+        id = "usd_via_eur", name = "USD via EUR", type = "asset",
+        instrumentCode = "USD", intermediaryInstrumentCode = "EUR"
+    )
+    private val usdViaEurSavings = usdViaEur.copy(id = "usd_via_eur_savings", name = "USD via EUR Savings")
+
     @Before
     fun setUp() {
         viewModel = mock()
@@ -92,7 +98,7 @@ class InstrumentTransferControllerTest {
             onChanged = onChanged,
             runInBackground = { it() },
             runOnUiThread = { it() }
-        ).also { it.populateSpinners(listOf(usdWallet, usdSavings, eurWallet)) }
+        ).also { it.populateSpinners(listOf(usdWallet, usdSavings, eurWallet, usdViaEur, usdViaEurSavings)) }
 
     @Test
     fun `no accounts selected produces no entries`() {
@@ -133,6 +139,93 @@ class InstrumentTransferControllerTest {
         assertEquals(60_000L, totalDebit)
         assertEquals(150L, entries.first { it.accountId == "usd_wallet" }.instrumentCreditAmount)
         assertEquals(150L, entries.first { it.accountId == "usd_savings" }.instrumentDebitAmount)
+    }
+
+    private fun stubBalance(id: String, balance: Long, instrument: Long, intermediary: Long = 0L) {
+        whenever(viewModel.getBalance(id)).thenReturn(
+            AccountBalance(
+                accountId = id,
+                balance = balance,
+                instrumentBalance = instrument,
+                intermediaryBalance = intermediary,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+    }
+
+    /** Selects usd_via_eur (From, position 4) then its twin (To, position 2 of [usd_via_eur, usd_via_eur_savings]). */
+    private fun selectIntermediaryAccounts(amount: String) {
+        stubBalance("usd_via_eur", balance = 400_000L, instrument = 1000L, intermediary = 500L)
+        stubBalance("usd_via_eur_savings", balance = 0L, instrument = 0L, intermediary = 0L)
+        fromSpinner.setSelection(4)
+        toSpinner.setSelection(2)
+        editTransferAmount.setText(amount)
+    }
+
+    @Test
+    fun `to spinner only offers accounts sharing the from account's intermediary instrument`() {
+        controller()
+
+        fromSpinner.setSelection(4) // usd_via_eur
+
+        // placeholder + usd_via_eur + usd_via_eur_savings; plain USD accounts are excluded
+        assertEquals(3, toSpinner.adapter.count)
+        assertEquals(usdViaEur.name, toSpinner.adapter.getItem(1))
+        assertEquals(usdViaEurSavings.name, toSpinner.adapter.getItem(2))
+    }
+
+    @Test
+    fun `an intermediary transfer credits from and debits to by a proportionally derived intermediary amount`() {
+        val controller = controller()
+        selectIntermediaryAccounts("1.50") // 150 units -> 150 * 500 / 1000 = 75
+
+        val entries = controller.collectEntries()!!
+        val from = entries.first { it.accountId == "usd_via_eur" }
+        val to = entries.first { it.accountId == "usd_via_eur_savings" }
+        assertEquals(75L, from.intermediaryCreditAmount)
+        assertNull(from.intermediaryDebitAmount)
+        assertEquals(75L, to.intermediaryDebitAmount)
+        assertNull(to.intermediaryCreditAmount)
+    }
+
+    @Test
+    fun `an account without an intermediary records no intermediary amount`() {
+        stubBalance("usd_wallet", balance = 400_000L, instrument = 1000L, intermediary = 500L)
+        stubBalance("usd_savings", balance = 0L, instrument = 0L)
+        val controller = controller()
+
+        fromSpinner.setSelection(1)
+        toSpinner.setSelection(2)
+        editTransferAmount.setText("1.50")
+
+        val entries = controller.collectEntries()!!
+        assertTrue(entries.all { it.intermediaryCreditAmount == null && it.intermediaryDebitAmount == null })
+        assertEquals("≈ 60,000 Ar", textAmountBase.text.toString())
+    }
+
+    @Test
+    fun `balance and new balance lines append the intermediary part on both sides`() {
+        controller()
+        selectIntermediaryAccounts("1.50")
+
+        assertEquals("Balance: 400,000 Ar · 10.0\u00A0USD · 5.0\u00A0EUR", fromTextBalance.text.toString())
+        assertEquals(
+            "New balance: 340,000 Ar · 8.5\u00A0USD · 4.25\u00A0EUR",
+            fromTextNewBalance.text.toString()
+        )
+        assertEquals(
+            "New balance: 60,000 Ar · 1.5\u00A0USD · 0.75\u00A0EUR",
+            toTextNewBalance.text.toString()
+        )
+    }
+
+    @Test
+    fun `the amount preview appends the intermediary amount`() {
+        controller()
+        selectIntermediaryAccounts("1.50")
+
+        assertEquals("≈ 60,000 Ar · 0.75\u00A0EUR", textAmountBase.text.toString())
     }
 
     @Test

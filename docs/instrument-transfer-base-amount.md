@@ -89,8 +89,17 @@ It is saved as `intermediaryDebitAmount` on the asset entry (omitted when
 the account has no intermediary or the result is not positive). The
 intermediary balance is appended as a third part to the asset's "Balance:"
 line (`AccountSideController`), its "New balance:" line, and the "+ … Ar ·
-… · …" delta line below the new balance field. Instrument Transfer still
-excludes accounts with an intermediary.
+… · …" delta line below the new balance field.
+
+### Transfer with an intermediary instrument
+
+Instrument Transfer accepts accounts with an intermediary instrument too, but
+the To account must have the **same instrument and the same intermediary
+instrument** as From (`InstrumentTransferBuilder.selectableToAccounts`). The
+intermediary amount is derived exactly as in Income, from the **From**
+account's `intermediaryBalance`, and saved as `intermediaryCreditAmount` on
+the From entry and `intermediaryDebitAmount` on the To entry. The balance,
+new balance and "≈ … Ar · …" preview lines gain the intermediary part.
 
 ## Notes
 

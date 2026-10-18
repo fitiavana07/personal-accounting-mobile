@@ -36,12 +36,63 @@ class InstrumentTransferBuilderTest {
     private val loan = Account(id = "loan", name = "Loan", type = "liability")
 
     @Test
-    fun `selectableFromAccounts keeps only asset accounts with an instrument and no intermediary`() {
+    fun `selectableFromAccounts keeps only asset accounts with an instrument, with or without intermediary`() {
         val result = InstrumentTransferBuilder.selectableFromAccounts(
             listOf(cash, usdWallet, eurWallet, btcWalletWithIntermediary, revenue, loan)
         )
 
-        assertEquals(listOf(usdWallet, eurWallet), result)
+        assertEquals(listOf(usdWallet, eurWallet, btcWalletWithIntermediary), result)
+    }
+
+    @Test
+    fun `selectableToAccounts requires the same intermediary instrument as the from account`() {
+        val btcSavingsSameIntermediary = btcWalletWithIntermediary.copy(id = "btc_savings")
+        val btcSavingsOtherIntermediary =
+            btcWalletWithIntermediary.copy(id = "btc_eur", intermediaryInstrumentCode = "EUR")
+        val btcPlain = btcWalletWithIntermediary.copy(id = "btc_plain", intermediaryInstrumentCode = null)
+        val accounts = listOf(
+            btcWalletWithIntermediary, btcSavingsSameIntermediary, btcSavingsOtherIntermediary, btcPlain
+        )
+
+        assertEquals(
+            listOf(btcWalletWithIntermediary, btcSavingsSameIntermediary),
+            InstrumentTransferBuilder.selectableToAccounts(accounts, btcWalletWithIntermediary)
+        )
+        assertEquals(
+            listOf(btcPlain),
+            InstrumentTransferBuilder.selectableToAccounts(accounts, btcPlain)
+        )
+    }
+
+    @Test
+    fun `buildEntries credits the intermediary amount on from and debits it on to`() {
+        val entries = InstrumentTransferBuilder.buildEntries(
+            fromAccountId = "btc_wallet",
+            toAccountId = "btc_savings",
+            instrumentAmount = 2L,
+            baseAmount = 60_000L,
+            intermediaryAmount = 15L
+        )
+
+        assertEquals(15L, entries[0].intermediaryCreditAmount)
+        assertEquals(null, entries[0].intermediaryDebitAmount)
+        assertEquals(15L, entries[1].intermediaryDebitAmount)
+        assertEquals(null, entries[1].intermediaryCreditAmount)
+    }
+
+    @Test
+    fun `buildEntries omits a null or non-positive intermediary amount`() {
+        listOf(null, 0L, -3L).forEach { amount ->
+            val entries = InstrumentTransferBuilder.buildEntries(
+                fromAccountId = "a",
+                toAccountId = "b",
+                instrumentAmount = 2L,
+                baseAmount = 60_000L,
+                intermediaryAmount = amount
+            )
+            assertEquals(null, entries[0].intermediaryCreditAmount)
+            assertEquals(null, entries[1].intermediaryDebitAmount)
+        }
     }
 
     @Test

@@ -43,6 +43,7 @@
     <string name="label_balance_ar_instrument_intermediary">Balance: %1$s Ar · %2$s · %3$s</string>
     <string name="label_new_balance_ar_instrument_intermediary">New balance: %1$s Ar · %2$s · %3$s</string>
     <string name="label_amount_base_ar">≈ %1$s Ar</string>
+    <string name="label_amount_base_ar_instrument_intermediary">≈ %1$s Ar · %2$s</string>
     <string name="mode_title_classic">Classic</string>
     <string name="mode_title_simple_transfer">Simple Transfer</string>
     <string name="mode_title_instrument_transfer">Instrument Transfer</string>
