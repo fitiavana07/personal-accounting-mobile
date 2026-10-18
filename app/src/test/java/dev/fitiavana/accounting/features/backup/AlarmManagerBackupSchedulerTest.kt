@@ -32,18 +32,21 @@ class AlarmManagerBackupSchedulerTest {
     fun `scheduleAt arms a wakeup alarm at the given time`() {
         scheduler.scheduleAt(1_700_000_000_000L)
 
-        val alarm = shadowOf(alarmManager).nextScheduledAlarm
+        val alarm = shadowOf(alarmManager).peekNextScheduledAlarm()
         assertNotNull(alarm)
-        assertEquals(1_700_000_000_000L, alarm.triggerAtTime)
-        assertEquals(AlarmManager.RTC_WAKEUP, alarm.type)
+        assertEquals(1_700_000_000_000L, alarm.triggerAtMs)
+        assertEquals(AlarmManager.RTC_WAKEUP, alarm.getType())
     }
 
     @Test
     fun `the alarm broadcasts to the auto-backup receiver`() {
         scheduler.scheduleAt(1_700_000_000_000L)
 
-        val alarm = shadowOf(alarmManager).nextScheduledAlarm
-        val intent = shadowOf(alarm.operation).savedIntent
+        val alarm = shadowOf(alarmManager).peekNextScheduledAlarm()
+        // Robolectric has no getter for the PendingIntent, only the (deprecated) field.
+        @Suppress("DEPRECATION")
+        val operation = alarm.operation
+        val intent = shadowOf(operation).savedIntent
         assertEquals(AutoBackupReceiver::class.java.name, intent.component?.className)
         assertEquals(AutoBackupReceiver.ACTION_AUTO_BACKUP, intent.action)
     }
@@ -54,7 +57,7 @@ class AlarmManagerBackupSchedulerTest {
         scheduler.scheduleAt(1_700_000_500_000L)
 
         assertEquals(1, shadowOf(alarmManager).scheduledAlarms.size)
-        assertEquals(1_700_000_500_000L, shadowOf(alarmManager).nextScheduledAlarm.triggerAtTime)
+        assertEquals(1_700_000_500_000L, shadowOf(alarmManager).peekNextScheduledAlarm().triggerAtMs)
     }
 
     @Test
@@ -63,6 +66,6 @@ class AlarmManagerBackupSchedulerTest {
 
         scheduler.cancel()
 
-        assertNull(shadowOf(alarmManager).nextScheduledAlarm)
+        assertNull(shadowOf(alarmManager).peekNextScheduledAlarm())
     }
 }

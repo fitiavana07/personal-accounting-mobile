@@ -73,11 +73,22 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    lint {
+        // minSdk is 19: no SDK_INT checks that API 19 already satisfies, no deprecated resources (docs/guardrails.md).
+        error += setOf("ObsoleteSdkInt", "Deprecated")
+    }
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
             isReturnDefaultValues = true
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        // A deprecated API must be replaced by its recommended alternative, so every warning fails the build.
+        allWarningsAsErrors.set(true)
     }
 }
 

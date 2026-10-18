@@ -23,6 +23,8 @@ class PeriodSelectorAdapterTest {
         return adapter.onCreateViewHolder(parent, 0)
     }
 
+    // inflateHolder returns the raw RecyclerView.ViewHolder; the adapter's type argument is erased at runtime.
+    @Suppress("UNCHECKED_CAST")
     @Test
     fun `icon is hidden when no iconFor is provided`() {
         val adapter = PeriodSelectorAdapter<Int>(labelFor = { it.toString() }, onSelected = {})
@@ -34,6 +36,7 @@ class PeriodSelectorAdapterTest {
         assertEquals(View.GONE, icon.visibility)
     }
 
+    @Suppress("UNCHECKED_CAST")
     @Test
     fun `icon is visible with the resource from iconFor when provided`() {
         val adapter = PeriodSelectorAdapter<ReportType>(
