@@ -101,6 +101,18 @@ account's `intermediaryBalance`, and saved as `intermediaryCreditAmount` on
 the From entry and `intermediaryDebitAmount` on the To entry. The balance,
 new balance and "≈ … Ar · …" preview lines gain the intermediary part.
 
+### Zero-balance accounts hidden from From
+
+In both Instrument Transfer and Simple Transfer, the From spinner hides accounts
+whose base balance is zero (or has no balance row). The To spinner is
+unaffected. Balances come from `AddTransactionViewModel.loadAccountsAndInstruments()`
+(`balancesByAccountId`). A template whose FROM account is empty is therefore
+reported as unavailable.
+
+The To spinner also never offers the account currently selected in From. Simple
+Transfer repopulates To whenever From changes (keeping the To selection if it is
+still offered); Instrument Transfer already did so for its instrument filter.
+
 ## Notes
 
 - The rate is always taken from the **From** account (Transfer) or the
