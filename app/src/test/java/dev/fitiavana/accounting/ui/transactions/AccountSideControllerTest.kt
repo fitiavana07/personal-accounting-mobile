@@ -219,7 +219,7 @@ class AccountSideControllerTest {
 
         select(spinner, 1)
 
-        assertEquals("Balance: 2,000 Ar · 0.2\u00A0USD · 7.5\u00A0EUR", textBalance.text.toString())
+        assertEquals("Balance: 0.2\u00A0USD · 7.5\u00A0EUR · 2,000 Ar", textBalance.text.toString())
     }
 
     @Test

@@ -87,9 +87,14 @@ val intermediaryAmount = InstrumentValueCalculator.computeBaseAmount(
 
 It is saved as `intermediaryDebitAmount` on the asset entry (omitted when
 the account has no intermediary or the result is not positive). The
-intermediary balance is appended as a third part to the asset's "Balance:"
-line (`AccountSideController`), its "New balance:" line, and the "+ … Ar ·
-… · …" delta line below the new balance field.
+intermediary balance is added as a second part to the asset's "Balance:"
+line (`AccountSideController`), its "New balance:" line, and the "+ …"
+delta line below the new balance field.
+
+All these lines (in Income and Transfer) show amounts in the order
+**account instrument · intermediary instrument · base (Ar)**, e.g.
+`Balance: 1.5 BTC · 90,000 USDT · 400,000 Ar`, since the instrument is what
+the user types; the order lives in the string templates only.
 
 ### Transfer with an intermediary instrument
 
@@ -99,7 +104,7 @@ instrument** as From (`InstrumentTransferBuilder.selectableToAccounts`). The
 intermediary amount is derived exactly as in Income, from the **From**
 account's `intermediaryBalance`, and saved as `intermediaryCreditAmount` on
 the From entry and `intermediaryDebitAmount` on the To entry. The balance,
-new balance and "≈ … Ar · …" preview lines gain the intermediary part.
+new balance and "≈ … · … Ar" preview lines gain the intermediary part.
 
 ### Zero-balance accounts hidden from From
 

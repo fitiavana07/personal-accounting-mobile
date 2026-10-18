@@ -310,13 +310,13 @@ class InstrumentTransferControllerTest {
         controller()
         selectIntermediaryAccounts("1.50")
 
-        assertEquals("Balance: 400,000 Ar · 10.0\u00A0USD · 5.0\u00A0EUR", fromTextBalance.text.toString())
+        assertEquals("Balance: 10.0\u00A0USD · 5.0\u00A0EUR · 400,000 Ar", fromTextBalance.text.toString())
         assertEquals(
-            "New balance: 340,000 Ar · 8.5\u00A0USD · 4.25\u00A0EUR",
+            "New balance: 8.5\u00A0USD · 4.25\u00A0EUR · 340,000 Ar",
             fromTextNewBalance.text.toString()
         )
         assertEquals(
-            "New balance: 60,000 Ar · 1.5\u00A0USD · 0.75\u00A0EUR",
+            "New balance: 1.5\u00A0USD · 0.75\u00A0EUR · 60,000 Ar",
             toTextNewBalance.text.toString()
         )
     }
@@ -326,7 +326,7 @@ class InstrumentTransferControllerTest {
         controller()
         selectIntermediaryAccounts("1.50")
 
-        assertEquals("≈ 60,000 Ar · 0.75\u00A0EUR", textAmountBase.text.toString())
+        assertEquals("≈ 0.75\u00A0EUR · 60,000 Ar", textAmountBase.text.toString())
     }
 
     @Test
@@ -400,7 +400,7 @@ class InstrumentTransferControllerTest {
 
         assertEquals(View.VISIBLE, fromTextBalance.visibility)
         assertEquals(
-            "Balance: 400,000 Ar · 10.0\u00A0USD",
+            "Balance: 10.0\u00A0USD · 400,000 Ar",
             fromTextBalance.text.toString()
         )
     }
@@ -433,12 +433,12 @@ class InstrumentTransferControllerTest {
 
         assertEquals(View.VISIBLE, fromTextNewBalance.visibility)
         assertEquals(
-            "New balance: 340,000 Ar · 8.5\u00A0USD",
+            "New balance: 8.5\u00A0USD · 340,000 Ar",
             fromTextNewBalance.text.toString()
         )
         assertEquals(View.VISIBLE, toTextNewBalance.visibility)
         assertEquals(
-            "New balance: 60,000 Ar · 1.5\u00A0USD",
+            "New balance: 1.5\u00A0USD · 60,000 Ar",
             toTextNewBalance.text.toString()
         )
 
