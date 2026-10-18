@@ -206,6 +206,10 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 Common types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`,
 `perf`. Use `!` after type/scope (e.g. `feat!:`) for breaking changes.
 
+For a `fix` (and any non-trivial change), add a body after a blank line that
+describes the bug (symptom, and the root cause when known) and the solution, so
+the history explains why the change was made. Wrap the body at about 80 columns.
+
 ### Version bumps
 
 Never edit `versionCode`/`versionName` in `app/build.gradle.kts` (a hook blocks
