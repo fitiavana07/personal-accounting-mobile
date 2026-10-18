@@ -38,10 +38,21 @@ class InstrumentIncomeBuilderTest {
     @Test
     fun `selectableAssetAccounts keeps only asset accounts with an instrument, with or without intermediary`() {
         val result = InstrumentIncomeBuilder.selectableAssetAccounts(
-            listOf(cash, usdWallet, btcWalletWithIntermediary, salesRevenue, loan)
+            listOf(cash, usdWallet, btcWalletWithIntermediary, salesRevenue, loan),
+            mapOf("usd_wallet" to 100L, "btc_wallet" to 200L)
         )
 
         assertEquals(listOf(usdWallet, btcWalletWithIntermediary), result)
+    }
+
+    @Test
+    fun `selectableAssetAccounts hides asset accounts whose base balance is zero or unknown`() {
+        val result = InstrumentIncomeBuilder.selectableAssetAccounts(
+            listOf(usdWallet, btcWalletWithIntermediary),
+            mapOf("usd_wallet" to 0L)
+        )
+
+        assertEquals(emptyList<Account>(), result)
     }
 
     @Test

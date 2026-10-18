@@ -98,7 +98,10 @@ class InstrumentIncomeControllerTest {
             runOnUiThread = { it() }
         ).also {
             it.populateSpinners(
-                listOf(usdWallet, eurWallet, usdViaEurWallet, usdIncomeInEurWallet, salesRevenue, otherRevenue)
+                listOf(usdWallet, eurWallet, usdViaEurWallet, usdIncomeInEurWallet, salesRevenue, otherRevenue),
+                mapOf(
+                    "usd_wallet" to 1L, "eur_wallet" to 1L, "usd_via_eur" to 1L, "usd_income_eur" to 1L
+                )
             )
         }
 

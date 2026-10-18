@@ -284,8 +284,9 @@ class InstrumentIncomeController(
         textAmountBase.visibility = View.VISIBLE
     }
 
-    fun populateSpinners(accounts: List<Account>) {
-        asset.populate(InstrumentIncomeBuilder.selectableAssetAccounts(accounts))
+    /** Offers the accounts of [InstrumentIncomeBuilder]; the asset side hides those with a zero base balance in [balances]. */
+    fun populateSpinners(accounts: List<Account>, balances: Map<String, Long>) {
+        asset.populate(InstrumentIncomeBuilder.selectableAssetAccounts(accounts, balances))
         revenue.populate(InstrumentIncomeBuilder.selectableRevenueAccounts(accounts))
     }
 

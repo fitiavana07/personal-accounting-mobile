@@ -62,7 +62,7 @@ class InstrumentIncomeTemplateTest {
             onChanged = {},
             runInBackground = { it() },
             runOnUiThread = { it() }
-        ).also { it.populateSpinners(listOf(usdWallet, sales)) }
+        ).also { it.populateSpinners(listOf(usdWallet, sales), mapOf("usd_wallet" to 1L)) }
     }
 
     private fun template(vararg slots: Pair<String, String>) = TemplateWithEntries(

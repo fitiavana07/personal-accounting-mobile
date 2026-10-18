@@ -163,7 +163,7 @@ class AddTransactionActivity : AppCompatActivity() {
                     runInBackground = backgroundRunner,
                     runOnUiThread = uiThreadRunner
                 )
-                instrumentIncomeController.populateSpinners(accounts)
+                instrumentIncomeController.populateSpinners(accounts, loaded.balancesByAccountId)
                 recalculateBalanceSummary()
                 // Templates need the controllers above, so they are shown (and can be applied) only now.
                 showTemplates(templates)

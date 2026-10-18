@@ -17,11 +17,14 @@ object InstrumentIncomeBuilder {
 
     /**
      * The accounts offered in the asset spinner: asset accounts with an
-     * instrument (with or without an intermediary instrument). Input order is
-     * preserved.
+     * instrument (with or without an intermediary instrument) whose base
+     * balance in [balances] is not zero (or unknown), like Transfer's From.
+     * Input order is preserved.
      */
-    fun selectableAssetAccounts(accounts: List<Account>): List<Account> =
-        accounts.filter { it.type == AccountTypes.ASSET && it.instrumentCode != null }
+    fun selectableAssetAccounts(accounts: List<Account>, balances: Map<String, Long>): List<Account> =
+        accounts.filter {
+            it.type == AccountTypes.ASSET && it.instrumentCode != null && (balances[it.id] ?: 0L) != 0L
+        }
 
     /**
      * The accounts offered in the revenue spinner: revenue accounts with no
