@@ -92,7 +92,10 @@ val copyChangelogAsset by tasks.registering(Copy::class) {
     into(changelogAssetsDir)
 }
 android.sourceSets.getByName("main").assets.directories.add(changelogAssetsDir.get().asFile.path)
-tasks.matching { it.name.startsWith("merge") && it.name.endsWith("Assets") }.configureEach {
+// Lint also scans the asset source dirs, so it needs the copy done first.
+tasks.matching {
+    (it.name.startsWith("merge") && it.name.endsWith("Assets")) || it.name.contains("lint", ignoreCase = true)
+}.configureEach {
     dependsOn(copyChangelogAsset)
 }
 
