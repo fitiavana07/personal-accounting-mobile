@@ -2,8 +2,8 @@
 
 Accounting app with features like accounts, balances, transactions, reports.
 
-Build and test. Make sure to run it after every change. Remember to use TDD
-for every change: RED → GREEN → REFACTOR.
+Build and test. Make sure to run it after every change. Remember to use TDD for
+every change: RED → GREEN → REFACTOR.
 
 ```
 ./gradlew assembleDebug testDebugUnitTest
@@ -19,8 +19,8 @@ above API 19 without adding appropriate compatibility notes or checks.
 - **Language**: Kotlin.
 - **Build system**: Gradle, with Kotlin DSL `build.gradle.kts`
 
-Build variants: `debug` (applicationIdSuffix `.dev`, includes clear-data
-menu) and `release`. Both can be installed side-by-side.
+Build variants: `debug` (applicationIdSuffix `.dev`, includes clear-data menu)
+and `release`. Both can be installed side-by-side.
 
 The package is dev.fitiavana.accounting.
 
@@ -37,10 +37,10 @@ that receives Repository instances from the Activity/Fragment.
 
 **Layering rule: Activity/Fragment → ViewModel → Repository → DAO.**
 Activities and Fragments must talk to a ViewModel only — never call a
-Repository or DAO directly. A ViewModel may depend on multiple Repositories,
-a Repository may depend on multiple DAOs, but a DAO must never depend on a
-Repository and a Repository must never be called directly from the UI layer.
-If a ViewModel is missing a method you need, add it to the ViewModel (which
+Repository or DAO directly. A ViewModel may depend on multiple Repositories, a
+Repository may depend on multiple DAOs, but a DAO must never depend on a
+Repository and a Repository must never be called directly from the UI layer. If
+a ViewModel is missing a method you need, add it to the ViewModel (which
 delegates to the Repository) rather than reaching past it from the UI layer.
 
 RoomDatabase singleton in
@@ -78,10 +78,10 @@ ui/
   common/        # shared presenters/adapters (UiUtils, ReportPresenter, TransactionDisplay)
 ```
 
-Each feature under `features/<name>/` colocates its Room `@Entity`, `@Dao`,
-and `Repository` together (rather than splitting them across `data/model/`,
-`data/dao/`, `data/repository/`) — feature-cohesive, fewer cross-package
-jumps to touch one feature. The `ui/<name>/` layering rule still applies:
+Each feature under `features/<name>/` colocates its Room `@Entity`, `@Dao`, and
+`Repository` together (rather than splitting them across `data/model/`,
+`data/dao/`, `data/repository/`) — feature-cohesive, fewer cross-package jumps
+to touch one feature. The `ui/<name>/` layering rule still applies:
 UI code only talks to a `features/<name>/*Repository` through a ViewModel,
 never to a `*Dao` directly.
 
@@ -93,13 +93,14 @@ Features: Accounts, Instruments, Transactions, Balances, Reports
 See `docs/reports-feature.md` for how the Reports feature works (period
 selection, ViewModel data flow, report builders) before exploring its code.
 
-See `docs/instrument-transfer-base-amount.md` for how the base currency
-amount is calculated in Instrument Transfer transaction creation mode.
+See `docs/instrument-transfer-base-amount.md` for how the base currency amount
+is calculated in Instrument Transfer transaction creation mode.
 
 See `docs/cex-prices-feature.md` for the CEX pair price comparison feature
 (home shortcut, spinners, per-exchange fetchers).
 
-See `docs/p2p-prices-feature.md` for the Binance P2P prices block on the home screen.
+See `docs/p2p-prices-feature.md` for the Binance P2P prices block on the home
+screen.
 
 See `docs/auto-backup-feature.md` for the automatic daily backup (AlarmManager,
 receivers, where files go) and how to test it.
@@ -116,9 +117,10 @@ interest, the Earn screen and the Balance Sheet APR row).
 
 See `docs/p2p-sync.md` for peer-to-peer sync over the local Wi-Fi (what syncs,
 stamps and tombstones, merge and repair, the protocol, and why debug and
-release builds never see each other). **Every write to a synced table (instruments,
-accounts, transactions + entries, templates + entries, the settings row) must go
-through its repository inside `ChangeTracker.inTransaction`, so it is stamped.**
+release builds never see each other). **Every write to a synced table (
+instruments, accounts, transactions + entries, templates + entries, the
+settings row) must go through its repository inside
+`ChangeTracker.inTransaction`, so it is stamped.**
 
 Each CRUD feature: {Feature}Fragment + {Feature}ViewModel + {Feature}Adapter +
 Edit{Feature}Activity + Edit{Feature}ViewModel
@@ -141,13 +143,18 @@ Transaction amounts stored as integers
 - **TDD is mandatory**: for every change (new feature, bug fix, refactor),
   write a failing test first, verify it actually fails by running the test
   command, then write the minimum code to make it pass, then refactor. Never
-  write production code before there is a test that requires it.
+  write production code before there is a test that requires it. When doing the
+  RED check for the tests, only run the new tests instead of everything,
+  because some other agents may be adding new tests. Because running all the
+  tests at once may be long, run the green CHECK in two steps: 1. running the
+  new tests only, 2. running all the tests. That way, we catch failing tests
+  early.
 - **Add a Robolectric test whenever it's relevant**, not just Mockito-mocked
   coverage: any new or changed `@Dao` interface with a non-trivial `@Query`
   (`WHERE`/`JOIN`/date-range filter/ordering/aggregation) needs its own
   `androidx.room.testing`-backed `@RunWith(RobolectricTestRunner::class)`
-  test hitting a real in-memory Room database — a mocked-repository test in
-  a ViewModel test cannot catch a broken `@Query`. The same applies to other
+  test hitting a real in-memory Room database — a mocked-repository test in a
+  ViewModel test cannot catch a broken `@Query`. The same applies to other
   Android-framework-dependent code (adapters binding views, anything reading
   resources/`Context`). See `features/accounts/AccountDaoTest.kt` or
   `features/transactions/TransactionDaoTest.kt` for the pattern.
@@ -161,8 +168,8 @@ Transaction amounts stored as integers
 
 ## Code
 
-- Avoid using `@Deprecated` methods when possible, use recommended
-  replacement instead.
+- Avoid using `@Deprecated` methods when possible, use recommended replacement
+  instead.
 - Never include Co-Authored-By in commits
 - DRY: Reuse code when possible, refactor if needed
 - To display a base-currency amount (prefixed "Ar", thousands-separated, no
@@ -196,14 +203,9 @@ commit.
 
 ## On new features
 
-After every change:
-
-- generate a testing checklist
-- write unit tests (new or update existing ones) conforming to this
-  checklist, for everything that is worth to be unit-tested
+After every change, generate a testing checklist for the user to test manually
 
 ## When adding new libraries
 
-When adding a new library (in build.gradle.kts / libs.versions.toml),
-always verify the app can be built successfully before making changes to
-source code.
+When adding a new library (in build.gradle.kts / libs.versions.toml), always
+verify the app can be built successfully before making changes to source code.
