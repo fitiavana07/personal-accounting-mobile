@@ -314,10 +314,40 @@ class BackupRepositoryTest {
         verify(templateDao).insertTemplates(emptyList())
     }
 
+    // --- restore: older backups ---
+
+    @Test
+    fun `restore of an older backup succeeds with an older version warning`() {
+        val json = JSONObject(repository.export())
+        json.put("schemaVersion", AppDatabase.SCHEMA_VERSION - 1)
+
+        val result = repository.restore(json.toString())
+
+        assertEquals(
+            RestoreResult.SuccessFromOlderVersion(AppDatabase.SCHEMA_VERSION - 1, AppDatabase.SCHEMA_VERSION),
+            result
+        )
+        verify(instrumentDao).insertAll(listOf(instrument, instrumentNoCoingeckoId))
+        verify(accountDao).insertAll(listOf(account, accountNoInstrument))
+    }
+
+    @Test
+    fun `restore of an older backup lacking newer account fields uses their defaults`() {
+        val json = JSONObject(repository.export())
+        json.put("schemaVersion", 21)
+        val accounts = json.getJSONArray("accounts")
+        for (i in 0 until accounts.length()) accounts.getJSONObject(i).remove("linkedRevenueAccountId")
+
+        val result = repository.restore(json.toString())
+
+        assertTrue(result is RestoreResult.SuccessFromOlderVersion)
+        verify(accountDao).insertAll(listOf(account, accountNoInstrument))
+    }
+
     // --- restore: schema mismatch ---
 
     @Test
-    fun `restore with different schema version returns SchemaMismatch`() {
+    fun `restore with newer schema version returns SchemaMismatch`() {
         val json = JSONObject(repository.export())
         json.put("schemaVersion", AppDatabase.SCHEMA_VERSION + 1)
 

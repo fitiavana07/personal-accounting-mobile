@@ -26,6 +26,14 @@ import org.json.JSONObject
 
 sealed class RestoreResult {
     object Success : RestoreResult()
+
+    /** Restored from a backup made by an older schema; fields it lacks took their defaults. */
+    data class SuccessFromOlderVersion(
+        val backupVersion: Int,
+        val currentVersion: Int
+    ) : RestoreResult()
+
+    /** The backup comes from a newer schema than this app knows, so it is refused. */
     data class SchemaMismatch(
         val backupVersion: Int,
         val currentVersion: Int
@@ -102,7 +110,7 @@ class BackupRepository(
         } catch (e: JSONException) {
             return RestoreResult.Error("Backup file is missing a schema version")
         }
-        if (backupVersion != AppDatabase.SCHEMA_VERSION) {
+        if (backupVersion > AppDatabase.SCHEMA_VERSION) {
             return RestoreResult.SchemaMismatch(
                 backupVersion,
                 AppDatabase.SCHEMA_VERSION
@@ -183,7 +191,11 @@ class BackupRepository(
             )
         }
 
-        return RestoreResult.Success
+        return if (backupVersion < AppDatabase.SCHEMA_VERSION) {
+            RestoreResult.SuccessFromOlderVersion(backupVersion, AppDatabase.SCHEMA_VERSION)
+        } else {
+            RestoreResult.Success
+        }
     }
 
     companion object {

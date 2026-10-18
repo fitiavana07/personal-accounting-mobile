@@ -249,6 +249,15 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
+    /** A dialog rather than a toast: the message is long and a toast truncates it. */
+    internal fun showRestoreOlderVersionWarning(backupVersion: Int, currentVersion: Int) {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.dialog_restore_title)
+            .setMessage(getString(R.string.restore_success_older_version, backupVersion, currentVersion))
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
     private fun performRestore(uri: Uri) {
         setOperationInProgress(true)
         Thread {
@@ -264,6 +273,10 @@ class MainActivity : AppCompatActivity() {
                             R.string.restore_success,
                             Toast.LENGTH_SHORT
                         ).show()
+                    }
+
+                    is RestoreResult.SuccessFromOlderVersion -> runOnUiThread {
+                        showRestoreOlderVersionWarning(result.backupVersion, result.currentVersion)
                     }
 
                     is RestoreResult.SchemaMismatch -> runOnUiThread {

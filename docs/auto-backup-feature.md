@@ -42,7 +42,10 @@ a `.tmp` file and renamed so a crash never leaves a half-written backup. Only th
 bad edits, not against losing the phone. Use the manual **Backup** to keep a copy elsewhere.
 
 Restoring an auto-backup: the files are ordinary backups, so copy one somewhere the document picker can reach
-and use **Restore**. Schema rules are unchanged: a backup only restores on the same `AppDatabase.SCHEMA_VERSION`.
+and use **Restore**. Schema rules: a backup from an **older** schema restores (fields it lacks take their defaults,
+and a warning dialog says so, `RestoreResult.SuccessFromOlderVersion`); a backup from a **newer** schema is refused
+(`SchemaMismatch`). A migration that transforms data (not just adds a column) must also be applied to the JSON
+in `BackupRepository.restore`, per `backupVersion`, with a test.
 
 ## Tests
 

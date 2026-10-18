@@ -27,7 +27,8 @@
     <string name="dialog_restore_message">This will erase all current data and replace it with the contents of the selected backup file. This cannot be undone.</string>
     <string name="dialog_restore_title">Restore backup</string>
     <string name="restore_failed">Restore failed: %1$s</string>
-    <string name="restore_schema_mismatch">This backup was made with a different app version (schema v%1$d) and can\'t be restored on this version (schema v%2$d).</string>
+    <string name="restore_schema_mismatch">This backup was made with a newer app version (schema v%1$d) and can\'t be restored on this version (schema v%2$d).</string>
+    <string name="restore_success_older_version">Restore complete. Warning: this backup was made with an older app version (schema v%1$d, now v%2$d); data added since then took default values. Please check your data.</string>
     <string name="restore_success">Restore complete</string>
     <string name="amount_ar">Ar %1$s</string>
     <string name="label_currency_ar">Ar</string>
