@@ -7,13 +7,16 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.49] - 2026-10-18
+
 ### Added
 
-- transactions: hide zero-balance assets in Instrument Income <!-- c:630ec61 -->
+- transactions: hide zero-balance assets in Instrument Income
+- release: add make changelog to sync and commit Unreleased entries
 
 ### Changed
 
-- sync: show "Sync" in the overflow menu with one shared string <!-- c:b571b56 -->
+- sync: show "Sync" in the overflow menu with one shared string
 
 ## [1.48] - 2026-10-18
 
@@ -412,7 +415,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.48...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.49...HEAD
+[1.49]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.48...v1.49
 [1.48]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.47...v1.48
 [1.47]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.46...v1.47
 [1.46]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.45...v1.46
