@@ -50,6 +50,32 @@ class SyncRepairTest {
     }
 
     @Test
+    fun `an account linked to a revenue account that is gone loses the link`() {
+        val data = data(
+            instruments = listOf(instrument("USD")),
+            accounts = listOf(account("a1", instrumentCode = "USD", linkedRevenue = "gone")),
+        )
+
+        val result = SyncRepair.repair(data)
+
+        assertEquals(account("a1", instrumentCode = "USD", linkedRevenue = null), result.data.accounts.single())
+        assertEquals(setOf(key(SyncKind.ACCOUNT, "a1")), result.modified)
+    }
+
+    @Test
+    fun `an account linked to an existing account keeps the link`() {
+        val data = data(
+            instruments = listOf(instrument("USD")),
+            accounts = listOf(account("a1", instrumentCode = "USD", linkedRevenue = "rev"), account("rev")),
+        )
+
+        val result = SyncRepair.repair(data)
+
+        assertEquals(data.accounts, result.data.accounts)
+        assertTrue(result.modified.isEmpty())
+    }
+
+    @Test
     fun `an account whose intermediary instrument is gone loses that reference`() {
         val data = data(
             instruments = listOf(instrument("USD")),

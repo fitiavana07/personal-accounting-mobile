@@ -37,5 +37,10 @@ data class Account(
      * Asset account with an intermediary instrument whose Instrument Income is typed on the
      * intermediary instrument: the account's own instrument balance never changes.
      */
-    val incomeOnIntermediary: Boolean = false
+    val incomeOnIntermediary: Boolean = false,
+    /**
+     * Revenue account pre-associated with an asset account that has an instrument (default for
+     * Instrument Income). A plain id, not a foreign key; null when none.
+     */
+    val linkedRevenueAccountId: String? = null
 )

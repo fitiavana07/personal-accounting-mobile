@@ -62,7 +62,11 @@ class InstrumentIncomeControllerTest {
         id = "usd_income_eur", name = "USD income in EUR", type = "asset",
         instrumentCode = "USD", intermediaryInstrumentCode = "EUR", incomeOnIntermediary = true
     )
-    private val salesRevenue = Account(id = "sales_revenue", name = "Sales Revenue", type = "revenue")
+    private val usdLinkedWallet = Account(
+        id = "usd_linked", name = "USD Linked", type = "asset", instrumentCode = "USD",
+        linkedRevenueAccountId = "other_revenue"
+    )
+    private val salesRevenue =Account(id = "sales_revenue", name = "Sales Revenue", type = "revenue")
     private val otherRevenue = Account(id = "other_revenue", name = "Other Revenue", type = "revenue")
 
     @Before
@@ -98,9 +102,13 @@ class InstrumentIncomeControllerTest {
             runOnUiThread = { it() }
         ).also {
             it.populateSpinners(
-                listOf(usdWallet, eurWallet, usdViaEurWallet, usdIncomeInEurWallet, salesRevenue, otherRevenue),
+                listOf(
+                    usdWallet, eurWallet, usdViaEurWallet, usdIncomeInEurWallet, usdLinkedWallet,
+                    salesRevenue, otherRevenue
+                ),
                 mapOf(
-                    "usd_wallet" to 1L, "eur_wallet" to 1L, "usd_via_eur" to 1L, "usd_income_eur" to 1L
+                    "usd_wallet" to 1L, "eur_wallet" to 1L, "usd_via_eur" to 1L, "usd_income_eur" to 1L,
+                    "usd_linked" to 1L
                 )
             )
         }
@@ -151,8 +159,8 @@ class InstrumentIncomeControllerTest {
     fun `asset spinner only offers eligible asset accounts`() {
         val controller = controller()
 
-        // placeholder + usd_wallet + eur_wallet + usd_via_eur + usd_income_eur (intermediary accounts are offered too)
-        assertEquals(5, assetSpinner.adapter.count)
+        // placeholder + usd_wallet + eur_wallet + usd_via_eur + usd_income_eur + usd_linked (intermediary accounts are offered too)
+        assertEquals(6, assetSpinner.adapter.count)
         assertEquals(usdWallet.name, assetSpinner.adapter.getItem(1))
         assertEquals(eurWallet.name, assetSpinner.adapter.getItem(2))
         assertEquals(usdViaEurWallet.name, assetSpinner.adapter.getItem(3))
@@ -648,6 +656,34 @@ class InstrumentIncomeControllerTest {
         editIncomeAmount.setText("1.50")
 
         assertEquals(View.GONE, textAmountBase.visibility)
+    }
+
+    @Test
+    fun `selecting an asset with a linked revenue account preselects that revenue account`() {
+        controller()
+
+        assetSpinner.setSelection(5) // usd_linked, linked to other_revenue
+
+        assertEquals(2, revenueSpinner.selectedItemPosition) // other_revenue
+    }
+
+    @Test
+    fun `an asset without a linked revenue account leaves the revenue spinner alone`() {
+        controller()
+
+        assetSpinner.setSelection(1) // usd_wallet
+
+        assertEquals(0, revenueSpinner.selectedItemPosition)
+    }
+
+    @Test
+    fun `a revenue account already chosen is not replaced by the linked one`() {
+        controller()
+        revenueSpinner.setSelection(1) // sales_revenue
+
+        assetSpinner.setSelection(5) // usd_linked, linked to other_revenue
+
+        assertEquals(1, revenueSpinner.selectedItemPosition)
     }
 
     @Test

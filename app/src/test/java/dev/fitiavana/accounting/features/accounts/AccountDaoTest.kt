@@ -129,6 +129,28 @@ class AccountDaoTest {
         assertFalse(accountDao.hasAccountsWithIntermediaryInstrument("USD"))
     }
 
+    // linkedRevenueAccountId
+
+    @Test
+    fun `the linked revenue account round trips and defaults to none`() {
+        accountDao.insert(Account(id = "rev", name = "Interest", type = "revenue"))
+        accountDao.insert(Account(id = "plain", name = "Plain", type = "asset"))
+        accountDao.insert(Account(id = "linked", name = "Linked", type = "asset", linkedRevenueAccountId = "rev"))
+
+        assertNull(accountDao.getById("plain")?.linkedRevenueAccountId)
+        assertEquals("rev", accountDao.getById("linked")?.linkedRevenueAccountId)
+    }
+
+    @Test
+    fun `hasAccountsLinkedTo is true only for the revenue account an account points to`() {
+        accountDao.insert(Account(id = "rev", name = "Interest", type = "revenue"))
+        accountDao.insert(Account(id = "other", name = "Other", type = "revenue"))
+        accountDao.insert(Account(id = "a", name = "Asset", type = "asset", linkedRevenueAccountId = "rev"))
+
+        assertTrue(accountDao.hasAccountsLinkedTo("rev"))
+        assertFalse(accountDao.hasAccountsLinkedTo("other"))
+    }
+
     // aprPercent
 
     @Test

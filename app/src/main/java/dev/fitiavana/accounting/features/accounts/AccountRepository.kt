@@ -9,6 +9,9 @@ class AccountRepository(val dao: AccountDao, private val tracker: ChangeTracker)
     fun getAllSync(): List<Account> = dao.getAllSync()
     fun getById(id: String): Account? = dao.getById(id)
 
+    /** True when an asset account has [revenueAccountId] as its pre-associated revenue account. */
+    fun hasAccountsLinkedTo(revenueAccountId: String): Boolean = dao.hasAccountsLinkedTo(revenueAccountId)
+
     fun insert(account: Account) = tracker.inTransaction {
         dao.insert(account)
         tracker.touch(SyncKind.ACCOUNT, account.id)

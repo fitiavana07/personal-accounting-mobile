@@ -67,6 +67,8 @@ class InstrumentIncomeController(
         isDebit = true,
         onAccountSelected = { account ->
             textAmountCode.text = account?.let { amountInstrumentOf(it) }?.code ?: ""
+            // Default to the asset's pre-associated revenue account, unless one is already chosen.
+            account?.linkedRevenueAccountId?.let { if (revenue.account == null) revenue.select(it) }
             if (account == null) {
                 assetTextNewBalance.visibility = View.GONE
                 updateAmountBasePreview()

@@ -28,8 +28,16 @@ object SyncFixtures {
 
     fun instrument(code: String) = Instrument(code, "Note $code", "currency", 2)
 
-    fun account(id: String, instrumentCode: String? = null, intermediary: String? = null) =
-        Account(id, "Name $id", "asset", instrumentCode = instrumentCode, intermediaryInstrumentCode = intermediary)
+    fun account(
+        id: String,
+        instrumentCode: String? = null,
+        intermediary: String? = null,
+        linkedRevenue: String? = null,
+    ) = Account(
+        id, "Name $id", "asset",
+        instrumentCode = instrumentCode, intermediaryInstrumentCode = intermediary,
+        linkedRevenueAccountId = linkedRevenue,
+    )
 
     fun transaction(id: String) = Transaction(id, 1L, 2L, "note $id")
 

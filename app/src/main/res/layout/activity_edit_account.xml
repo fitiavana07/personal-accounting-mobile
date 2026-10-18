@@ -132,6 +132,25 @@
             android:maxLines="1"
             android:visibility="gone" />
 
+        <TextView
+            android:id="@+id/label_linked_revenue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/input_apr"
+            android:layout_marginTop="16dp"
+            android:text="@string/label_linked_revenue"
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:visibility="gone" />
+
+        <Spinner
+            android:id="@+id/spinner_linked_revenue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/label_linked_revenue"
+            android:layout_marginTop="4dp"
+            android:visibility="gone" />
+
         <Button
             android:id="@+id/button_save"
             android:layout_width="match_parent"

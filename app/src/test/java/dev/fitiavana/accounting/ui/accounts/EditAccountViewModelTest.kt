@@ -338,6 +338,74 @@ class EditAccountViewModelTest {
         assertTrue(captor.allValues.none { it.incomeOnIntermediary })
     }
 
+    // --- saveAccount: linked revenue account ---
+
+    private fun saveWithLink(type: String, instrumentCode: String?, link: String?): Account {
+        viewModel.saveAccount(
+            id = null, name = "A", type = type, instrumentCode = instrumentCode,
+            intermediaryInstrumentCode = null, linkedRevenueAccountId = link
+        )
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).insert(captor.capture())
+        return captor.firstValue
+    }
+
+    @Test
+    fun `an asset account with an instrument keeps its revenue link`() {
+        whenever(accountRepository.getById("rev")).thenReturn(Account("rev", "Interest", "revenue"))
+
+        assertEquals("rev", saveWithLink("asset", "USD", "rev").linkedRevenueAccountId)
+    }
+
+    @Test
+    fun `the revenue link is dropped without an instrument`() {
+        whenever(accountRepository.getById("rev")).thenReturn(Account("rev", "Interest", "revenue"))
+
+        assertNull(saveWithLink("asset", null, "rev").linkedRevenueAccountId)
+    }
+
+    @Test
+    fun `the revenue link is dropped for a non asset account`() {
+        whenever(accountRepository.getById("rev")).thenReturn(Account("rev", "Interest", "revenue"))
+
+        assertNull(saveWithLink("liability", "USD", "rev").linkedRevenueAccountId)
+    }
+
+    @Test
+    fun `the revenue link is dropped when the target is not a revenue account`() {
+        whenever(accountRepository.getById("x")).thenReturn(Account("x", "Cash", "asset"))
+
+        assertNull(saveWithLink("asset", "USD", "x").linkedRevenueAccountId)
+        assertNull(saveWithLink2("missing"))
+    }
+
+    private fun saveWithLink2(link: String): String? {
+        viewModel.saveAccount(
+            id = null, name = "B", type = "asset", instrumentCode = "USD",
+            intermediaryInstrumentCode = null, linkedRevenueAccountId = link
+        )
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository, org.mockito.kotlin.times(2)).insert(captor.capture())
+        return captor.lastValue.linkedRevenueAccountId
+    }
+
+    @Test
+    fun `revenueAccounts lists only revenue accounts`() {
+        whenever(accountRepository.getAllSync()).thenReturn(
+            listOf(Account("a", "Cash", "asset"), Account("r", "Interest", "revenue"), Account("e", "Food", "expense"))
+        )
+
+        assertEquals(listOf("r"), viewModel.revenueAccounts().map { it.id })
+    }
+
+    @Test
+    fun `hasLinkedAccounts delegates to the repository`() {
+        whenever(accountRepository.hasAccountsLinkedTo("r")).thenReturn(true)
+
+        assertTrue(viewModel.hasLinkedAccounts("r"))
+        assertFalse(viewModel.hasLinkedAccounts("other"))
+    }
+
     // --- deleteAccount ---
 
     @Test

@@ -75,6 +75,8 @@ idempotent) because merging row by row can break rules across rows:
 
 1. an account whose instrument is gone loses that reference (its data and transactions are kept: a missing
    reference is better than deleting the account with its transactions);
+   likewise, an account whose pre-associated revenue account (`linkedRevenueAccountId`, a plain id, not a
+   foreign key) is gone loses that link;
 2. a transaction with an entry on an account that is gone is dropped whole (and tombstoned);
 3. a template entry on an account that is gone is removed (the template counts as changed, as the foreign key does locally).
 

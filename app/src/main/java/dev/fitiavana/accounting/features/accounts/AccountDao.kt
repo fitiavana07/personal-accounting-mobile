@@ -39,4 +39,7 @@ interface AccountDao {
 
     @Query("SELECT COUNT(*) > 0 FROM accounts WHERE intermediaryInstrumentCode = :instrumentCode")
     fun hasAccountsWithIntermediaryInstrument(instrumentCode: String): Boolean
+
+    @Query("SELECT COUNT(*) > 0 FROM accounts WHERE linkedRevenueAccountId = :revenueAccountId")
+    fun hasAccountsLinkedTo(revenueAccountId: String): Boolean
 }

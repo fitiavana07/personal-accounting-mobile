@@ -62,6 +62,7 @@ internal fun Account.toJson() = JSONObject().apply {
     if (liquidityLevel != null) put("liquidityLevel", liquidityLevel)
     if (aprPercent != null) put("aprPercent", aprPercent)
     if (incomeOnIntermediary) put("incomeOnIntermediary", true)
+    if (linkedRevenueAccountId != null) put("linkedRevenueAccountId", linkedRevenueAccountId)
 }
 
 internal fun accountFromJson(json: JSONObject) = Account(
@@ -72,7 +73,8 @@ internal fun accountFromJson(json: JSONObject) = Account(
     intermediaryInstrumentCode = json.optStringOrNull("intermediaryInstrumentCode"),
     liquidityLevel = json.optStringOrNull("liquidityLevel"),
     aprPercent = if (json.has("aprPercent") && !json.isNull("aprPercent")) json.getDouble("aprPercent") else null,
-    incomeOnIntermediary = json.optBoolean("incomeOnIntermediary", false)
+    incomeOnIntermediary = json.optBoolean("incomeOnIntermediary", false),
+    linkedRevenueAccountId = json.optStringOrNull("linkedRevenueAccountId")
 )
 
 internal fun Transaction.toJson() = JSONObject().apply {

@@ -24,13 +24,21 @@ object SyncRepair {
         val removed = mutableSetOf<RecordKey>()
 
         val instruments = data.instruments.map { it.code }.toSet()
+        val allAccountIds = data.accounts.map { it.id }.toSet()
         val accounts = data.accounts.map { account ->
             val instrument = account.instrumentCode?.takeIf { it in instruments }
             val intermediary = account.intermediaryInstrumentCode?.takeIf { it in instruments }
-            if (instrument == account.instrumentCode && intermediary == account.intermediaryInstrumentCode) account
+            val linkedRevenue = account.linkedRevenueAccountId?.takeIf { it in allAccountIds }
+            if (instrument == account.instrumentCode && intermediary == account.intermediaryInstrumentCode &&
+                linkedRevenue == account.linkedRevenueAccountId
+            ) account
             else {
                 modified += RecordKey(SyncKind.ACCOUNT, account.id)
-                account.copy(instrumentCode = instrument, intermediaryInstrumentCode = intermediary)
+                account.copy(
+                    instrumentCode = instrument,
+                    intermediaryInstrumentCode = intermediary,
+                    linkedRevenueAccountId = linkedRevenue
+                )
             }
         }
 

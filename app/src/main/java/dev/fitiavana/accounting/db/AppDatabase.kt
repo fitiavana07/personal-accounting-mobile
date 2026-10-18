@@ -44,7 +44,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun syncDao(): SyncDao
 
     companion object {
-        const val SCHEMA_VERSION = 21
+        const val SCHEMA_VERSION = 22
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -354,6 +354,22 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** Adds the accounts' pre-associated revenue account. Internal so it can be checked against Room's generated schema. */
+        internal val MIGRATION_21_22 = object : Migration(21, 22) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val hasColumn = db.query("PRAGMA table_info(`accounts`)").use { cursor ->
+                    var found = false
+                    while (cursor.moveToNext()) {
+                        if (cursor.getString(1) == "linkedRevenueAccountId") found = true
+                    }
+                    found
+                }
+                if (!hasColumn) {
+                    db.execSQL("ALTER TABLE `accounts` ADD COLUMN `linkedRevenueAccountId` TEXT")
+                }
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -381,7 +397,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_17_18,
                         MIGRATION_18_19,
                         MIGRATION_19_20,
-                        MIGRATION_20_21
+                        MIGRATION_20_21,
+                        MIGRATION_21_22
                     )
                     .build().also { instance = it }
             }

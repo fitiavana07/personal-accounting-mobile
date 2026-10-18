@@ -173,6 +173,28 @@ class BackupRepositoryTest {
     }
 
     @Test
+    fun `export writes an account's linked revenue account and omits it when there is none`() {
+        val linked = Account(id = "linked", name = "Linked", type = "asset", linkedRevenueAccountId = "rev")
+        whenever(accountDao.getAllSync()).thenReturn(listOf(linked, accountNoInstrument))
+
+        val accounts = JSONObject(repository.export()).getJSONArray("accounts")
+
+        assertEquals("rev", accounts.getJSONObject(0).getString("linkedRevenueAccountId"))
+        assertTrue(!accounts.getJSONObject(1).has("linkedRevenueAccountId"))
+    }
+
+    @Test
+    fun `restore round trip keeps an account's linked revenue account`() {
+        val linked = Account(id = "linked", name = "Linked", type = "asset", linkedRevenueAccountId = "rev")
+        whenever(accountDao.getAllSync()).thenReturn(listOf(linked, accountNoInstrument))
+
+        val result = repository.restore(repository.export())
+
+        assertEquals(RestoreResult.Success, result)
+        verify(accountDao).insertAll(listOf(linked, accountNoInstrument))
+    }
+
+    @Test
     fun `restore round trip keeps an account's income on intermediary flag`() {
         val flagged = Account(
             id = "flagged", name = "Flagged", type = "asset", incomeOnIntermediary = true

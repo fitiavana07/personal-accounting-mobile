@@ -62,6 +62,16 @@ intermediary (the last two null when the account has none).
     units, one `Day:` / `Month:` / `Year:` line each; tap again to hide. Open cards stay open across data refreshes
     (the adapter keeps the set of open account ids). Accounts without an instrument are not tappable.
 
+## Pre-associated revenue account
+
+An asset account that has an instrument can name one Revenue account (Edit Account, "Revenue account (optional)").
+It is stored as `Account.linkedRevenueAccountId` (schema 22, plain id, no foreign key), travels with backup and sync
+(`BackupRowJson`), and is the default revenue account in Instrument Income: choosing the asset preselects it
+(`InstrumentIncomeController`), unless a revenue account is already chosen. `EditAccountViewModel.saveAccount` drops
+the link for non-asset accounts, accounts without an instrument, and targets that are not revenue accounts. A revenue
+account that an asset points to cannot be deleted (`AccountRepository.hasAccountsLinkedTo`); sync repair nulls a
+link whose revenue account is gone (see `p2p-sync.md`).
+
 ## Code map
 
 - `EarnItemBuilder` (pure) builds `EarnState(items, totals)` from accounts, balances and instruments.

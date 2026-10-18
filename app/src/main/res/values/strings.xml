@@ -164,6 +164,8 @@
     <string name="label_liquidity_level">Liquidity level</string>
     <string name="label_income_on_intermediary">Instrument income is received in the intermediary instrument</string>
     <string name="label_apr">Yearly interest (APR, %)</string>
+    <string name="label_linked_revenue">Revenue account (optional)</string>
+    <string name="dialog_cannot_delete_linked_revenue_message">Asset accounts use this revenue account. Remove it from them first.</string>
     <string name="account_apr">%1$s%% APR</string>
     <string name="report_apr_label">APR</string>
     <string name="title_earn">Earn</string>

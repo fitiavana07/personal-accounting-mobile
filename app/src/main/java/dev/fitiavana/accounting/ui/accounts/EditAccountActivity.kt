@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountTypes
 import dev.fitiavana.accounting.features.accounts.LiquidityLevels
 import dev.fitiavana.accounting.features.instruments.Instrument
@@ -47,9 +48,12 @@ class EditAccountActivity : AppCompatActivity() {
     private lateinit var incomeOnIntermediaryCheck: CheckBox
     private lateinit var aprLabel: TextView
     private lateinit var aprInput: EditText
+    private lateinit var linkedRevenueLabel: TextView
+    private lateinit var linkedRevenueSpinner: Spinner
     private var accountId: String? = null
 
     private var instruments: List<Instrument> = emptyList()
+    private var revenueAccounts: List<Account> = emptyList()
     private var isLocked: Boolean = false
     private var instrumentInitiallyUnset: Boolean = true
     private var intermediaryInitiallyUnset: Boolean = true
@@ -71,6 +75,7 @@ class EditAccountActivity : AppCompatActivity() {
         setupTypeSpinner()
         setupLiquidityLevelSpinner()
         observeInstruments()
+        loadRevenueAccounts()
         setupInstrumentSpinnerListener()
         setupIntermediarySpinnerListener()
         loadAccountForEditingIfNeeded()
@@ -102,7 +107,38 @@ class EditAccountActivity : AppCompatActivity() {
         incomeOnIntermediaryCheck = findViewById(R.id.check_income_on_intermediary)
         aprLabel = findViewById(R.id.label_apr)
         aprInput = findViewById(R.id.input_apr)
+        linkedRevenueLabel = findViewById(R.id.label_linked_revenue)
+        linkedRevenueSpinner = findViewById(R.id.spinner_linked_revenue)
         saveButton = findViewById(R.id.button_save)
+    }
+
+    /** Fills the revenue spinner ("None" + revenue accounts) and selects the edited account's link. */
+    private fun loadRevenueAccounts() {
+        val id = accountId
+        Thread {
+            val revenues = viewModel.revenueAccounts()
+            val linkedId = id?.let { viewModel.getAccount(it)?.linkedRevenueAccountId }
+            runOnUiThread {
+                revenueAccounts = revenues
+                val adapter = ArrayAdapter(
+                    this,
+                    android.R.layout.simple_spinner_item,
+                    listOf(getString(R.string.spinner_no_instrument)) + revenues.map { it.name }
+                )
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                linkedRevenueSpinner.adapter = adapter
+                val index = revenues.indexOfFirst { it.id == linkedId }
+                linkedRevenueSpinner.setSelection(if (index >= 0) index + 1 else 0)
+            }
+        }.start()
+    }
+
+    /** Only an asset account with an instrument can have a pre-associated revenue account. */
+    private fun updateLinkedRevenueVisibility() {
+        val isAsset = AccountTypes.VALUES.getOrNull(typeSpinner.selectedItemPosition) == AccountTypes.ASSET
+        val visibility = if (isAsset && instrumentSpinner.selectedItemPosition > 0) View.VISIBLE else View.GONE
+        linkedRevenueLabel.visibility = visibility
+        linkedRevenueSpinner.visibility = visibility
     }
 
     private fun setupTypeSpinner() {
@@ -326,6 +362,8 @@ class EditAccountActivity : AppCompatActivity() {
                 // Accept a comma as the decimal separator, which some keyboards produce.
                 val selectedApr = aprInput.text.toString().trim().replace(',', '.').toDoubleOrNull()
                 val selectedIncomeOnIntermediary = incomeOnIntermediaryCheck.isChecked
+                val revenuePos = linkedRevenueSpinner.selectedItemPosition
+                val selectedLinkedRevenueId = revenueAccounts.getOrNull(revenuePos - 1)?.id
                 Thread {
                     viewModel.saveAccount(
                         accountId,
@@ -335,7 +373,8 @@ class EditAccountActivity : AppCompatActivity() {
                         selectedIntermediaryCode,
                         selectedLiquidityLevel,
                         selectedApr,
-                        selectedIncomeOnIntermediary
+                        selectedIncomeOnIntermediary,
+                        selectedLinkedRevenueId
                     )
                     runOnUiThread { finish() }
                 }.start()
@@ -348,6 +387,7 @@ class EditAccountActivity : AppCompatActivity() {
         intermediaryInstrumentSpinner.isEnabled =
             canEdit && selectedTypeSupportsInstrument() && instrumentSpinner.selectedItemPosition > 0
         updateIncomeOnIntermediaryVisibility()
+        updateLinkedRevenueVisibility()
     }
 
     /** Only an asset account with an intermediary instrument can take its income on that instrument. */
@@ -390,11 +430,15 @@ class EditAccountActivity : AppCompatActivity() {
                 Thread {
                     val hasTransactions =
                         viewModel.hasTransactions(id)
+                    val isLinked = viewModel.hasLinkedAccounts(id)
                     runOnUiThread {
-                        if (hasTransactions) {
+                        if (hasTransactions || isLinked) {
                             AlertDialog.Builder(this)
                                 .setTitle(R.string.dialog_cannot_delete_account_title)
-                                .setMessage(R.string.dialog_cannot_delete_account_message)
+                                .setMessage(
+                                    if (hasTransactions) R.string.dialog_cannot_delete_account_message
+                                    else R.string.dialog_cannot_delete_linked_revenue_message
+                                )
                                 .setPositiveButton(android.R.string.ok, null)
                                 .show()
                         } else {

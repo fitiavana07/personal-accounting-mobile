@@ -187,6 +187,61 @@ class EditAccountActivityTest {
         assertEquals(View.GONE, activity.incomeCheckbox().visibility)
     }
 
+    private fun EditAccountActivity.linkedRevenueSpinner() = findViewById<Spinner>(R.id.spinner_linked_revenue)
+
+    private fun EditAccountActivity.linkedRevenueLabel() = findViewById<View>(R.id.label_linked_revenue)
+
+    @Test
+    fun `the revenue account option is shown only for an asset account with an instrument`() {
+        seedInstruments()
+        val activity = launchNew().get()
+
+        activity.selectType(AccountTypes.ASSET)
+        assertEquals(View.GONE, activity.linkedRevenueSpinner().visibility)
+        assertEquals(View.GONE, activity.linkedRevenueLabel().visibility)
+
+        activity.selectInstruments(instrumentPos = 1, intermediaryPos = 0)
+        assertEquals(View.VISIBLE, activity.linkedRevenueSpinner().visibility)
+        assertEquals(View.VISIBLE, activity.linkedRevenueLabel().visibility)
+
+        activity.findViewById<Spinner>(R.id.spinner_instrument).setSelection(0)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(View.GONE, activity.linkedRevenueSpinner().visibility)
+    }
+
+    @Test
+    fun `the revenue account option is hidden for other account types`() {
+        seedInstruments()
+        val activity = launchNew().get()
+        activity.selectType(AccountTypes.ASSET)
+        activity.selectInstruments(instrumentPos = 1, intermediaryPos = 0)
+
+        activity.selectType(AccountTypes.LIABILITY)
+
+        assertEquals(View.GONE, activity.linkedRevenueSpinner().visibility)
+    }
+
+    @Test
+    fun `an existing account's revenue account is selected when editing`() {
+        seedInstruments()
+        inBackground {
+            accountRepository.insert(Account(id = "link_rev", name = "Link Revenue Target", type = "revenue"))
+            accountRepository.insert(
+                Account(
+                    id = "link_asset", name = "Link Asset", type = "asset",
+                    instrumentCode = "AAA", linkedRevenueAccountId = "link_rev"
+                )
+            )
+        }
+        val activity = Robolectric.buildActivity(
+            EditAccountActivity::class.java, EditAccountActivity.editIntent(context, "link_asset")
+        ).setup().get()
+
+        waitUntil { activity.linkedRevenueSpinner().selectedItem?.toString() == "Link Revenue Target" }
+
+        assertEquals(View.VISIBLE, activity.linkedRevenueSpinner().visibility)
+    }
+
     // The account is saved but the posted finish() never runs: in the full suite the main looper
     // intermittently stops delivering messages (a runnable posted to it is not run even after
     // idle()/idleFor()), so waiting for isFinishing times out. Passes alone. The flag is also covered by
