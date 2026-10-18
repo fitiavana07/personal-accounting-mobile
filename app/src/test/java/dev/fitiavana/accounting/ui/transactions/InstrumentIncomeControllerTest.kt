@@ -197,7 +197,7 @@ class InstrumentIncomeControllerTest {
         editIncomeAmount.setText("11.50")
 
         assertNull(controller.collectEntries()!!.first { it.accountId == "usd_wallet" }.intermediaryDebitAmount)
-        assertEquals("New balance: 11.5\u00A0USD · 460,000 Ar", assetTextNewBalance.text.toString())
+        assertEquals("New balance: 11.5\u00A0USD · 460,000\u00A0Ar", assetTextNewBalance.text.toString())
     }
 
     @Test
@@ -208,7 +208,7 @@ class InstrumentIncomeControllerTest {
         assetSpinner.setSelection(3)
         editIncomeAmount.setText("11.50") // +150 -> intermediary +75: 5.00 -> 5.75
 
-        assertEquals("New balance: 11.5\u00A0USD · 5.75\u00A0EUR · 460,000 Ar", assetTextNewBalance.text.toString())
+        assertEquals("New balance: 11.5\u00A0USD · 5.75\u00A0EUR · 460,000\u00A0Ar", assetTextNewBalance.text.toString())
     }
 
     @Test
@@ -355,7 +355,7 @@ class InstrumentIncomeControllerTest {
         assetSpinner.setSelection(1)
 
         assertEquals(View.VISIBLE, assetTextBalance.visibility)
-        assertEquals("Balance: 10.0\u00A0USD · 400,000 Ar", assetTextBalance.text.toString())
+        assertEquals("Balance: 10.0\u00A0USD · 400,000\u00A0Ar", assetTextBalance.text.toString())
     }
 
     @Test
@@ -374,7 +374,7 @@ class InstrumentIncomeControllerTest {
         revenueSpinner.setSelection(1)
 
         assertEquals(View.VISIBLE, revenueTextBalance.visibility)
-        assertEquals("Balance: 100,000 Ar", revenueTextBalance.text.toString())
+        assertEquals("Balance: 100,000\u00A0Ar", revenueTextBalance.text.toString())
     }
 
     @Test
@@ -404,7 +404,7 @@ class InstrumentIncomeControllerTest {
         editIncomeAmount.setText("11.50") // new balance; prior instrument balance was 10.0
 
         assertEquals(View.VISIBLE, assetTextNewBalance.visibility)
-        assertEquals("New balance: 11.5\u00A0USD · 460,000 Ar", assetTextNewBalance.text.toString())
+        assertEquals("New balance: 11.5\u00A0USD · 460,000\u00A0Ar", assetTextNewBalance.text.toString())
 
         controller.collectEntries()
     }
@@ -435,9 +435,9 @@ class InstrumentIncomeControllerTest {
         revenueSpinner.setSelection(1)
 
         assertEquals(View.VISIBLE, assetTextNewBalance.visibility)
-        assertEquals("New balance: 10.0\u00A0USD · 400,000 Ar", assetTextNewBalance.text.toString())
+        assertEquals("New balance: 10.0\u00A0USD · 400,000\u00A0Ar", assetTextNewBalance.text.toString())
         assertEquals(View.VISIBLE, revenueTextNewBalance.visibility)
-        assertEquals("New balance: 100,000 Ar", revenueTextNewBalance.text.toString())
+        assertEquals("New balance: 100,000\u00A0Ar", revenueTextNewBalance.text.toString())
     }
 
     @Test
@@ -467,7 +467,7 @@ class InstrumentIncomeControllerTest {
         editIncomeAmount.setText("11.50") // new balance; prior instrument balance was 10.0
 
         assertEquals(View.VISIBLE, revenueTextNewBalance.visibility)
-        assertEquals("New balance: 160,000 Ar", revenueTextNewBalance.text.toString())
+        assertEquals("New balance: 160,000\u00A0Ar", revenueTextNewBalance.text.toString())
     }
 
     @Test

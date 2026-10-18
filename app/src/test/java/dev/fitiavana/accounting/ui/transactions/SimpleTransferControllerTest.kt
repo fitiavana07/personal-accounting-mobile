@@ -255,6 +255,22 @@ class SimpleTransferControllerTest {
     }
 
     @Test
+    fun `balance lines keep the amount and Ar together with a non-breaking space`() {
+        stubBalance("cash", 12_500L)
+        stubBalance("bank", 700L)
+        controller()
+
+        fromSpinner.setSelection(1)
+        toSpinner.setSelection(1)
+        editTransferAmount.setText("500")
+
+        assertEquals("Balance: 12,500\u00A0Ar", fromTextBalance.text.toString())
+        assertEquals("New balance: 12,000\u00A0Ar", fromTextNewBalance.text.toString())
+        assertEquals("Balance: 700\u00A0Ar", toTextBalance.text.toString())
+        assertEquals("New balance: 1,200\u00A0Ar", toTextNewBalance.text.toString())
+    }
+
+    @Test
     fun `balance preview becomes visible after an account is selected`() {
         whenever(viewModel.getBalance("cash")).thenReturn(
             AccountBalance(accountId = "cash", balance = 500L, updatedAt = 0L, createdAt = 0L)
