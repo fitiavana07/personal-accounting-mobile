@@ -21,6 +21,22 @@ object SimpleTransferBuilder {
         accounts.filter { it.type == ASSET_TYPE && it.instrumentCode == null }
 
     /**
+     * The accounts offered in the From spinner: [selectableAccounts] minus those
+     * whose base balance in [balances] is zero (or unknown). Input order is
+     * preserved.
+     */
+    fun selectableFromAccounts(accounts: List<Account>, balances: Map<String, Long>): List<Account> =
+        selectableAccounts(accounts).filter { (balances[it.id] ?: 0L) != 0L }
+
+    /**
+     * The accounts offered in the To spinner: [selectableAccounts] minus
+     * [fromAccount], which can't be transferred to itself. Input order is
+     * preserved.
+     */
+    fun selectableToAccounts(accounts: List<Account>, fromAccount: Account?): List<Account> =
+        selectableAccounts(accounts).filter { it.id != fromAccount?.id }
+
+    /**
      * The two entries a simple transfer produces: [fromAccountId] credited and
      * [toAccountId] debited by [amount]. An [amount] of zero (or less) yields
      * null amounts, which [TransactionValidator.validate] reports as

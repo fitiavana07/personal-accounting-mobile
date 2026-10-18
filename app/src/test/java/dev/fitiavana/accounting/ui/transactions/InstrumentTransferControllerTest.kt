@@ -98,7 +98,43 @@ class InstrumentTransferControllerTest {
             onChanged = onChanged,
             runInBackground = { it() },
             runOnUiThread = { it() }
-        ).also { it.populateSpinners(listOf(usdWallet, usdSavings, eurWallet, usdViaEur, usdViaEurSavings)) }
+        ).also {
+            it.populateSpinners(
+                listOf(usdWallet, usdSavings, eurWallet, usdViaEur, usdViaEurSavings),
+                balances
+            )
+        }
+
+    private var balances = mapOf(
+        "usd_wallet" to 1L, "usd_savings" to 1L, "eur_wallet" to 1L,
+        "usd_via_eur" to 1L, "usd_via_eur_savings" to 1L
+    )
+
+    @Test
+    fun `to spinner excludes the account selected in from`() {
+        controller()
+        fromSpinner.setSelection(1)
+
+        val names = (0 until toSpinner.adapter.count).map { toSpinner.adapter.getItem(it).toString() }
+
+        assertEquals(listOf(context.getString(R.string.spinner_select_account), "USD Savings"), names)
+    }
+
+    @Test
+    fun `from spinner hides accounts with a zero balance`() {
+        balances = balances + ("usd_wallet" to 0L)
+        controller()
+
+        val names = (0 until fromSpinner.adapter.count).map { fromSpinner.adapter.getItem(it).toString() }
+
+        assertEquals(
+            listOf(
+                context.getString(R.string.spinner_select_account),
+                "USD Savings", "EUR Wallet", "USD via EUR", "USD via EUR Savings"
+            ),
+            names
+        )
+    }
 
     @Test
     fun `no accounts selected produces no entries`() {
@@ -129,7 +165,7 @@ class InstrumentTransferControllerTest {
         val controller = controller()
 
         fromSpinner.setSelection(1) // usd_wallet
-        toSpinner.setSelection(2) // usd_savings (usd_wallet itself is offered at position 1)
+        toSpinner.setSelection(1) // usd_savings (usd_wallet is excluded as the from account)
         editTransferAmount.setText("1.50")
 
         val entries = controller.collectEntries()
@@ -159,7 +195,7 @@ class InstrumentTransferControllerTest {
         stubBalance("usd_via_eur", balance = 400_000L, instrument = 1000L, intermediary = 500L)
         stubBalance("usd_via_eur_savings", balance = 0L, instrument = 0L, intermediary = 0L)
         fromSpinner.setSelection(4)
-        toSpinner.setSelection(2)
+        toSpinner.setSelection(1)
         editTransferAmount.setText(amount)
     }
 
@@ -169,10 +205,9 @@ class InstrumentTransferControllerTest {
 
         fromSpinner.setSelection(4) // usd_via_eur
 
-        // placeholder + usd_via_eur + usd_via_eur_savings; plain USD accounts are excluded
-        assertEquals(3, toSpinner.adapter.count)
-        assertEquals(usdViaEur.name, toSpinner.adapter.getItem(1))
-        assertEquals(usdViaEurSavings.name, toSpinner.adapter.getItem(2))
+        // placeholder + usd_via_eur_savings; plain USD accounts and the from account are excluded
+        assertEquals(2, toSpinner.adapter.count)
+        assertEquals(usdViaEurSavings.name, toSpinner.adapter.getItem(1))
     }
 
     @Test
@@ -196,7 +231,7 @@ class InstrumentTransferControllerTest {
         val controller = controller()
 
         fromSpinner.setSelection(1)
-        toSpinner.setSelection(2)
+        toSpinner.setSelection(1)
         editTransferAmount.setText("1.50")
 
         val entries = controller.collectEntries()!!
@@ -234,10 +269,9 @@ class InstrumentTransferControllerTest {
 
         fromSpinner.setSelection(1) // usd_wallet
 
-        // placeholder + usd_wallet + usd_savings; eur_wallet excluded (different instrument)
-        assertEquals(3, toSpinner.adapter.count)
-        assertEquals(usdWallet.name, toSpinner.adapter.getItem(1))
-        assertEquals(usdSavings.name, toSpinner.adapter.getItem(2))
+        // placeholder + usd_savings; eur_wallet excluded (different instrument), usd_wallet is the from account
+        assertEquals(2, toSpinner.adapter.count)
+        assertEquals(usdSavings.name, toSpinner.adapter.getItem(1))
     }
 
     @Test
@@ -263,7 +297,7 @@ class InstrumentTransferControllerTest {
         val controller = controller()
 
         fromSpinner.setSelection(1)
-        toSpinner.setSelection(2)
+        toSpinner.setSelection(1)
         editTransferAmount.setText("1.50")
 
         assertNull(controller.collectEntries())
@@ -328,7 +362,7 @@ class InstrumentTransferControllerTest {
         val controller = controller()
 
         fromSpinner.setSelection(1)
-        toSpinner.setSelection(2)
+        toSpinner.setSelection(1)
         editTransferAmount.setText("1.50")
 
         assertEquals(View.VISIBLE, fromTextNewBalance.visibility)
@@ -449,7 +483,7 @@ class InstrumentTransferControllerTest {
         controller()
 
         fromSpinner.setSelection(1) // usd_wallet, nonzero balance
-        toSpinner.setSelection(2) // usd_savings, zero balance
+        toSpinner.setSelection(1) // usd_savings, zero balance
 
         assertEquals(View.GONE, fromTextZeroBalanceError.visibility)
     }

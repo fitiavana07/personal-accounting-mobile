@@ -58,11 +58,15 @@ class AddTransactionViewModelTest {
             listOf(cashAccount, revenueAccount)
         )
         whenever(instrumentRepository.getAllSync()).thenReturn(listOf(usd))
+        whenever(balanceRepository.getAllSync()).thenReturn(
+            listOf(AccountBalance(accountId = "cash", balance = 500L, updatedAt = 0L, createdAt = 0L))
+        )
 
         val result = viewModel.loadAccountsAndInstruments()
 
         assertEquals(listOf(cashAccount, revenueAccount), result.accounts)
         assertEquals(usd, result.instrumentsByCode["USD"])
+        assertEquals(mapOf("cash" to 500L), result.balancesByAccountId)
     }
 
     @Test

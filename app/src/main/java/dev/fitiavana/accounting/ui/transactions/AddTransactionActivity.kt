@@ -147,7 +147,7 @@ class AddTransactionActivity : AppCompatActivity() {
             runOnUiThread {
                 addEntryRow()
                 addEntryRow()
-                transferController.populateSpinners(accounts)
+                transferController.populateSpinners(accounts, loaded.balancesByAccountId)
                 instrumentTransferController = InstrumentTransferController(
                     context = this,
                     viewModel = viewModel,
@@ -166,7 +166,7 @@ class AddTransactionActivity : AppCompatActivity() {
                     runInBackground = backgroundRunner,
                     runOnUiThread = uiThreadRunner
                 )
-                instrumentTransferController.populateSpinners(accounts)
+                instrumentTransferController.populateSpinners(accounts, loaded.balancesByAccountId)
                 instrumentIncomeController = InstrumentIncomeController(
                     context = this,
                     viewModel = viewModel,

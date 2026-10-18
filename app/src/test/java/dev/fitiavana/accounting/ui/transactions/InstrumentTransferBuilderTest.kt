@@ -38,7 +38,11 @@ class InstrumentTransferBuilderTest {
     @Test
     fun `selectableFromAccounts keeps only asset accounts with an instrument, with or without intermediary`() {
         val result = InstrumentTransferBuilder.selectableFromAccounts(
-            listOf(cash, usdWallet, eurWallet, btcWalletWithIntermediary, revenue, loan)
+            listOf(cash, usdWallet, eurWallet, btcWalletWithIntermediary, revenue, loan),
+            balances = mapOf(
+                "cash" to 1L, "usd_wallet" to 1L, "eur_wallet" to 1L, "btc_wallet" to 1L,
+                "rev" to 1L, "loan" to 1L
+            )
         )
 
         assertEquals(listOf(usdWallet, eurWallet, btcWalletWithIntermediary), result)
@@ -55,11 +59,11 @@ class InstrumentTransferBuilderTest {
         )
 
         assertEquals(
-            listOf(btcWalletWithIntermediary, btcSavingsSameIntermediary),
+            listOf(btcSavingsSameIntermediary),
             InstrumentTransferBuilder.selectableToAccounts(accounts, btcWalletWithIntermediary)
         )
         assertEquals(
-            listOf(btcPlain),
+            emptyList<Account>(),
             InstrumentTransferBuilder.selectableToAccounts(accounts, btcPlain)
         )
     }
@@ -106,13 +110,23 @@ class InstrumentTransferBuilderTest {
     }
 
     @Test
-    fun `selectableToAccounts keeps only accounts matching the from account's instrument`() {
+    fun `selectableToAccounts keeps only other accounts matching the from account's instrument`() {
         val result = InstrumentTransferBuilder.selectableToAccounts(
             listOf(usdWallet, usdSavings, eurWallet, cash),
             fromAccount = usdWallet
         )
 
-        assertEquals(listOf(usdWallet, usdSavings), result)
+        assertEquals(listOf(usdSavings), result)
+    }
+
+    @Test
+    fun `selectableFromAccounts hides accounts with a zero or missing balance`() {
+        val result = InstrumentTransferBuilder.selectableFromAccounts(
+            listOf(usdWallet, usdSavings, eurWallet),
+            balances = mapOf("usd_wallet" to 0L, "usd_savings" to 40L)
+        )
+
+        assertEquals(listOf(usdSavings), result)
     }
 
     @Test

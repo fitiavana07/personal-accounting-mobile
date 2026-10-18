@@ -36,6 +36,42 @@ class SimpleTransferBuilderTest {
     }
 
     @Test
+    fun `selectableFromAccounts hides accounts with a zero or missing balance`() {
+        val result = SimpleTransferBuilder.selectableFromAccounts(
+            listOf(cash, wallet, revenue, bank),
+            balances = mapOf("cash" to 0L, "bank" to 300L)
+        )
+
+        assertEquals(listOf(bank), result)
+    }
+
+    @Test
+    fun `selectableFromAccounts keeps accounts with a negative balance`() {
+        val result = SimpleTransferBuilder.selectableFromAccounts(
+            listOf(cash, bank),
+            balances = mapOf("cash" to -5L, "bank" to 0L)
+        )
+
+        assertEquals(listOf(cash), result)
+    }
+
+    @Test
+    fun `selectableToAccounts excludes the from account`() {
+        assertEquals(
+            listOf(bank),
+            SimpleTransferBuilder.selectableToAccounts(listOf(cash, wallet, revenue, bank), cash)
+        )
+    }
+
+    @Test
+    fun `selectableToAccounts offers every selectable account when no from account is selected`() {
+        assertEquals(
+            listOf(cash, bank),
+            SimpleTransferBuilder.selectableToAccounts(listOf(cash, wallet, bank), null)
+        )
+    }
+
+    @Test
     fun `buildEntries credits the from account and debits the to account`() {
         val entries =
             SimpleTransferBuilder.buildEntries("cash", "bank", 25_000L)

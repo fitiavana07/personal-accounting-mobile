@@ -65,7 +65,7 @@ class InstrumentTransferTemplateTest {
             onChanged = {},
             runInBackground = { it() },
             runOnUiThread = { it() }
-        ).also { it.populateSpinners(listOf(usdWallet, usdSavings, eurWallet)) }
+        ).also { it.populateSpinners(listOf(usdWallet, usdSavings, eurWallet), mapOf("usd_wallet" to 1L, "usd_savings" to 1L, "eur_wallet" to 1L)) }
     }
 
     private fun template(vararg slots: Pair<String, String>) = TemplateWithEntries(
@@ -84,7 +84,7 @@ class InstrumentTransferTemplateTest {
     @Test
     fun `templateSlots returns the chosen FROM and TO accounts`() {
         fromSpinner.setSelection(1) // usd_wallet
-        toSpinner.setSelection(2) // usd_savings
+        toSpinner.setSelection(1) // usd_savings
 
         assertEquals(
             listOf(TemplateSlot(TemplateSlots.FROM, "usd_wallet"), TemplateSlot(TemplateSlots.TO, "usd_savings")),

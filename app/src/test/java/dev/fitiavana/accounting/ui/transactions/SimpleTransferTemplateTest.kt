@@ -60,7 +60,7 @@ class SimpleTransferTemplateTest {
             onChanged = {},
             runInBackground = { it() },
             runOnUiThread = { it() }
-        ).also { it.populateSpinners(listOf(cash, bank)) }
+        ).also { it.populateSpinners(listOf(cash, bank), mapOf("cash" to 1L, "bank" to 1L)) }
     }
 
     private fun template(vararg slots: Pair<String, String>) = TemplateWithEntries(

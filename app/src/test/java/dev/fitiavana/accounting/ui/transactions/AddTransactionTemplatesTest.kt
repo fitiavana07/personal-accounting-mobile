@@ -13,6 +13,7 @@ import androidx.test.core.app.ApplicationProvider
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.db.AppDatabase
+import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.templates.TemplateModes
 import dev.fitiavana.accounting.features.templates.TemplateSlot
@@ -47,6 +48,11 @@ class AddTransactionTemplatesTest {
             container.accountRepository.insert(Account(id = "tpl_cash", name = "Tpl Cash", type = "asset"))
             container.accountRepository.insert(Account(id = "tpl_bank", name = "Tpl Bank", type = "asset"))
             container.accountRepository.insert(Account(id = "tpl_food", name = "Tpl Food", type = "expense"))
+            // the From spinner hides zero-balance accounts, so both transfer accounts need a balance
+            listOf("tpl_cash", "tpl_bank").forEach {
+                AppDatabase.getInstance(context).accountBalanceDao()
+                    .insert(AccountBalance(accountId = it, balance = 1_000L, updatedAt = 0L, createdAt = 0L))
+            }
         }
     }
 

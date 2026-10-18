@@ -228,9 +228,9 @@ class InstrumentTransferController(
         textAmountBase.visibility = View.VISIBLE
     }
 
-    fun populateSpinners(accounts: List<Account>) {
+    fun populateSpinners(accounts: List<Account>, balances: Map<String, Long>) {
         allAccounts = accounts
-        from.populate(InstrumentTransferBuilder.selectableFromAccounts(accounts))
+        from.populate(InstrumentTransferBuilder.selectableFromAccounts(accounts, balances))
         repopulateToSpinner(null)
     }
 

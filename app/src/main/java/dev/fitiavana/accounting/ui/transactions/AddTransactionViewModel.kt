@@ -16,7 +16,8 @@ import dev.fitiavana.accounting.features.transactions.TransactionRepository
 
 data class AccountsAndInstruments(
     val accounts: List<Account>,
-    val instrumentsByCode: Map<String, Instrument>
+    val instrumentsByCode: Map<String, Instrument>,
+    val balancesByAccountId: Map<String, Long>
 )
 
 class AddTransactionViewModel(
@@ -45,7 +46,8 @@ class AddTransactionViewModel(
     fun loadAccountsAndInstruments(): AccountsAndInstruments =
         AccountsAndInstruments(
             accountRepository.getAllSync(),
-            instrumentRepository.getAllSync().associateBy { it.code }
+            instrumentRepository.getAllSync().associateBy { it.code },
+            balanceRepository.getAllSync().associate { it.accountId to it.balance }
         )
 
     /** Synchronous — callers must invoke this off the main thread. */

@@ -61,6 +61,11 @@ class SimpleTransferControllerTest {
         buttonAll = Button(context)
     }
 
+    private var balances = mapOf("cash" to 1L, "bank" to 1L)
+
+    private fun spinnerNames(spinner: Spinner): List<String> =
+        (0 until spinner.adapter.count).map { spinner.adapter.getItem(it).toString() }
+
     private fun controller(onChanged: () -> Unit = {}): SimpleTransferController =
         SimpleTransferController(
             context = context,
@@ -77,12 +82,80 @@ class SimpleTransferControllerTest {
             onChanged = onChanged,
             runInBackground = { it() },
             runOnUiThread = { it() }
-        ).also { it.populateSpinners(listOf(cashAccount, bankAccount)) }
+        ).also { it.populateSpinners(listOf(cashAccount, bankAccount), balances) }
 
     private fun stubBalance(id: String, balance: Long) {
         whenever(viewModel.getBalance(id)).thenReturn(
             AccountBalance(accountId = id, balance = balance, updatedAt = 0L, createdAt = 0L)
         )
+    }
+
+    @Test
+    fun `from spinner hides accounts with a zero balance but to keeps them`() {
+        balances = mapOf("cash" to 0L, "bank" to 900L)
+        controller()
+
+        assertEquals(
+            listOf(context.getString(R.string.spinner_select_account), "Bank"),
+            spinnerNames(fromSpinner)
+        )
+        assertEquals(
+            listOf(context.getString(R.string.spinner_select_account), "Cash", "Bank"),
+            spinnerNames(toSpinner)
+        )
+    }
+
+    @Test
+    fun `to spinner excludes the account selected in from`() {
+        controller()
+
+        fromSpinner.setSelection(1)
+
+        assertEquals(
+            listOf(context.getString(R.string.spinner_select_account), "Bank"),
+            spinnerNames(toSpinner)
+        )
+    }
+
+    @Test
+    fun `changing from restores the previous account in to and clears a clashing to selection`() {
+        controller()
+        fromSpinner.setSelection(1)
+        toSpinner.setSelection(1)
+        assertEquals("Bank", toSpinner.selectedItem.toString())
+
+        fromSpinner.setSelection(2)
+
+        assertEquals(
+            listOf(context.getString(R.string.spinner_select_account), "Cash"),
+            spinnerNames(toSpinner)
+        )
+        assertEquals(0, toSpinner.selectedItemPosition)
+    }
+
+    @Test
+    fun `changing from keeps the to selection when it is still offered`() {
+        controller()
+        fromSpinner.setSelection(1)
+        toSpinner.setSelection(1)
+
+        fromSpinner.setSelection(0)
+
+        assertEquals("Bank", toSpinner.selectedItem.toString())
+    }
+
+    @Test
+    fun `from spinner selection maps to the right account after hiding zero balances`() {
+        balances = mapOf("cash" to 0L, "bank" to 900L)
+        stubBalance("bank", 800L)
+        val controller = controller()
+        fromSpinner.setSelection(1)
+        toSpinner.setSelection(1)
+        editTransferAmount.setText("100")
+
+        val entries = controller.collectEntries()!!
+
+        assertEquals("bank", entries[0].accountId)
     }
 
     @Test
@@ -162,7 +235,7 @@ class SimpleTransferControllerTest {
         val controller = controller()
 
         fromSpinner.setSelection(1)
-        toSpinner.setSelection(2)
+        toSpinner.setSelection(1)
         editTransferAmount.setText("100")
 
         val entries = controller.collectEntries()

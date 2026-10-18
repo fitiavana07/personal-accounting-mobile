@@ -52,14 +52,13 @@ class SimpleTransferController(
         val textNewBalance: TextView,
         val isDebit: Boolean,
         var account: Account? = null,
-        var balance: Long = 0L
+        var balance: Long = 0L,
+        /** Accounts offered by [spinner], in spinner order after the placeholder. */
+        var options: List<Account> = emptyList()
     )
 
     private val from = Side(fromSpinner, fromTextBalance, fromTextNewBalance, isDebit = false)
     private val to = Side(toSpinner, toTextBalance, toTextNewBalance, isDebit = true)
-
-    /** Accounts offered by the spinners; see [SimpleTransferBuilder]. */
-    private var transferAccounts: List<Account> = emptyList()
 
     init {
         editTransferAmount.enableAmountFormatting()
@@ -92,9 +91,10 @@ class SimpleTransferController(
                 position: Int,
                 id: Long
             ) {
-                val account = selectedAccount(side.spinner)
+                val account = selectedAccount(side)
                 side.account = account
                 side.balance = 0L
+                if (side === from) repopulateTo()
                 if (account == null) {
                     hideBalances(side)
                     return
@@ -124,6 +124,7 @@ class SimpleTransferController(
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 side.account = null
                 hideBalances(side)
+                if (side === from) repopulateTo()
             }
         }
     }
@@ -154,22 +155,38 @@ class SimpleTransferController(
         side.textNewBalance.visibility = View.VISIBLE
     }
 
-    fun populateSpinners(accounts: List<Account>) {
-        transferAccounts = SimpleTransferBuilder.selectableAccounts(accounts)
-        val names = listOf(context.getString(R.string.spinner_select_account)) +
-                transferAccounts.map { it.name }
-        listOf(from, to).forEach { side ->
-            val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, names)
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            side.spinner.adapter = adapter
-            side.spinner.setSelection(0)
-        }
+    /** Offers the accounts of [SimpleTransferBuilder]; From hides those with a zero balance in [balances]. */
+    fun populateSpinners(accounts: List<Account>, balances: Map<String, Long>) {
+        from.options = SimpleTransferBuilder.selectableFromAccounts(accounts, balances)
+        allAccounts = accounts
+        showOptions(from, from.options)
+        repopulateTo()
     }
 
-    private fun selectedAccount(spinner: Spinner): Account? {
-        val position = spinner.selectedItemPosition
-        return if (position > 0 && position <= transferAccounts.size) {
-            transferAccounts[position - 1]
+    private fun showOptions(side: Side, options: List<Account>, selected: Account? = null) {
+        side.options = options
+        val names = listOf(context.getString(R.string.spinner_select_account)) + options.map { it.name }
+        val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, names)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        side.spinner.adapter = adapter
+        side.spinner.setSelection(options.indexOfFirst { it.id == selected?.id } + 1)
+    }
+
+    /** Offers every To account but the From one, keeping the To selection when it is still offered. */
+    private fun repopulateTo() {
+        showOptions(
+            to,
+            SimpleTransferBuilder.selectableToAccounts(allAccounts, selectedAccount(from)),
+            selectedAccount(to)
+        )
+    }
+
+    private var allAccounts: List<Account> = emptyList()
+
+    private fun selectedAccount(side: Side): Account? {
+        val position = side.spinner.selectedItemPosition
+        return if (position > 0 && position <= side.options.size) {
+            side.options[position - 1]
         } else {
             null
         }
@@ -177,8 +194,8 @@ class SimpleTransferController(
 
     /** The chosen FROM and TO accounts for saving as a template, or null until both are picked. */
     fun templateSlots(): List<TemplateSlot>? {
-        val fromAccount = selectedAccount(from.spinner) ?: return null
-        val toAccount = selectedAccount(to.spinner) ?: return null
+        val fromAccount = selectedAccount(from) ?: return null
+        val toAccount = selectedAccount(to) ?: return null
         return listOf(
             TemplateSlot(TemplateSlots.FROM, fromAccount.id),
             TemplateSlot(TemplateSlots.TO, toAccount.id)
@@ -187,21 +204,20 @@ class SimpleTransferController(
 
     /** Selects the template's accounts; false, changing nothing, when one is no longer offered. */
     fun applyTemplate(template: TemplateWithEntries): Boolean {
-        val fromIndex = indexOfAccount(template.accountFor(TemplateSlots.FROM))
-        val toIndex = indexOfAccount(template.accountFor(TemplateSlots.TO))
-        if (fromIndex < 0 || toIndex < 0) return false
-        from.spinner.setSelection(fromIndex + 1)
-        to.spinner.setSelection(toIndex + 1)
+        val fromAccount = from.options.firstOrNull { it.id == template.accountFor(TemplateSlots.FROM) }
+        val toOptions = SimpleTransferBuilder.selectableToAccounts(allAccounts, fromAccount)
+        val toAccount = toOptions.firstOrNull { it.id == template.accountFor(TemplateSlots.TO) }
+        if (fromAccount == null || toAccount == null) return false
+        // the From listener may only fire later, so narrow the To list now rather than wait for it
+        from.spinner.setSelection(from.options.indexOf(fromAccount) + 1)
+        showOptions(to, toOptions, toAccount)
         return true
     }
 
-    private fun indexOfAccount(accountId: String?): Int =
-        if (accountId == null) -1 else transferAccounts.indexOfFirst { it.id == accountId }
-
     /** The two entries for this transfer, or null with a Toast already shown if incomplete. */
     fun collectEntries(): List<TransactionValidator.EntryData>? {
-        val fromAccount = selectedAccount(from.spinner)
-        val toAccount = selectedAccount(to.spinner)
+        val fromAccount = selectedAccount(from)
+        val toAccount = selectedAccount(to)
         if (fromAccount == null || toAccount == null) {
             Toast.makeText(
                 context,
@@ -228,8 +244,8 @@ class SimpleTransferController(
     /** Entries as typed so far, for the running totals line — ignores validity. */
     fun summaryEntries(): List<TransactionValidator.EntryData> =
         SimpleTransferBuilder.buildEntries(
-            fromAccountId = selectedAccount(from.spinner)?.id ?: "",
-            toAccountId = selectedAccount(to.spinner)?.id ?: "",
+            fromAccountId = selectedAccount(from)?.id ?: "",
+            toAccountId = selectedAccount(to)?.id ?: "",
             amount = EntryRowController.parseAmount(editTransferAmount)
         )
 

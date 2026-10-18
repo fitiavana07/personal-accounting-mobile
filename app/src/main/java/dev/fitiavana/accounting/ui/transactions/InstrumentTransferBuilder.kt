@@ -15,23 +15,27 @@ import dev.fitiavana.accounting.features.accounts.AccountTypes
  */
 object InstrumentTransferBuilder {
 
-    /**
-     * The accounts offered in the From spinner: asset accounts with an
-     * instrument (with or without an intermediary instrument). Input order is
-     * preserved.
-     */
-    fun selectableFromAccounts(accounts: List<Account>): List<Account> =
+    private fun transferableAccounts(accounts: List<Account>): List<Account> =
         accounts.filter { it.type == AccountTypes.ASSET && it.instrumentCode != null }
 
     /**
-     * The accounts offered in the To spinner: the same eligible accounts as
-     * [selectableFromAccounts], further restricted to [fromAccount]'s
-     * instrument and intermediary instrument. Empty when no From account is selected yet.
+     * The accounts offered in the From spinner: asset accounts with an
+     * instrument (with or without an intermediary instrument) whose base
+     * balance in [balances] is not zero (or unknown). Input order is preserved.
+     */
+    fun selectableFromAccounts(accounts: List<Account>, balances: Map<String, Long>): List<Account> =
+        transferableAccounts(accounts).filter { (balances[it.id] ?: 0L) != 0L }
+
+    /**
+     * The accounts offered in the To spinner: asset accounts with an
+     * instrument, restricted to [fromAccount]'s instrument and intermediary
+     * instrument, whatever their balance, and excluding [fromAccount] itself. Empty when no From account is selected yet.
      */
     fun selectableToAccounts(accounts: List<Account>, fromAccount: Account?): List<Account> {
         val instrumentCode = fromAccount?.instrumentCode ?: return emptyList()
-        return selectableFromAccounts(accounts).filter {
-            it.instrumentCode == instrumentCode &&
+        return transferableAccounts(accounts).filter {
+            it.id != fromAccount.id &&
+                it.instrumentCode == instrumentCode &&
                 it.intermediaryInstrumentCode == fromAccount.intermediaryInstrumentCode
         }
     }
