@@ -173,6 +173,19 @@ class BackupRepositoryTest {
     }
 
     @Test
+    fun `restore round trip keeps an account's income on intermediary flag`() {
+        val flagged = Account(
+            id = "flagged", name = "Flagged", type = "asset", incomeOnIntermediary = true
+        )
+        whenever(accountDao.getAllSync()).thenReturn(listOf(flagged, accountNoInstrument))
+
+        val result = repository.restore(repository.export())
+
+        assertEquals(RestoreResult.Success, result)
+        verify(accountDao).insertAll(listOf(flagged, accountNoInstrument))
+    }
+
+    @Test
     fun `export includes monthly living expenses from app settings`() {
         val json = JSONObject(repository.export())
         assertEquals(150000L, json.getJSONObject("appSettings").getLong("monthlyLivingExpenses"))

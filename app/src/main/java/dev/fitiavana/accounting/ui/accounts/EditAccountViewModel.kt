@@ -29,7 +29,8 @@ class EditAccountViewModel(
         instrumentCode: String?,
         intermediaryInstrumentCode: String?,
         liquidityLevel: String? = null,
-        aprPercent: Double? = null
+        aprPercent: Double? = null,
+        incomeOnIntermediary: Boolean = false
     ) {
         val trimmed = name.trim()
         val supportsInstrument = AccountTypes.supportsInstrument(type)
@@ -37,31 +38,20 @@ class EditAccountViewModel(
         val savedIntermediaryCode = intermediaryInstrumentCode.takeIf { supportsInstrument }
         // Only asset accounts earn interest, and a zero or negative rate means "none".
         val savedApr = aprPercent.takeIf { type == AccountTypes.ASSET && it != null && it > 0.0 }
-        if (id == null) {
-            repository.insert(
-                Account(
-                    id = UUID.randomUUID().toString(),
-                    name = trimmed,
-                    type = type,
-                    instrumentCode = savedInstrumentCode,
-                    intermediaryInstrumentCode = savedIntermediaryCode,
-                    liquidityLevel = liquidityLevel,
-                    aprPercent = savedApr
-                )
-            )
-        } else {
-            repository.update(
-                Account(
-                    id = id,
-                    name = trimmed,
-                    type = type,
-                    instrumentCode = savedInstrumentCode,
-                    intermediaryInstrumentCode = savedIntermediaryCode,
-                    liquidityLevel = liquidityLevel,
-                    aprPercent = savedApr
-                )
-            )
-        }
+        // The flag only means something for an asset account that has an intermediary instrument.
+        val savedIncomeOnIntermediary =
+            incomeOnIntermediary && type == AccountTypes.ASSET && savedIntermediaryCode != null
+        val account = Account(
+            id = id ?: UUID.randomUUID().toString(),
+            name = trimmed,
+            type = type,
+            instrumentCode = savedInstrumentCode,
+            intermediaryInstrumentCode = savedIntermediaryCode,
+            liquidityLevel = liquidityLevel,
+            aprPercent = savedApr,
+            incomeOnIntermediary = savedIncomeOnIntermediary
+        )
+        if (id == null) repository.insert(account) else repository.update(account)
     }
 
     fun deleteAccount(account: Account) {

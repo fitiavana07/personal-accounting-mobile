@@ -7,7 +7,6 @@ import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.core.app.ApplicationProvider
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -93,9 +92,4 @@ class Migration19To20Test {
         }
     }
 
-    @Test
-    fun `the schema version is 20`() {
-        assertEquals(20, AppDatabase.SCHEMA_VERSION)
-        assertTrue(AppDatabase.SCHEMA_VERSION > 19)
-    }
 }

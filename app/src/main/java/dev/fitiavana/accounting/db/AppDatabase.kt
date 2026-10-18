@@ -44,7 +44,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun syncDao(): SyncDao
 
     companion object {
-        const val SCHEMA_VERSION = 20
+        const val SCHEMA_VERSION = 21
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -338,6 +338,22 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** Adds the accounts' income-on-intermediary flag. Internal so it can be checked against Room's generated schema. */
+        internal val MIGRATION_20_21 = object : Migration(20, 21) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val hasColumn = db.query("PRAGMA table_info(`accounts`)").use { cursor ->
+                    var found = false
+                    while (cursor.moveToNext()) {
+                        if (cursor.getString(1) == "incomeOnIntermediary") found = true
+                    }
+                    found
+                }
+                if (!hasColumn) {
+                    db.execSQL("ALTER TABLE `accounts` ADD COLUMN `incomeOnIntermediary` INTEGER NOT NULL DEFAULT 0")
+                }
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -364,7 +380,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_16_17,
                         MIGRATION_17_18,
                         MIGRATION_18_19,
-                        MIGRATION_19_20
+                        MIGRATION_19_20,
+                        MIGRATION_20_21
                     )
                     .build().also { instance = it }
             }

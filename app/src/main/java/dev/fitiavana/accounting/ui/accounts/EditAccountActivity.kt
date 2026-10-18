@@ -8,6 +8,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
@@ -43,6 +44,7 @@ class EditAccountActivity : AppCompatActivity() {
     private lateinit var liquidityLevelLabel: TextView
     private lateinit var liquidityLevelSpinner: Spinner
     private lateinit var liquidityLevelDescription: TextView
+    private lateinit var incomeOnIntermediaryCheck: CheckBox
     private lateinit var aprLabel: TextView
     private lateinit var aprInput: EditText
     private var accountId: String? = null
@@ -70,6 +72,7 @@ class EditAccountActivity : AppCompatActivity() {
         setupLiquidityLevelSpinner()
         observeInstruments()
         setupInstrumentSpinnerListener()
+        setupIntermediarySpinnerListener()
         loadAccountForEditingIfNeeded()
         setupSaveButton()
     }
@@ -96,6 +99,7 @@ class EditAccountActivity : AppCompatActivity() {
         liquidityLevelSpinner = findViewById(R.id.spinner_liquidity_level)
         liquidityLevelDescription =
             findViewById(R.id.text_liquidity_level_description)
+        incomeOnIntermediaryCheck = findViewById(R.id.check_income_on_intermediary)
         aprLabel = findViewById(R.id.label_apr)
         aprInput = findViewById(R.id.input_apr)
         saveButton = findViewById(R.id.button_save)
@@ -239,6 +243,7 @@ class EditAccountActivity : AppCompatActivity() {
                                 account.instrumentCode == null
                             intermediaryInitiallyUnset =
                                 account.intermediaryInstrumentCode == null
+                            incomeOnIntermediaryCheck.isChecked = account.incomeOnIntermediary
                         }
                         updateIntermediarySpinnerEnabled()
                     }
@@ -320,6 +325,7 @@ class EditAccountActivity : AppCompatActivity() {
                     if (selectedType != "asset" || liquidityPos == 0) null else LiquidityLevels.VALUES[liquidityPos - 1]
                 // Accept a comma as the decimal separator, which some keyboards produce.
                 val selectedApr = aprInput.text.toString().trim().replace(',', '.').toDoubleOrNull()
+                val selectedIncomeOnIntermediary = incomeOnIntermediaryCheck.isChecked
                 Thread {
                     viewModel.saveAccount(
                         accountId,
@@ -328,7 +334,8 @@ class EditAccountActivity : AppCompatActivity() {
                         selectedInstrumentCode,
                         selectedIntermediaryCode,
                         selectedLiquidityLevel,
-                        selectedApr
+                        selectedApr,
+                        selectedIncomeOnIntermediary
                     )
                     runOnUiThread { finish() }
                 }.start()
@@ -340,6 +347,33 @@ class EditAccountActivity : AppCompatActivity() {
         val canEdit = !isLocked || intermediaryInitiallyUnset
         intermediaryInstrumentSpinner.isEnabled =
             canEdit && selectedTypeSupportsInstrument() && instrumentSpinner.selectedItemPosition > 0
+        updateIncomeOnIntermediaryVisibility()
+    }
+
+    /** Only an asset account with an intermediary instrument can take its income on that instrument. */
+    private fun updateIncomeOnIntermediaryVisibility() {
+        val isAsset = AccountTypes.VALUES.getOrNull(typeSpinner.selectedItemPosition) == AccountTypes.ASSET
+        val hasIntermediary =
+            instrumentSpinner.selectedItemPosition > 0 && intermediaryInstrumentSpinner.selectedItemPosition > 0
+        incomeOnIntermediaryCheck.visibility = if (isAsset && hasIntermediary) View.VISIBLE else View.GONE
+    }
+
+    private fun setupIntermediarySpinnerListener() {
+        intermediaryInstrumentSpinner.onItemSelectedListener =
+            object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: android.widget.AdapterView<*>?,
+                    view: android.view.View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    updateIncomeOnIntermediaryVisibility()
+                }
+
+                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {
+                    updateIncomeOnIntermediaryVisibility()
+                }
+            }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

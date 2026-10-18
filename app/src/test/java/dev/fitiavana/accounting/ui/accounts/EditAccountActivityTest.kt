@@ -2,6 +2,7 @@ package dev.fitiavana.accounting.ui.accounts
 
 import android.os.Looper
 import android.view.View
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.Spinner
 import androidx.test.core.app.ApplicationProvider
@@ -9,6 +10,7 @@ import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountTypes
+import dev.fitiavana.accounting.features.instruments.Instrument
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -137,6 +139,88 @@ class EditAccountActivityTest {
         var saved: Account? = null
         inBackground { saved = accountRepository.getAllSync().firstOrNull { it.name == "No Apr Account" } }
         assertNull(saved?.aprPercent)
+    }
+
+    private fun seedInstruments() = inBackground {
+        val instruments = AppContainer.getInstance(context).instrumentRepository
+        listOf("AAA", "BBB").filter { instruments.getByCode(it) == null }.forEach {
+            instruments.insert(Instrument(code = it, note = "", type = "fiat", decimalPlaces = 2))
+        }
+    }
+
+    private fun EditAccountActivity.selectInstruments(instrumentPos: Int, intermediaryPos: Int) {
+        waitUntil { findViewById<Spinner>(R.id.spinner_instrument).adapter?.count ?: 0 > 2 }
+        findViewById<Spinner>(R.id.spinner_instrument).setSelection(instrumentPos)
+        shadowOf(Looper.getMainLooper()).idle()
+        findViewById<Spinner>(R.id.spinner_intermediary_instrument).setSelection(intermediaryPos)
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    private fun EditAccountActivity.incomeCheckbox() = findViewById<CheckBox>(R.id.check_income_on_intermediary)
+
+    @Test
+    fun `the income on intermediary option is hidden until an asset account has an intermediary`() {
+        seedInstruments()
+        val activity = launchNew().get()
+
+        activity.selectType(AccountTypes.ASSET)
+        assertEquals(View.GONE, activity.incomeCheckbox().visibility)
+
+        activity.selectInstruments(instrumentPos = 1, intermediaryPos = 2)
+        assertEquals(View.VISIBLE, activity.incomeCheckbox().visibility)
+
+        activity.findViewById<Spinner>(R.id.spinner_intermediary_instrument).setSelection(0)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(View.GONE, activity.incomeCheckbox().visibility)
+    }
+
+    @Test
+    fun `the income on intermediary option is hidden for other account types`() {
+        seedInstruments()
+        val activity = launchNew().get()
+        activity.selectType(AccountTypes.ASSET)
+        activity.selectInstruments(instrumentPos = 1, intermediaryPos = 2)
+
+        activity.selectType(AccountTypes.LIABILITY)
+
+        assertEquals(View.GONE, activity.incomeCheckbox().visibility)
+    }
+
+    @Test
+    fun `saving stores the income on intermediary option`() {
+        seedInstruments()
+        val activity = launchNew().get()
+        activity.selectType(AccountTypes.ASSET)
+        activity.findViewById<EditText>(R.id.input_account_name).setText("Income On Inter Save")
+        activity.selectInstruments(instrumentPos = 1, intermediaryPos = 2)
+        activity.incomeCheckbox().isChecked = true
+
+        activity.findViewById<View>(R.id.button_save).performClick()
+        waitUntil { activity.isFinishing }
+
+        var saved: Account? = null
+        inBackground { saved = accountRepository.getAllSync().firstOrNull { it.name == "Income On Inter Save" } }
+        assertEquals(true, saved?.incomeOnIntermediary)
+    }
+
+    @Test
+    fun `an existing account's income on intermediary option is checked when editing`() {
+        seedInstruments()
+        inBackground {
+            accountRepository.insert(
+                Account(
+                    id = "income_inter_edit", name = "Income Inter Edit", type = "asset",
+                    instrumentCode = "AAA", intermediaryInstrumentCode = "BBB", incomeOnIntermediary = true
+                )
+            )
+        }
+        val activity = Robolectric.buildActivity(
+            EditAccountActivity::class.java, EditAccountActivity.editIntent(context, "income_inter_edit")
+        ).setup().get()
+
+        waitUntil { activity.incomeCheckbox().isChecked }
+
+        assertEquals(View.VISIBLE, activity.incomeCheckbox().visibility)
     }
 
     @Test

@@ -114,6 +114,31 @@ intermediary balance is added as a second part to the asset's "Balance:"
 line (`AccountSideController`), its "New balance:" line, and the "+ …"
 delta line below the new balance field.
 
+#### Accounts whose income is on the intermediary instrument
+
+An asset account with an intermediary can set `Account.incomeOnIntermediary`
+(checkbox on the Edit Account screen, shown only for an asset account with an
+intermediary; saved as false otherwise). For such an account the account
+instrument balance never changes, so Income is typed on the **intermediary**
+instrument instead: the new-balance field and its code label use the
+intermediary instrument, the amount is the typed new balance minus
+`intermediaryBalance`, and the base amount is scaled from the intermediary
+side:
+
+```kotlin
+val baseAmount = InstrumentValueCalculator.computeBaseAmount(
+    instrumentAmount = intermediaryDelta,
+    balance = asset.balance,
+    instrumentBalance = asset.intermediaryBalance
+)
+```
+
+The asset entry then carries only `debitAmount` and `intermediaryDebitAmount`
+(`instrumentDebitAmount` stays null). The "New balance:" line keeps the
+unchanged instrument balance and shows the new intermediary balance; the "+ …"
+delta line shows `intermediary · Ar`. The flag is part of the account's
+backup/sync JSON (`incomeOnIntermediary`, schema version 21).
+
 All these lines (in Income and Transfer) show amounts in the order
 **account instrument · intermediary instrument · base (Ar)**, e.g.
 `Balance: 1.5 BTC · 90,000 USDT · 400,000 Ar`, since the instrument is what

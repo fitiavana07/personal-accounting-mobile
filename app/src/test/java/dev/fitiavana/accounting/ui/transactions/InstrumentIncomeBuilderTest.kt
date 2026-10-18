@@ -64,6 +64,33 @@ class InstrumentIncomeBuilderTest {
     }
 
     @Test
+    fun `buildEntries without an instrument amount debits only base and intermediary on the asset entry`() {
+        val entries = InstrumentIncomeBuilder.buildEntries(
+            assetAccountId = "btc_wallet",
+            revenueAccountId = "sales_revenue",
+            instrumentAmount = null,
+            baseAmount = 60_000L,
+            intermediaryAmount = 4_000L
+        )
+
+        assertEquals(
+            TransactionValidator.EntryData(
+                accountId = "btc_wallet",
+                debitAmount = 60_000L,
+                creditAmount = null,
+                instrumentDebitAmount = null,
+                instrumentCreditAmount = null,
+                intermediaryDebitAmount = 4_000L
+            ),
+            entries[0]
+        )
+        assertEquals(
+            TransactionValidator.ValidationResult.Valid,
+            TransactionValidator.validate(entries)
+        )
+    }
+
+    @Test
     fun `buildEntries drops a non-positive intermediary amount`() {
         val entries = InstrumentIncomeBuilder.buildEntries(
             assetAccountId = "btc_wallet",

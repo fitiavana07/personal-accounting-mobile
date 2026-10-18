@@ -58,6 +58,10 @@ class InstrumentIncomeControllerTest {
         id = "usd_via_eur", name = "USD via EUR", type = "asset",
         instrumentCode = "USD", intermediaryInstrumentCode = "EUR"
     )
+    private val usdIncomeInEurWallet = Account(
+        id = "usd_income_eur", name = "USD income in EUR", type = "asset",
+        instrumentCode = "USD", intermediaryInstrumentCode = "EUR", incomeOnIntermediary = true
+    )
     private val salesRevenue = Account(id = "sales_revenue", name = "Sales Revenue", type = "revenue")
     private val otherRevenue = Account(id = "other_revenue", name = "Other Revenue", type = "revenue")
 
@@ -92,7 +96,11 @@ class InstrumentIncomeControllerTest {
             onChanged = onChanged,
             runInBackground = { it() },
             runOnUiThread = { it() }
-        ).also { it.populateSpinners(listOf(usdWallet, eurWallet, usdViaEurWallet, salesRevenue, otherRevenue)) }
+        ).also {
+            it.populateSpinners(
+                listOf(usdWallet, eurWallet, usdViaEurWallet, usdIncomeInEurWallet, salesRevenue, otherRevenue)
+            )
+        }
 
     @Test
     fun `no accounts selected produces no entries`() {
@@ -140,11 +148,12 @@ class InstrumentIncomeControllerTest {
     fun `asset spinner only offers eligible asset accounts`() {
         val controller = controller()
 
-        // placeholder + usd_wallet + eur_wallet + usd_via_eur (intermediary accounts are offered too)
-        assertEquals(4, assetSpinner.adapter.count)
+        // placeholder + usd_wallet + eur_wallet + usd_via_eur + usd_income_eur (intermediary accounts are offered too)
+        assertEquals(5, assetSpinner.adapter.count)
         assertEquals(usdWallet.name, assetSpinner.adapter.getItem(1))
         assertEquals(eurWallet.name, assetSpinner.adapter.getItem(2))
         assertEquals(usdViaEurWallet.name, assetSpinner.adapter.getItem(3))
+        assertEquals(usdIncomeInEurWallet.name, assetSpinner.adapter.getItem(4))
     }
 
     private fun stubBalance(id: String, balance: Long, instrument: Long, intermediary: Long = 0L) {
@@ -209,6 +218,81 @@ class InstrumentIncomeControllerTest {
         editIncomeAmount.setText("11.50") // +150 -> intermediary +75: 5.00 -> 5.75
 
         assertEquals("New balance: 11.5\u00A0USD · 5.75\u00A0EUR · 460,000\u00A0Ar", assetTextNewBalance.text.toString())
+    }
+
+    private fun selectIncomeOnIntermediary(intermediary: Long = 500L) {
+        stubBalance("usd_income_eur", balance = 400_000L, instrument = 1000L, intermediary = intermediary)
+        stubBalance("sales_revenue", balance = 0L, instrument = 0L)
+        assetSpinner.setSelection(4) // usd_income_eur
+        revenueSpinner.setSelection(1)
+    }
+
+    @Test
+    fun `income on intermediary types the new balance in the intermediary instrument`() {
+        val controller = controller()
+        selectIncomeOnIntermediary()
+
+        assertEquals("EUR", textAmountCode.text.toString())
+        editIncomeAmount.setText("6.50") // delta 150 EUR units on a balance of 5.00
+
+        val asset = controller.collectEntries()!!.first { it.accountId == "usd_income_eur" }
+        assertEquals(150L, asset.intermediaryDebitAmount)
+        assertNull(asset.intermediaryCreditAmount)
+        assertNull(asset.instrumentDebitAmount)
+        assertNull(asset.instrumentCreditAmount)
+    }
+
+    @Test
+    fun `income on intermediary scales the base amount from the intermediary balance`() {
+        val controller = controller()
+        selectIncomeOnIntermediary()
+
+        editIncomeAmount.setText("6.50") // 150 * 400,000 / 500
+
+        val entries = controller.collectEntries()!!
+        assertEquals(120_000L, entries.first { it.accountId == "usd_income_eur" }.debitAmount)
+        assertEquals(120_000L, entries.first { it.accountId == "sales_revenue" }.creditAmount)
+        assertEquals(TransactionValidator.ValidationResult.Valid, TransactionValidator.validate(entries))
+    }
+
+    @Test
+    fun `income on intermediary fails when the account has no prior intermediary balance`() {
+        val controller = controller()
+        selectIncomeOnIntermediary(intermediary = 0L)
+
+        editIncomeAmount.setText("1.50")
+
+        assertNull(controller.collectEntries())
+    }
+
+    @Test
+    fun `income on intermediary fails when the new balance is not above the current intermediary balance`() {
+        val controller = controller()
+        selectIncomeOnIntermediary()
+
+        editIncomeAmount.setText("5.00")
+
+        assertNull(controller.collectEntries())
+    }
+
+    @Test
+    fun `income on intermediary previews the amount in the intermediary instrument`() {
+        controller()
+        selectIncomeOnIntermediary()
+
+        editIncomeAmount.setText("6.50")
+
+        assertEquals("+ 1.5 EUR · 120,000 Ar", textAmountBase.text.toString())
+    }
+
+    @Test
+    fun `income on intermediary leaves the instrument balance unchanged in the new balance line`() {
+        controller()
+        selectIncomeOnIntermediary()
+
+        editIncomeAmount.setText("6.50")
+
+        assertEquals("New balance: 10.0 USD · 6.5 EUR · 520,000 Ar", assetTextNewBalance.text.toString())
     }
 
     @Test

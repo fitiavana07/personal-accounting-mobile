@@ -162,6 +162,7 @@
     <string name="label_instrument_type">Instrument type</string>
     <string name="label_intermediary_instrument">Intermediary Instrument</string>
     <string name="label_liquidity_level">Liquidity level</string>
+    <string name="label_income_on_intermediary">Instrument income is received in the intermediary instrument</string>
     <string name="label_apr">Yearly interest (APR, %)</string>
     <string name="account_apr">%1$s%% APR</string>
     <string name="report_apr_label">APR</string>

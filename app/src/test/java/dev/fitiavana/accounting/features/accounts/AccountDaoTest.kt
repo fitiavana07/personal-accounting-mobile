@@ -42,6 +42,22 @@ class AccountDaoTest {
         db.close()
     }
 
+    @Test
+    fun `income on intermediary round trips and defaults to off`() {
+        instrumentDao.insert(Instrument(code = "USD", note = "US Dollar", type = "currency", decimalPlaces = 2))
+        instrumentDao.insert(Instrument(code = "EUR", note = "Euro", type = "currency", decimalPlaces = 2))
+        accountDao.insert(Account(id = "plain", name = "Plain", type = "asset", instrumentCode = "USD"))
+        accountDao.insert(
+            Account(
+                id = "flagged", name = "Flagged", type = "asset", instrumentCode = "USD",
+                intermediaryInstrumentCode = "EUR", incomeOnIntermediary = true
+            )
+        )
+
+        assertFalse(accountDao.getAllSync().first { it.id == "plain" }.incomeOnIntermediary)
+        assertTrue(accountDao.getAllSync().first { it.id == "flagged" }.incomeOnIntermediary)
+    }
+
     // hasAccountsWithInstrument
 
     @Test

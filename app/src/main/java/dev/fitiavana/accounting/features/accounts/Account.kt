@@ -32,5 +32,10 @@ data class Account(
     val intermediaryInstrumentCode: String? = null,
     val liquidityLevel: String? = null,
     /** Yearly interest rate in percent for Earn-style asset accounts; null when the account earns nothing. */
-    val aprPercent: Double? = null
+    val aprPercent: Double? = null,
+    /**
+     * Asset account with an intermediary instrument whose Instrument Income is typed on the
+     * intermediary instrument: the account's own instrument balance never changes.
+     */
+    val incomeOnIntermediary: Boolean = false
 )

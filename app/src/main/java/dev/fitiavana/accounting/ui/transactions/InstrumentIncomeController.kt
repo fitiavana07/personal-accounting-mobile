@@ -66,7 +66,7 @@ class InstrumentIncomeController(
         textBalance = assetTextBalance,
         isDebit = true,
         onAccountSelected = { account ->
-            textAmountCode.text = account?.instrumentCode?.let { instrumentsMap[it] }?.code ?: ""
+            textAmountCode.text = account?.let { amountInstrumentOf(it) }?.code ?: ""
             if (account == null) {
                 assetTextNewBalance.visibility = View.GONE
                 updateAmountBasePreview()
@@ -117,47 +117,74 @@ class InstrumentIncomeController(
         })
     }
 
-    private fun currentInstrument(): Instrument? =
-        asset.account?.instrumentCode?.let { instrumentsMap[it] }
+    /** Whether [account] takes its income on the intermediary instrument (the flag only counts with an intermediary). */
+    private fun incomeOnIntermediary(account: Account?): Boolean =
+        account != null && account.incomeOnIntermediary && account.intermediaryInstrumentCode != null
+
+    /** The instrument the amount is typed in: the intermediary one for an income-on-intermediary account. */
+    private fun amountInstrumentOf(account: Account): Instrument? =
+        (if (incomeOnIntermediary(account)) account.intermediaryInstrumentCode else account.instrumentCode)
+            ?.let { instrumentsMap[it] }
+
+    private fun currentInstrument(): Instrument? = asset.account?.let { amountInstrumentOf(it) }
+
+    /** The asset's current balance in the instrument the amount is typed in. */
+    private fun amountBalance(): Long =
+        if (incomeOnIntermediary(asset.account)) asset.intermediaryBalance else asset.instrumentBalance
 
     /**
-     * The instrument-denominated new balance typed into the field. An empty
-     * or unparseable field defaults to the asset's current instrument
-     * balance, i.e. no change yet.
+     * The new balance typed into the field, in the amount instrument. An empty
+     * or unparseable field defaults to the asset's current balance in that
+     * instrument, i.e. no change yet.
      */
-    private fun parsedNewInstrumentBalance(instrument: Instrument): Long {
+    private fun parsedNewBalance(instrument: Instrument): Long {
         val factor = 10.0.pow(instrument.decimalPlaces)
         return editIncomeAmount.plainText()
-            .toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: asset.instrumentBalance
+            .toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: amountBalance()
     }
 
     /** The transaction amount, inferred as the typed new balance minus the asset's current balance. */
-    private fun transactionInstrumentAmount(instrument: Instrument): Long =
-        parsedNewInstrumentBalance(instrument) - asset.instrumentBalance
+    private fun transactionAmount(instrument: Instrument): Long =
+        parsedNewBalance(instrument) - amountBalance()
+
+    /** The transaction amount in the asset's own instrument; none when the income is on the intermediary. */
+    private fun entryInstrumentAmount(instrument: Instrument): Long? =
+        transactionAmount(instrument).takeUnless { incomeOnIntermediary(asset.account) }
 
     private fun computedBaseAmount(instrument: Instrument): Long? =
         InstrumentValueCalculator.computeBaseAmount(
-            instrumentAmount = transactionInstrumentAmount(instrument),
+            instrumentAmount = transactionAmount(instrument),
             balance = asset.balance,
-            instrumentBalance = asset.instrumentBalance
+            instrumentBalance = amountBalance()
         )
 
     private fun intermediaryInstrument(): Instrument? =
         asset.account?.intermediaryInstrumentCode?.let { instrumentsMap[it] }
 
     /**
-     * The intermediary instrument units received, derived like the base amount
+     * The intermediary instrument units received: the typed amount itself for
+     * an income-on-intermediary account, otherwise derived like the base amount
      * from the asset's own prior ratio (intermediary balance per instrument
      * unit). Null when the asset has no intermediary instrument or no rate.
      */
     private fun computedIntermediaryAmount(instrument: Instrument): Long? {
         if (intermediaryInstrument() == null) return null
+        if (incomeOnIntermediary(asset.account)) return transactionAmount(instrument)
         return InstrumentValueCalculator.computeBaseAmount(
-            instrumentAmount = transactionInstrumentAmount(instrument),
+            instrumentAmount = transactionAmount(instrument),
             balance = asset.intermediaryBalance,
             instrumentBalance = asset.instrumentBalance
         )
     }
+
+    private fun buildEntries(instrument: Instrument?, baseAmount: Long?) =
+        InstrumentIncomeBuilder.buildEntries(
+            assetAccountId = asset.account?.id ?: "",
+            revenueAccountId = revenue.account?.id ?: "",
+            instrumentAmount = instrument?.let { entryInstrumentAmount(it) },
+            baseAmount = baseAmount,
+            intermediaryAmount = instrument?.let { computedIntermediaryAmount(it) }
+        )
 
     private fun updateNewBalances(side: AccountSideController) {
         val account = side.account
@@ -177,15 +204,17 @@ class InstrumentIncomeController(
         )
 
         if (side === asset) {
-            val instrumentAmount = transactionInstrumentAmount(instrument)
             val newInstrumentBalance = BalanceCalculator.project(
                 accountType = account.type,
                 currentBalance = side.instrumentBalance,
-                debit = instrumentAmount,
+                debit = entryInstrumentAmount(instrument) ?: 0L,
                 credit = 0L
             )
             val formattedBase = TransactionDisplay.formatAmount(newBalance)
-            val formattedInstrument = TransactionDisplay.formatInstrumentAmountNoWrap(newInstrumentBalance, instrument)
+            val formattedInstrument = TransactionDisplay.formatInstrumentAmountNoWrap(
+                newInstrumentBalance,
+                instrumentsMap[account.instrumentCode] ?: instrument
+            )
             val intermediary = intermediaryInstrument()
             val line = if (intermediary != null) {
                 val newIntermediaryBalance = BalanceCalculator.project(
@@ -226,8 +255,8 @@ class InstrumentIncomeController(
             textAmountBase.visibility = View.GONE
             return
         }
-        val instrumentAmount = transactionInstrumentAmount(instrument)
-        if (instrumentAmount <= 0L) {
+        val amount = transactionAmount(instrument)
+        if (amount <= 0L) {
             textAmountBase.text = context.getString(R.string.label_instrument_income_new_balance_too_low)
             textAmountBase.visibility = View.VISIBLE
             return
@@ -238,10 +267,11 @@ class InstrumentIncomeController(
             return
         }
         val formattedBase = TransactionDisplay.formatAmount(baseAmount)
-        val formattedInstrument = TransactionDisplay.formatInstrumentAmountNoWrap(instrumentAmount, instrument)
+        val formattedInstrument = TransactionDisplay.formatInstrumentAmountNoWrap(amount, instrument)
         val intermediary = intermediaryInstrument()
         val intermediaryAmount = computedIntermediaryAmount(instrument)
-        textAmountBase.text = if (intermediary != null && intermediaryAmount != null) {
+        // On an income-on-intermediary account the typed amount already is the intermediary one.
+        textAmountBase.text = if (intermediary != null && intermediaryAmount != null && !incomeOnIntermediary(asset.account)) {
             context.getString(
                 R.string.label_amount_plus_ar_instrument_intermediary,
                 formattedBase,
@@ -289,7 +319,7 @@ class InstrumentIncomeController(
             return null
         }
         val instrument = currentInstrument()
-        val instrumentAmount = instrument?.let { transactionInstrumentAmount(it) } ?: 0L
+        val instrumentAmount = instrument?.let { transactionAmount(it) } ?: 0L
         if (instrumentAmount < 0L) {
             Toast.makeText(
                 context,
@@ -306,11 +336,7 @@ class InstrumentIncomeController(
             ).show()
             return null
         }
-        val baseAmount = InstrumentValueCalculator.computeBaseAmount(
-            instrumentAmount = instrumentAmount,
-            balance = asset.balance,
-            instrumentBalance = asset.instrumentBalance
-        )
+        val baseAmount = instrument?.let { computedBaseAmount(it) }
         if (baseAmount == null) {
             Toast.makeText(
                 context,
@@ -319,27 +345,13 @@ class InstrumentIncomeController(
             ).show()
             return null
         }
-        return InstrumentIncomeBuilder.buildEntries(
-            assetAccountId = assetAccount.id,
-            revenueAccountId = revenueAccount.id,
-            instrumentAmount = instrumentAmount,
-            baseAmount = baseAmount,
-            intermediaryAmount = instrument?.let { computedIntermediaryAmount(it) }
-        )
+        return buildEntries(instrument, baseAmount)
     }
 
     /** Entries as typed so far, for the running totals line — ignores validity. */
     fun summaryEntries(): List<TransactionValidator.EntryData> {
         val instrument = currentInstrument()
-        val instrumentAmount = instrument?.let { transactionInstrumentAmount(it) } ?: 0L
-        val baseAmount = instrument?.let { computedBaseAmount(it) }
-        return InstrumentIncomeBuilder.buildEntries(
-            assetAccountId = asset.account?.id ?: "",
-            revenueAccountId = revenue.account?.id ?: "",
-            instrumentAmount = instrumentAmount,
-            baseAmount = baseAmount,
-            intermediaryAmount = instrument?.let { computedIntermediaryAmount(it) }
-        )
+        return buildEntries(instrument, instrument?.let { computedBaseAmount(it) })
     }
 
     fun hasContent(): Boolean =

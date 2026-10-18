@@ -285,6 +285,59 @@ class EditAccountViewModelTest {
         assertTrue(captor.allValues.all { it.aprPercent == null })
     }
 
+    // --- saveAccount: income on intermediary ---
+
+    @Test
+    fun `new asset account with an intermediary saves income on intermediary`() {
+        viewModel.saveAccount(
+            id = null, name = "Wallet", type = "asset", instrumentCode = "USD",
+            intermediaryInstrumentCode = "EUR", incomeOnIntermediary = true
+        )
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).insert(captor.capture())
+        assertTrue(captor.firstValue.incomeOnIntermediary)
+    }
+
+    @Test
+    fun `existing asset account with an intermediary updates income on intermediary`() {
+        viewModel.saveAccount(
+            id = "1", name = "Wallet", type = "asset", instrumentCode = "USD",
+            intermediaryInstrumentCode = "EUR", incomeOnIntermediary = true
+        )
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).update(captor.capture())
+        assertTrue(captor.firstValue.incomeOnIntermediary)
+    }
+
+    @Test
+    fun `income on intermediary defaults to off`() {
+        viewModel.saveAccount(
+            id = null, name = "Wallet", type = "asset", instrumentCode = "USD", intermediaryInstrumentCode = "EUR"
+        )
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository).insert(captor.capture())
+        assertFalse(captor.firstValue.incomeOnIntermediary)
+    }
+
+    @Test
+    fun `income on intermediary is dropped without an intermediary or for a non asset account`() {
+        viewModel.saveAccount(
+            id = null, name = "A", type = "asset", instrumentCode = "USD",
+            intermediaryInstrumentCode = null, incomeOnIntermediary = true
+        )
+        viewModel.saveAccount(
+            id = null, name = "B", type = "liability", instrumentCode = "USD",
+            intermediaryInstrumentCode = "EUR", incomeOnIntermediary = true
+        )
+
+        val captor = argumentCaptor<Account>()
+        verify(accountRepository, org.mockito.kotlin.times(2)).insert(captor.capture())
+        assertTrue(captor.allValues.none { it.incomeOnIntermediary })
+    }
+
     // --- deleteAccount ---
 
     @Test
