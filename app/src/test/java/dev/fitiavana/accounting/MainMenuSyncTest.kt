@@ -24,6 +24,6 @@ class MainMenuSyncTest {
         val item = menu.findItem(R.id.action_sync)
 
         assertNotNull(item)
-        assertEquals(context.getString(R.string.action_sync), item.title.toString())
+        assertEquals(context.getString(R.string.sync), item.title.toString())
     }
 }

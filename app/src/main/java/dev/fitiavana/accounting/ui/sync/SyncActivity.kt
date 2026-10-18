@@ -35,7 +35,7 @@ class SyncActivity : AppCompatActivity() {
         setContentView(R.layout.activity_sync)
 
         UiUtils.setupActionBar(this)
-        title = getString(R.string.title_sync)
+        title = getString(R.string.sync)
 
         val container = AppContainer.getInstance(this)
         viewModel = ViewModelProvider(

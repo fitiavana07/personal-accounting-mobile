@@ -236,8 +236,7 @@
     <string name="cex_spread_format">Spread %1$s</string>
 
     <!-- Sync with other devices -->
-    <string name="action_sync">Sync with other devices</string>
-    <string name="title_sync">Sync</string>
+    <string name="sync">Sync</string>
     <string name="sync_this_device">This device</string>
     <string name="sync_passphrase_title">Passphrase</string>
     <string name="sync_passphrase_hint">Passphrase</string>

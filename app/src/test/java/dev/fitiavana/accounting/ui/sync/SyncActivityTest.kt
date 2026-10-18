@@ -59,7 +59,7 @@ class SyncActivityTest {
 
     @Test
     fun `the title is Sync`() {
-        assertEquals(context.getString(R.string.title_sync), launch().title.toString())
+        assertEquals(context.getString(R.string.sync), launch().title.toString())
     }
 
     @Test
