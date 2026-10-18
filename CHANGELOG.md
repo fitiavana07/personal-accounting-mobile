@@ -7,6 +7,13 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.50] - 2026-10-18
+
+### Added
+
+- accounts: pre-associate a revenue account with an asset account
+- backup: restore backups made by an older schema
+
 ## [1.49] - 2026-10-18
 
 ### Added
@@ -415,7 +422,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.49...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.50...HEAD
+[1.50]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.49...v1.50
 [1.49]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.48...v1.49
 [1.48]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.47...v1.48
 [1.47]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.46...v1.47
