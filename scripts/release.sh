@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
-# Release script: bumps the patch version, commits, tags, builds a signed
-# release APK, and pushes branch + tag to origin.
+# Release script: bumps the patch version, adds the release to CHANGELOG.md
+# (scripts/changelog.sh), commits, tags, builds a signed release APK, and pushes
+# branch + tag to origin.
 #
 # Signing credentials are read only from local.properties (see
 # local.properties for the expected keys: android.keystore.path,
@@ -16,6 +17,7 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
 GRADLE_FILE="app/build.gradle.kts"
+CHANGELOG_FILE="CHANGELOG.md"
 RELEASES_DIR="releases"
 LOCAL_PROPERTIES="local.properties"
 
@@ -58,6 +60,11 @@ if [[ -n "$(git status --porcelain)" ]]; then
   exit 1
 fi
 
+if [[ ! -f "$CHANGELOG_FILE" ]]; then
+  echo "Error: $CHANGELOG_FILE not found. Seed it once with scripts/backfill-changelog.sh and commit it." >&2
+  exit 1
+fi
+
 CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 
 # --- Compute new version ------------------------------------------------
@@ -78,6 +85,12 @@ echo "Bumping version: $CURRENT_VERSION_NAME ($CURRENT_VERSION_CODE) -> $NEW_VER
 sed -i -E "s/(versionCode = )$CURRENT_VERSION_CODE/\1$NEW_VERSION_CODE/" "$GRADLE_FILE"
 sed -i -E "s/(versionName = )\"$CURRENT_VERSION_NAME\"/\1\"$NEW_VERSION_NAME\"/" "$GRADLE_FILE"
 
+# --- Changelog -------------------------------------------------------------
+
+# Before the build, so the app (which bundles CHANGELOG.md) ships the new section.
+PREVIOUS_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo -)"
+scripts/changelog.sh add "$PREVIOUS_TAG" HEAD "$NEW_VERSION_NAME" "$(date +%F)"
+
 # --- Build and test -------------------------------------------------------
 
 echo "Running build and unit tests..."
@@ -85,7 +98,7 @@ echo "Running build and unit tests..."
 
 # --- Commit and tag --------------------------------------------------------
 
-git add "$GRADLE_FILE"
+git add "$GRADLE_FILE" "$CHANGELOG_FILE"
 git commit -m "chore: bump version to $NEW_VERSION_NAME ($NEW_VERSION_CODE)"
 git tag -a "v$NEW_VERSION_NAME" -m "Release $NEW_VERSION_NAME"
 

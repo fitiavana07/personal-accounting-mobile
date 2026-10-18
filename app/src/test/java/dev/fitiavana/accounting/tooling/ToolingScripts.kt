@@ -9,9 +9,15 @@ object ToolingScripts {
 
     class Result(val exitCode: Int, val output: String)
 
-    fun run(script: String, args: List<String> = emptyList(), stdin: String = ""): Result {
+    /** [script] is relative to the repo root; [workingDir] is where it runs (a temp repo for the scripts that act on git). */
+    fun run(
+        script: String,
+        args: List<String> = emptyList(),
+        stdin: String = "",
+        workingDir: File = repoRoot,
+    ): Result {
         val process = ProcessBuilder(listOf("bash", File(repoRoot, script).path) + args)
-            .directory(repoRoot)
+            .directory(workingDir)
             .redirectErrorStream(true)
             .start()
         process.outputStream.use { it.write(stdin.toByteArray()) }
