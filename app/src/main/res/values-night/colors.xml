@@ -14,4 +14,7 @@
     <color name="section_card_bg">#1E1E1E</color>
 
     <color name="balance_main">@color/gold_300</color>
+
+    <!-- colorSurface (#121212) plus the 8dp elevation overlay the bar gets in dark mode. -->
+    <color name="bottom_bar_surface">#2E2E2E</color>
 </resources>

@@ -1,26 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="?attr/actionBarSize" />
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="?attr/actionBarSize" />
+
+        <FrameLayout
+            android:id="@+id/fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_navigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:itemIconTint="@color/bottom_nav_item"
+            app:itemTextColor="@color/bottom_nav_item"
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/bottom_nav_menu" />
+
+    </LinearLayout>
+
+    <!-- Centered over the bar's empty middle slot (nav_add_placeholder). The ring in the bar's color
+         makes the button look set into the bar. Its bottom margin is set from the bar's height in
+         MainActivity so the button's center sits on the bar's top edge. The elevation only keeps the
+         ring above the bar (elevation 8dp) when drawing; no shadow of its own. -->
     <FrameLayout
-        android:id="@+id/fragment_container"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:id="@+id/add_transaction_container"
+        android:layout_width="68dp"
+        android:layout_height="68dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:background="@drawable/bg_add_button_ring"
+        android:clipChildren="false"
+        android:elevation="10dp"
+        android:outlineProvider="none"
+        tools:targetApi="21">
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_navigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:menu="@menu/bottom_nav_menu" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_add_transaction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:contentDescription="@string/title_new_transaction"
+            app:elevation="4dp"
+            app:srcCompat="@drawable/ic_add_transaction" />
+    </FrameLayout>
 
-</LinearLayout>
+</FrameLayout>

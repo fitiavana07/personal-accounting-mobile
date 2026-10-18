@@ -8,6 +8,11 @@
         android:id="@+id/nav_reports"
         android:icon="@drawable/ic_nav_reports"
         android:title="@string/nav_reports" />
+    <!-- Empty middle slot: the add-transaction button in activity_main.xml sits over it. -->
+    <item
+        android:id="@+id/nav_add_placeholder"
+        android:enabled="false"
+        android:title="@string/nav_add_placeholder" />
     <item
         android:id="@+id/nav_transactions"
         android:icon="@drawable/ic_nav_transactions"

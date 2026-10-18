@@ -15,7 +15,6 @@ import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.ui.common.EquityStatementAdapter
 import dev.fitiavana.accounting.ui.common.ReportAdapter
-import dev.fitiavana.accounting.ui.transactions.AddTransactionActivity
 
 class ReportsFragment : Fragment() {
 
@@ -84,10 +83,6 @@ class ReportsFragment : Fragment() {
         expandAllView.setOnClickListener { viewModel.toggleExpandAll() }
         val contentRecycler = view.findViewById<RecyclerView>(R.id.recycler_reports_content)
         val equityScroll = view.findViewById<View>(R.id.scroll_reports_equity)
-
-        view.findViewById<View>(R.id.fab_add_transaction).setOnClickListener {
-            startActivity(AddTransactionActivity.intent(requireContext()))
-        }
 
         setUpTrendCharts(view)
 

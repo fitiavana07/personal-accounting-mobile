@@ -5,9 +5,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.FragmentActivity
 import dev.fitiavana.accounting.R
-import dev.fitiavana.accounting.ui.transactions.AddTransactionActivity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -65,15 +65,9 @@ class ReportsFragmentTest {
     }
 
     @Test
-    fun `tapping the FAB opens AddTransactionActivity`() {
+    fun `the screen has no FAB of its own`() {
         val activity = launch()
 
-        activity.findViewById<View>(R.id.fab_add_transaction).performClick()
-
-        val started = shadowOf(activity).nextStartedActivity
-        assertEquals(
-            AddTransactionActivity::class.java.name,
-            started.component?.className
-        )
+        assertNull(activity.findViewById<View>(R.id.fab_add_transaction))
     }
 }

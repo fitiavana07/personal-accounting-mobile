@@ -5,6 +5,8 @@ import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,6 +28,7 @@ import dev.fitiavana.accounting.ui.home.HomeFragment
 import dev.fitiavana.accounting.ui.instruments.InstrumentsActivity
 import dev.fitiavana.accounting.ui.reports.ReportsFragment
 import dev.fitiavana.accounting.ui.sync.SyncActivity
+import dev.fitiavana.accounting.ui.transactions.AddTransactionActivity
 import dev.fitiavana.accounting.ui.transactions.TransactionsFragment
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -82,6 +85,20 @@ class MainActivity : AppCompatActivity() {
                     navBar.bottom
                 )
                 insets
+            }
+        }
+
+        findViewById<View>(R.id.fab_add_transaction).setOnClickListener {
+            startActivity(AddTransactionActivity.intent(this))
+        }
+        // Keep the button's center on the bar's top edge, whatever the bar's height (insets included).
+        val addButtonContainer = findViewById<View>(R.id.add_transaction_container)
+        bottomNav.addOnLayoutChangeListener { _, _, top, _, bottom, _, _, _, _ ->
+            val params = addButtonContainer.layoutParams as FrameLayout.LayoutParams
+            val margin = (bottom - top) - addButtonContainer.measuredHeight / 2
+            if (params.bottomMargin != margin) {
+                params.bottomMargin = margin
+                addButtonContainer.layoutParams = params
             }
         }
 

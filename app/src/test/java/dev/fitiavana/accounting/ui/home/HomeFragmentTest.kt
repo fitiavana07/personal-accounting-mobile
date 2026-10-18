@@ -7,8 +7,8 @@ import dev.fitiavana.accounting.R
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.ui.cexprices.CexPricesActivity
 import dev.fitiavana.accounting.ui.earn.EarnActivity
-import dev.fitiavana.accounting.ui.transactions.AddTransactionActivity
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -32,17 +32,10 @@ class HomeFragmentTest {
     }
 
     @Test
-    fun `tapping the FAB opens AddTransactionActivity`() {
+    fun `the screen has no FAB of its own`() {
         val activity = launchHomeFragment()
 
-        val fab = activity.findViewById<View>(R.id.fab_add_transaction)
-        fab.performClick()
-
-        val started = shadowOf(activity).nextStartedActivity
-        assertEquals(
-            AddTransactionActivity::class.java.name,
-            started.component?.className
-        )
+        assertNull(activity.findViewById<View>(R.id.fab_add_transaction))
     }
 
     private fun layOutRecycler(activity: FragmentActivity): RecyclerView {

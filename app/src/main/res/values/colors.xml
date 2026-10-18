@@ -30,4 +30,7 @@
     <color name="section_card_bg">@color/white</color>
 
     <color name="balance_main">@color/gold_500</color>
+
+    <!-- Same as the bottom navigation bar's background (colorSurface), for the ring around the add button. -->
+    <color name="bottom_bar_surface">@color/white</color>
 </resources>

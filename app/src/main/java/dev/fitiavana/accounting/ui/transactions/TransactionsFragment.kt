@@ -20,7 +20,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.BuildConfig
 import dev.fitiavana.accounting.R
@@ -86,8 +85,6 @@ class TransactionsFragment : Fragment() {
             adapter = this@TransactionsFragment.adapter
         }
 
-        val fab =
-            view.findViewById<FloatingActionButton>(R.id.fab_add_transaction)
         val emptyView = view.findViewById<TextView>(R.id.text_empty)
         val spinnerAccount = view.findViewById<Spinner>(R.id.spinner_account)
         val textDateStart = view.findViewById<TextView>(R.id.text_date_start)
@@ -97,10 +94,6 @@ class TransactionsFragment : Fragment() {
             val calendarIcon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_calendar)
             TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(textDateStart, null, null, calendarIcon, null)
             TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(textDateEnd, null, null, calendarIcon, null)
-        }
-
-        fab.setOnClickListener {
-            startActivity(AddTransactionActivity.intent(requireContext()))
         }
 
         // Initialize date labels from default filter
@@ -163,14 +156,11 @@ class TransactionsFragment : Fragment() {
             val hasAccounts = accounts.isNotEmpty()
 
             if (!hasAccounts) {
-                fab.hide()
                 emptyView.visibility = View.VISIBLE
                 emptyView.setText(R.string.empty_transactions_no_accounts)
                 adapter.submitList(emptyList())
                 return@observe
             }
-
-            fab.show()
 
             if (transactions.isEmpty()) {
                 emptyView.visibility = View.VISIBLE
