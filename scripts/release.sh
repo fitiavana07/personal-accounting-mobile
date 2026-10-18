@@ -21,7 +21,18 @@ CHANGELOG_FILE="CHANGELOG.md"
 RELEASES_DIR="releases"
 LOCAL_PROPERTIES="local.properties"
 
+TOTAL_STEPS=8
+STEP_NUM=0
+
+step() {
+  STEP_NUM=$((STEP_NUM + 1))
+  echo
+  echo "==> [$STEP_NUM/$TOTAL_STEPS] $*"
+}
+
 # --- Preconditions -----------------------------------------------------
+
+step "Checking preconditions (signing config, clean working tree, changelog)"
 
 read_local_property() {
   local key="$1"
@@ -66,8 +77,11 @@ if [[ ! -f "$CHANGELOG_FILE" ]]; then
 fi
 
 CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+echo "Preconditions OK (branch: $CURRENT_BRANCH)."
 
 # --- Compute new version ------------------------------------------------
+
+step "Computing new version"
 
 CURRENT_VERSION_NAME="$(grep -oP 'versionName\s*=\s*"\K[^"]+' "$GRADLE_FILE")"
 CURRENT_VERSION_CODE="$(grep -oP 'versionCode\s*=\s*\K[0-9]+' "$GRADLE_FILE")"
@@ -82,6 +96,8 @@ echo "Bumping version: $CURRENT_VERSION_NAME ($CURRENT_VERSION_CODE) -> $NEW_VER
 
 # --- Apply version bump --------------------------------------------------
 
+step "Writing version $NEW_VERSION_NAME ($NEW_VERSION_CODE) to $GRADLE_FILE"
+
 sed -i -E "s/(versionCode = )$CURRENT_VERSION_CODE/\1$NEW_VERSION_CODE/" "$GRADLE_FILE"
 sed -i -E "s/(versionName = )\"$CURRENT_VERSION_NAME\"/\1\"$NEW_VERSION_NAME\"/" "$GRADLE_FILE"
 
@@ -89,15 +105,17 @@ sed -i -E "s/(versionName = )\"$CURRENT_VERSION_NAME\"/\1\"$NEW_VERSION_NAME\"/"
 
 # Before the build, so the app (which bundles CHANGELOG.md) ships the new section.
 PREVIOUS_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo -)"
+step "Adding $NEW_VERSION_NAME to $CHANGELOG_FILE (commits since ${PREVIOUS_TAG/#-/the beginning})"
 scripts/changelog.sh add "$PREVIOUS_TAG" HEAD "$NEW_VERSION_NAME" "$(date +%F)"
 
 # --- Build and test -------------------------------------------------------
 
-echo "Running build and unit tests..."
+step "Running build and unit tests (assembleDebug testDebugUnitTest)"
 ./gradlew assembleDebug testDebugUnitTest
 
 # --- Commit and tag --------------------------------------------------------
 
+step "Committing and tagging v$NEW_VERSION_NAME"
 git add "$GRADLE_FILE" "$CHANGELOG_FILE"
 git commit -m "chore: bump version to $NEW_VERSION_NAME ($NEW_VERSION_CODE)"
 git tag -a "v$NEW_VERSION_NAME" -m "Release $NEW_VERSION_NAME"
@@ -106,7 +124,7 @@ echo "Created commit and tag v$NEW_VERSION_NAME."
 
 # --- Build signed release APK ---------------------------------------------
 
-echo "Building signed release APK..."
+step "Building signed release APK"
 ./gradlew assembleRelease
 
 BUILT_APK="app/build/outputs/apk/release/app-release.apk"
@@ -124,9 +142,10 @@ echo "Signed APK: $OUTPUT_APK"
 
 # --- Push --------------------------------------------------------------
 
-echo "Pushing branch '$CURRENT_BRANCH' and tag 'v$NEW_VERSION_NAME' to origin..."
+step "Pushing branch '$CURRENT_BRANCH' and tag 'v$NEW_VERSION_NAME' to origin"
 git push origin "$CURRENT_BRANCH"
 git push origin "v$NEW_VERSION_NAME"
 echo "Pushed branch and tag to origin."
 
-echo "Release $NEW_VERSION_NAME complete."
+echo
+echo "==> Release $NEW_VERSION_NAME complete."
