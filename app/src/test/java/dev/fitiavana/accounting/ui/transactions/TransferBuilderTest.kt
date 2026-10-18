@@ -53,8 +53,8 @@ class TransferBuilderTest {
     }
 
     @Test
-    fun `buildSimpleEntries credits from and debits to in base only`() {
-        val entries = TransferBuilder.buildSimpleEntries("cash", "bank", 500L)
+    fun `buildBaseEntries credits from and debits to in base only`() {
+        val entries = TransferBuilder.buildBaseEntries("cash", "bank", 500L)
 
         assertEquals(500L, entries[0].creditAmount)
         assertNull(entries[0].debitAmount)
@@ -70,24 +70,24 @@ class TransferBuilderTest {
 
     @Test
     fun `build entries map zero or null amounts to null so they read as incomplete`() {
-        val simple = TransferBuilder.buildSimpleEntries("cash", "bank", 0L)
+        val base = TransferBuilder.buildBaseEntries("cash", "bank", 0L)
         val instrument = TransferBuilder.buildInstrumentEntries("usd", "usd2", 0L, null, 0L)
 
-        assertEquals(TransactionValidator.ValidationResult.Error.Incomplete, TransactionValidator.validate(simple))
+        assertEquals(TransactionValidator.ValidationResult.Error.Incomplete, TransactionValidator.validate(base))
         assertEquals(TransactionValidator.ValidationResult.Error.Incomplete, TransactionValidator.validate(instrument))
         assertNull(instrument[0].intermediaryCreditAmount)
     }
 
     @Test
     fun `built entries are balanced and valid, and reject the same account twice`() {
-        val simple = TransferBuilder.buildSimpleEntries("cash", "bank", 500L)
+        val base = TransferBuilder.buildBaseEntries("cash", "bank", 500L)
         val instrument = TransferBuilder.buildInstrumentEntries("usd", "usd2", 10L, 200L)
 
-        assertEquals(TransactionValidator.ValidationResult.Valid, TransactionValidator.validate(simple))
+        assertEquals(TransactionValidator.ValidationResult.Valid, TransactionValidator.validate(base))
         assertEquals(TransactionValidator.ValidationResult.Valid, TransactionValidator.validate(instrument))
         assertEquals(
             TransactionValidator.ValidationResult.Error.DuplicateAccount,
-            TransactionValidator.validate(TransferBuilder.buildSimpleEntries("cash", "cash", 500L))
+            TransactionValidator.validate(TransferBuilder.buildBaseEntries("cash", "cash", 500L))
         )
     }
 

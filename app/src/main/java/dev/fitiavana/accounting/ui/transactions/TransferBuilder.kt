@@ -7,7 +7,7 @@ import dev.fitiavana.accounting.features.accounts.AccountTypes
  * Pure logic behind the "Transfer" transaction mode. What the transfer looks
  * like depends on the From account:
  *  - an instrument-free asset moves a base-currency amount to another
- *    instrument-free asset ([buildSimpleEntries]);
+ *    instrument-free asset ([buildBaseEntries]);
  *  - an asset with an instrument moves an amount of that instrument to an asset
  *    sharing its instrument and intermediary instrument, the base (and
  *    intermediary) side being derived from the From account's own prior
@@ -48,7 +48,7 @@ object TransferBuilder {
      * [toAccountId] debited by [amount]. An [amount] of zero (or less) yields
      * null amounts, which [TransactionValidator.validate] reports as incomplete.
      */
-    fun buildSimpleEntries(
+    fun buildBaseEntries(
         fromAccountId: String,
         toAccountId: String,
         amount: Long

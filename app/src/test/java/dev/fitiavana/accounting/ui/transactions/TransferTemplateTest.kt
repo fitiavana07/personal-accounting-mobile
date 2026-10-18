@@ -29,7 +29,7 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [21])
-class TransferInstrumentTemplateTest {
+class TransferTemplateTest {
 
     private val context: Context = ContextThemeWrapper(
         ApplicationProvider.getApplicationContext(),
@@ -44,6 +44,8 @@ class TransferInstrumentTemplateTest {
     private val usdWallet = Account(id = "usd_wallet", name = "USD Wallet", type = "asset", instrumentCode = "USD")
     private val usdSavings = Account(id = "usd_savings", name = "USD Savings", type = "asset", instrumentCode = "USD")
     private val eurWallet = Account(id = "eur_wallet", name = "EUR Wallet", type = "asset", instrumentCode = "EUR")
+    private val cash = Account(id = "cash", name = "Cash", type = "asset")
+    private val bank = Account(id = "bank", name = "Bank", type = "asset")
 
     @Before
     fun setUp() {
@@ -67,7 +69,8 @@ class TransferInstrumentTemplateTest {
             onChanged = {},
             runInBackground = { it() },
             runOnUiThread = { it() }
-        ).also { it.populateSpinners(listOf(usdWallet, usdSavings, eurWallet), mapOf("usd_wallet" to 1L, "usd_savings" to 1L, "eur_wallet" to 1L)) }
+        ).also { it.populateSpinners(listOf(usdWallet, usdSavings, eurWallet, cash, bank),
+            listOf(usdWallet, usdSavings, eurWallet, cash, bank).associate { it.id to 1L }) }
     }
 
     private fun template(vararg slots: Pair<String, String>) = TemplateWithEntries(
@@ -103,6 +106,17 @@ class TransferInstrumentTemplateTest {
         assertTrue(applied)
         assertEquals("usd_wallet", controller.templateSlots()?.first()?.accountId)
         assertEquals("usd_savings", controller.templateSlots()?.last()?.accountId)
+    }
+
+    @Test
+    fun `applyTemplate selects FROM and TO for accounts without an instrument`() {
+        val applied = controller.applyTemplate(template(TemplateSlots.FROM to "cash", TemplateSlots.TO to "bank"))
+
+        assertTrue(applied)
+        assertEquals(
+            listOf(TemplateSlot(TemplateSlots.FROM, "cash"), TemplateSlot(TemplateSlots.TO, "bank")),
+            controller.templateSlots()
+        )
     }
 
     @Test

@@ -344,7 +344,7 @@ class TransferController(
                 toast(R.string.error_transfer_from_zero_balance)
                 return null
             }
-            return TransferBuilder.buildSimpleEntries(fromAccount.id, toAccount.id, parsedAmount(null))
+            return TransferBuilder.buildBaseEntries(fromAccount.id, toAccount.id, parsedAmount(null))
         }
         val instrumentAmount = parsedAmount(instrument)
         if (instrumentAmount <= 0L) {
@@ -370,7 +370,7 @@ class TransferController(
         val fromId = from.account?.id ?: ""
         val toId = to.account?.id ?: ""
         val instrument = currentInstrument()
-            ?: return TransferBuilder.buildSimpleEntries(fromId, toId, parsedAmount(null))
+            ?: return TransferBuilder.buildBaseEntries(fromId, toId, parsedAmount(null))
         return TransferBuilder.buildInstrumentEntries(
             fromAccountId = fromId,
             toAccountId = toId,
