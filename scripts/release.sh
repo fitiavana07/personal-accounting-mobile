@@ -105,7 +105,7 @@ sed -i -E "s/(versionName = )\"$CURRENT_VERSION_NAME\"/\1\"$NEW_VERSION_NAME\"/"
 
 # Before the build, so the app (which bundles CHANGELOG.md) ships the new section.
 PREVIOUS_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo -)"
-step "Adding $NEW_VERSION_NAME to $CHANGELOG_FILE (commits since ${PREVIOUS_TAG/#-/the beginning})"
+step "Adding $NEW_VERSION_NAME to $CHANGELOG_FILE (Unreleased entries plus commits since ${PREVIOUS_TAG/#-/the beginning})"
 scripts/changelog.sh add "$PREVIOUS_TAG" HEAD "$NEW_VERSION_NAME" "$(date +%F)"
 
 # --- Build and test -------------------------------------------------------
@@ -146,6 +146,10 @@ step "Pushing branch '$CURRENT_BRANCH' and tag 'v$NEW_VERSION_NAME' to origin"
 git push origin "$CURRENT_BRANCH"
 git push origin "v$NEW_VERSION_NAME"
 echo "Pushed branch and tag to origin."
+
+echo
+echo "Changelog entries of $NEW_VERSION_NAME:"
+scripts/changelog.sh show "$NEW_VERSION_NAME"
 
 echo
 echo "==> Release $NEW_VERSION_NAME complete."

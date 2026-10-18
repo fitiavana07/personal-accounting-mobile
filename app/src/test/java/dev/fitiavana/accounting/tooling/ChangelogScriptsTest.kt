@@ -25,6 +25,8 @@ class ChangelogScriptsTest {
     fun initRepo() {
         repo = folder.newFolder("repo")
         git("init", "-q")
+        git("config", "user.name", "t")
+        git("config", "user.email", "t@t.t")
     }
 
     private fun git(vararg args: String, date: String = "2026-01-01T12:00:00") {
@@ -255,6 +257,200 @@ class ChangelogScriptsTest {
         val result = backfill()
         assertEquals(result.output, 1, result.exitCode)
         assertFalse(changelog.exists())
+    }
+
+    private fun sync(): ToolingScripts.Result =
+        ToolingScripts.run("scripts/changelog.sh", listOf("sync"), workingDir = repo).also {
+            assertEquals(it.output, 0, it.exitCode)
+        }
+
+    private fun show(version: String) =
+        ToolingScripts.run("scripts/changelog.sh", listOf("show", version), workingDir = repo)
+
+    /** The text of the bullets under Unreleased, without the hidden commit markers. */
+    private fun unreleasedBullets(): List<String> =
+        lines().dropWhile { it != "## [Unreleased]" }.drop(1).takeWhile { !it.startsWith("## [") }
+            .filter { it.startsWith("- ") }.map { it.replace(Regex(" <!-- c:[0-9a-f]+ -->$"), "") }
+
+    @Test
+    fun syncWritesTheCommitsSinceTheLastTagUnderUnreleased() {
+        commit("feat: before the tag")
+        tag("v1.0.0", "2026-01-05T10:00:00")
+        commit("fix(ui): crash on rotate")
+        commit("chore: tidy")
+        commit("feat(accounts): add search")
+
+        val result = sync()
+
+        assertEquals(listOf("- accounts: add search", "- ui: crash on rotate"), unreleasedBullets())
+        assertTrue(result.output, result.output.contains("accounts: add search"))
+        assertTrue(changelog.readText(), changelog.readText().contains("\n### Added\n\n- accounts: add search"))
+    }
+
+    @Test
+    fun syncCreatesTheFileWithTheKeepAChangelogHeader() {
+        commit("feat: first")
+        sync()
+
+        assertTrue(changelog.readText(), changelog.readText().startsWith("# Changelog\n"))
+        assertEquals(listOf("- first"), unreleasedBullets())
+    }
+
+    @Test
+    fun syncDoesNotRepeatWhatIsAlreadyThere() {
+        commit("feat: first")
+        sync()
+        commit("fix: second")
+
+        val result = sync()
+
+        assertEquals(listOf("- first", "- second"), unreleasedBullets())
+        assertFalse(result.output, result.output.contains("first"))
+        val settled = changelog.readText()
+        assertTrue(sync().output.contains("up to date"))
+        assertEquals(settled, changelog.readText())
+    }
+
+    @Test
+    fun syncKeepsAHandEditedBulletAndDoesNotAddItsCommitAgain() {
+        commit("feat: first")
+        sync()
+        changelog.writeText(changelog.readText().replace("- first <!--", "- a much nicer wording <!--"))
+        commit("fix: second")
+
+        sync()
+
+        assertEquals(listOf("- a much nicer wording", "- second"), unreleasedBullets())
+    }
+
+    @Test
+    fun syncKeepsHandWrittenBulletsWithoutAMarker() {
+        commit("feat: first")
+        changelog.writeText("# Changelog\n\n## [Unreleased]\n\n### Added\n\n- written by hand\n  on two lines\n")
+
+        sync()
+
+        val text = changelog.readText()
+        assertTrue(text, text.contains("- written by hand\n  on two lines\n- first <!-- c:"))
+    }
+
+    @Test
+    fun syncLeavesReleasedSectionsAndLinksUntouched() {
+        git("remote", "add", "origin", "git@github.com:someone/some-repo.git")
+        commit("feat: released")
+        assertAdded("-", "HEAD", "1.0.0", "2026-02-01")
+        tag("v1.0.0", "2026-02-01T10:00:00")
+        val before = changelog.readText()
+        commit("fix: later")
+
+        sync()
+
+        val unmarked = changelog.readText().replace(Regex(" <!-- c:[0-9a-f]+ -->"), "")
+        assertEquals(before.replace("## [Unreleased]\n", "## [Unreleased]\n\n### Fixed\n\n- later\n"), unmarked)
+    }
+
+    @Test
+    fun addPromotesTheUnreleasedBulletsAndAddsTheCommitsMissingFromThem() {
+        commit("feat(ui): recorded")
+        sync()
+        changelog.writeText(changelog.readText().replace("- ui: recorded <!--", "- ui: reworded <!--"))
+        commit("fix: not recorded yet")
+        assertAdded("-", "HEAD", "1.0.0", "2026-02-01")
+
+        val expected = """
+            ## [Unreleased]
+
+            ## [1.0.0] - 2026-02-01
+
+            ### Added
+
+            - ui: reworded
+
+            ### Fixed
+
+            - not recorded yet
+        """.trimIndent() + "\n"
+        assertTrue(changelog.readText(), changelog.readText().endsWith(expected))
+        assertFalse(changelog.readText(), changelog.readText().contains("<!--"))
+    }
+
+    @Test
+    fun addKeepsHandEditedWordingAndContinuationLinesOfUnreleased() {
+        commit("feat: a")
+        changelog.writeText(
+            "# Changelog\n\n## [Unreleased]\n\n### Added\n\n- nicer wording\n  on two lines\n- another one\n",
+        )
+        assertAdded("-", "HEAD", "1.0.0", "2026-02-01")
+
+        val text = changelog.readText()
+        assertTrue(text, text.contains("### Added\n\n- nicer wording\n  on two lines\n- another one\n- a\n"))
+    }
+
+    @Test
+    fun showPrintsTheBulletsOfAReleaseWithoutMarkdownHeadings() {
+        commit("feat(ui): add the earn screen")
+        commit("fix: crash on rotate")
+        commit("feat: older release")
+        assertAdded("-", "HEAD", "1.0.0", "2026-02-01")
+        tag("v1.0.0", "2026-02-01T10:00:00")
+        commit("feat(sync): newer one")
+        assertAdded("v1.0.0", "HEAD", "1.1.0", "2026-03-01")
+
+        val result = show("1.0.0")
+
+        assertEquals(result.output, 0, result.exitCode)
+        assertEquals(
+            "Added\n  - ui: add the earn screen\n  - older release\n\nFixed\n  - crash on rotate\n",
+            result.output,
+        )
+        assertEquals("Added\n  - sync: newer one\n", show("1.1.0").output)
+    }
+
+    private fun gitOutput(vararg args: String): String {
+        val process = ProcessBuilder(listOf("git") + args).directory(repo).redirectErrorStream(true).start()
+        return process.inputStream.bufferedReader().readText().also { process.waitFor() }
+    }
+
+    private fun syncAndCommit() =
+        ToolingScripts.run("scripts/changelog.sh", listOf("commit"), workingDir = repo).also {
+            assertEquals(it.output, 0, it.exitCode)
+        }
+
+    @Test
+    fun commitSyncsThenCommitsOnlyTheChangelog() {
+        commit("feat(ui): add the earn screen")
+        File(repo, "other.txt").writeText("staged, not mine")
+        git("add", "other.txt")
+
+        val result = syncAndCommit()
+
+        assertTrue(result.output, result.output.contains("ui: add the earn screen"))
+        assertEquals("docs(changelog): update Unreleased entries", gitOutput("log", "-1", "--format=%s").trim())
+        assertEquals("CHANGELOG.md", gitOutput("show", "--name-only", "--format=", "HEAD").trim())
+        assertEquals("other.txt", gitOutput("diff", "--cached", "--name-only").trim())
+        assertEquals(listOf("- ui: add the earn screen"), unreleasedBullets())
+        assertTrue(gitOutput("log", "-1", "--format=%b").contains("- ui: add the earn screen"))
+    }
+
+    @Test
+    fun commitDoesNothingWhenTheChangelogIsUpToDate() {
+        commit("feat: first")
+        syncAndCommit()
+        val head = gitOutput("rev-parse", "HEAD")
+
+        val result = syncAndCommit()
+
+        assertTrue(result.output, result.output.contains("up to date"))
+        assertEquals(head, gitOutput("rev-parse", "HEAD"))
+    }
+
+    @Test
+    fun theCommitOfTheChangelogIsNotListedInTheChangelog() {
+        commit("feat: first")
+        syncAndCommit()
+        syncAndCommit()
+
+        assertEquals(listOf("- first"), unreleasedBullets())
     }
 
     @Test
