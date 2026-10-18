@@ -7,6 +7,12 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.47] - 2026-10-18
+
+### Added
+
+- release: print a numbered message for each release step
+
 ## [1.46] - 2026-10-18
 
 ### Added
@@ -392,7 +398,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.46...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.47...HEAD
+[1.47]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.46...v1.47
 [1.46]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.45...v1.46
 [1.45]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.44...v1.45
 [1.44]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.43...v1.44
