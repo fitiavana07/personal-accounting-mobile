@@ -3,7 +3,7 @@ package dev.fitiavana.accounting
 import androidx.multidex.MultiDexApplication
 import dev.fitiavana.accounting.features.sync.ForegroundTracker
 
-class AccountingApplication : MultiDexApplication() {
+open class AccountingApplication: MultiDexApplication() {
     override fun onCreate() {
         super.onCreate()
         // Sync runs only while one of the app's screens is on screen. The container is looked up lazily,

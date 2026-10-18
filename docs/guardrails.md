@@ -114,6 +114,17 @@ Reads the imports of every file under `app/src/main/java` and fails on:
 It is import-based, so it does not see fully qualified names written inline or
 what a function does. The rules are also tested with synthetic bad sources.
 
+### No real network in unit tests: `NoRealNetworkInTestsTest`
+
+Robolectric tests run under `TestAccountingApplication`
+(`app/src/test/resources/robolectric.properties`), which sets
+`AppContainer.httpClientFactory` to a client that throws before connecting. Every
+fetcher built by `AppContainer` (P2P, CEX, CoinGecko, Yahoo) shares that client,
+so opening the Home screen or Cex prices screen in a test can no longer reach
+p2p.binance.com or an exchange. A test that needs responses builds its own
+fetcher around a fake instead. A new fetcher added to `AppContainer` must take
+the shared `httpClient`, or `NoRealNetworkInTestsTest` should be extended to cover it.
+
 ### Compiler and Lint
 
 - `kotlin { compilerOptions { allWarningsAsErrors.set(true) } }`: any warning,

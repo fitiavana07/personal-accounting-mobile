@@ -1,6 +1,7 @@
 package dev.fitiavana.accounting
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.backup.AlarmManagerBackupScheduler
@@ -29,8 +30,12 @@ import dev.fitiavana.accounting.features.sync.SyncSettingsStore
 import dev.fitiavana.accounting.features.templates.TemplateRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
 import java.io.File
+import dev.fitiavana.accounting.network.Api19HttpClients
+import dev.fitiavana.accounting.network.CoinGeckoClient
+import dev.fitiavana.accounting.network.YahooFinanceClient
 import dev.fitiavana.accounting.network.cex.HttpCexPriceFetcher
 import dev.fitiavana.accounting.network.p2p.HttpP2pPriceFetcher
+import okhttp3.OkHttpClient
 
 /**
  * Builds each repository once from the shared [AppDatabase] instance. Activities and
@@ -56,16 +61,21 @@ class AppContainer private constructor(context: Context) {
         database.accountBalanceDao(),
         database.transactionDao()
     )
-    val exchangeRateRepository =
-        ExchangeRateRepository(database.exchangeRateCacheDao())
+    private val httpClient = httpClientFactory()
+
+    val exchangeRateRepository = ExchangeRateRepository(
+        database.exchangeRateCacheDao(),
+        CoinGeckoClient(httpClient),
+        YahooFinanceClient(httpClient)
+    )
     val cexPriceRepository = CexPriceRepository(
-        HttpCexPriceFetcher.createAll(),
+        HttpCexPriceFetcher.createAll(httpClient),
         SharedPreferencesCexPairStore(
             context.getSharedPreferences(SharedPreferencesCexPairStore.PREFS_NAME, Context.MODE_PRIVATE)
         )
     )
     val p2pPriceRepository = P2pPriceRepository(
-        HttpP2pPriceFetcher(),
+        HttpP2pPriceFetcher(client = httpClient),
         SharedPreferencesP2pFilterStore(
             context.getSharedPreferences(SharedPreferencesP2pFilterStore.PREFS_NAME, Context.MODE_PRIVATE)
         )
@@ -124,6 +134,11 @@ class AppContainer private constructor(context: Context) {
 
     companion object {
         private const val AUTO_BACKUP_DIR = "backups"
+
+        /** Builds the client every price/rate fetcher shares; unit tests swap in an offline one before the container exists. */
+        @Volatile
+        @VisibleForTesting
+        var httpClientFactory: () -> OkHttpClient = Api19HttpClients::build
 
         @Volatile
         private var instance: AppContainer? = null
