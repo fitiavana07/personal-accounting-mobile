@@ -7,6 +7,12 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.48] - 2026-10-18
+
+### Fixed
+
+- build: run copyChangelogAsset before lint tasks
+
 ## [1.47] - 2026-10-18
 
 ### Added
@@ -398,7 +404,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.47...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.48...HEAD
+[1.48]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.47...v1.48
 [1.47]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.46...v1.47
 [1.46]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.45...v1.46
 [1.45]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.44...v1.45
