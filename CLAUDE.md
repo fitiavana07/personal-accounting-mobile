@@ -62,6 +62,7 @@ features/
   backup/         # BackupRepository, AutoBackupManager (daily backups)
   templates/      # TransactionTemplate/TemplateEntry (@Entity), TemplateDao, TemplateRepository
   sync/           # P2P sync over Wi-Fi: ChangeTracker (stamps), SyncRepository (merge), SyncCoordinator, discovery/session/crypto
+  changelog/      # ChangelogParser, ChangelogRepository, AssetChangelogSource (reads the bundled CHANGELOG.md)
 db/               # AppDatabase singleton (Room, migrations)
 network/          # HTTP clients for exchange-rate providers (CoinGecko, Yahoo Finance)
   p2p/            # Binance P2P ad search (BinanceP2pApi, P2pPriceFetcher)
@@ -75,6 +76,7 @@ ui/
   home/          # HomeFragment, HomeViewModel (dashboard/metrics)
   earn/          # EarnActivity, EarnViewModel, EarnAdapter (interest on accounts with an APR)
   sync/          # SyncActivity, SyncViewModel, SyncPeersAdapter (passphrase, auto-sync, devices found)
+  changelog/     # ChangelogActivity, ChangelogViewModel, ChangelogAdapter (Release notes screen)
   common/        # shared presenters/adapters (UiUtils, ReportPresenter, TransactionDisplay)
 ```
 
@@ -120,6 +122,10 @@ the selected type tab, combined with the hide-zero-balance toggle).
 
 See `docs/earn-feature.md` for Earn (an APR on asset accounts, projected
 interest, the Earn screen and the Balance Sheet APR row).
+
+See `docs/changelog-feature.md` for `CHANGELOG.md` (Keep a Changelog, one section
+added per release by `scripts/release.sh`) and the Release notes screen that
+shows it.
 
 See `docs/p2p-sync.md` for peer-to-peer sync over the local Wi-Fi (what syncs,
 stamps and tombstones, merge and repair, the protocol, and why debug and

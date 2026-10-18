@@ -270,4 +270,10 @@
     <string name="sync_failure_invalid">Invalid reply: %1$s</string>
     <string name="sync_failure_network">Network problem: %1$s</string>
     <string name="sync_network_error">Wi-Fi problem: %1$s. Tap Refresh to try again.</string>
+
+    <!-- Release notes -->
+    <string name="action_release_notes">Release notes</string>
+    <string name="title_release_notes">Release notes</string>
+    <string name="changelog_empty">No release notes available.</string>
+    <string name="changelog_entry">• %1$s</string>
 </resources>

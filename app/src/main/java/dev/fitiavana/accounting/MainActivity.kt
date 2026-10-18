@@ -24,6 +24,7 @@ import dev.fitiavana.accounting.ui.accounts.AccountsFragment
 import dev.fitiavana.accounting.ui.backup.AutoBackupViewModel
 import dev.fitiavana.accounting.ui.backup.AutoBackupViewModelFactory
 import dev.fitiavana.accounting.ui.balances.BalancesActivity
+import dev.fitiavana.accounting.ui.changelog.ChangelogActivity
 import dev.fitiavana.accounting.ui.home.HomeFragment
 import dev.fitiavana.accounting.ui.instruments.InstrumentsActivity
 import dev.fitiavana.accounting.ui.reports.ReportsFragment
@@ -169,6 +170,11 @@ class MainActivity : AppCompatActivity() {
 
             R.id.action_balances -> {
                 startActivity(BalancesActivity.intent(this))
+                return true
+            }
+
+            R.id.action_release_notes -> {
+                startActivity(ChangelogActivity.intent(this))
                 return true
             }
         }

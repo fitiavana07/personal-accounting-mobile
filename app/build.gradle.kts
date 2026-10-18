@@ -85,6 +85,17 @@ android {
     }
 }
 
+// The release notes screen reads the repo's CHANGELOG.md: ship it as an asset instead of keeping a second copy.
+val changelogAssetsDir = layout.buildDirectory.dir("generated/changelog-assets")
+val copyChangelogAsset by tasks.registering(Copy::class) {
+    from(rootProject.file("CHANGELOG.md"))
+    into(changelogAssetsDir)
+}
+android.sourceSets.getByName("main").assets.directories.add(changelogAssetsDir.get().asFile.path)
+tasks.matching { it.name.startsWith("merge") && it.name.endsWith("Assets") }.configureEach {
+    dependsOn(copyChangelogAsset)
+}
+
 kotlin {
     compilerOptions {
         // A deprecated API must be replaced by its recommended alternative, so every warning fails the build.

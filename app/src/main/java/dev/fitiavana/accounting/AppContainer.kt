@@ -8,6 +8,8 @@ import dev.fitiavana.accounting.features.backup.AutoBackupManager
 import dev.fitiavana.accounting.features.backup.BackupRepository
 import dev.fitiavana.accounting.features.backup.SharedPreferencesBackupPrefsStore
 import dev.fitiavana.accounting.features.balances.BalanceRepository
+import dev.fitiavana.accounting.features.changelog.AssetChangelogSource
+import dev.fitiavana.accounting.features.changelog.ChangelogRepository
 import dev.fitiavana.accounting.features.cexprices.CexPriceRepository
 import dev.fitiavana.accounting.features.cexprices.SharedPreferencesCexPairStore
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
@@ -68,6 +70,7 @@ class AppContainer private constructor(context: Context) {
             context.getSharedPreferences(SharedPreferencesP2pFilterStore.PREFS_NAME, Context.MODE_PRIVATE)
         )
     )
+    val changelogRepository = ChangelogRepository(AssetChangelogSource(context.assets))
     val settingsRepository = AppSettingsRepository(database.appSettingsDao(), changeTracker)
     val backupRepository = BackupRepository(
         database,
