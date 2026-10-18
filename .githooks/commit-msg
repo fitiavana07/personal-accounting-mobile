@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# commit-msg hook: enforces Conventional Commits and forbids a Co-Authored-By trailer.
+# Enable once per clone with: git config core.hooksPath .githooks
+# See docs/guardrails.md.
+
+set -euo pipefail
+
+message="$(grep -v '^#' "$1" || true)"
+subject="$(sed -n '/[^[:space:]]/{p;q}' <<< "$message")"
+
+types='feat|fix|docs|style|refactor|test|chore|perf|build|ci|revert'
+conventional="^(${types})(\([a-z0-9._/-]+\))?!?: .+"
+generated='^(Merge |Revert "|fixup! |squash! |amend! )'
+
+if ! [[ "$subject" =~ $conventional || "$subject" =~ $generated ]]; then
+  cat >&2 <<EOF
+Commit rejected: the subject must follow Conventional Commits.
+
+  <type>(<scope>): <description>
+
+  types: ${types//|/, }
+  use "!" after the type/scope for a breaking change (feat!: ...)
+
+Got: "${subject}"
+EOF
+  exit 1
+fi
+
+if grep -qiE '^co-authored-by:' <<< "$message"; then
+  echo "Commit rejected: no Co-Authored-By trailer allowed in this repository." >&2
+  exit 1
+fi

@@ -1,19 +1,31 @@
 {
+  "attribution": {
+    "commit": ""
+  },
   "permissions": {
     "allow": [
       "Bash(./gradlew assembleDebug)",
       "Bash(./gradlew assembleDebug testDebugUnitTest)",
       "Bash(./gradlew testDebugUnitTest)"
+    ],
+    "deny": [
+      "Read(./local.properties)",
+      "Bash(make)",
+      "Bash(make *)",
+      "Bash(*scripts/release.sh*)",
+      "Bash(*connected*AndroidTest*)",
+      "Edit(app/src/androidTest/**)"
     ]
   },
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Read|Grep",
+        "matcher": "Read|Grep|Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *local.properties) echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"local.properties contains plaintext keystore signing credentials and must not be read by Claude Code.\"}}';; esac"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-local-properties.sh",
+            "statusMessage": "Checking for local.properties access"
           }
         ]
       },
@@ -22,7 +34,18 @@
         "hooks": [
           {
             "type": "command",
-            "command": "c=$(jq -r '.tool_input.command // empty'); case \"$c\" in *local.properties*) echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Command references local.properties, which contains plaintext keystore signing credentials.\"}}';; esac"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-no-verify.sh",
+            "statusMessage": "Checking git hook bypass"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-build-files.sh",
+            "statusMessage": "Checking build file rules"
           }
         ]
       }
@@ -34,6 +57,18 @@
           {
             "type": "command",
             "command": "file=$(echo \"$CLAUDE_TOOL_INPUT\" | jq -r '.file_path // empty'); [[ \"$file\" == *.kt ]] && ktlint --format \"$file\" || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-build-and-tests.sh",
+            "timeout": 600,
+            "statusMessage": "Running build and unit tests"
           }
         ]
       }

@@ -90,6 +90,11 @@ Account ID is a UUID stored as `String`; generate with
 
 Features: Accounts, Instruments, Transactions, Balances, Reports
 
+See `docs/guardrails.md` for the rules enforced by hooks, tests and compiler
+settings (commit messages, version bumps, layering, build before finishing),
+what blocks what, and how to get unblocked. On a fresh clone run
+`git config core.hooksPath .githooks`.
+
 See `docs/reports-feature.md` for how the Reports feature works (period
 selection, ViewModel data flow, report builders) before exploring its code.
 
@@ -197,10 +202,10 @@ Common types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`,
 
 ### Version bumps
 
-When bumping `versionCode`/`versionName` in `app/build.gradle.kts`, do it in
-its own commit (`chore: bump version to <versionName> (<versionCode>)`), then
-create an annotated git tag `v<versionName>` (e.g. `v1.16`) pointing at that
-commit.
+Never edit `versionCode`/`versionName` in `app/build.gradle.kts` (a hook blocks
+it). The user releases with `scripts/release.sh`, which bumps them, commits
+`chore: bump version to <versionName> (<versionCode>)` and creates the annotated
+tag `v<versionName>`.
 
 ## On new features
 
