@@ -108,15 +108,14 @@ class TemplateRepositoryTest {
     // --- completeness per mode ---
 
     @Test
-    fun `instrument transfer needs FROM and TO`() {
-        assertTrue(
-            withEntries(TemplateModes.INSTRUMENT_TRANSFER, TemplateSlots.FROM to "a", TemplateSlots.TO to "b")
-                .isComplete()
-        )
-        assertEquals(
-            false,
-            withEntries(TemplateModes.INSTRUMENT_TRANSFER, TemplateSlots.TO to "b").isComplete()
-        )
+    fun `transfer, and its legacy simple and instrument values, need FROM and TO`() {
+        listOf(TemplateModes.TRANSFER, TemplateModes.SIMPLE_TRANSFER, TemplateModes.INSTRUMENT_TRANSFER)
+            .forEach { mode ->
+                assertTrue(
+                    withEntries(mode, TemplateSlots.FROM to "a", TemplateSlots.TO to "b").isComplete()
+                )
+                assertEquals(false, withEntries(mode, TemplateSlots.TO to "b").isComplete())
+            }
     }
 
     @Test

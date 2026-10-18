@@ -29,7 +29,7 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [21])
-class InstrumentTransferTemplateTest {
+class TransferInstrumentTemplateTest {
 
     private val context: Context = ContextThemeWrapper(
         ApplicationProvider.getApplicationContext(),
@@ -37,7 +37,7 @@ class InstrumentTransferTemplateTest {
     )
     private lateinit var fromSpinner: Spinner
     private lateinit var toSpinner: Spinner
-    private lateinit var controller: InstrumentTransferController
+    private lateinit var controller: TransferController
 
     private val usd = Instrument(code = "USD", note = "", type = "fiat", decimalPlaces = 2)
     private val eur = Instrument(code = "EUR", note = "", type = "fiat", decimalPlaces = 2)
@@ -49,7 +49,7 @@ class InstrumentTransferTemplateTest {
     fun setUp() {
         fromSpinner = Spinner(context)
         toSpinner = Spinner(context)
-        controller = InstrumentTransferController(
+        controller = TransferController(
             context = context,
             viewModel = mock(),
             instrumentsMap = mapOf("USD" to usd, "EUR" to eur),
@@ -71,7 +71,7 @@ class InstrumentTransferTemplateTest {
     }
 
     private fun template(vararg slots: Pair<String, String>) = TemplateWithEntries(
-        TransactionTemplate("t", "Move USD", TemplateModes.INSTRUMENT_TRANSFER, 1L),
+        TransactionTemplate("t", "Move USD", TemplateModes.TRANSFER, 1L),
         slots.mapIndexed { i, (slot, account) -> TemplateEntry("e$i", "t", account, slot, i) }
     )
 

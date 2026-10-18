@@ -42,7 +42,7 @@ import java.util.UUID
 class AddTransactionActivity : AppCompatActivity() {
 
     /** Data-entry mode chosen in step 1; only the inputs differ, not the saved transaction. */
-    private enum class Mode { CLASSIC, SIMPLE_TRANSFER, INSTRUMENT_TRANSFER, INSTRUMENT_INCOME }
+    private enum class Mode { CLASSIC, TRANSFER, INSTRUMENT_INCOME }
 
     /** The two-step wizard flow: pick a mode, then fill in its form. */
     private enum class Step { MODE_SELECTION, TRANSACTION_FORM }
@@ -66,14 +66,11 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var stepModeSelection: View
     private lateinit var stepTransactionForm: View
     private lateinit var modeClassic: View
-    private lateinit var modeSimpleTransfer: View
-    private lateinit var modeInstrumentTransfer: View
+    private lateinit var modeTransfer: View
     private lateinit var modeInstrumentIncome: View
     private lateinit var sectionTemplates: View
     private lateinit var listTemplates: LinearLayout
-    private lateinit var editTransferAmount: EditText
-    private lateinit var transferController: SimpleTransferController
-    private lateinit var instrumentTransferController: InstrumentTransferController
+    private lateinit var transferController: TransferController
     private lateinit var instrumentIncomeController: InstrumentIncomeController
 
     private val entryRows = mutableListOf<EntryRowController>()
@@ -110,28 +107,10 @@ class AddTransactionActivity : AppCompatActivity() {
         stepModeSelection = findViewById(R.id.step_mode_selection)
         stepTransactionForm = findViewById(R.id.step_transaction_form)
         modeClassic = findViewById(R.id.mode_classic)
-        modeSimpleTransfer = findViewById(R.id.mode_simple_transfer)
-        modeInstrumentTransfer = findViewById(R.id.mode_instrument_transfer)
+        modeTransfer = findViewById(R.id.mode_transfer)
         modeInstrumentIncome = findViewById(R.id.mode_instrument_income)
         sectionTemplates = findViewById(R.id.section_templates)
         listTemplates = findViewById(R.id.list_templates)
-        editTransferAmount = findViewById(R.id.edit_transfer_amount)
-        transferController = SimpleTransferController(
-            context = this,
-            viewModel = viewModel,
-            fromSpinner = findViewById(R.id.spinner_transfer_from),
-            fromTextBalance = findViewById(R.id.text_transfer_from_balance),
-            fromTextNewBalance = findViewById(R.id.text_transfer_from_new_balance),
-            fromTextZeroBalanceError = findViewById(R.id.text_transfer_from_zero_balance),
-            toSpinner = findViewById(R.id.spinner_transfer_to),
-            toTextBalance = findViewById(R.id.text_transfer_to_balance),
-            toTextNewBalance = findViewById(R.id.text_transfer_to_new_balance),
-            editTransferAmount = editTransferAmount,
-            buttonAll = findViewById(R.id.btn_transfer_amount_all),
-            onChanged = { recalculateBalanceSummary() },
-            runInBackground = backgroundRunner,
-            runOnUiThread = uiThreadRunner
-        )
 
         setupModeSelection()
 
@@ -147,27 +126,26 @@ class AddTransactionActivity : AppCompatActivity() {
             runOnUiThread {
                 addEntryRow()
                 addEntryRow()
-                transferController.populateSpinners(accounts, loaded.balancesByAccountId)
-                instrumentTransferController = InstrumentTransferController(
+                transferController = TransferController(
                     context = this,
                     viewModel = viewModel,
                     instrumentsMap = instrumentsMap,
-                    fromSpinner = findViewById(R.id.spinner_instrument_transfer_from),
-                    fromTextBalance = findViewById(R.id.text_instrument_transfer_from_balance),
-                    fromTextNewBalance = findViewById(R.id.text_instrument_transfer_from_new_balance),
-                    fromTextZeroBalanceError = findViewById(R.id.text_instrument_transfer_from_zero_balance),
-                    toSpinner = findViewById(R.id.spinner_instrument_transfer_to),
-                    toTextBalance = findViewById(R.id.text_instrument_transfer_to_balance),
-                    toTextNewBalance = findViewById(R.id.text_instrument_transfer_to_new_balance),
-                    textAmountCode = findViewById(R.id.text_instrument_transfer_amount_code),
-                    editTransferAmount = findViewById(R.id.edit_instrument_transfer_amount),
-                    buttonAll = findViewById(R.id.btn_instrument_transfer_amount_all),
-                    textAmountBase = findViewById(R.id.text_instrument_transfer_amount_base),
+                    fromSpinner = findViewById(R.id.spinner_transfer_from),
+                    fromTextBalance = findViewById(R.id.text_transfer_from_balance),
+                    fromTextNewBalance = findViewById(R.id.text_transfer_from_new_balance),
+                    fromTextZeroBalanceError = findViewById(R.id.text_transfer_from_zero_balance),
+                    toSpinner = findViewById(R.id.spinner_transfer_to),
+                    toTextBalance = findViewById(R.id.text_transfer_to_balance),
+                    toTextNewBalance = findViewById(R.id.text_transfer_to_new_balance),
+                    textAmountCode = findViewById(R.id.text_transfer_amount_code),
+                    editTransferAmount = findViewById(R.id.edit_transfer_amount),
+                    buttonAll = findViewById(R.id.btn_transfer_amount_all),
+                    textAmountBase = findViewById(R.id.text_transfer_amount_base),
                     onChanged = { recalculateBalanceSummary() },
                     runInBackground = backgroundRunner,
                     runOnUiThread = uiThreadRunner
                 )
-                instrumentTransferController.populateSpinners(accounts, loaded.balancesByAccountId)
+                transferController.populateSpinners(accounts, loaded.balancesByAccountId)
                 instrumentIncomeController = InstrumentIncomeController(
                     context = this,
                     viewModel = viewModel,
@@ -220,8 +198,7 @@ class AddTransactionActivity : AppCompatActivity() {
     private fun setupModeSelection() {
         val modeOptions = listOf(
             R.id.mode_option_classic to Mode.CLASSIC,
-            R.id.mode_option_simple_transfer to Mode.SIMPLE_TRANSFER,
-            R.id.mode_option_instrument_transfer to Mode.INSTRUMENT_TRANSFER,
+            R.id.mode_option_transfer to Mode.TRANSFER,
             R.id.mode_option_instrument_income to Mode.INSTRUMENT_INCOME
         )
         modeOptions.forEach { (viewId, optionMode) ->
@@ -282,10 +259,8 @@ class AddTransactionActivity : AppCompatActivity() {
         mode = newMode
         modeClassic.visibility =
             if (newMode == Mode.CLASSIC) View.VISIBLE else View.GONE
-        modeSimpleTransfer.visibility =
-            if (newMode == Mode.SIMPLE_TRANSFER) View.VISIBLE else View.GONE
-        modeInstrumentTransfer.visibility =
-            if (newMode == Mode.INSTRUMENT_TRANSFER) View.VISIBLE else View.GONE
+        modeTransfer.visibility =
+            if (newMode == Mode.TRANSFER) View.VISIBLE else View.GONE
         modeInstrumentIncome.visibility =
             if (newMode == Mode.INSTRUMENT_INCOME) View.VISIBLE else View.GONE
         recalculateBalanceSummary()
@@ -382,10 +357,9 @@ class AddTransactionActivity : AppCompatActivity() {
     private fun summaryEntries(): List<TransactionValidator.EntryData> =
         when (mode) {
             Mode.CLASSIC -> entryRows.map { it.summaryEntry() }
-            Mode.SIMPLE_TRANSFER -> transferController.summaryEntries()
-            Mode.INSTRUMENT_TRANSFER ->
-                if (::instrumentTransferController.isInitialized) {
-                    instrumentTransferController.summaryEntries()
+            Mode.TRANSFER ->
+                if (::transferController.isInitialized) {
+                    transferController.summaryEntries()
                 } else {
                     emptyList()
                 }
@@ -437,10 +411,9 @@ class AddTransactionActivity : AppCompatActivity() {
     private fun collectEntries(): List<TransactionValidator.EntryData>? =
         when (mode) {
             Mode.CLASSIC -> collectClassicEntries()
-            Mode.SIMPLE_TRANSFER -> transferController.collectEntries()
-            Mode.INSTRUMENT_TRANSFER ->
-                if (::instrumentTransferController.isInitialized) {
-                    instrumentTransferController.collectEntries()
+            Mode.TRANSFER ->
+                if (::transferController.isInitialized) {
+                    transferController.collectEntries()
                 } else {
                     null
                 }
@@ -575,10 +548,7 @@ class AddTransactionActivity : AppCompatActivity() {
 
     private fun hasUnsavedChanges(): Boolean {
         if (editNote.text.toString().trim().isNotEmpty()) return true
-        if (transferController.hasContent()) return true
-        if (::instrumentTransferController.isInitialized && instrumentTransferController.hasContent()) {
-            return true
-        }
+        if (::transferController.isInitialized && transferController.hasContent()) return true
         if (::instrumentIncomeController.isInitialized && instrumentIncomeController.hasContent()) {
             return true
         }
@@ -610,8 +580,7 @@ class AddTransactionActivity : AppCompatActivity() {
     private fun returnToModeSelection() {
         editNote.setText("")
         entryRows.forEach { it.clear() }
-        transferController.clear()
-        if (::instrumentTransferController.isInitialized) instrumentTransferController.clear()
+        if (::transferController.isInitialized) transferController.clear()
         if (::instrumentIncomeController.isInitialized) instrumentIncomeController.clear()
         showStep(Step.MODE_SELECTION)
     }
@@ -620,25 +589,27 @@ class AddTransactionActivity : AppCompatActivity() {
 
     private fun Mode.templateMode(): String = when (this) {
         Mode.CLASSIC -> TemplateModes.CLASSIC
-        Mode.SIMPLE_TRANSFER -> TemplateModes.SIMPLE_TRANSFER
-        Mode.INSTRUMENT_TRANSFER -> TemplateModes.INSTRUMENT_TRANSFER
+        Mode.TRANSFER -> TemplateModes.TRANSFER
         Mode.INSTRUMENT_INCOME -> TemplateModes.INSTRUMENT_INCOME
     }
 
+    /** Templates saved before the transfer modes merged carry a legacy mode value, still read as [Mode.TRANSFER]. */
     private fun modeOf(templateMode: String): Mode? =
-        Mode.values().firstOrNull { it.templateMode() == templateMode }
+        if (TemplateModes.isTransfer(templateMode)) {
+            Mode.TRANSFER
+        } else {
+            Mode.values().firstOrNull { it.templateMode() == templateMode }
+        }
 
     private fun Mode.titleRes(): Int = when (this) {
         Mode.CLASSIC -> R.string.mode_title_classic
-        Mode.SIMPLE_TRANSFER -> R.string.mode_title_simple_transfer
-        Mode.INSTRUMENT_TRANSFER -> R.string.mode_title_instrument_transfer
+        Mode.TRANSFER -> R.string.mode_title_transfer
         Mode.INSTRUMENT_INCOME -> R.string.mode_title_instrument_income
     }
 
     private fun Mode.iconRes(): Int = when (this) {
         Mode.CLASSIC -> R.drawable.ic_mode_classic
-        Mode.SIMPLE_TRANSFER -> R.drawable.ic_mode_simple_transfer
-        Mode.INSTRUMENT_TRANSFER -> R.drawable.ic_mode_instrument_transfer
+        Mode.TRANSFER -> R.drawable.ic_mode_transfer
         Mode.INSTRUMENT_INCOME -> R.drawable.ic_mode_instrument_income
     }
 
@@ -664,9 +635,8 @@ class AddTransactionActivity : AppCompatActivity() {
         showMode(templateMode)
         val applied = when (templateMode) {
             Mode.CLASSIC -> applyClassicTemplate(template.rowAccountIds())
-            Mode.SIMPLE_TRANSFER -> transferController.applyTemplate(template)
-            Mode.INSTRUMENT_TRANSFER ->
-                ::instrumentTransferController.isInitialized && instrumentTransferController.applyTemplate(template)
+            Mode.TRANSFER ->
+                ::transferController.isInitialized && transferController.applyTemplate(template)
             Mode.INSTRUMENT_INCOME ->
                 ::instrumentIncomeController.isInitialized && instrumentIncomeController.applyTemplate(template)
         }
@@ -695,9 +665,8 @@ class AddTransactionActivity : AppCompatActivity() {
                 if (ids.size < MIN_CLASSIC_ROWS || ids.any { it == null }) null
                 else ids.filterNotNull().map { TemplateSlot(TemplateSlots.ROW, it) }
             }
-            Mode.SIMPLE_TRANSFER -> transferController.templateSlots()
-            Mode.INSTRUMENT_TRANSFER ->
-                if (::instrumentTransferController.isInitialized) instrumentTransferController.templateSlots() else null
+            Mode.TRANSFER ->
+                if (::transferController.isInitialized) transferController.templateSlots() else null
             Mode.INSTRUMENT_INCOME ->
                 if (::instrumentIncomeController.isInitialized) instrumentIncomeController.templateSlots() else null
         }

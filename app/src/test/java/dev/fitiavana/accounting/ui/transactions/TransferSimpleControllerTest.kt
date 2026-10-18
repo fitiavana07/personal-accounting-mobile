@@ -26,7 +26,7 @@ import org.robolectric.shadows.ShadowToast
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [21])
-class SimpleTransferControllerTest {
+class TransferSimpleControllerTest {
 
     private val context: Context = ContextThemeWrapper(
         ApplicationProvider.getApplicationContext(),
@@ -66,10 +66,11 @@ class SimpleTransferControllerTest {
     private fun spinnerNames(spinner: Spinner): List<String> =
         (0 until spinner.adapter.count).map { spinner.adapter.getItem(it).toString() }
 
-    private fun controller(onChanged: () -> Unit = {}): SimpleTransferController =
-        SimpleTransferController(
+    private fun controller(onChanged: () -> Unit = {}): TransferController =
+        TransferController(
             context = context,
             viewModel = viewModel,
+            instrumentsMap = emptyMap(),
             fromSpinner = fromSpinner,
             fromTextBalance = fromTextBalance,
             fromTextNewBalance = fromTextNewBalance,
@@ -77,8 +78,10 @@ class SimpleTransferControllerTest {
             toSpinner = toSpinner,
             toTextBalance = toTextBalance,
             toTextNewBalance = toTextNewBalance,
+            textAmountCode = TextView(context),
             editTransferAmount = editTransferAmount,
             buttonAll = buttonAll,
+            textAmountBase = TextView(context),
             onChanged = onChanged,
             runInBackground = { it() },
             runOnUiThread = { it() }
@@ -99,10 +102,19 @@ class SimpleTransferControllerTest {
             listOf(context.getString(R.string.spinner_select_account), "Bank"),
             spinnerNames(fromSpinner)
         )
+        fromSpinner.setSelection(1) // Bank
+
         assertEquals(
-            listOf(context.getString(R.string.spinner_select_account), "Cash", "Bank"),
+            listOf(context.getString(R.string.spinner_select_account), "Cash"),
             spinnerNames(toSpinner)
         )
+    }
+
+    @Test
+    fun `to offers no account until from is selected`() {
+        controller()
+
+        assertEquals(listOf(context.getString(R.string.spinner_select_account)), spinnerNames(toSpinner))
     }
 
     @Test
@@ -134,14 +146,15 @@ class SimpleTransferControllerTest {
     }
 
     @Test
-    fun `changing from keeps the to selection when it is still offered`() {
+    fun `deselecting from empties to and clears its selection`() {
         controller()
         fromSpinner.setSelection(1)
         toSpinner.setSelection(1)
 
         fromSpinner.setSelection(0)
 
-        assertEquals("Bank", toSpinner.selectedItem.toString())
+        assertEquals(listOf(context.getString(R.string.spinner_select_account)), spinnerNames(toSpinner))
+        assertEquals(0, toSpinner.selectedItemPosition)
     }
 
     @Test

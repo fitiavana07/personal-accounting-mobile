@@ -141,7 +141,7 @@ class AddTransactionTemplatesTest {
 
         assertEquals(View.GONE, activity.findViewById<View>(R.id.step_mode_selection).visibility)
         assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.step_transaction_form).visibility)
-        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.mode_simple_transfer).visibility)
+        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.mode_transfer).visibility)
         assertEquals("Tpl Bank", selectedName(activity.findViewById(R.id.spinner_transfer_from)))
         assertEquals("Tpl Cash", selectedName(activity.findViewById(R.id.spinner_transfer_to)))
     }
@@ -228,15 +228,15 @@ class AddTransactionTemplatesTest {
 
     // --- saving ---
 
-    private fun AddTransactionActivity.openSimpleTransferForm() {
-        findViewById<View>(R.id.mode_option_simple_transfer).performClick()
+    private fun AddTransactionActivity.openTransferForm() {
+        findViewById<View>(R.id.mode_option_transfer).performClick()
         waitUntil { findViewById<Spinner>(R.id.spinner_transfer_from).adapter != null }
     }
 
     @Test
     fun `save as template needs accounts to be chosen first`() {
         val activity = launch().get()
-        activity.openSimpleTransferForm()
+        activity.openTransferForm()
 
         activity.findViewById<View>(R.id.btn_save_template).performClick()
 
@@ -246,7 +246,7 @@ class AddTransactionTemplatesTest {
     @Test
     fun `save as template asks for a name and stores the mode and accounts without amounts`() {
         val activity = launch().get()
-        activity.openSimpleTransferForm()
+        activity.openTransferForm()
         selectByName(activity.findViewById(R.id.spinner_transfer_from), "Tpl Bank")
         selectByName(activity.findViewById(R.id.spinner_transfer_to), "Tpl Cash")
 
@@ -265,7 +265,7 @@ class AddTransactionTemplatesTest {
         assertEquals(
             listOf(
                 Triple(
-                    "Withdraw cash", TemplateModes.SIMPLE_TRANSFER,
+                    "Withdraw cash", TemplateModes.TRANSFER,
                     listOf(TemplateSlots.FROM to "tpl_bank", TemplateSlots.TO to "tpl_cash")
                 )
             ),
@@ -276,7 +276,7 @@ class AddTransactionTemplatesTest {
     @Test
     fun `a saved template shows up in the list without reopening the screen`() {
         val activity = launch().get()
-        activity.openSimpleTransferForm()
+        activity.openTransferForm()
         selectByName(activity.findViewById(R.id.spinner_transfer_from), "Tpl Bank")
         selectByName(activity.findViewById(R.id.spinner_transfer_to), "Tpl Cash")
         activity.findViewById<View>(R.id.btn_save_template).performClick()
@@ -292,7 +292,7 @@ class AddTransactionTemplatesTest {
     @Test
     fun `a blank template name is refused`() {
         val activity = launch().get()
-        activity.openSimpleTransferForm()
+        activity.openTransferForm()
         selectByName(activity.findViewById(R.id.spinner_transfer_from), "Tpl Bank")
         selectByName(activity.findViewById(R.id.spinner_transfer_to), "Tpl Cash")
         activity.findViewById<View>(R.id.btn_save_template).performClick()

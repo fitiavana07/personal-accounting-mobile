@@ -11,6 +11,8 @@ import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.baseAmountNoWrap
+import dev.fitiavana.accounting.ui.common.emphasizeMainAmount
 
 /** An account's current balances: base currency, instrument and (when it has one) intermediary instrument. */
 data class SideBalance(val balance: Long, val instrumentBalance: Long, val intermediaryBalance: Long = 0L)
@@ -21,7 +23,7 @@ fun AccountBalance.toSideBalance() = SideBalance(balance, instrumentBalance, int
  * One selectable account side of an instrument-aware transaction: a spinner
  * of eligible accounts, the selected account's current base/instrument
  * balance, and the balance-line preview. Shared by [InstrumentIncomeController]
- * and [InstrumentTransferController] via composition (one instance per
+ * and [TransferController] via composition (one instance per
  * side), each of which owns its own new-balance preview and amount formula
  * on top of this.
  */
@@ -120,7 +122,7 @@ class AccountSideController(
                 intermediaryBalance = bal?.intermediaryBalance ?: 0L
                 val instrument = account.instrumentCode?.let { instrumentsMap[it] }
                 val intermediary = account.intermediaryInstrumentCode?.let { instrumentsMap[it] }
-                textBalance.text = if (instrument != null && intermediary != null) {
+                val line = if (instrument != null && intermediary != null) {
                     context.getString(
                         R.string.label_balance_ar_instrument_intermediary,
                         TransactionDisplay.formatAmount(balance),
@@ -139,6 +141,9 @@ class AccountSideController(
                         TransactionDisplay.formatAmount(balance)
                     )
                 }
+                val main = instrument?.let { TransactionDisplay.formatInstrumentAmountNoWrap(instrumentBalance, it) }
+                    ?: baseAmountNoWrap(balance)
+                textBalance.text = emphasizeMainAmount(context, line, main)
                 textBalance.visibility = View.VISIBLE
                 onBalanceLoaded()
             }

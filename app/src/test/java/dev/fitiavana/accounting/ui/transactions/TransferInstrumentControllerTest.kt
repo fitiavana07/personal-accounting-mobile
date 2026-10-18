@@ -28,7 +28,7 @@ import org.robolectric.shadows.ShadowToast
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [21])
-class InstrumentTransferControllerTest {
+class TransferInstrumentControllerTest {
 
     private val context: Context = ContextThemeWrapper(
         ApplicationProvider.getApplicationContext(),
@@ -84,8 +84,8 @@ class InstrumentTransferControllerTest {
         textAmountBase = TextView(context)
     }
 
-    private fun controller(onChanged: () -> Unit = {}): InstrumentTransferController =
-        InstrumentTransferController(
+    private fun controller(onChanged: () -> Unit = {}): TransferController =
+        TransferController(
             context = context,
             viewModel = viewModel,
             instrumentsMap = instrumentsMap,

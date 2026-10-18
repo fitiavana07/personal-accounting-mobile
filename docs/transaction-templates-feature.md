@@ -9,10 +9,10 @@ notes are never stored.
 - **Save:** on the form step of *New transaction* (any mode), tap **Save as template**, pick every account first
   (all different; Classic needs at least two rows), then give it a name. It works without amounts, and no
   transaction is created.
-- **Use:** the mode-selection step lists saved templates under the four mode cards (newest first; the section
+- **Use:** the mode-selection step lists saved templates under the three mode cards (newest first; the section
   is hidden when there are none). Tap one: the form opens in that mode with the accounts already selected.
 - **Delete:** the trash icon on a template row, with a confirmation. Transactions already made are not affected.
-- If an account in a template can no longer be picked (for example, in Instrument Transfer, the TO account
+- If an account in a template can no longer be picked (for example, in Transfer, the TO account
   no longer fits the FROM account's instrument or intermediary instrument), the form still opens
   and a message asks you to pick the missing accounts again.
 
@@ -23,7 +23,9 @@ notes are never stored.
 | `transaction_templates` | `id`, `name`, `mode`, `createdAt` |
 | `template_entries` | `id`, `templateId` (FK, cascade), `accountId` (FK to `accounts`, cascade), `slot`, `position` |
 
-- `mode` is one of `TemplateModes` (`classic`, `simple_transfer`, `instrument_transfer`, `instrument_income`).
+- `mode` is one of `TemplateModes` (`classic`, `transfer`, `instrument_income`). Templates saved before Simple and Instrument Transfer merged hold
+  `simple_transfer` / `instrument_transfer`; both are still read as `transfer` (`TemplateModes.isTransfer`), so no
+  migration was needed, and new ones are saved as `transfer`.
 - `slot` says which account picker an entry belongs to (`TemplateSlots`): `from`/`to` for the two transfer modes,
   `asset`/`revenue` for Instrument Income, `row` for Classic.
 - **The debit or credit side is not stored.** It follows from the slot (`from` is credited, `to` is debited, as
@@ -46,12 +48,12 @@ notes are never stored.
   synchronous, call off the main thread, like its other methods).
 - Controllers each got `templateSlots()` (the chosen accounts, or null until all are picked) and
   `applyTemplate(template)` (selects the accounts; false and no change if one is unavailable):
-  `SimpleTransferController`, `InstrumentTransferController`, `InstrumentIncomeController`; Classic rows use
+  `TransferController`, `InstrumentIncomeController`; Classic rows use
   `EntryRowController.selectedAccountId()` / `selectAccount()`, and the activity adds or removes rows to match.
   `AccountSideController` gained `selectedAccountId()` / `select()`.
-- **Instrument Transfer ordering:** the TO list depends on FROM, and on a real device a spinner selection fires its
-  listener asynchronously. `InstrumentTransferController.applyTemplate` therefore keeps the TO account as
-  `pendingToAccountId` and selects it when FROM's choice has repopulated the TO list.
+- **Transfer ordering:** the TO list depends on FROM, and on a real device a spinner selection fires its
+  listener asynchronously. `TransferController.applyTemplate` therefore selects FROM, narrows the TO list itself and
+  keeps the TO account as `pendingToAccountId` so it is selected from that list (and kept by the later listener).
 - `AddTransactionActivity.intent(context, templateId)` opens a template's form directly (also handy in tests).
   Templates are listed and applied only after the controllers exist, i.e. after the accounts have loaded.
 
@@ -59,16 +61,16 @@ notes are never stored.
 
 `TemplateDaoTest` (in-memory Room: cascade, ordering), `TemplateRepositoryTest` (save, ordering, completeness per
 mode), `BackupRepositoryTest` (round trip, ordering), `Migration17To18Test`, `AddTransactionViewModelTest`,
-`SimpleTransferTemplateTest`, `InstrumentTransferTemplateTest`, `InstrumentIncomeTemplateTest`,
+`TransferInstrumentTemplateTest`, `InstrumentIncomeTemplateTest`,
 `EntryRowTemplateTest`, and `AddTransactionTemplatesTest` (list, apply per mode, unavailable account, intent
 extra, delete and cancel, save with name, validation, blank name, Classic needs two different accounts).
 
 ### Manual checklist (on a device, run it yourself)
 
-1. New transaction → Simple Transfer → pick two accounts → **Save as template** → name it → toast *Template saved*.
-2. Go back to the mode cards: the template is listed under **Templates**. Tap it: the Simple Transfer form opens
+1. New transaction → Transfer → pick two accounts → **Save as template** → name it → toast *Template saved*.
+2. Go back to the mode cards: the template is listed under **Templates**. Tap it: the Transfer form opens
    with both accounts selected and the amount empty.
-3. Repeat for Classic (3+ rows, accounts in order), Instrument Transfer (FROM then TO) and Instrument Income.
+3. Repeat for Classic (3+ rows, accounts in order), an instrument Transfer (FROM then TO) and Instrument Income.
 4. Try saving with a missing account, the same account twice, and a blank name: each shows a message.
 5. Delete a template (confirm, then cancel on another one).
 6. Make a backup, restore it: templates are still there. Delete an account used by a template (one without

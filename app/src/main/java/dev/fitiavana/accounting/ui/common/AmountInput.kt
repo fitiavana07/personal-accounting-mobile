@@ -52,7 +52,7 @@ object AmountInput {
 
     internal class Watcher(
         private val edit: EditText,
-        private val allowDecimal: Boolean
+        private val allowDecimal: () -> Boolean
     ) : TextWatcher {
         private var updating = false
 
@@ -61,7 +61,7 @@ object AmountInput {
 
         override fun afterTextChanged(s: Editable) {
             if (updating) return
-            val formatted = format(s.toString(), allowDecimal)
+            val formatted = format(s.toString(), allowDecimal())
             if (formatted == s.toString()) return
             val significant = significantBefore(s, edit.selectionStart)
             updating = true
@@ -84,6 +84,11 @@ object AmountInput {
  * (instrument quantities); otherwise only whole numbers. Read the value with [plainText].
  */
 fun EditText.enableAmountFormatting(allowDecimal: Boolean = false) {
+    enableAmountFormatting { allowDecimal }
+}
+
+/** Like [enableAmountFormatting] but [allowDecimal] is asked at every edit, for fields whose unit changes. */
+fun EditText.enableAmountFormatting(allowDecimal: () -> Boolean) {
     addTextChangedListener(AmountInput.Watcher(this, allowDecimal))
 }
 

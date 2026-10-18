@@ -84,7 +84,7 @@
         </FrameLayout>
 
         <FrameLayout
-            android:id="@+id/mode_option_simple_transfer"
+            android:id="@+id/mode_option_transfer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
@@ -104,7 +104,7 @@
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:layout_marginEnd="16dp"
-                    android:src="@drawable/ic_mode_simple_transfer"
+                    android:src="@drawable/ic_mode_transfer"
                     app:tint="?attr/colorControlNormal"
                     android:importantForAccessibility="no" />
 
@@ -117,7 +117,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/mode_title_simple_transfer"
+                        android:text="@string/mode_title_transfer"
                         android:textStyle="bold"
                         android:textSize="16sp"
                         android:textColor="?attr/colorOnSurface" />
@@ -126,60 +126,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="@string/mode_description_simple_transfer"
-                        android:textSize="13sp"
-                        android:alpha="0.7" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </FrameLayout>
-
-        <FrameLayout
-            android:id="@+id/mode_option_instrument_transfer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:background="@drawable/bg_section_card"
-            android:foreground="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="16dp">
-
-                <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_marginEnd="16dp"
-                    android:src="@drawable/ic_mode_instrument_transfer"
-                    app:tint="?attr/colorControlNormal"
-                    android:importantForAccessibility="no" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/mode_title_instrument_transfer"
-                        android:textStyle="bold"
-                        android:textSize="16sp"
-                        android:textColor="?attr/colorOnSurface" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/mode_description_instrument_transfer"
+                        android:text="@string/mode_description_transfer"
                         android:textSize="13sp"
                         android:alpha="0.7" />
 
@@ -375,7 +322,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/mode_simple_transfer"
+                android:id="@+id/mode_transfer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -478,9 +425,9 @@
                     android:gravity="center_vertical">
 
                     <TextView
+                        android:id="@+id/text_transfer_amount_code"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/label_currency_ar"
                         android:textSize="14sp"
                         android:paddingEnd="8dp" />
 
@@ -490,7 +437,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:hint="@string/hint_amount"
-                        android:inputType="number"
+                        android:inputType="numberDecimal"
                         android:maxLines="1" />
 
                     <Button
@@ -502,138 +449,8 @@
 
                 </LinearLayout>
 
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/mode_instrument_transfer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone">
-
                 <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_transfer_from"
-                    android:textSize="12sp"
-                    android:alpha="0.7" />
-
-                <Spinner
-                    android:id="@+id/spinner_instrument_transfer_from"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-
-                <TextView
-                    android:id="@+id/text_instrument_transfer_from_balance"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="6dp"
-                    android:paddingTop="2dp"
-                    android:textSize="11sp"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:id="@+id/text_instrument_transfer_from_new_balance"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="6dp"
-                    android:paddingTop="2dp"
-                    android:textSize="11sp"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:id="@+id/text_instrument_transfer_from_zero_balance"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="6dp"
-                    android:paddingTop="2dp"
-                    android:textSize="11sp"
-                    android:textColor="@color/loss"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
-                    android:text="@string/transfer_arrow_down"
-                    android:textSize="18sp"
-                    android:alpha="0.6"
-                    android:importantForAccessibility="no" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_transfer_to"
-                    android:textSize="12sp"
-                    android:alpha="0.7" />
-
-                <Spinner
-                    android:id="@+id/spinner_instrument_transfer_to"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-
-                <TextView
-                    android:id="@+id/text_instrument_transfer_to_balance"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="6dp"
-                    android:paddingTop="2dp"
-                    android:textSize="11sp"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:id="@+id/text_instrument_transfer_to_new_balance"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="6dp"
-                    android:paddingTop="2dp"
-                    android:textSize="11sp"
-                    android:visibility="gone" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="12dp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/hint_amount"
-                    android:textSize="12sp"
-                    android:alpha="0.7" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:id="@+id/text_instrument_transfer_amount_code"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="14sp"
-                        android:paddingEnd="8dp" />
-
-                    <EditText
-                        android:id="@+id/edit_instrument_transfer_amount"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:hint="@string/hint_amount"
-                        android:inputType="numberDecimal"
-                        android:maxLines="1" />
-
-                    <Button
-                        android:id="@+id/btn_instrument_transfer_amount_all"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/action_amount_all" />
-
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/text_instrument_transfer_amount_base"
+                    android:id="@+id/text_transfer_amount_base"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:paddingStart="6dp"

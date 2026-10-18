@@ -16,6 +16,8 @@ import dev.fitiavana.accounting.features.templates.TemplateSlot
 import dev.fitiavana.accounting.features.templates.TemplateSlots
 import dev.fitiavana.accounting.features.templates.TemplateWithEntries
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
+import dev.fitiavana.accounting.ui.common.baseAmountNoWrap
+import dev.fitiavana.accounting.ui.common.emphasizeMainAmount
 import dev.fitiavana.accounting.ui.common.enableAmountFormatting
 import dev.fitiavana.accounting.ui.common.plainText
 import kotlin.math.pow
@@ -34,7 +36,7 @@ import kotlin.math.roundToLong
  * entry construction, [InstrumentValueCalculator] for the base-amount
  * rate math (shared with Instrument Transfer), and [AccountSideController]
  * for the account-selection/balance-loading plumbing shared with
- * [InstrumentTransferController].
+ * [TransferController].
  */
 class InstrumentIncomeController(
     private val context: Context,
@@ -185,7 +187,7 @@ class InstrumentIncomeController(
             val formattedBase = TransactionDisplay.formatAmount(newBalance)
             val formattedInstrument = TransactionDisplay.formatInstrumentAmountNoWrap(newInstrumentBalance, instrument)
             val intermediary = intermediaryInstrument()
-            textNewBalance.text = if (intermediary != null) {
+            val line = if (intermediary != null) {
                 val newIntermediaryBalance = BalanceCalculator.project(
                     accountType = account.type,
                     currentBalance = side.intermediaryBalance,
@@ -201,10 +203,12 @@ class InstrumentIncomeController(
             } else {
                 context.getString(R.string.label_new_balance_ar_instrument, formattedBase, formattedInstrument)
             }
+            textNewBalance.text = emphasizeMainAmount(context, line, formattedInstrument)
         } else {
-            textNewBalance.text = context.getString(
-                R.string.label_new_balance_ar,
-                TransactionDisplay.formatAmount(newBalance)
+            textNewBalance.text = emphasizeMainAmount(
+                context,
+                context.getString(R.string.label_new_balance_ar, TransactionDisplay.formatAmount(newBalance)),
+                baseAmountNoWrap(newBalance)
             )
         }
         textNewBalance.visibility = View.VISIBLE

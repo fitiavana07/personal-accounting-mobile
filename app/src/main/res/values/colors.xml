@@ -28,4 +28,6 @@
     <color name="metrics_card_value">@color/black</color>
 
     <color name="section_card_bg">@color/white</color>
+
+    <color name="balance_main">@color/gold_500</color>
 </resources>

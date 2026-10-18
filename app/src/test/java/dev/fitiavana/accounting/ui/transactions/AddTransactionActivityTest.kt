@@ -59,29 +59,18 @@ class AddTransactionActivityTest {
         assertEquals(View.GONE, activity.step1().visibility)
         assertEquals(View.VISIBLE, activity.step2().visibility)
         assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.mode_classic).visibility)
-        assertEquals(View.GONE, activity.findViewById<View>(R.id.mode_simple_transfer).visibility)
-        assertEquals(View.GONE, activity.findViewById<View>(R.id.mode_instrument_transfer).visibility)
+        assertEquals(View.GONE, activity.findViewById<View>(R.id.mode_transfer).visibility)
         assertEquals(View.GONE, activity.findViewById<View>(R.id.mode_instrument_income).visibility)
     }
 
     @Test
-    fun `tapping the simple transfer mode card shows only the simple transfer section`() {
+    fun `tapping the transfer mode card shows only the transfer section`() {
         val activity = launch().get()
 
-        activity.findViewById<View>(R.id.mode_option_simple_transfer).performClick()
+        activity.findViewById<View>(R.id.mode_option_transfer).performClick()
 
         assertEquals(View.GONE, activity.step1().visibility)
-        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.mode_simple_transfer).visibility)
-        assertEquals(View.GONE, activity.findViewById<View>(R.id.mode_classic).visibility)
-    }
-
-    @Test
-    fun `tapping the instrument transfer mode card shows only the instrument transfer section`() {
-        val activity = launch().get()
-
-        activity.findViewById<View>(R.id.mode_option_instrument_transfer).performClick()
-
-        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.mode_instrument_transfer).visibility)
+        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.mode_transfer).visibility)
         assertEquals(View.GONE, activity.findViewById<View>(R.id.mode_classic).visibility)
     }
 

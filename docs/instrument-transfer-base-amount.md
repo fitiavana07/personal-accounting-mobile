@@ -1,6 +1,29 @@
-# Instrument Transfer: base currency amount calculation
+# Transfer mode: instrument transfers and base currency amount calculation
 
 Package: `dev.fitiavana.accounting.ui.transactions`
+
+## One Transfer mode, driven by the From account
+
+Simple Transfer and Instrument Transfer used to be two modes. They are now one
+**Transfer** mode (`TransferController`, `TransferBuilder`), and what it does
+depends on the selected **From** account:
+
+| From account | To accounts offered | Amount field | Entries |
+|---|---|---|---|
+| no instrument | other instrument-free assets | whole Ar, label "Ar", no decimals | base only (`buildSimpleEntries`) |
+| has an instrument | other assets with the same instrument **and** intermediary instrument | instrument units with decimals, label = instrument code, "≈ … Ar" preview | base + instrument (+ intermediary) (`buildInstrumentEntries`) |
+
+- From lists every asset account with a non-zero base balance; To is empty until
+  From is picked and is repopulated whenever From changes (the To selection is
+  kept if still offered). To never offers the From account.
+- Switching From to an account of another kind (instrument ↔ instrument-free, or
+  another instrument) clears the typed amount, since Ar and instrument units
+  aren't comparable.
+- ALL fills the From base balance (instrument-free) or instrument balance
+  (instrument).
+- A zero balance shows the error under From (base balance, or instrument balance
+  for an instrument account) and blocks saving.
+- The rest of this document describes the instrument side of the mode.
 
 ## Formula
 
@@ -30,14 +53,14 @@ fun computeBaseAmount(
 }
 ```
 
-This function is shared by both `InstrumentTransferController` and
+This function is shared by both `TransferController` and
 `InstrumentIncomeController` — each just passes in its own side's
 `balance`/`instrumentBalance` (From, for Transfer; asset, for Income).
 
 ## Callers
 
-`InstrumentTransferController` (`ui/transactions/InstrumentTransferController.kt`)
-calls this in two places, always passing the **From** side's `balance` and
+`TransferController` (`ui/transactions/TransferController.kt`)
+calls this, for an instrument From account, in two places, always passing the **From** side's `balance` and
 `instrumentBalance`:
 
 - `computedBaseAmount()` — used live, while typing, to drive both the "new
@@ -45,9 +68,9 @@ calls this in two places, always passing the **From** side's `balance` and
   (`updateAmountBasePreview`):
 
   ```kotlin
-  private fun computedBaseAmount(instrument: Instrument): Long? =
+  private fun computedBaseAmount(instrument: Instrument?): Long? =
       InstrumentValueCalculator.computeBaseAmount(
-          instrumentAmount = parsedInstrumentAmount(instrument),
+          instrumentAmount = parsedAmount(instrument),
           balance = from.balance,
           instrumentBalance = from.instrumentBalance
       )
@@ -55,7 +78,7 @@ calls this in two places, always passing the **From** side's `balance` and
 
 - `collectEntries()` — called again at save time to compute the final
   `baseAmount` used to build the transaction's two entries via
-  `InstrumentTransferBuilder.buildEntries`:
+  `TransferBuilder.buildInstrumentEntries`:
 
   ```kotlin
   val baseAmount = InstrumentValueCalculator.computeBaseAmount(
@@ -98,9 +121,9 @@ the user types; the order lives in the string templates only.
 
 ### Transfer with an intermediary instrument
 
-Instrument Transfer accepts accounts with an intermediary instrument too, but
+An instrument transfer accepts accounts with an intermediary instrument too, but
 the To account must have the **same instrument and the same intermediary
-instrument** as From (`InstrumentTransferBuilder.selectableToAccounts`). The
+instrument** as From (`TransferBuilder.selectableToAccounts`). The
 intermediary amount is derived exactly as in Income, from the **From**
 account's `intermediaryBalance`, and saved as `intermediaryCreditAmount` on
 the From entry and `intermediaryDebitAmount` on the To entry. The balance,
@@ -108,20 +131,16 @@ new balance and "≈ … · … Ar" preview lines gain the intermediary part.
 
 ### Zero-balance accounts hidden from From
 
-In both Instrument Transfer and Simple Transfer, the From spinner hides accounts
-whose base balance is zero (or has no balance row). The To spinner is
-unaffected. Balances come from `AddTransactionViewModel.loadAccountsAndInstruments()`
-(`balancesByAccountId`). A template whose FROM account is empty is therefore
-reported as unavailable.
-
-The To spinner also never offers the account currently selected in From. Simple
-Transfer repopulates To whenever From changes (keeping the To selection if it is
-still offered); Instrument Transfer already did so for its instrument filter.
+The From spinner hides accounts whose base balance is zero (or has no balance
+row). The To spinner is unaffected by balances. Balances come from
+`AddTransactionViewModel.loadAccountsAndInstruments()` (`balancesByAccountId`).
+A template whose FROM account is empty is therefore reported as unavailable.
 
 ### "ALL" button
 
 Next to the Transfer amount field, **ALL** fills the amount with the From
-account's whole `instrumentBalance` (formatted with the instrument's decimals).
+account's whole `instrumentBalance` (formatted with the instrument's decimals;
+for an instrument-free From it is the base balance).
 The base amount then equals the From account's full base balance. It does
 nothing without a From account or with a zero instrument balance.
 
@@ -139,7 +158,7 @@ nothing without a From account or with a zero instrument balance.
   `error_instrument_transfer_no_rate` / `error_instrument_income_no_rate` in
   each controller's `collectEntries()`, and simply hides the base-amount
   preview line in `updateAmountBasePreview()`.
-- `InstrumentTransferController` and `InstrumentIncomeController` share
+- `TransferController` and `InstrumentIncomeController` share
   their account-side state, spinner wiring, and balance-loading plumbing
   (including the "a newer selection may have won the race" guard) via
   `AccountSideController` (`ui/transactions/AccountSideController.kt`).

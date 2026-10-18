@@ -11,9 +11,18 @@ import dev.fitiavana.accounting.features.accounts.Account
 /** Which Add Transaction mode a template pre-fills. Stored as text so new modes need no migration. */
 object TemplateModes {
     const val CLASSIC = "classic"
+    const val TRANSFER = "transfer"
+
+    /** Legacy: saved before Simple and Instrument Transfer merged into [TRANSFER]; still read as [TRANSFER]. */
     const val SIMPLE_TRANSFER = "simple_transfer"
+
+    /** Legacy: see [SIMPLE_TRANSFER]. */
     const val INSTRUMENT_TRANSFER = "instrument_transfer"
     const val INSTRUMENT_INCOME = "instrument_income"
+
+    /** Whether [mode] is the merged transfer mode or one of the two legacy values it replaced. */
+    fun isTransfer(mode: String): Boolean =
+        mode == TRANSFER || mode == SIMPLE_TRANSFER || mode == INSTRUMENT_TRANSFER
 }
 
 /**
@@ -84,14 +93,14 @@ data class TemplateWithEntries(
         entries.filter { it.slot == TemplateSlots.ROW }.sortedBy { it.position }.map { it.accountId }
 
     /** False when an account was deleted and the template can no longer fill its mode's form. */
-    fun isComplete(): Boolean = when (template.mode) {
-        TemplateModes.SIMPLE_TRANSFER, TemplateModes.INSTRUMENT_TRANSFER ->
+    fun isComplete(): Boolean = when {
+        TemplateModes.isTransfer(template.mode) ->
             accountFor(TemplateSlots.FROM) != null && accountFor(TemplateSlots.TO) != null
 
-        TemplateModes.INSTRUMENT_INCOME ->
+        template.mode == TemplateModes.INSTRUMENT_INCOME ->
             accountFor(TemplateSlots.ASSET) != null && accountFor(TemplateSlots.REVENUE) != null
 
-        TemplateModes.CLASSIC -> rowAccountIds().size >= MIN_CLASSIC_ROWS
+        template.mode == TemplateModes.CLASSIC -> rowAccountIds().size >= MIN_CLASSIC_ROWS
         else -> false
     }
 

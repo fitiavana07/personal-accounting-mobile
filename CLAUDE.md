@@ -94,7 +94,8 @@ See `docs/reports-feature.md` for how the Reports feature works (period
 selection, ViewModel data flow, report builders) before exploring its code.
 
 See `docs/instrument-transfer-base-amount.md` for how the base currency amount
-is calculated in Instrument Transfer transaction creation mode.
+is calculated in the Transfer transaction creation mode (which also covers
+plain Ar transfers; the mode follows the From account).
 
 See `docs/cex-prices-feature.md` for the CEX pair price comparison feature
 (home shortcut, spinners, per-exchange fetchers).
