@@ -8,6 +8,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.accounts.takesIncomeOnIntermediary
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
@@ -141,8 +142,12 @@ class AccountSideController(
                         TransactionDisplay.formatAmount(balance)
                     )
                 }
-                val main = instrument?.let { TransactionDisplay.formatInstrumentAmountNoWrap(instrumentBalance, it) }
-                    ?: baseAmountNoWrap(balance)
+                val main = if (account.takesIncomeOnIntermediary() && intermediary != null) {
+                    TransactionDisplay.formatInstrumentAmountNoWrap(intermediaryBalance, intermediary)
+                } else {
+                    instrument?.let { TransactionDisplay.formatInstrumentAmountNoWrap(instrumentBalance, it) }
+                        ?: baseAmountNoWrap(balance)
+                }
                 textBalance.text = emphasizeMainAmount(context, line, main)
                 textBalance.visibility = View.VISIBLE
                 onBalanceLoaded()

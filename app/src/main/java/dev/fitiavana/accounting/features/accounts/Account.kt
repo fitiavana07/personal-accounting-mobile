@@ -44,3 +44,6 @@ data class Account(
      */
     val linkedRevenueAccountId: String? = null
 )
+
+/** Whether the account takes its income on the intermediary instrument (the flag only counts with an intermediary). */
+fun Account.takesIncomeOnIntermediary(): Boolean = incomeOnIntermediary && intermediaryInstrumentCode != null

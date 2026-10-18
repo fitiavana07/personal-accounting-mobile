@@ -10,6 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.accounts.takesIncomeOnIntermediary
 import dev.fitiavana.accounting.features.balances.BalanceCalculator
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.templates.TemplateSlot
@@ -120,8 +121,7 @@ class InstrumentIncomeController(
     }
 
     /** Whether [account] takes its income on the intermediary instrument (the flag only counts with an intermediary). */
-    private fun incomeOnIntermediary(account: Account?): Boolean =
-        account != null && account.incomeOnIntermediary && account.intermediaryInstrumentCode != null
+    private fun incomeOnIntermediary(account: Account?): Boolean = account?.takesIncomeOnIntermediary() == true
 
     /** The instrument the amount is typed in: the intermediary one for an income-on-intermediary account. */
     private fun amountInstrumentOf(account: Account): Instrument? =
@@ -218,6 +218,7 @@ class InstrumentIncomeController(
                 instrumentsMap[account.instrumentCode] ?: instrument
             )
             val intermediary = intermediaryInstrument()
+            var main = formattedInstrument
             val line = if (intermediary != null) {
                 val newIntermediaryBalance = BalanceCalculator.project(
                     accountType = account.type,
@@ -225,16 +226,19 @@ class InstrumentIncomeController(
                     debit = computedIntermediaryAmount(instrument) ?: 0L,
                     credit = 0L
                 )
+                val formattedIntermediary =
+                    TransactionDisplay.formatInstrumentAmountNoWrap(newIntermediaryBalance, intermediary)
+                if (incomeOnIntermediary(account)) main = formattedIntermediary
                 context.getString(
                     R.string.label_new_balance_ar_instrument_intermediary,
                     formattedBase,
                     formattedInstrument,
-                    TransactionDisplay.formatInstrumentAmountNoWrap(newIntermediaryBalance, intermediary)
+                    formattedIntermediary
                 )
             } else {
                 context.getString(R.string.label_new_balance_ar_instrument, formattedBase, formattedInstrument)
             }
-            textNewBalance.text = emphasizeMainAmount(context, line, formattedInstrument)
+            textNewBalance.text = emphasizeMainAmount(context, line, main)
         } else {
             textNewBalance.text = emphasizeMainAmount(
                 context,
@@ -273,7 +277,7 @@ class InstrumentIncomeController(
         val intermediary = intermediaryInstrument()
         val intermediaryAmount = computedIntermediaryAmount(instrument)
         // On an income-on-intermediary account the typed amount already is the intermediary one.
-        textAmountBase.text = if (intermediary != null && intermediaryAmount != null && !incomeOnIntermediary(asset.account)) {
+        val line = if (intermediary != null && intermediaryAmount != null && !incomeOnIntermediary(asset.account)) {
             context.getString(
                 R.string.label_amount_plus_ar_instrument_intermediary,
                 formattedBase,
@@ -283,6 +287,7 @@ class InstrumentIncomeController(
         } else {
             context.getString(R.string.label_amount_plus_ar_instrument, formattedBase, formattedInstrument)
         }
+        textAmountBase.text = emphasizeMainAmount(context, line, formattedInstrument)
         textAmountBase.visibility = View.VISIBLE
     }
 

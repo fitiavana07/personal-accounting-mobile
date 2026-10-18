@@ -238,6 +238,47 @@ class InstrumentIncomeControllerTest {
         revenueSpinner.setSelection(1)
     }
 
+    private fun emphasizedText(view: TextView): String {
+        val text = view.text as android.text.Spanned
+        val span = text.getSpans(0, text.length, android.text.style.ForegroundColorSpan::class.java).single()
+        return text.substring(text.getSpanStart(span), text.getSpanEnd(span))
+    }
+
+    @Test
+    fun `income on intermediary emphasizes the intermediary balance below the asset spinner`() {
+        controller()
+        selectIncomeOnIntermediary()
+
+        assertEquals(
+            dev.fitiavana.accounting.ui.common.TransactionDisplay.formatInstrumentAmountNoWrap(500L, eurInstrument),
+            emphasizedText(assetTextBalance)
+        )
+    }
+
+    @Test
+    fun `income on intermediary emphasizes the new intermediary balance`() {
+        controller()
+        selectIncomeOnIntermediary()
+        editIncomeAmount.setText("6.50") // 5.00 -> 6.50 EUR
+
+        assertEquals(
+            dev.fitiavana.accounting.ui.common.TransactionDisplay.formatInstrumentAmountNoWrap(650L, eurInstrument),
+            emphasizedText(assetTextNewBalance)
+        )
+    }
+
+    @Test
+    fun `an asset not taking income on the intermediary emphasizes its instrument balance`() {
+        stubBalance("usd_via_eur", balance = 400_000L, instrument = 1000L, intermediary = 500L)
+        controller()
+        assetSpinner.setSelection(3) // usd_via_eur
+
+        assertEquals(
+            dev.fitiavana.accounting.ui.common.TransactionDisplay.formatInstrumentAmountNoWrap(1000L, usdInstrument),
+            emphasizedText(assetTextBalance)
+        )
+    }
+
     @Test
     fun `income on intermediary types the new balance in the intermediary instrument`() {
         val controller = controller()
@@ -583,6 +624,29 @@ class InstrumentIncomeControllerTest {
 
         assertEquals(View.VISIBLE, textAmountBase.visibility)
         assertEquals("+ 1.5\u00A0USD · 60,000 Ar", textAmountBase.text.toString())
+    }
+
+    @Test
+    fun `transaction amount preview emphasizes the instrument amount`() {
+        whenever(viewModel.getBalance("usd_wallet")).thenReturn(
+            AccountBalance(
+                accountId = "usd_wallet",
+                balance = 400_000L,
+                instrumentBalance = 1000L,
+                updatedAt = 0L,
+                createdAt = 0L
+            )
+        )
+        controller()
+
+        assetSpinner.setSelection(1)
+        editIncomeAmount.setText("11.50")
+
+        val text = textAmountBase.text as android.text.Spanned
+        val span = text.getSpans(0, text.length, android.text.style.ForegroundColorSpan::class.java).single()
+        val amount = "1.5 USD"
+        assertEquals(text.toString().indexOf(amount), text.getSpanStart(span))
+        assertEquals(text.toString().indexOf(amount) + amount.length, text.getSpanEnd(span))
     }
 
     @Test
