@@ -1,6 +1,7 @@
 package dev.fitiavana.accounting.ui.transactions
 
 import android.content.Context
+import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
@@ -61,6 +62,7 @@ class InstrumentTransferTemplateTest {
             toTextNewBalance = TextView(context),
             textAmountCode = TextView(context),
             editTransferAmount = EditText(context),
+            buttonAll = Button(context),
             textAmountBase = TextView(context),
             onChanged = {},
             runInBackground = { it() },

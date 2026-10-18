@@ -4,6 +4,7 @@ import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
@@ -45,6 +46,7 @@ class InstrumentTransferController(
     private val toTextNewBalance: TextView,
     private val textAmountCode: TextView,
     private val editTransferAmount: EditText,
+    buttonAll: Button,
     private val textAmountBase: TextView,
     private val onChanged: () -> Unit,
     runInBackground: (() -> Unit) -> Unit,
@@ -119,6 +121,16 @@ class InstrumentTransferController(
                 onChanged()
             }
         })
+        buttonAll.setOnClickListener { fillAmountWithFromInstrumentBalance() }
+    }
+
+    /** "ALL": sets the amount to the From account's whole instrument balance, if it has one. */
+    private fun fillAmountWithFromInstrumentBalance() {
+        val instrument = currentInstrument() ?: return
+        if (from.instrumentBalance <= 0L) return
+        editTransferAmount.setText(
+            TransactionDisplay.formatInstrumentValue(from.instrumentBalance, instrument)
+        )
     }
 
     private fun currentInstrument(): Instrument? =

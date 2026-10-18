@@ -113,6 +113,13 @@ The To spinner also never offers the account currently selected in From. Simple
 Transfer repopulates To whenever From changes (keeping the To selection if it is
 still offered); Instrument Transfer already did so for its instrument filter.
 
+### "ALL" button
+
+Next to the Transfer amount field, **ALL** fills the amount with the From
+account's whole `instrumentBalance` (formatted with the instrument's decimals).
+The base amount then equals the From account's full base balance. It does
+nothing without a From account or with a zero instrument balance.
+
 ## Notes
 
 - The rate is always taken from the **From** account (Transfer) or the

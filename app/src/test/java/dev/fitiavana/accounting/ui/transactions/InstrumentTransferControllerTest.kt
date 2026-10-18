@@ -2,6 +2,7 @@ package dev.fitiavana.accounting.ui.transactions
 
 import android.content.Context
 import android.view.View
+import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
@@ -11,6 +12,7 @@ import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -43,6 +45,7 @@ class InstrumentTransferControllerTest {
     private lateinit var toTextNewBalance: TextView
     private lateinit var textAmountCode: TextView
     private lateinit var editTransferAmount: EditText
+    private lateinit var buttonAll: Button
     private lateinit var textAmountBase: TextView
 
     private val usdInstrument = Instrument(code = "USD", note = "", type = "fiat", decimalPlaces = 2)
@@ -77,6 +80,7 @@ class InstrumentTransferControllerTest {
         toTextNewBalance = TextView(context)
         textAmountCode = TextView(context)
         editTransferAmount = EditText(context)
+        buttonAll = Button(context)
         textAmountBase = TextView(context)
     }
 
@@ -94,6 +98,7 @@ class InstrumentTransferControllerTest {
             toTextNewBalance = toTextNewBalance,
             textAmountCode = textAmountCode,
             editTransferAmount = editTransferAmount,
+            buttonAll = buttonAll,
             textAmountBase = textAmountBase,
             onChanged = onChanged,
             runInBackground = { it() },
@@ -197,6 +202,67 @@ class InstrumentTransferControllerTest {
         fromSpinner.setSelection(4)
         toSpinner.setSelection(1)
         editTransferAmount.setText(amount)
+    }
+
+    @Test
+    fun `ALL fills the amount with the from account instrument balance`() {
+        stubBalance("usd_wallet", balance = 400_000L, instrument = 1250L)
+        controller()
+        fromSpinner.setSelection(1)
+
+        buttonAll.performClick()
+
+        assertEquals("12.5", editTransferAmount.text.toString())
+    }
+
+    @Test
+    fun `ALL shows the whole from base balance and a zero new balance`() {
+        stubBalance("usd_wallet", balance = 400_000L, instrument = 1250L)
+        controller()
+        fromSpinner.setSelection(1)
+
+        buttonAll.performClick()
+
+        assertEquals(context.getString(R.string.label_amount_base_ar, "400,000"), textAmountBase.text.toString())
+        assertEquals(
+            context.getString(R.string.label_new_balance_ar_instrument, "0", TransactionDisplay.formatInstrumentAmountNoWrap(0L, usdInstrument)),
+            fromTextNewBalance.text.toString()
+        )
+    }
+
+    @Test
+    fun `ALL does nothing when no from account is selected`() {
+        controller()
+        editTransferAmount.setText("42")
+
+        buttonAll.performClick()
+
+        assertEquals("42", editTransferAmount.text.toString())
+    }
+
+    @Test
+    fun `ALL does nothing when the from instrument balance is zero`() {
+        stubBalance("usd_wallet", balance = 0L, instrument = 0L)
+        controller()
+        fromSpinner.setSelection(1)
+        editTransferAmount.setText("7")
+
+        buttonAll.performClick()
+
+        assertEquals("7", editTransferAmount.text.toString())
+    }
+
+    @Test
+    fun `ALL notifies onChanged`() {
+        stubBalance("usd_wallet", balance = 400_000L, instrument = 1250L)
+        var changes = 0
+        controller(onChanged = { changes++ })
+        fromSpinner.setSelection(1)
+        val before = changes
+
+        buttonAll.performClick()
+
+        assertTrue(changes > before)
     }
 
     @Test
