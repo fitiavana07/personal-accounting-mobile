@@ -7,6 +7,14 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+### Added
+
+- transactions: hide zero-balance assets in Instrument Income <!-- c:630ec61 -->
+
+### Changed
+
+- sync: show "Sync" in the overflow menu with one shared string <!-- c:b571b56 -->
+
 ## [1.48] - 2026-10-18
 
 ### Fixed
