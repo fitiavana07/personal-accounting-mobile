@@ -7,6 +7,16 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.52] - 2026-10-19
+
+### Added
+
+- backup: encrypted daily Cloud Backup to a Google Drive folder
+
+### Changed
+
+- backup: share the restore confirmation dialog
+
 ## [1.51] - 2026-10-18
 
 ### Added
@@ -428,7 +438,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.51...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.52...HEAD
+[1.52]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.51...v1.52
 [1.51]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.50...v1.51
 [1.50]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.49...v1.50
 [1.49]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.48...v1.49
