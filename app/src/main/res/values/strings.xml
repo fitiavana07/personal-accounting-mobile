@@ -24,7 +24,8 @@
     <string name="backup_default_filename">accounting_backup_%1$s.json</string>
     <string name="backup_failed">Backup failed: %1$s</string>
     <string name="backup_success">Backup saved</string>
-    <string name="dialog_restore_message">This will erase all current data and replace it with the contents of the selected backup file. This cannot be undone.</string>
+    <string name="restore_confirm_title">Restore this backup?</string>
+    <string name="restore_confirm_message">All current data on this device will be erased and replaced by the contents of %1$s. This cannot be undone.</string>
     <string name="dialog_restore_title">Restore backup</string>
     <string name="restore_failed">Restore failed: %1$s</string>
     <string name="restore_schema_mismatch">This backup was made with a newer app version (schema v%1$d) and can\'t be restored on this version (schema v%2$d).</string>
@@ -308,8 +309,6 @@
     <string name="cloud_backup_restore_empty">No .accbak backups in this folder yet.</string>
     <string name="cloud_backup_restore_failed">Could not reach the folder. Check your connection and try again.</string>
     <string name="cloud_backup_file_item">%1$s\n%2$s · %3$s</string>
-    <string name="cloud_backup_confirm_title">Restore this backup?</string>
-    <string name="cloud_backup_confirm_message">All current data on this device will be erased and replaced by the contents of %1$s. This cannot be undone.</string>
     <string name="cloud_backup_passphrase_needed_title">Passphrase needed</string>
     <string name="cloud_backup_passphrase_needed_message">Enter the passphrase this backup was made with.</string>
     <string name="cloud_backup_passphrase_wrong_message">Wrong passphrase, or the file is damaged. Enter the passphrase this backup was made with.</string>

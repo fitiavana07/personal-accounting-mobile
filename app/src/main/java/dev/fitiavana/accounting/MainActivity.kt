@@ -3,6 +3,7 @@ package dev.fitiavana.accounting
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -18,6 +19,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import dev.fitiavana.accounting.features.backup.BackupRepository
+import dev.fitiavana.accounting.ui.common.RestoreConfirmDialog
 import dev.fitiavana.accounting.ui.common.RestoreResultPresenter
 import dev.fitiavana.accounting.ui.common.UiUtils
 import dev.fitiavana.accounting.ui.accounts.AccountsFragment
@@ -223,17 +225,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun confirmRestore(uri: Uri) {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.dialog_restore_title)
-            .setMessage(R.string.dialog_restore_message)
-            .setPositiveButton(R.string.action_restore) { _, _ ->
-                performRestore(
-                    uri
-                )
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
+        RestoreConfirmDialog.show(this, displayName(uri)) { performRestore(uri) }
     }
+
+    private fun displayName(uri: Uri): String =
+        contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {
+            if (it.moveToFirst()) it.getString(0) else null
+        } ?: uri.lastPathSegment ?: uri.toString()
 
     private fun performBackup(uri: Uri) {
         setOperationInProgress(true)

@@ -31,6 +31,7 @@ import dev.fitiavana.accounting.features.cloudbackup.CloudBackupFile
 import dev.fitiavana.accounting.features.cloudbackup.CloudBackupOutcome
 import dev.fitiavana.accounting.features.cloudbackup.CloudBackupPolicy
 import dev.fitiavana.accounting.features.cloudbackup.CloudRestoreResult
+import dev.fitiavana.accounting.ui.common.RestoreConfirmDialog
 import dev.fitiavana.accounting.ui.common.RestoreResultPresenter
 import dev.fitiavana.accounting.ui.common.UiUtils
 import java.text.DateFormat
@@ -292,16 +293,10 @@ class CloudBackupActivity : AppCompatActivity() {
     }
 
     private fun confirmRestore(file: CloudBackupFile) {
-        val dialog = AlertDialog.Builder(this)
-            .setTitle(R.string.cloud_backup_confirm_title)
-            .setMessage(getString(R.string.cloud_backup_confirm_message, file.name))
-            .setPositiveButton(R.string.action_restore) { _, _ ->
-                restoringFile = file
-                viewModel.restore(file, null)
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.loss))
+        RestoreConfirmDialog.show(this, file.name) {
+            restoringFile = file
+            viewModel.restore(file, null)
+        }
     }
 
     private fun visible(show: Boolean) = if (show) View.VISIBLE else View.GONE
