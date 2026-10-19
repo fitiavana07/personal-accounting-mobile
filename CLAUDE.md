@@ -60,6 +60,8 @@ features/
   p2pprices/      # P2pPrices, P2pPriceRepository (Binance P2P USDT/MGA top ads on home)
   settings/       # AppSettings (@Entity), AppSettingsDao, AppSettingsRepository
   backup/         # BackupRepository, AutoBackupManager (daily backups)
+  cloudbackup/    # CloudBackupManager/Repository, BackupEnvelope (.accbak), SafCloudFolder (Drive via SAF), CloudBackupStore
+  crypto/         # AesGcm, pbkdf2Sha256 (shared by P2P sync and Cloud Backup)
   templates/      # TransactionTemplate/TemplateEntry (@Entity), TemplateDao, TemplateRepository
   sync/           # P2P sync over Wi-Fi: ChangeTracker (stamps), SyncRepository (merge), SyncCoordinator, discovery/session/crypto
   changelog/      # ChangelogParser, ChangelogRepository, AssetChangelogSource (reads the bundled CHANGELOG.md)
@@ -76,6 +78,7 @@ ui/
   home/          # HomeFragment, HomeViewModel (dashboard/metrics)
   earn/          # EarnActivity, EarnViewModel, EarnAdapter (interest on accounts with an APR)
   sync/          # SyncActivity, SyncViewModel, SyncPeersAdapter (passphrase, auto-sync, devices found)
+  cloudbackup/   # CloudBackupActivity, CloudBackupViewModel (Drive folder, passphrase, daily backup, restore)
   changelog/     # ChangelogActivity, ChangelogViewModel, ChangelogAdapter (Release notes screen)
   common/        # shared presenters/adapters (UiUtils, ReportPresenter, TransactionDisplay)
 ```
@@ -112,6 +115,12 @@ screen.
 
 See `docs/auto-backup-feature.md` for the automatic daily backup (AlarmManager,
 receivers, where files go) and how to test it.
+
+See `docs/cloud-backup-feature.md` for Cloud Backup (encrypted `.accbak` daily
+backups to a Google Drive folder through the Storage Access Framework, own
+passphrase, retention of 7, offline/failure handling, restore). Android 6.0+
+only. It is isolated from the manual backup, the auto-backup and P2P sync, which
+stay unencrypted.
 
 See `docs/transaction-templates-feature.md` for transaction templates (saved
 mode + accounts for Add Transaction): data model, slots, and how templates are

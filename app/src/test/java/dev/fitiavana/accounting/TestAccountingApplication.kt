@@ -6,11 +6,13 @@ import java.io.IOException
 /**
  * The application every Robolectric test runs under (see `robolectric.properties`). Its HTTP
  * client fails every request before it connects, so no test can reach a real exchange through
- * [AppContainer]. Tests that need responses build their own fetchers around a fake instead.
+ * [AppContainer]. Tests that need responses build their own fetchers around a fake instead. Secrets
+ * are sealed in memory, as Robolectric has no AndroidKeyStore.
  */
 class TestAccountingApplication : AccountingApplication() {
     override fun onCreate() {
         AppContainer.httpClientFactory = ::offlineClient
+        AppContainer.secretCipherFactory = { InMemorySecretCipher() }
         super.onCreate()
     }
 

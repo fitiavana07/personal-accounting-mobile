@@ -53,6 +53,6 @@ class SyncBackupRulesTest {
 
         assertTrue(rules.contains("cloud-backup/$file"))
         assertTrue(rules.contains("device-transfer/$file"))
-        assertEquals(2, rules.size)
+        assertEquals(4, rules.size) // sync and cloud backup preferences, in both sections
     }
 }

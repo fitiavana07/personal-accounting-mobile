@@ -7,6 +7,9 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Cloud Backup: skip a run while offline, and tell the user when backups keep failing. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".AccountingApplication"
@@ -72,8 +75,17 @@
             android:parentActivityName=".MainActivity"
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".ui.cloudbackup.CloudBackupActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity"
+            android:windowSoftInputMode="adjustResize" />
+
         <receiver
             android:name=".features.backup.AutoBackupReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".features.cloudbackup.CloudBackupReceiver"
             android:exported="false" />
         <receiver
             android:name=".features.backup.BootReceiver"

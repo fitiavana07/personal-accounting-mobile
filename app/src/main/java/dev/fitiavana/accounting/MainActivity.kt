@@ -18,7 +18,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import dev.fitiavana.accounting.features.backup.BackupRepository
-import dev.fitiavana.accounting.features.backup.RestoreResult
+import dev.fitiavana.accounting.ui.common.RestoreResultPresenter
 import dev.fitiavana.accounting.ui.common.UiUtils
 import dev.fitiavana.accounting.ui.accounts.AccountsFragment
 import dev.fitiavana.accounting.ui.backup.AutoBackupViewModel
@@ -28,6 +28,9 @@ import dev.fitiavana.accounting.ui.changelog.ChangelogActivity
 import dev.fitiavana.accounting.ui.home.HomeFragment
 import dev.fitiavana.accounting.ui.instruments.InstrumentsActivity
 import dev.fitiavana.accounting.ui.reports.ReportsFragment
+import dev.fitiavana.accounting.ui.cloudbackup.CloudBackupActivity
+import dev.fitiavana.accounting.ui.cloudbackup.CloudBackupViewModel
+import dev.fitiavana.accounting.ui.cloudbackup.CloudBackupViewModelFactory
 import dev.fitiavana.accounting.ui.sync.SyncActivity
 import dev.fitiavana.accounting.ui.transactions.AddTransactionActivity
 import dev.fitiavana.accounting.ui.transactions.TransactionsFragment
@@ -63,6 +66,12 @@ class MainActivity : AppCompatActivity() {
             .get(AutoBackupViewModel::class.java)
         // Catch up on a daily backup whose alarm never fired (e.g. force-stopped app), and re-arm it.
         if (savedInstanceState == null) autoBackupViewModel.runCatchUp()
+        // The same for the daily cloud backup, which has its own alarm.
+        if (savedInstanceState == null) {
+            ViewModelProvider(this, CloudBackupViewModelFactory(container.cloudBackupRepository, container.cloudBackupManager))
+                .get(CloudBackupViewModel::class.java)
+                .runCatchUp()
+        }
 
         UiUtils.setupActionBar(
             this,
@@ -158,6 +167,11 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
 
+            R.id.action_cloud_backup -> {
+                startActivity(CloudBackupActivity.intent(this))
+                return true
+            }
+
             R.id.action_sync -> {
                 startActivity(SyncActivity.intent(this))
                 return true
@@ -249,13 +263,8 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
-    /** A dialog rather than a toast: the message is long and a toast truncates it. */
     internal fun showRestoreOlderVersionWarning(backupVersion: Int, currentVersion: Int) {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.dialog_restore_title)
-            .setMessage(getString(R.string.restore_success_older_version, backupVersion, currentVersion))
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
+        RestoreResultPresenter.showOlderVersionWarning(this, backupVersion, currentVersion)
     }
 
     private fun performRestore(uri: Uri) {
@@ -266,39 +275,8 @@ class MainActivity : AppCompatActivity() {
                     ?.use { it.readBytes() }
                     ?.toString(Charsets.UTF_8)
                     ?: throw IllegalStateException("Could not read backup file")
-                when (val result = backupRepository.restore(json)) {
-                    is RestoreResult.Success -> runOnUiThread {
-                        Toast.makeText(
-                            this,
-                            R.string.restore_success,
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-
-                    is RestoreResult.SuccessFromOlderVersion -> runOnUiThread {
-                        showRestoreOlderVersionWarning(result.backupVersion, result.currentVersion)
-                    }
-
-                    is RestoreResult.SchemaMismatch -> runOnUiThread {
-                        Toast.makeText(
-                            this,
-                            getString(
-                                R.string.restore_schema_mismatch,
-                                result.backupVersion,
-                                result.currentVersion
-                            ),
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-
-                    is RestoreResult.Error -> runOnUiThread {
-                        Toast.makeText(
-                            this,
-                            getString(R.string.restore_failed, result.message),
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
+                val result = backupRepository.restore(json)
+                runOnUiThread { RestoreResultPresenter.show(this, result) }
             } catch (e: Exception) {
                 runOnUiThread {
                     Toast.makeText(

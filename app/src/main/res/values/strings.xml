@@ -273,6 +273,54 @@
     <string name="sync_failure_network">Network problem: %1$s</string>
     <string name="sync_network_error">Wi-Fi problem: %1$s. Tap Refresh to try again.</string>
 
+    <!-- Cloud Backup -->
+    <string name="action_cloud_backup">Cloud Backup</string>
+    <string name="cloud_backup_unsupported">Cloud Backup needs Android 6.0 or newer.</string>
+    <string name="cloud_backup_intro">Encrypted daily backups to a Google Drive folder of your choice.</string>
+    <string name="cloud_backup_folder_title">Drive folder</string>
+    <string name="cloud_backup_choose_folder">Choose Drive folder</string>
+    <string name="cloud_backup_change_folder">Change folder</string>
+    <string name="cloud_backup_disconnect">Disconnect</string>
+    <string name="cloud_backup_debug_hint">This is the debug build: choose a different folder than the one the release build uses.</string>
+    <string name="cloud_backup_connect_failed">Could not read that folder. Check your connection and try again.</string>
+    <string name="cloud_backup_passphrase_title">Encryption passphrase</string>
+    <string name="cloud_backup_passphrase_hint">Passphrase</string>
+    <string name="cloud_backup_save_passphrase">Save passphrase</string>
+    <string name="cloud_backup_change_passphrase">Change passphrase</string>
+    <string name="cloud_backup_passphrase_set">A passphrase is set.</string>
+    <string name="cloud_backup_passphrase_too_short">The passphrase needs at least 8 characters.</string>
+    <string name="cloud_backup_passphrase_warning">If you lose this passphrase, your cloud backups cannot be read. Changing it does not re-encrypt backups already in the folder.</string>
+    <string name="cloud_backup_enable">Back up to the cloud every day</string>
+    <string name="cloud_backup_retention">Keeps the newest %1$d backups in this folder. Older ones are deleted.</string>
+    <string name="cloud_backup_status_title">Status</string>
+    <string name="cloud_backup_status_never">No cloud backup yet</string>
+    <string name="cloud_backup_last_success">Last cloud backup: %1$s</string>
+    <string name="cloud_backup_error_offline">Offline: it will try again automatically.</string>
+    <string name="cloud_backup_error_not_configured">Choose a Drive folder and set a passphrase first.</string>
+    <string name="cloud_backup_error_folder">The folder could not be written to. Check that it still exists and that the access was not removed, then choose it again.</string>
+    <string name="cloud_backup_error_unexpected">Something went wrong. It will try again automatically.</string>
+    <string name="cloud_backup_done">Backed up to the cloud</string>
+    <string name="cloud_backup_working">Working…</string>
+    <string name="cloud_backup_now">Back up now</string>
+    <string name="cloud_backup_restore">Restore from cloud…</string>
+    <string name="cloud_backup_restore_title">Restore from cloud</string>
+    <string name="cloud_backup_restore_loading">Loading…</string>
+    <string name="cloud_backup_restore_empty">No .accbak backups in this folder yet.</string>
+    <string name="cloud_backup_restore_failed">Could not reach the folder. Check your connection and try again.</string>
+    <string name="cloud_backup_file_item">%1$s\n%2$s · %3$s</string>
+    <string name="cloud_backup_confirm_title">Restore this backup?</string>
+    <string name="cloud_backup_confirm_message">All current data on this device will be erased and replaced by the contents of %1$s. This cannot be undone.</string>
+    <string name="cloud_backup_passphrase_needed_title">Passphrase needed</string>
+    <string name="cloud_backup_passphrase_needed_message">Enter the passphrase this backup was made with.</string>
+    <string name="cloud_backup_passphrase_wrong_message">Wrong passphrase, or the file is damaged. Enter the passphrase this backup was made with.</string>
+    <string name="cloud_backup_not_a_backup">This file is not a Cloud Backup file.</string>
+    <string name="cloud_backup_unsupported_format">This backup was made by a newer version of the app and cannot be opened by this one.</string>
+    <string name="cloud_backup_restore_unreachable">Could not read the backup. Check your connection and try again.</string>
+
+    <string name="cloud_backup_notification_channel">Cloud Backup problems</string>
+    <string name="cloud_backup_notification_title">Cloud backup is failing</string>
+    <string name="cloud_backup_notification_text">Your data has not been backed up to the cloud for a while. Tap to see why.</string>
+
     <!-- Release notes -->
     <string name="action_release_notes">Release notes</string>
     <string name="title_release_notes">Release notes</string>

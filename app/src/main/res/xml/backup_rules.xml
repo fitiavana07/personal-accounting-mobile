@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?><!--
    Auto Backup rules for Android 11 and older (ignored from API 31, see data_extraction_rules.xml).
-   Everything is backed up except the sync preferences: they hold this installation's device id and
-   its sync passphrase, which must never be restored onto another phone.
+   Everything is backed up except the sync preferences (this installation's device id and its sync
+   passphrase, which must never be restored onto another phone) and the Cloud Backup preferences
+   (a passphrase sealed with a key that stays on this phone, and this installation's folder grant).
 -->
 <full-backup-content>
     <exclude domain="sharedpref" path="sync.xml" />
+    <exclude domain="sharedpref" path="cloud_backup.xml" />
 </full-backup-content>

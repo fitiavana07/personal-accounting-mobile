@@ -26,6 +26,15 @@ import dev.fitiavana.accounting.features.sync.WifiDiscoveryChannels
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import dev.fitiavana.accounting.features.cloudbackup.AlarmManagerCloudBackupScheduler
+import dev.fitiavana.accounting.features.cloudbackup.AndroidCloudBackupNotifier
+import dev.fitiavana.accounting.features.cloudbackup.CloudBackupManager
+import dev.fitiavana.accounting.features.cloudbackup.CloudBackupRepository
+import dev.fitiavana.accounting.features.cloudbackup.ConnectivityNetworkChecker
+import dev.fitiavana.accounting.features.cloudbackup.SecretCipher
+import dev.fitiavana.accounting.features.cloudbackup.SharedPreferencesCloudBackupStore
+import dev.fitiavana.accounting.features.cloudbackup.openCloudFolder
+import dev.fitiavana.accounting.features.cloudbackup.openSecretCipher
 import dev.fitiavana.accounting.features.sync.SyncSettingsStore
 import dev.fitiavana.accounting.features.templates.TemplateRepository
 import dev.fitiavana.accounting.features.transactions.TransactionRepository
@@ -132,6 +141,25 @@ class AppContainer private constructor(context: Context) {
         scheduler = AlarmManagerBackupScheduler(context)
     )
 
+    val cloudBackupStore = SharedPreferencesCloudBackupStore(
+        context.getSharedPreferences(SharedPreferencesCloudBackupStore.PREFS_NAME, Context.MODE_PRIVATE),
+        secretCipherFactory("cloud_backup_passphrase")
+    )
+
+    val cloudBackupRepository = CloudBackupRepository(cloudBackupStore) { uri -> openCloudFolder(context.contentResolver, uri) }
+
+    val cloudBackupManager = CloudBackupManager(
+        export = backupRepository::export,
+        repository = cloudBackupRepository,
+        store = cloudBackupStore,
+        scheduler = AlarmManagerCloudBackupScheduler(context),
+        network = ConnectivityNetworkChecker(context),
+        notifier = AndroidCloudBackupNotifier(context),
+        restore = backupRepository::restore,
+        // Per build, so a debug install pointed at the release folder never prunes release backups.
+        filePrefix = if (BuildConfig.DEBUG) "accounting_dev_cloud_backup_" else "accounting_cloud_backup_"
+    )
+
     companion object {
         private const val AUTO_BACKUP_DIR = "backups"
 
@@ -139,6 +167,11 @@ class AppContainer private constructor(context: Context) {
         @Volatile
         @VisibleForTesting
         var httpClientFactory: () -> OkHttpClient = Api19HttpClients::build
+
+        /** Opens the cipher that seals the Cloud Backup passphrase; unit tests swap in one that needs no AndroidKeyStore. */
+        @Volatile
+        @VisibleForTesting
+        var secretCipherFactory: (String) -> SecretCipher = ::openSecretCipher
 
         @Volatile
         private var instance: AppContainer? = null
