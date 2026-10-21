@@ -94,6 +94,18 @@ class HomeItemBuilderTest {
     }
 
     @Test
+    fun `crypto account whose instrument has no coingeckoId is excluded`() {
+        val noId = btc.copy(coingeckoId = null)
+        val result = HomeItemBuilder.build(
+            balances = listOf(balance("acc1")),
+            accounts = listOf(account("acc1", "Crypto", instrumentCode = "BTC", intermediaryInstrumentCode = "USDT")),
+            instruments = mapOf("BTC" to noId, "USDT" to usdt),
+            rates = emptyMap()
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
     fun `crypto account without intermediary instrument is excluded`() {
         val result = HomeItemBuilder.build(
             balances = listOf(balance("acc1")),

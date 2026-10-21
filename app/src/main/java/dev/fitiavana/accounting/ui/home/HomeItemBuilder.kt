@@ -45,6 +45,8 @@ object HomeItemBuilder {
             val instrument = account.instrumentCode?.let { instruments[it] }
                 ?: return@mapNotNull null
             if (instrument.type != "cryptocurrency" && instrument.type != "stock") return@mapNotNull null
+            // No CoinGecko id means no rate can ever be fetched for this crypto.
+            if (instrument.type == "cryptocurrency" && instrument.coingeckoId == null) return@mapNotNull null
 
             val intermediaryInstrument =
                 account.intermediaryInstrumentCode?.let { instruments[it] }

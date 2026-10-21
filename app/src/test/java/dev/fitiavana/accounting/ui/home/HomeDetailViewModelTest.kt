@@ -26,7 +26,8 @@ class HomeDetailViewModelTest {
         code = "BTC",
         note = "Bitcoin",
         type = "cryptocurrency",
-        decimalPlaces = 8
+        decimalPlaces = 8,
+        coingeckoId = "bitcoin"
     )
     private val ar = Instrument(code = "AR", note = "Ariary", type = "fiat")
     private val account = Account(
