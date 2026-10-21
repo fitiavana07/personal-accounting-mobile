@@ -7,6 +7,20 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.53] - 2026-10-21
+
+### Added
+
+- home: redesign the gain/loss block with a summary and clearer rows
+
+### Changed
+
+- home: move gain/loss list above the P2P prices
+
+### Fixed
+
+- home: hide crypto gain/loss rows without a coingeckoId
+
 ## [1.52] - 2026-10-19
 
 ### Added
@@ -438,7 +452,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.52...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.53...HEAD
+[1.53]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.52...v1.53
 [1.52]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.51...v1.52
 [1.51]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.50...v1.51
 [1.50]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.49...v1.50
