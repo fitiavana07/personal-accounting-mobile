@@ -90,13 +90,13 @@ class HomeFragment : Fragment() {
             ConcatAdapter(
                 metricsAdapter,
                 shortcutsAdapter,
+                noteAdapter,
+                adapter,
                 p2pPricesAdapter,
                 emergencyFundAdapter,
                 incomeToExpensesAdapter,
                 pieChartsAdapter,
-                balanceSheetAdapter,
-                noteAdapter,
-                adapter
+                balanceSheetAdapter
             )
 
         val emptyView = view.findViewById<TextView>(R.id.text_empty_home)

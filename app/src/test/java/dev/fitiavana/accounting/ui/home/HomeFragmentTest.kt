@@ -4,6 +4,7 @@ import android.os.Looper
 import android.view.View
 import androidx.fragment.app.FragmentActivity
 import dev.fitiavana.accounting.R
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.ui.cexprices.CexPricesActivity
 import dev.fitiavana.accounting.ui.earn.EarnActivity
@@ -68,6 +69,26 @@ class HomeFragmentTest {
 
         val started = shadowOf(activity).nextStartedActivity
         assertEquals(EarnActivity::class.java.name, started.component?.className)
+    }
+
+    @Test
+    fun `gain loss list with its note sits between the shortcuts and P2P prices`() {
+        val activity = launchHomeFragment()
+        val recycler = activity.findViewById<RecyclerView>(R.id.recycler_home)
+
+        val sections =
+            (recycler.adapter as ConcatAdapter).adapters.map { it.javaClass.simpleName }
+
+        val shortcuts = sections.indexOf("HomeShortcutsAdapter")
+        assertEquals(
+            listOf(
+                "HomeShortcutsAdapter",
+                "HomeNoteAdapter",
+                "HomeAdapter",
+                "HomeP2pPricesAdapter"
+            ),
+            sections.subList(shortcuts, shortcuts + 4)
+        )
     }
 
     @Test
