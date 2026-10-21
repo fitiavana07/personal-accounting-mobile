@@ -97,6 +97,8 @@
     <string name="home_rate_never_updated">Price not fetched yet</string>
     <string name="home_refresh_failed">Failed to refresh some rates</string>
     <string name="home_metrics_header">Metrics</string>
+    <string name="home_gain_loss_header">Unrealized gains &amp; losses</string>
+    <string name="home_gain_loss_invested">on %1$s invested</string>
     <string name="home_metric_equity_label">Equity</string>
     <string name="home_metric_cash_label">Cash</string>
     <string name="home_metric_emergency_fund_label">Emergency Fund</string>

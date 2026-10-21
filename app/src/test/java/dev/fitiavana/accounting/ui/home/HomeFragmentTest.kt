@@ -72,7 +72,7 @@ class HomeFragmentTest {
     }
 
     @Test
-    fun `gain loss list with its note sits between the shortcuts and P2P prices`() {
+    fun `gain loss list followed by its note sits between the shortcuts and P2P prices`() {
         val activity = launchHomeFragment()
         val recycler = activity.findViewById<RecyclerView>(R.id.recycler_home)
 
@@ -83,8 +83,8 @@ class HomeFragmentTest {
         assertEquals(
             listOf(
                 "HomeShortcutsAdapter",
-                "HomeNoteAdapter",
                 "HomeAdapter",
+                "HomeNoteAdapter",
                 "HomeP2pPricesAdapter"
             ),
             sections.subList(shortcuts, shortcuts + 4)

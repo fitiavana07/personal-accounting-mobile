@@ -10,6 +10,8 @@
     <color name="icon_toolbar">@color/black</color>
     <color name="gain">#2E7D32</color>
     <color name="loss">#C62828</color>
+    <color name="gain_pill_bg">#1F2E7D32</color>
+    <color name="loss_pill_bg">#1FC62828</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 

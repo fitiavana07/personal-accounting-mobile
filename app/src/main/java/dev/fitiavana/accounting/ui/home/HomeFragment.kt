@@ -90,8 +90,8 @@ class HomeFragment : Fragment() {
             ConcatAdapter(
                 metricsAdapter,
                 shortcutsAdapter,
-                noteAdapter,
                 adapter,
+                noteAdapter,
                 p2pPricesAdapter,
                 emergencyFundAdapter,
                 incomeToExpensesAdapter,
