@@ -7,6 +7,12 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.54] - 2026-10-22
+
+### Added
+
+- apr: edit an account's APR from the Balance Sheet and Earn screens
+
 ## [1.53] - 2026-10-21
 
 ### Added
@@ -452,7 +458,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.53...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.54...HEAD
+[1.54]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.53...v1.54
 [1.53]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.52...v1.53
 [1.52]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.51...v1.52
 [1.51]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.50...v1.51
