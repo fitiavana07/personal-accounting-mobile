@@ -160,7 +160,10 @@ Collapse all" control (`text_reports_expand_all`) sits under the as-of date.
 - **APR sub-row:** an asset account with an APR (see `docs/earn-feature.md`) is also expandable, even with no
   instrument. `BalanceSheetBuilder.buildMonthly` copies `Account.aprPercent` to `ReportRow.AccountLine.aprPercent`;
   `ReportPresenter` appends a `ReportDisplayRow.AprLine` (e.g. `5.5% `) after the native sub-rows, and
-  `ReportAdapter` renders it as an "APR" row in the same column.
+  `ReportAdapter` renders it as an "APR" row in the same column. The rate is underlined and tappable
+  (`ReportAdapter(onAprClick)`): it opens `EditAprDialog` (`ui/common/`), and Save calls
+  `ReportsViewModel.updateApr` -> `AccountRepository.updateApr` (stamped for sync), then reloads the sheet. Only
+  positive rates on asset accounts can be saved (there is no "remove" here; clear the APR in Edit account).
 
 ## Trend charts (above the period selector)
 

@@ -70,7 +70,9 @@ object ReportPresenter {
         }
         // Same trailing space as the native amounts so the values stay right-aligned together.
         val aprLines = listOfNotNull(
-            row.aprPercent?.let { ReportDisplayRow.AprLine("${TransactionDisplay.formatAprPercent(it)} ") }
+            row.aprPercent?.let {
+                ReportDisplayRow.AprLine("${TransactionDisplay.formatAprPercent(it)} ", row.accountId, it, row.name)
+            }
         )
         val subRows = nativeLines + aprLines
         val expandable = row.accountId != null && subRows.isNotEmpty()

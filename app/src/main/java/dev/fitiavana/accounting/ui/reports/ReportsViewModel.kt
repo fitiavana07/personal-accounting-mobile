@@ -163,6 +163,15 @@ class ReportsViewModel(
         Thread { refreshSync() }.start()
     }
 
+    /** Saves a new yearly rate for the asset account [accountId] from the Balance Sheet, then reloads. */
+    fun updateApr(accountId: String, aprPercent: Double) {
+        Thread { updateAprSync(accountId, aprPercent) }.start()
+    }
+
+    internal fun updateAprSync(accountId: String, aprPercent: Double) {
+        if (accountRepository.updateApr(accountId, aprPercent)) refreshSync()
+    }
+
     /** Synchronous version of the initial load, for use on a background thread (or directly in tests). */
     internal fun loadInitialSync() = loadSync(keepSelection = false)
 

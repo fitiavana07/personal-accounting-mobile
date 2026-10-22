@@ -16,9 +16,11 @@ import java.util.Locale
 /**
  * @param onAccountClick called with the account id when an expandable [ReportDisplayRow.AccountLine] is tapped;
  * when null (e.g. Home), account lines are not clickable.
+ * @param onAprClick called with the [ReportDisplayRow.AprLine] when its underlined rate is tapped; when null, the rate is plain text.
  */
 class ReportAdapter(
-    private val onAccountClick: ((String) -> Unit)? = null
+    private val onAccountClick: ((String) -> Unit)? = null,
+    private val onAprClick: ((ReportDisplayRow.AprLine) -> Unit)? = null
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var rows: List<ReportDisplayRow> = emptyList()
@@ -53,8 +55,7 @@ class ReportAdapter(
             is ReportDisplayRow.SubsectionHeader -> (holder as RowViewHolder).bindSubsectionHeader(row)
             is ReportDisplayRow.AccountLine -> (holder as RowViewHolder).bindAccount(row, onAccountClick)
             is ReportDisplayRow.NativeLine -> (holder as RowViewHolder).bindNative(row.code, row.amountText)
-            is ReportDisplayRow.AprLine ->
-                (holder as RowViewHolder).bindNative(holder.itemView.context.getString(R.string.report_apr_label), row.amountText)
+            is ReportDisplayRow.AprLine -> (holder as RowViewHolder).bindApr(row, onAprClick)
             is ReportDisplayRow.TotalLine -> (holder as RowViewHolder).bindTotal(row)
         }
     }
@@ -114,6 +115,8 @@ class ReportAdapter(
             labelView.text =
                 if (row.expandable) "${row.name} ${if (row.expanded) CHEVRON_EXPANDED else CHEVRON_COLLAPSED}" else row.name
             if (row.expandable && accountId != null && onAccountClick != null) {
+                amountView.setOnClickListener(null)
+                amountView.isClickable = false
                 root.setOnClickListener { onAccountClick(accountId) }
             } else {
                 resetClick()
@@ -140,6 +143,15 @@ class ReportAdapter(
             resetClick()
             divider.visibility = View.GONE
             setColorDot(null)
+        }
+
+        /** Like [bindNative], but the rate is underlined and, with a handler, tapping it edits the rate. */
+        fun bindApr(row: ReportDisplayRow.AprLine, onAprClick: ((ReportDisplayRow.AprLine) -> Unit)?) {
+            bindNative(context.getString(R.string.report_apr_label), row.amountText)
+            if (onAprClick == null || row.accountId == null) return
+            // Underline the number only, not the trailing alignment space.
+            amountView.text = UiUtils.underlined(row.amountText, row.amountText.trimEnd().length)
+            amountView.setOnClickListener { onAprClick(row) }
         }
 
         private fun setColorDot(color: Int?) {
@@ -175,6 +187,8 @@ class ReportAdapter(
         private fun resetClick() {
             root.setOnClickListener(null)
             root.isClickable = false
+            amountView.setOnClickListener(null)
+            amountView.isClickable = false
         }
 
         private fun setLabelIndent(startPadding: Int) {

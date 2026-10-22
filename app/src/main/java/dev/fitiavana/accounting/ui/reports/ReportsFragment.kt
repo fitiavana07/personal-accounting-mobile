@@ -13,6 +13,7 @@ import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.LineChart
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.ui.common.EditAprDialog
 import dev.fitiavana.accounting.ui.common.EquityStatementAdapter
 import dev.fitiavana.accounting.ui.common.ReportAdapter
 
@@ -52,7 +53,14 @@ class ReportsFragment : Fragment() {
             onSelected = { viewModel.selectReportType(it) },
             iconFor = { it.iconRes }
         )
-        contentAdapter = ReportAdapter(onAccountClick = { viewModel.toggleAccount(it) })
+        contentAdapter = ReportAdapter(
+            onAccountClick = { viewModel.toggleAccount(it) },
+            onAprClick = { line ->
+                EditAprDialog.show(requireContext(), line.accountName, line.aprPercent) {
+                    line.accountId?.let { id -> viewModel.updateApr(id, it) }
+                }
+            }
+        )
         equityAdapter = EquityStatementAdapter()
 
         view.findViewById<RecyclerView>(R.id.recycler_reports_years).apply {

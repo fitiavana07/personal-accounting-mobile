@@ -3,6 +3,9 @@ package dev.fitiavana.accounting.ui.common
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.UnderlineSpan
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -67,6 +70,10 @@ class UiUtils {
                 R.string.amount_ar,
                 TransactionDisplay.formatAmount(amount)
             )
+
+        /** [text] underlined up to [end], to mark a value that can be tapped to edit it. */
+        fun underlined(text: String, end: Int = text.length): CharSequence =
+            SpannableString(text).apply { setSpan(UnderlineSpan(), 0, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) }
 
         /** Color for a progress-bar percent: goal reached (>=100) vs. still in progress. */
         fun progressPercentColorRes(percent: Int): Int =

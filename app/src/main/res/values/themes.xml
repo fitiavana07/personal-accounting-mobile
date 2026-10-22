@@ -8,6 +8,12 @@
         <item name="colorSecondaryVariant">@color/brown_700</item>
         <item name="colorOnSecondary">@color/white</item>
         <item name="android:statusBarColor" tools:targetApi="21">?attr/colorPrimaryVariant</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.Accounting.Dialog.Alert</item>
+    </style>
+
+    <!-- colorPrimary drives the dialog button text; use a variant that stays readable on the dialog surface in dark mode. -->
+    <style name="ThemeOverlay.Accounting.Dialog.Alert" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="colorPrimary">@color/dialog_button</item>
     </style>
 
     <!-- One ad: price and details on a single line. -->

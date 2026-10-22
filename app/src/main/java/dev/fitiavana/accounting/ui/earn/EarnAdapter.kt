@@ -15,8 +15,10 @@ import dev.fitiavana.accounting.ui.common.UiUtils
 /**
  * A totals card (monthly base-currency interest of every account) followed by one card per Earn account.
  * Tapping an account with an instrument reveals its interest in the instrument's own units.
+ *
+ * @param onAprClick called with the account when its underlined APR is tapped; when null, the APR is plain text.
  */
-class EarnAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class EarnAdapter(private val onAprClick: ((EarnItem) -> Unit)? = null) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var totals: EarnTotals? = null
     private var items: List<EarnItem> = emptyList()
@@ -38,7 +40,7 @@ class EarnAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         return if (viewType == VIEW_TYPE_TOTALS) {
             TotalsViewHolder(inflater.inflate(R.layout.item_earn_totals, parent, false))
         } else {
-            ItemViewHolder(inflater.inflate(R.layout.item_earn, parent, false), expanded)
+            ItemViewHolder(inflater.inflate(R.layout.item_earn, parent, false), expanded, onAprClick)
         }
     }
 
@@ -61,14 +63,17 @@ class EarnAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         }
     }
 
-    class ItemViewHolder(view: View, private val expanded: MutableSet<String>) : RecyclerView.ViewHolder(view) {
+    class ItemViewHolder(
+        view: View,
+        private val expanded: MutableSet<String>,
+        private val onAprClick: ((EarnItem) -> Unit)? = null
+    ) : RecyclerView.ViewHolder(view) {
         private val nativeView = itemView.findViewById<TextView>(R.id.text_earn_native)
 
         fun bind(item: EarnItem) {
             val context = itemView.context
             itemView.findViewById<TextView>(R.id.text_earn_name).text = item.account.name
-            itemView.findViewById<TextView>(R.id.text_earn_apr).text =
-                context.getString(R.string.account_apr, TransactionDisplay.formatApr(item.aprPercent))
+            bindApr(item)
             val balanceParts = listOf(UiUtils.formatAmountAr(context, item.balance)) + nativeParts(
                 item, item.instrumentBalance, item.intermediaryBalance
             )
@@ -89,6 +94,20 @@ class EarnAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             itemView.setOnClickListener(if (expandable) View.OnClickListener { toggle(item.account.id) } else null)
             // setOnClickListener always makes a view clickable, so undo that for rows with nothing to expand.
             itemView.isClickable = expandable
+        }
+
+        /** The APR is underlined and, with a handler, tapping it edits the rate (the card itself still toggles). */
+        private fun bindApr(item: EarnItem) {
+            val aprView = itemView.findViewById<TextView>(R.id.text_earn_apr)
+            val text = itemView.context.getString(R.string.account_apr, TransactionDisplay.formatApr(item.aprPercent))
+            if (onAprClick != null) {
+                aprView.text = UiUtils.underlined(text)
+                aprView.setOnClickListener { onAprClick.invoke(item) }
+            } else {
+                aprView.text = text
+                aprView.setOnClickListener(null)
+                aprView.isClickable = false
+            }
         }
 
         private fun toggle(accountId: String) {

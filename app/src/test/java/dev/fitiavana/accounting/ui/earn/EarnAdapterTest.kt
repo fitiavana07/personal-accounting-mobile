@@ -174,4 +174,50 @@ class EarnAdapterTest {
 
         assertEquals(0, adapter.itemCount)
     }
+
+    // --- tapping the APR ---
+
+    private fun aprState() = state(earn, balances = listOf(balance("earn", 1_200_000L)))
+
+    @Test
+    fun `the APR is underlined and reports a tap with its item`() {
+        var tapped: EarnItem? = null
+        val adapter = EarnAdapter(onAprClick = { tapped = it }).also { it.submit(aprState()) }
+        val view = bindAt(adapter, 1)
+
+        val apr = view.findViewById<TextView>(R.id.text_earn_apr)
+        val spanned = apr.text as android.text.Spanned
+        assertEquals(1, spanned.getSpans(0, spanned.length, android.text.style.UnderlineSpan::class.java).size)
+        assertEquals("12% APR", apr.text.toString())
+        apr.performClick()
+        assertEquals("earn", tapped?.account?.id)
+        assertEquals(12.0, tapped?.aprPercent ?: 0.0, 0.0)
+    }
+
+    @Test
+    fun `without a handler the APR is plain and not tappable`() {
+        val view = bindAt(adapterWith(aprState()), 1)
+
+        val apr = view.findViewById<TextView>(R.id.text_earn_apr)
+        assertFalse(apr.isClickable)
+        val text = apr.text
+        assertTrue(text !is android.text.Spanned ||
+            text.getSpans(0, text.length, android.text.style.UnderlineSpan::class.java).isEmpty())
+    }
+
+    @Test
+    fun `tapping the APR does not expand the card, tapping the card still does`() {
+        val withInstrument = Account(id = "btc", name = "BTC Earn", type = "asset", instrumentCode = "BTC", aprPercent = 4.0)
+        val adapter = EarnAdapter(onAprClick = {}).also {
+            it.submit(state(withInstrument, balances = listOf(balance("btc", 500_000L, instrument = 100_000L))))
+        }
+        val view = bindAt(adapter, 1)
+        val native = view.findViewById<View>(R.id.text_earn_native)
+
+        view.findViewById<TextView>(R.id.text_earn_apr).performClick()
+        assertEquals(View.GONE, native.visibility)
+
+        view.performClick()
+        assertEquals(View.VISIBLE, native.visibility)
+    }
 }

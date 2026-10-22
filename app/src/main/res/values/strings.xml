@@ -117,6 +117,8 @@
     <string name="home_progress_remaining">%1$s to go</string>
     <string name="home_progress_goal_reached">Goal reached</string>
     <string name="dialog_edit_monthly_expenses_title">Monthly Living Expenses (Ar)</string>
+    <string name="dialog_edit_apr_title">Yearly interest (APR)</string>
+    <string name="error_invalid_apr">Enter a rate greater than 0</string>
     <string name="title_home_detail">Position Details</string>
     <string name="home_detail_label_balance">Balance</string>
     <string name="home_detail_label_market_value">Market value</string>

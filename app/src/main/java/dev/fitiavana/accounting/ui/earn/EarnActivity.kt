@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.ui.common.EditAprDialog
 import dev.fitiavana.accounting.ui.common.UiUtils
 
 /** Projected daily, monthly and yearly interest of every asset account that has an APR. */
@@ -36,7 +37,9 @@ class EarnActivity : AppCompatActivity() {
             )
         ).get(EarnViewModel::class.java)
 
-        val adapter = EarnAdapter()
+        val adapter = EarnAdapter(onAprClick = { item ->
+            EditAprDialog.show(this, item.account.name, item.aprPercent) { viewModel.updateApr(item.account.id, it) }
+        })
         val recycler = findViewById<RecyclerView>(R.id.recycler_earn).apply {
             layoutManager = LinearLayoutManager(this@EarnActivity)
             this.adapter = adapter

@@ -86,4 +86,39 @@ class EarnActivityTest {
 
         assertEquals(true, activity.isFinishing)
     }
+
+    @Test
+    fun `tapping the APR opens the dialog and saving updates the account`() {
+        removeEarnAccounts()
+        Thread {
+            AppContainer.getInstance(context).accountRepository
+                .insert(Account(id = "earn_edit", name = "Edit Me", type = "asset", aprPercent = 8.0))
+            AppDatabase.getInstance(context).accountBalanceDao().insert(
+                AccountBalance(accountId = "earn_edit", balance = 1_000_000L, updatedAt = 0L, createdAt = 0L)
+            )
+        }.apply { start(); join() }
+        val activity = launch()
+        val recycler = activity.findViewById<RecyclerView>(R.id.recycler_earn)
+        waitUntil { (recycler.adapter?.itemCount ?: 0) >= 2 }
+        val adapter = recycler.adapter!!
+        val holder = adapter.onCreateViewHolder(recycler, adapter.getItemViewType(1))
+        adapter.onBindViewHolder(holder, 1)
+
+        holder.itemView.findViewById<TextView>(R.id.text_earn_apr).performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        val dialog = org.robolectric.shadows.ShadowDialog.getLatestDialog() as androidx.appcompat.app.AlertDialog
+        assertEquals("Edit Me", dialog.findViewById<TextView>(androidx.appcompat.R.id.alertTitle)!!.text.toString())
+        val input = dialog.findViewById<android.widget.EditText>(R.id.input_apr)!!
+        assertEquals("8", input.text.toString())
+        input.setText("7,25")
+        dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).performClick()
+
+        waitUntil {
+            var saved: Double? = null
+            Thread { saved = AppContainer.getInstance(context).accountRepository.getById("earn_edit")?.aprPercent }
+                .apply { start(); join() }
+            saved == 7.25
+        }
+    }
 }

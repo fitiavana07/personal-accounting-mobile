@@ -361,7 +361,7 @@ class ReportPresenterTest {
         assertEquals(
             listOf(
                 ReportDisplayRow.AccountLine("Earn", "50,000 ", null, accountId = "a1", expandable = true, expanded = true),
-                ReportDisplayRow.AprLine("5.5% ")
+                ReportDisplayRow.AprLine("5.5% ", "a1", 5.5, "Earn")
             ),
             result
         )
@@ -379,7 +379,7 @@ class ReportPresenterTest {
             listOf(
                 ReportDisplayRow.AccountLine("Earn", "50,000 ", null, accountId = "a1", expandable = true, expanded = true),
                 ReportDisplayRow.NativeLine("USDT", "1,250.5 "),
-                ReportDisplayRow.AprLine("12% ")
+                ReportDisplayRow.AprLine("12% ", "a1", 12.0, "Earn")
             ),
             result
         )

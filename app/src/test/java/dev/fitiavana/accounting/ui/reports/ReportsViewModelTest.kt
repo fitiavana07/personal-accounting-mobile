@@ -561,6 +561,40 @@ class ReportsViewModelTest {
         verify(balanceRepository).computeIntermediaryBalancesAsOf(cutoff)
     }
 
+    private fun loadEarnAccount(type: String = "asset") {
+        whenever(balanceRepository.getTransactionDateRange())
+            .thenReturn(millisFor(2025, Calendar.JANUARY, 1) to millisFor(2025, Calendar.JANUARY, 20))
+        val earn = Account(id = "earn", name = "Earn", type = type, aprPercent = 5.5)
+        whenever(accountRepository.getAllSync()).thenReturn(listOf(earn))
+        whenever(accountRepository.getById("earn")).thenReturn(earn)
+        whenever(balanceRepository.computeBalancesAsOf(any())).thenReturn(mapOf("earn" to 500_000L))
+        viewModel.loadInitialSync()
+        viewModel.toggleAccount("earn")
+    }
+
+    @Test
+    fun `updating the APR saves it through the repository and shows the new rate`() {
+        loadEarnAccount()
+        whenever(accountRepository.updateApr("earn", 7.25)).thenReturn(true)
+        whenever(accountRepository.getAllSync())
+            .thenReturn(listOf(Account(id = "earn", name = "Earn", type = "asset", aprPercent = 7.25)))
+
+        viewModel.updateAprSync("earn", 7.25)
+
+        verify(accountRepository).updateApr("earn", 7.25)
+        assertTrue(rows().contains(ReportDisplayRow.AprLine("7.25% ", "earn", 7.25, "Earn")))
+    }
+
+    @Test
+    fun `nothing is reloaded when the repository does not save the rate`() {
+        loadEarnAccount()
+        whenever(accountRepository.updateApr("earn", 0.0)).thenReturn(false)
+
+        viewModel.updateAprSync("earn", 0.0)
+
+        verify(accountRepository, times(1)).getAllSync()
+    }
+
     @Test
     fun `an asset with an APR but no instrument can be expanded to show its rate`() {
         whenever(balanceRepository.getTransactionDateRange())
@@ -573,7 +607,7 @@ class ReportsViewModelTest {
 
         viewModel.toggleAccount("earn")
 
-        assertTrue(viewModel.balanceSheetRows.value.orEmpty().contains(ReportDisplayRow.AprLine("5.5% ")))
+        assertTrue(viewModel.balanceSheetRows.value.orEmpty().contains(ReportDisplayRow.AprLine("5.5% ", "earn", 5.5, "Earn")))
         assertEquals(true, viewModel.expandToggle.value?.visible)
     }
 

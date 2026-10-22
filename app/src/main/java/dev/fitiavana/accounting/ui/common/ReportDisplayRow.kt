@@ -17,8 +17,12 @@ sealed class ReportDisplayRow {
     /** Sub-row under an expanded [AccountLine]: balance in one instrument, labeled by its [code]. */
     data class NativeLine(val code: String, val amountText: String) : ReportDisplayRow()
 
-    /** Sub-row under an expanded [AccountLine] of an Earn account: its yearly rate, e.g. "5.5% ". */
-    data class AprLine(val amountText: String) : ReportDisplayRow()
+    /**
+     * Sub-row under an expanded [AccountLine] of an Earn account: its yearly rate, e.g. "5.5% ".
+     * [accountId], [aprPercent] and [accountName] let the rate be tapped to edit it.
+     */
+    data class AprLine(val amountText: String, val accountId: String?, val aprPercent: Double, val accountName: String) :
+        ReportDisplayRow()
     data class TotalLine(
         val label: String,
         val amountText: String,

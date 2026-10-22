@@ -114,10 +114,56 @@ class ReportAdapterTest {
     @Test
     fun `APR line shows APR on the left and the rate on the right`() {
         val adapter = ReportAdapter()
-        val h = bind(adapter, listOf(ReportDisplayRow.AprLine("5.5% ")), 0)
+        val h = bind(adapter, listOf(ReportDisplayRow.AprLine("5.5% ", "a1", 5.5, "Earn")), 0)
 
         assertEquals("APR", label(h).text.toString())
         assertEquals("5.5% ", amount(h).text.toString())
         assertFalse(h.itemView.isClickable)
+        assertFalse(label(h).isClickable)
+    }
+
+    @Test
+    fun `APR value is underlined and reports clicks with its row`() {
+        var clicked: ReportDisplayRow.AprLine? = null
+        val adapter = ReportAdapter(onAprClick = { clicked = it })
+        val h = bind(adapter, listOf(ReportDisplayRow.AprLine("5.5% ", "a1", 5.5, "Earn")), 0)
+
+        val text = amount(h).text as android.text.Spanned
+        val underline = text.getSpans(0, text.length, android.text.style.UnderlineSpan::class.java)
+        assertEquals(1, underline.size)
+        assertEquals(0, text.getSpanStart(underline[0]))
+        assertEquals(4, text.getSpanEnd(underline[0]))
+        amount(h).performClick()
+        assertEquals(ReportDisplayRow.AprLine("5.5% ", "a1", 5.5, "Earn"), clicked)
+    }
+
+    @Test
+    fun `APR value is not tappable without a handler`() {
+        val adapter = ReportAdapter()
+        val h = bind(adapter, listOf(ReportDisplayRow.AprLine("5.5% ", "a1", 5.5, "Earn")), 0)
+
+        assertFalse(amount(h).isClickable)
+    }
+
+    @Test
+    fun `recycled holder loses the APR underline and click when rebound`() {
+        var clicked = false
+        val adapter = ReportAdapter(onAprClick = { clicked = true })
+        val rows = listOf(
+            ReportDisplayRow.AprLine("5.5% ", "a1", 5.5, "Earn"),
+            ReportDisplayRow.NativeLine("USDT", "1 "),
+            ReportDisplayRow.AccountLine("Cash", "20,000 ", accountId = "a2")
+        )
+        val h = bind(adapter, rows, 0)
+
+        for (position in 1..2) {
+            adapter.onBindViewHolder(h, position)
+            val text = amount(h).text
+            assertTrue(text !is android.text.Spanned ||
+                text.getSpans(0, text.length, android.text.style.UnderlineSpan::class.java).isEmpty())
+            assertFalse(amount(h).isClickable)
+            amount(h).performClick()
+        }
+        assertFalse(clicked)
     }
 }

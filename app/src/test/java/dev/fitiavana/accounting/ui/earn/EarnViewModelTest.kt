@@ -14,6 +14,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 class EarnViewModelTest {
@@ -24,6 +25,7 @@ class EarnViewModelTest {
     private val accounts = MutableLiveData<List<Account>>()
     private val balances = MutableLiveData<List<AccountBalance>>()
     private val instruments = MutableLiveData<List<Instrument>>()
+    private lateinit var accountRepository: AccountRepository
     private lateinit var viewModel: EarnViewModel
 
     private fun balance(id: String, base: Long) =
@@ -31,7 +33,7 @@ class EarnViewModelTest {
 
     @Before
     fun setUp() {
-        val accountRepository: AccountRepository = mock()
+        accountRepository = mock()
         val balanceRepository: BalanceRepository = mock()
         val instrumentRepository: InstrumentRepository = mock()
         whenever(accountRepository.getAll()).thenReturn(accounts)
@@ -39,6 +41,13 @@ class EarnViewModelTest {
         whenever(instrumentRepository.getAll()).thenReturn(instruments)
         viewModel = EarnViewModel(accountRepository, balanceRepository, instrumentRepository)
         viewModel.state.observeForever { }
+    }
+
+    @Test
+    fun `updating the APR is delegated to the account repository`() {
+        viewModel.updateAprSync("earn", 7.25)
+
+        verify(accountRepository).updateApr("earn", 7.25)
     }
 
     @Test

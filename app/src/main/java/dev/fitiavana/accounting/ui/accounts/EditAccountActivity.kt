@@ -359,8 +359,7 @@ class EditAccountActivity : AppCompatActivity() {
                 val liquidityPos = liquidityLevelSpinner.selectedItemPosition
                 val selectedLiquidityLevel =
                     if (selectedType != "asset" || liquidityPos == 0) null else LiquidityLevels.VALUES[liquidityPos - 1]
-                // Accept a comma as the decimal separator, which some keyboards produce.
-                val selectedApr = aprInput.text.toString().trim().replace(',', '.').toDoubleOrNull()
+                val selectedApr = TransactionDisplay.parseApr(aprInput.text.toString())
                 val selectedIncomeOnIntermediary = incomeOnIntermediaryCheck.isChecked
                 val revenuePos = linkedRevenueSpinner.selectedItemPosition
                 val selectedLinkedRevenueId = revenueAccounts.getOrNull(revenuePos - 1)?.id

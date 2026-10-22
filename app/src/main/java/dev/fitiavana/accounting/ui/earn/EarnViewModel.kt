@@ -13,7 +13,7 @@ import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 
 /** Earn accounts (asset accounts with an APR) and their projected interest, kept current as the data changes. */
 class EarnViewModel(
-    accountRepository: AccountRepository,
+    private val accountRepository: AccountRepository,
     balanceRepository: BalanceRepository,
     instrumentRepository: InstrumentRepository
 ) : ViewModel() {
@@ -38,6 +38,15 @@ class EarnViewModel(
             latestInstruments = (it ?: emptyList()).associateBy { instrument -> instrument.code }
             update()
         }
+    }
+
+    /** Saves a new yearly rate for [accountId]; the list refreshes itself when the account row changes. */
+    fun updateApr(accountId: String, aprPercent: Double) {
+        Thread { updateAprSync(accountId, aprPercent) }.start()
+    }
+
+    internal fun updateAprSync(accountId: String, aprPercent: Double) {
+        accountRepository.updateApr(accountId, aprPercent)
     }
 }
 

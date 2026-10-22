@@ -49,7 +49,8 @@ intermediary (the last two null when the account has none).
 - **Reports, Balance Sheet:** an asset account with an APR becomes tappable even without instruments. Expanding it
   (the same chevron / "Expand all" as the native amounts) shows the instrument amounts, then an `APR  5.5%` row.
   `BalanceSheetBuilder.buildMonthly` puts the rate on `ReportRow.AccountLine.aprPercent`; `ReportPresenter` adds a
-  `ReportDisplayRow.AprLine`; `ReportAdapter` renders it like a native row.
+  `ReportDisplayRow.AprLine`; `ReportAdapter` renders it like a native row, with the rate underlined: tapping it opens
+  `EditAprDialog` to change the APR without leaving Reports (`ReportsViewModel.updateApr`).
 - **Earn screen** (`ui/earn/`), opened from the **Earn** button on the Home shortcuts row (after CEX Prices and
   Mo. Expenses; `ic_home_earn` is a coin with an up arrow). It lists every asset account with an APR **and a non-zero base-currency balance**, **largest
   yearly interest first** (then by name). With no Earn account it shows a hint on how to set one.
@@ -60,7 +61,11 @@ intermediary (the last two null when the account has none).
     A thin bar at the bottom shows the account's share of the total yearly interest (`EarnItem.yearlySharePercent`).
   - **Tap** an account that has an instrument to show its interest in the instrument's (and intermediary's) own
     units, one `Day:` / `Month:` / `Year:` line each; tap again to hide. Open cards stay open across data refreshes
-    (the adapter keeps the set of open account ids). Accounts without an instrument are not tappable.
+    (the adapter keeps the set of open account ids). Accounts without an instrument do not expand.
+  - **Tap the underlined APR** on any card to change it: `EarnAdapter(onAprClick)` opens `EditAprDialog` (same dialog as
+    the Balance Sheet), and Save calls `EarnViewModel.updateApr` -> `AccountRepository.updateApr` (asset accounts, rate
+    > 0, stamped for sync). No manual reload: the account row changes, so the list, order and totals rebuild by themselves.
+    Tapping the APR does not expand the card.
 
 ## Pre-associated revenue account
 
@@ -85,7 +90,8 @@ link whose revenue account is gone (see `p2p-sync.md`).
 `AccountDaoTest` (APR round trip), `Migration18To19Test` (the new column matches Room's schema, also upgrading
 from 17, and re-running is harmless), `Migration17To18Test` (leaves `accounts` untouched),
 `BackupRepositoryTest`, `EditAccountViewModelTest`, `EditAccountActivityTest`, `AccountsAdapterAprTest`,
-`BalanceSheetBuilderTest` / `ReportPresenterTest` / `ReportAdapterTest` / `ReportsViewModelTest` (APR row),
+`BalanceSheetBuilderTest` / `ReportPresenterTest` / `ReportAdapterTest` / `ReportsViewModelTest` (APR row and its edit),
+`EditAprDialogTest`, `AccountRepositoryAprTest` (the save rule and its stamp), and the APR tap in `EarnAdapterTest` / `EarnActivityTest` / `EarnViewModelTest`,
 `TransactionDisplayTest`, `HomeShortcutsAdapterTest` and `HomeFragmentTest` (the Earn button).
 
 ### Manual checklist (on a device, run it yourself)
@@ -97,5 +103,10 @@ from 17, and re-running is harmless), `Migration17To18Test` (leaves `accounts` u
    appear after the base amount on each line.
 4. Reports, Balance Sheet: the account shows a chevron; expanding it shows the `APR  5.5%` row under the native
    rows. **Expand all** includes it.
+   Tap the underlined rate: a dialog opens prefilled; enter `7,25` (comma works) and Save. The row, the Accounts list
+   and the Earn screen show `7.25%`. `0`, empty or text keeps the dialog open with an error; Cancel changes nothing.
+   Earn screen: the APR on each card is underlined. Tap it: the same dialog opens, titled with the account name and
+   prefilled. Save `7,25`: the card shows `7.25% APR`, the totals and the order update, and a card you had expanded
+   stays expanded. Tapping the APR does not expand the card; tapping elsewhere on an account with an instrument does.
 5. Clear the APR (or change the account to another type): it leaves the Earn screen and the Accounts list line.
 6. Back up and restore: the APR is still there.

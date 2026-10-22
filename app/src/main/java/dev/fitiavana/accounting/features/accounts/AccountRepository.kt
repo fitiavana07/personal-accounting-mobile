@@ -22,6 +22,19 @@ class AccountRepository(val dao: AccountDao, private val tracker: ChangeTracker)
         tracker.touch(SyncKind.ACCOUNT, account.id)
     }
 
+    /**
+     * Sets the yearly rate of the asset account [accountId] and leaves everything else as is.
+     * Only asset accounts earn interest and a zero or negative rate means "none", so those (and an
+     * unknown id) are ignored. Returns whether the rate was saved.
+     */
+    fun updateApr(accountId: String, aprPercent: Double): Boolean {
+        if (aprPercent <= 0.0) return false
+        val account = getById(accountId) ?: return false
+        if (account.type != AccountTypes.ASSET) return false
+        update(account.copy(aprPercent = aprPercent))
+        return true
+    }
+
     fun delete(account: Account) = tracker.inTransaction {
         tracker.deletedAccount(account.id)
         dao.delete(account)

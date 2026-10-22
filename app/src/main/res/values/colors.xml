@@ -6,6 +6,8 @@
     <color name="brown_300">#8D6E63</color>
     <color name="brown_500">#5D4037</color>
     <color name="brown_700">#4E342E</color>
+    <!-- Text of dialog buttons (Save, Cancel, OK...); the night variant is lighter so it reads on the dark dialog. -->
+    <color name="dialog_button">@color/gold_500</color>
     <color name="icon_remove">#757575</color>
     <color name="icon_toolbar">@color/black</color>
     <color name="gain">#2E7D32</color>

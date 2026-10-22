@@ -83,6 +83,9 @@ object TransactionDisplay {
     fun formatApr(percent: Double): String =
         java.math.BigDecimal.valueOf(percent).stripTrailingZeros().toPlainString()
 
+    /** Parses an APR typed in an edit field; a comma is accepted as the decimal separator (some keyboards produce it). */
+    fun parseApr(text: String): Double? = text.trim().replace(',', '.').toDoubleOrNull()
+
     /** An APR with its sign, e.g. "5.5%". */
     fun formatAprPercent(percent: Double): String = "${formatApr(percent)}%"
 
