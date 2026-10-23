@@ -224,7 +224,7 @@
     <string name="dialog_delete_template_message">Delete \"%1$s\"? Transactions already made are not affected.</string>
     <string name="cd_delete_template">Delete template</string>
     <string name="home_shortcut_cex_prices">CEX Prices</string>
-    <string name="home_shortcut_monthly_expenses">Mo. Expenses</string>
+    <string name="home_shortcut_monthly_expenses">Monthly Spend</string>
     <string name="home_shortcut_earn">Earn</string>
     <string name="home_shortcut_alerts">Alerts</string>
     <string name="home_p2p_header">Binance P2P · USDT/MGA</string>

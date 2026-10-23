@@ -144,7 +144,7 @@ class HomeShortcutsAdapterTest {
         val label = view.findViewById<android.view.View>(R.id.button_monthly_expenses)
             .findViewById<TextView>(R.id.text_shortcut_monthly_expenses)
 
-        assertEquals("Mo. Expenses", label.text.toString())
+        assertEquals("Monthly Spend", label.text.toString())
     }
 
     @Test
