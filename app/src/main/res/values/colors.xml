@@ -33,6 +33,11 @@
 
     <color name="section_card_bg">@color/white</color>
 
+    <color name="report_card_bg">#FFF7EED8</color>
+    <color name="report_card_footer_bg">#FFEDDFBC</color>
+    <color name="report_net_gain">@color/gain</color>
+    <color name="report_net_loss">@color/loss</color>
+
     <color name="balance_main">@color/gold_500</color>
 
     <!-- Same as the bottom navigation bar's background (colorSurface), for the ring around the add button. -->

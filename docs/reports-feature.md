@@ -5,21 +5,63 @@ Package: `dev.fitiavana.accounting.ui.reports` (UI/ViewModel) +
 
 ## Screen structure
 
-`ReportsFragment` (`ui/reports/ReportsFragment.kt`) hosts four horizontal
-`PeriodSelectorAdapter<T>` tab rows plus content:
+`fragment_reports.xml` has a pinned header (outside the scroll area), a
+`NestedScrollView` with the trends and the report body, and an empty state.
 
-- `recycler_reports_years` — years with transactions (`Int`)
+Pinned header (`layout_reports_header`):
+
+- `text_reports_year` — a chip showing the selected year; tapping it opens a
+  `ListPopupWindow` with the years that have transactions (`showYearDropdown`)
 - `recycler_reports_months` — months of the selected year (`Int?`, 0-11),
   with a trailing `null` entry rendered as a **"Year"** tab
-- `recycler_reports_type` — `ReportType` values (Balance Sheet, Income
-  Statement, Statement of Changes in Equity)
-- `recycler_reports_content` (visible for Balance Sheet/Income Statement) or
-  `scroll_reports_equity` (visible for Changes in Equity) — the report body
+  (`PeriodSelectorAdapter`, `item_period_compact.xml`)
+- `recycler_reports_type` — `ReportType` tabs with an icon and `shortLabel`
+  (Balance Sheet, Income, Equity; `item_period_segment.xml`)
+- `text_reports_as_of_date` — the as-of / period line
+
+Scroll area (`scroll_reports`): the trends block (see below), the
+"Expand all" control, then the report body: `recycler_reports_content`
+(visible for Balance Sheet/Income Statement) or `scroll_reports_equity`
+(visible for Changes in Equity), and a bottom spacer clearing the add button.
 
 `PeriodSelectorAdapter<T>` (`ui/reports/PeriodSelectorAdapter.kt`) is a
-single generic adapter reused for all three tab rows: `labelFor: (T) ->
+single generic adapter reused for the month and type rows: `labelFor: (T) ->
 String`, `onSelected: (T) -> Unit`, `submitList(items, selected)` highlights
 the selected item (bold + gold + underline).
+
+## Report body style (section cards)
+
+On this screen the report bodies are drawn as rounded cream **cards**; Home's
+"Instant Balance Sheet" reuses the same adapter but keeps the flat look.
+
+- **`ReportAdapter(cardStyle = true)`** (only `ReportsFragment` passes it).
+  `submitList` computes a `CardRole` per row with `ReportAdapter.cardRolesFor`:
+  a card runs from a `SectionHeader` (`TOP`) through its rows (`MIDDLE`) to the
+  next *emphasized* `TotalLine` (`BOTTOM`, a slightly darker footer). An
+  emphasized total outside any section (the Income Statement's Net Income) is
+  its own `SINGLE` card; non-emphasized subtotals stay inside the card;
+  `Title`/`DateLine` rows are never in a card.
+- `RowViewHolder.applyCard` runs after each `bind*`: it sets the role's
+  background (`bg_report_card_top/middle/bottom/single.xml`, colours
+  `report_card_bg` / `report_card_footer_bg`, light and night), 16dp side
+  margins and a 12dp gap above `TOP`/`SINGLE` rows. Margins are reset on every
+  bind because views are recycled.
+- **Net result tint:** `ReportDisplayRow.TotalLine.netResultSign` (-1/0/1,
+  set by `ReportPresenter` for `parenthesizeNegative` totals, i.e. Net Income /
+  Net Loss and "Total Unclosed IS accounts"; `null` otherwise). Only an
+  *emphasized* total with a non-zero sign is tinted, green (`report_net_gain`)
+  or red (`report_net_loss`). Income/Expense/Gain/Loss lines and totals stay
+  neutral (parentheses already show contra amounts).
+- **Changes in Equity** (`EquityStatementAdapter`): one card made of the rows,
+  the column-titles row on top (muted), the "Balance at ..." rows tinted
+  (`bg_report_card_footer`), "Changes in ..." rows plain, the last row closing
+  the card. Numbers use the proportional font with tabular figures (`tnum`, API
+  21+), not monospace; `"-"` cells are muted. The table still scrolls
+  horizontally inside `scroll_reports_equity` (16dp start/end padding).
+- Do not edit the shared colours `report_title`, `report_header_text`,
+  `report_divider`, `report_section_header_bg`, `report_grand_total_bg`: Home,
+  Transaction detail, Sync and Cloud Backup use them. Add `report_card_*`
+  names instead.
 
 ## `ReportsViewModel` (`ui/reports/ReportsViewModel.kt`)
 
@@ -111,12 +153,13 @@ month/year to stay deterministic).
 
 ## `ReportType` (`ui/reports/ReportType.kt`)
 
-Plain enum, not a string resource:
+Plain enum, not a string resource; `shortLabel` and `iconRes` are used by the
+type tabs:
 ```kotlin
-enum class ReportType(val label: String) {
-    BALANCE_SHEET("Balance Sheet"),
-    INCOME_STATEMENT("Income Statement"),
-    CHANGES_IN_EQUITY("Statement of Changes in Equity")
+enum class ReportType(val label: String, val shortLabel: String, val iconRes: Int) {
+    BALANCE_SHEET("Balance Sheet", "Balance Sheet", R.drawable.ic_report_balance_sheet),
+    INCOME_STATEMENT("Income Statement", "Income", R.drawable.ic_report_income_statement),
+    CHANGES_IN_EQUITY("Statement of Changes in Equity", "Equity", R.drawable.ic_report_equity_statement)
 }
 ```
 Orthogonal to the year/month/Year-tab period selection.
@@ -165,11 +208,12 @@ Collapse all" control (`text_reports_expand_all`) sits under the as-of date.
   `ReportsViewModel.updateApr` -> `AccountRepository.updateApr` (stamped for sync), then reloads the sheet. Only
   positive rates on asset accounts can be saved (there is no "remove" here; clear the APR in Edit account).
 
-## Trend charts (above the period selector)
+## Trend charts (top of the scroll area)
 
-- A "Trends" block at the top of `fragment_reports.xml` is always shown (no collapse control) and displays two charts at once: net worth
+- A "Trends" block (`text_trend_toggle` + `layout_trend`) opens the scroll area, below the pinned header. Tapping
+  the toggle (chevron ▼/►) collapses or expands it. It displays two charts at once: net worth
   (`LineChart`) and net income (`BarChart`, coloured by sign), for the last `TrendSeriesBuilder.MAX_MONTHS` (12)
-  months that have transactions. The whole screen sits in a `NestedScrollView`, so the charts scroll away and the
+  months that have transactions. The scroll area is a `NestedScrollView`, so the charts scroll away and the
   report list does not scroll by itself.
 - `TrendSeriesBuilder` (pure) reuses the report builders: net worth = `BalanceSheetBuilder.totalEquity` over
   `computeBalancesAsOf(asOfMillis)`, net income = `IncomeStatementBuilder.netIncome` (the Income Statement's
@@ -187,6 +231,11 @@ Collapse all" control (`text_reports_expand_all`) sits under the as-of date.
 
 - `TrendSeriesBuilderTest`, `TrendChartRendererTest`, plus the trend cases in `ReportsViewModelTest` /
   `ReportsFragmentTest`.
+- `ReportAdapterTest` (Robolectric) — row binding, chevron/APR clicks, and the card style: `cardRolesFor`
+  grouping, card margins/backgrounds, recycling reset, flat default style, net-result tint.
+- `EquityStatementAdapterTest` (Robolectric) — card backgrounds, tabular proportional numbers, muted titles and
+  dashes. (Bold weight is not asserted: Robolectric's `Typeface` does not report it.)
+- `ReportPresenterTest` — formatting and `netResultSign`.
 - `ReportPeriodSelectorTest.kt` — pure date-math unit tests per function
   (including the year-level functions above).
 - `ReportsViewModelTest.kt` — mocks `AccountRepository`/`BalanceRepository`

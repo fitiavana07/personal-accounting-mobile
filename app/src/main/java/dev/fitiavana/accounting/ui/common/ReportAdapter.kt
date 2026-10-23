@@ -18,18 +18,27 @@ import java.util.Locale
  * @param onAccountClick called with the account id when an expandable [ReportDisplayRow.AccountLine] is tapped;
  * when null (e.g. Home), account lines are not clickable.
  * @param onAprClick called with the [ReportDisplayRow.AprLine] when its underlined rate is tapped; when null, the rate is plain text.
+ * @param cardStyle groups each section (header … emphasized total) into one rounded card, and tints net results
+ * green/red (Reports screen); the flat look is kept otherwise (Home).
  */
 class ReportAdapter(
     private val onAccountClick: ((String) -> Unit)? = null,
-    private val onAprClick: ((ReportDisplayRow.AprLine) -> Unit)? = null
+    private val onAprClick: ((ReportDisplayRow.AprLine) -> Unit)? = null,
+    private val cardStyle: Boolean = false
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var rows: List<ReportDisplayRow> = emptyList()
+    private var cardRoles: List<CardRole?> = emptyList()
 
     fun submitList(list: List<ReportDisplayRow>) {
         rows = list
+        cardRoles = if (cardStyle) cardRolesFor(list) else emptyList()
         notifyDataSetChanged()
     }
+
+    /** Where a row sits in its section card; null for rows outside any card. */
+    internal enum class CardRole { TOP, MIDDLE, BOTTOM, SINGLE }
+
 
     override fun getItemCount() = rows.size
 
@@ -58,6 +67,9 @@ class ReportAdapter(
             is ReportDisplayRow.NativeLine -> (holder as RowViewHolder).bindNative(row.code, row.amountText)
             is ReportDisplayRow.AprLine -> (holder as RowViewHolder).bindApr(row, onAprClick)
             is ReportDisplayRow.TotalLine -> (holder as RowViewHolder).bindTotal(row)
+        }
+        if (cardStyle && holder is RowViewHolder) {
+            holder.applyCard(cardRoles.getOrNull(position), rows[position])
         }
     }
 
@@ -185,6 +197,32 @@ class ReportAdapter(
             setColorDot(null)
         }
 
+        /** Card style: [role]'s background and outer margins (reset on every bind: views are recycled), plus net-result tint. */
+        internal fun applyCard(role: CardRole?, row: ReportDisplayRow) {
+            val background = when (role) {
+                CardRole.TOP -> R.drawable.bg_report_card_top
+                CardRole.MIDDLE -> R.drawable.bg_report_card_middle
+                CardRole.BOTTOM -> R.drawable.bg_report_card_bottom
+                CardRole.SINGLE -> R.drawable.bg_report_card_single
+                null -> null
+            }
+            if (background != null) root.setBackgroundResource(background)
+            val sideMarginPx = if (role != null) dpToPx(16f) else 0
+            val topMarginPx = if (role == CardRole.TOP || role == CardRole.SINGLE) dpToPx(12f) else 0
+            (itemView.layoutParams as? ViewGroup.MarginLayoutParams)?.let {
+                it.setMargins(sideMarginPx, topMarginPx, sideMarginPx, 0)
+                itemView.layoutParams = it
+            }
+            if (row is ReportDisplayRow.TotalLine && row.emphasized && row.netResultSign != null) {
+                amountView.setTextColor(
+                    ContextCompat.getColor(
+                        context,
+                        if (row.netResultSign < 0) R.color.report_net_loss else R.color.report_net_gain
+                    )
+                )
+            }
+        }
+
         private fun resetClick() {
             root.setOnClickListener(null)
             root.isClickable = false
@@ -257,6 +295,20 @@ class ReportAdapter(
     }
 
     companion object {
+        /** A card runs from a [ReportDisplayRow.SectionHeader] to the next emphasized total; a lone emphasized total (Net Income) is its own card. */
+        internal fun cardRolesFor(rows: List<ReportDisplayRow>): List<CardRole?> {
+            var inCard = false
+            return rows.map { row ->
+                when {
+                    row is ReportDisplayRow.SectionHeader -> CardRole.TOP.also { inCard = true }
+                    row is ReportDisplayRow.TotalLine && row.emphasized ->
+                        (if (inCard) CardRole.BOTTOM else CardRole.SINGLE).also { inCard = false }
+                    inCard && row !is ReportDisplayRow.Title && row !is ReportDisplayRow.DateLine -> CardRole.MIDDLE
+                    else -> null
+                }
+            }
+        }
+
         private const val VIEW_TYPE_TITLE = 0
         private const val VIEW_TYPE_ROW = 1
         private const val VIEW_TYPE_DATE = 2

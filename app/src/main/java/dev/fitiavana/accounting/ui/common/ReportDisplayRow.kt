@@ -26,7 +26,10 @@ sealed class ReportDisplayRow {
     data class TotalLine(
         val label: String,
         val amountText: String,
-        val emphasized: Boolean = false
+        val emphasized: Boolean = false,
+        // Sign (-1, 0, 1) of a net result such as Net Income, so card-style reports can tint it
+        // green/red; null for every other total.
+        val netResultSign: Int? = null
     ) : ReportDisplayRow()
     data class DateLine(val text: String) : ReportDisplayRow()
 }

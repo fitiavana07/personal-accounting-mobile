@@ -67,7 +67,8 @@ class ReportsFragment : Fragment() {
                 EditAprDialog.show(requireContext(), line.accountName, line.aprPercent) {
                     line.accountId?.let { id -> viewModel.updateApr(id, it) }
                 }
-            }
+            },
+            cardStyle = true
         )
         equityAdapter = EquityStatementAdapter()
 

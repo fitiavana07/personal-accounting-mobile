@@ -2,6 +2,7 @@ package dev.fitiavana.accounting.ui.common
 
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.os.Build
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -30,10 +31,11 @@ class EquityStatementAdapter : RecyclerView.Adapter<EquityStatementAdapter.RowVi
         // Only the header row's value cells (column titles) wrap onto multiple lines;
         // every other cell, including the leftmost/label column on every row, stays single-line.
         val wrapsValueCells: Boolean = false,
-        // Background color resource, matching the section-header/grand-total rows of the
-        // other reports: goldish for the column-titles header row, grey for the
-        // Starting/Ending balance rows, none for the intermediate "Changes in ..." rows.
-        val backgroundColorRes: Int? = null
+        // Card background drawable: the table is one rounded card (header on top, final balance at the
+        // bottom), with the Starting/Ending balance rows tinted.
+        val backgroundRes: Int,
+        // Column titles are muted; every other row uses the primary text colour.
+        val muted: Boolean = false
     )
 
     private var rows: List<Row> = emptyList()
@@ -48,14 +50,19 @@ class EquityStatementAdapter : RecyclerView.Adapter<EquityStatementAdapter.RowVi
             emphasized = true,
             topDivider = false,
             wrapsValueCells = true,
-            backgroundColorRes = R.color.report_section_header_bg
+            backgroundRes = R.drawable.bg_report_card_top,
+            muted = true
         )
-        val dataRows = display.rows.map {
+        val dataRows = display.rows.mapIndexed { index, it ->
             Row(
                 listOf(it.label) + it.cellTexts,
                 emphasized = it.emphasized,
                 topDivider = it.emphasized,
-                backgroundColorRes = if (it.emphasized) R.color.report_grand_total_bg else null
+                backgroundRes = when {
+                    index == display.rows.lastIndex -> R.drawable.bg_report_card_bottom
+                    it.emphasized -> R.drawable.bg_report_card_footer
+                    else -> R.drawable.bg_report_card_middle
+                }
             )
         }
         rows = listOf(headerRow) + dataRows
@@ -85,9 +92,7 @@ class EquityStatementAdapter : RecyclerView.Adapter<EquityStatementAdapter.RowVi
 
         internal fun bind(row: Row, labelColumnWidthPx: Int) {
             divider.visibility = if (row.topDivider) View.VISIBLE else View.GONE
-            root.setBackgroundColor(
-                row.backgroundColorRes?.let { ContextCompat.getColor(context, it) } ?: 0
-            )
+            root.setBackgroundResource(row.backgroundRes)
             content.removeAllViews()
             row.cellTexts.forEachIndexed { index, text ->
                 val isLabel = index == 0
@@ -96,6 +101,7 @@ class EquityStatementAdapter : RecyclerView.Adapter<EquityStatementAdapter.RowVi
                         text,
                         isLabel = isLabel,
                         bold = row.emphasized,
+                        muted = row.muted || text == "-",
                         wraps = row.wrapsValueCells && !isLabel,
                         widthPx = if (isLabel) labelColumnWidthPx else valueColumnWidthPx()
                     )
@@ -117,7 +123,7 @@ class EquityStatementAdapter : RecyclerView.Adapter<EquityStatementAdapter.RowVi
 
         private fun valueColumnWidthPx(): Int {
             val charWidthPx = Paint().apply {
-                typeface = Typeface.MONOSPACE
+                typeface = Typeface.DEFAULT
                 textSize = spToPx(VALUE_TEXT_SIZE_SP)
             }.measureText("0")
             return dpToPx(VALUE_WIDTH_DP) + (charWidthPx * EXTRA_VALUE_WIDTH_CHARS).toInt()
@@ -129,6 +135,7 @@ class EquityStatementAdapter : RecyclerView.Adapter<EquityStatementAdapter.RowVi
             text: String,
             isLabel: Boolean,
             bold: Boolean,
+            muted: Boolean,
             wraps: Boolean,
             widthPx: Int
         ): TextView =
@@ -143,15 +150,20 @@ class EquityStatementAdapter : RecyclerView.Adapter<EquityStatementAdapter.RowVi
                     0
                 )
                 textSize = if (isLabel) LABEL_TEXT_SIZE_SP else VALUE_TEXT_SIZE_SP
-                typeface = if (isLabel) Typeface.DEFAULT else Typeface.MONOSPACE
-                setTypeface(typeface, if (bold) Typeface.BOLD else Typeface.NORMAL)
+                setTypeface(Typeface.DEFAULT, if (bold || (muted && !isLabel && wraps)) Typeface.BOLD else Typeface.NORMAL)
+                // Tabular figures keep digits aligned in a proportional font (no-op below API 21).
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) fontFeatureSettings = "tnum"
                 maxLines = if (wraps) HEADER_VALUE_MAX_LINES else 1
-                setTextColor(defaultTextColor())
+                setTextColor(if (muted) secondaryTextColor() else defaultTextColor())
             }
 
-        private fun defaultTextColor(): Int {
+        private fun defaultTextColor(): Int = themeTextColor(android.R.attr.textColorPrimary)
+
+        private fun secondaryTextColor(): Int = themeTextColor(android.R.attr.textColorSecondary)
+
+        private fun themeTextColor(attr: Int): Int {
             val typedValue = TypedValue()
-            context.theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+            context.theme.resolveAttribute(attr, typedValue, true)
             return if (typedValue.resourceId != 0) {
                 ContextCompat.getColor(context, typedValue.resourceId)
             } else {

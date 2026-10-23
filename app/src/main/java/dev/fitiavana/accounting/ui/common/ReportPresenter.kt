@@ -38,7 +38,8 @@ object ReportPresenter {
                         arPrefixed = true,
                         contra = row.contra || (row.parenthesizeNegative && row.amount < 0)
                     ),
-                    row.emphasized
+                    row.emphasized,
+                    netResultSign = if (row.parenthesizeNegative) java.lang.Long.signum(row.amount) else null
                 )
             )
 

@@ -221,7 +221,8 @@ class ReportPresenterTest {
                 ReportDisplayRow.TotalLine(
                     "Total Unclosed IS accounts",
                     "(Ar 200)",
-                    emphasized = false
+                    emphasized = false,
+                    netResultSign = -1
                 )
             ),
             result
@@ -244,11 +245,31 @@ class ReportPresenterTest {
                 ReportDisplayRow.TotalLine(
                     "Total Unclosed IS accounts",
                     "Ar 200 ",
-                    emphasized = false
+                    emphasized = false,
+                    netResultSign = 1
                 )
             ),
             result
         )
+    }
+
+    @Test
+    fun `a zero parenthesizeNegative TotalLine has a zero net result sign`() {
+        val result = ReportPresenter.present(
+            listOf(RawRow.TotalLine("Net Income", 0, emphasized = true, parenthesizeNegative = true))
+        )
+        assertEquals(0, (result.single() as ReportDisplayRow.TotalLine).netResultSign)
+    }
+
+    @Test
+    fun `a TotalLine that is not a net result has no net result sign`() {
+        val result = ReportPresenter.present(
+            listOf(
+                RawRow.TotalLine("Total Income", 500, emphasized = true),
+                RawRow.TotalLine("Total Expense", 500, emphasized = true, contra = true)
+            )
+        )
+        assertEquals(listOf(null, null), result.map { (it as ReportDisplayRow.TotalLine).netResultSign })
     }
 
     @Test

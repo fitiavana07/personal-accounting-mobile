@@ -219,6 +219,10 @@
                 android:id="@+id/scroll_reports_equity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:paddingStart="16dp"
+                android:paddingTop="12dp"
+                android:paddingEnd="16dp"
                 android:visibility="gone">
 
                 <androidx.recyclerview.widget.RecyclerView
