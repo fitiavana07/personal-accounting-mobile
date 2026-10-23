@@ -7,7 +7,9 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "app_settings")
 data class AppSettings(
     @PrimaryKey val id: Int = SINGLETON_ID,
-    val monthlyLivingExpenses: Long
+    val monthlyLivingExpenses: Long,
+    /** The asset account shown first in Home's gains/losses; at most one, so it lives on this single row. */
+    val pinnedAccountId: String? = null
 ) {
     companion object {
         const val SINGLETON_ID = 0

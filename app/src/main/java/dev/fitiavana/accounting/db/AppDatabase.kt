@@ -49,7 +49,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun alertDao(): AlertDao
 
     companion object {
-        const val SCHEMA_VERSION = 23
+        const val SCHEMA_VERSION = 24
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -405,6 +405,22 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** Adds the settings' pinned account (the asset shown first on Home). Internal so it can be checked against Room's generated schema. */
+        internal val MIGRATION_23_24 = object : Migration(23, 24) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val hasColumn = db.query("PRAGMA table_info(`app_settings`)").use { cursor ->
+                    var found = false
+                    while (cursor.moveToNext()) {
+                        if (cursor.getString(1) == "pinnedAccountId") found = true
+                    }
+                    found
+                }
+                if (!hasColumn) {
+                    db.execSQL("ALTER TABLE `app_settings` ADD COLUMN `pinnedAccountId` TEXT")
+                }
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -434,7 +450,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_19_20,
                         MIGRATION_20_21,
                         MIGRATION_21_22,
-                        MIGRATION_22_23
+                        MIGRATION_22_23,
+                        MIGRATION_23_24
                     )
                     .build().also { instance = it }
             }

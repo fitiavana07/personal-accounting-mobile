@@ -15,6 +15,7 @@ import dev.fitiavana.accounting.ui.common.UiUtils
  * account. The header is the first position, so row `n` is `items[n - 1]`.
  */
 class HomeAdapter(
+    private val onItemLongClick: (HomeItem) -> Unit = {},
     private val onItemClick: (HomeItem) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -36,7 +37,7 @@ class HomeAdapter(
         return if (viewType == TYPE_SUMMARY) {
             SummaryViewHolder(inflater.inflate(R.layout.item_home_summary, parent, false))
         } else {
-            RowViewHolder(inflater.inflate(R.layout.item_home, parent, false), onItemClick)
+            RowViewHolder(inflater.inflate(R.layout.item_home, parent, false), onItemClick, onItemLongClick)
         }
     }
 
@@ -77,8 +78,13 @@ class HomeAdapter(
         }
     }
 
-    class RowViewHolder(view: View, private val onItemClick: (HomeItem) -> Unit) : RecyclerView.ViewHolder(view) {
+    class RowViewHolder(
+        view: View,
+        private val onItemClick: (HomeItem) -> Unit,
+        private val onItemLongClick: (HomeItem) -> Unit
+    ) : RecyclerView.ViewHolder(view) {
         private val nameView: TextView = view.findViewById(R.id.text_home_account_name)
+        private val pinnedView: View = view.findViewById(R.id.icon_home_pinned)
         private val balanceView: TextView = view.findViewById(R.id.text_home_account_balance)
         private val gainLossAmountView: TextView = view.findViewById(R.id.text_home_gain_loss_amount)
         private val gainLossPercentView: TextView = view.findViewById(R.id.text_home_gain_loss_percent)
@@ -89,7 +95,13 @@ class HomeAdapter(
             nameView.text = item.accountName
             balanceView.text = item.instrumentBalanceFormatted
 
+            pinnedView.visibility = if (item.isPinned) View.VISIBLE else View.GONE
+
             itemView.setOnClickListener { onItemClick(item) }
+            itemView.setOnLongClickListener {
+                onItemLongClick(item)
+                true
+            }
 
             bindSigned(
                 context, gainLossArView, item.gainLossAr,

@@ -134,6 +134,9 @@ the selected type tab, combined with the hide-zero-balance toggle).
 See `docs/earn-feature.md` for Earn (an APR on asset accounts, projected
 interest, the Earn screen and the Balance Sheet APR row).
 
+See `docs/home-pin-feature.md` for pinning one asset first in the Home
+gains/losses (long-press, stored on the synced settings row).
+
 See `docs/gain-loss-alerts-feature.md` for gain/loss % alerts (per-account notifications
 when the Home gain/loss crosses a threshold: crossing semantics with re-arming,
 the hourly alarm, the check after the Home rate fetch, device-local state, sync and

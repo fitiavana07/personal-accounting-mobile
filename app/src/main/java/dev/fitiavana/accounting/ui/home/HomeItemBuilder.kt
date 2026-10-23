@@ -22,7 +22,8 @@ data class HomeItem(
     val gainLossAr: Double?,
     val bookRate: String?,
     val currentRate: String?,
-    val rateFetchedAt: Long?
+    val rateFetchedAt: Long?,
+    val isPinned: Boolean = false
 )
 
 object HomeItemBuilder {
@@ -30,9 +31,10 @@ object HomeItemBuilder {
         balances: List<AccountBalance>,
         accounts: List<Account>,
         instruments: Map<String, Instrument>,
-        rates: Map<String, ExchangeRateCache>
+        rates: Map<String, ExchangeRateCache>,
+        pinnedAccountId: String? = null
     ): List<HomeItem> {
-        return AccountGainLoss.positions(balances, accounts, instruments, rates).map { position ->
+        val items = AccountGainLoss.positions(balances, accounts, instruments, rates).map { position ->
             val balance = position.balance
             val account = position.account
             val instrument = position.instrument
@@ -82,8 +84,11 @@ object HomeItemBuilder {
                 gainLossAr = gainLossAr,
                 bookRate = bookRate,
                 currentRate = currentRate,
-                rateFetchedAt = cached?.fetchedAt
+                rateFetchedAt = cached?.fetchedAt,
+                isPinned = balance.accountId == pinnedAccountId
             )
         }
+        // sortedByDescending is stable, so the other items keep their order.
+        return items.sortedByDescending { it.isPinned }
     }
 }

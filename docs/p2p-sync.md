@@ -14,7 +14,7 @@ pulled), and conflicts are settled by a fixed merge rule. The design is ported f
 | **Transaction together with its entries** | Backup preferences, CEX pair choices |
 | **Template together with its entries** | The device id, the passphrase, the auto-sync switch |
 | Gain/loss alert (`gain_loss_alerts`, see `gain-loss-alerts-feature.md`) | `alert_states` (device-local detection state of each alert) |
-| The settings row (monthly living expenses; key `"0"`) | |
+| The settings row (monthly living expenses and the account pinned on Home; key `"0"`) | |
 
 A transaction and its entries are one record, and so are a template and its entries: they are stamped, merged
 and deleted together, so two versions can never be mixed. Transactions are never edited in the app (only created,

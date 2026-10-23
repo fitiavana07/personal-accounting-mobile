@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.instruments.Instrument
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -92,6 +93,34 @@ class HomeAdapterTest {
         inflate(adapter, 2).performClick()
 
         assertEquals("2", clicked?.accountId)
+    }
+
+    @Test
+    fun `long-pressing a row reports its item`() {
+        var pressed: HomeItem? = null
+        val adapter = HomeAdapter(onItemLongClick = { pressed = it }) { }
+        adapter.submitList(listOf(item("1", 20_000.0), item("2", -5_000.0)))
+
+        inflate(adapter, 2).performLongClick()
+
+        assertEquals("2", pressed?.accountId)
+    }
+
+    @Test
+    fun `the header cannot be long-pressed`() {
+        val adapter = HomeAdapter(onItemLongClick = { }) { }
+        adapter.submitList(listOf(item("1", 20_000.0)))
+
+        assertFalse(inflate(adapter, 0).isLongClickable)
+    }
+
+    @Test
+    fun `only the pinned row shows the pin icon`() {
+        val adapter = HomeAdapter { }
+        adapter.submitList(listOf(item("1", 20_000.0).copy(isPinned = true), item("2", -5_000.0)))
+
+        assertEquals(View.VISIBLE, inflate(adapter, 1).findViewById<View>(R.id.icon_home_pinned).visibility)
+        assertEquals(View.GONE, inflate(adapter, 2).findViewById<View>(R.id.icon_home_pinned).visibility)
     }
 
     @Test

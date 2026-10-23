@@ -110,9 +110,4 @@ class Migration22To23Test {
 
         assertEquals(5, columns(db, "gain_loss_alerts").size)
     }
-
-    @Test
-    fun `the schema version is 23`() {
-        assertEquals(23, AppDatabase.SCHEMA_VERSION)
-    }
 }

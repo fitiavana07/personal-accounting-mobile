@@ -65,7 +65,9 @@ class HomeFragment : Fragment() {
             )
         ).get(HomeViewModel::class.java)
 
-        adapter = HomeAdapter { item ->
+        adapter = HomeAdapter(
+            onItemLongClick = { item -> Thread { viewModel.togglePin(item.accountId) }.start() }
+        ) { item ->
             startActivity(
                 HomeDetailActivity.intent(
                     requireContext(),

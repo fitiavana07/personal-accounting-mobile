@@ -212,8 +212,10 @@ internal fun exchangeRateCacheFromJson(json: JSONObject) =
 
 internal fun AppSettings.toJson() = JSONObject().apply {
     put("monthlyLivingExpenses", monthlyLivingExpenses)
+    pinnedAccountId?.let { put("pinnedAccountId", it) }
 }
 
 internal fun appSettingsFromJson(json: JSONObject) = AppSettings(
-    monthlyLivingExpenses = json.getLong("monthlyLivingExpenses")
+    monthlyLivingExpenses = json.getLong("monthlyLivingExpenses"),
+    pinnedAccountId = if (json.has("pinnedAccountId")) json.getString("pinnedAccountId") else null
 )

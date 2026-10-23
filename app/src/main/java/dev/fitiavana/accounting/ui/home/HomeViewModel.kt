@@ -56,14 +56,21 @@ class HomeViewModel(
         var latestAccounts: List<Account> = emptyList()
         var latestInstruments: Map<String, Instrument> = emptyMap()
         var latestRates: Map<String, ExchangeRateCache> = emptyMap()
+        var latestPinnedAccountId: String? = null
 
         fun update() {
             value = HomeItemBuilder.build(
                 latestBalances,
                 latestAccounts,
                 latestInstruments,
-                latestRates
+                latestRates,
+                latestPinnedAccountId
             )
+        }
+
+        addSource(settingsRepository.observe()) { settings ->
+            latestPinnedAccountId = settings?.pinnedAccountId
+            update()
         }
 
         addSource(balances) { b ->
@@ -275,6 +282,9 @@ class HomeViewModel(
     /** Synchronous — callers must invoke this off the main thread. */
     fun setMonthlyLivingExpenses(amount: Long) =
         settingsRepository.setMonthlyLivingExpenses(amount)
+
+    /** Pins the account first in the gains/losses, or unpins it if it already is. Synchronous — callers must invoke this off the main thread. */
+    fun togglePin(accountId: String) = settingsRepository.togglePin(accountId)
 
     /** Synchronous — callers must invoke this off the main thread. */
     fun refreshRates(): RefreshResult {

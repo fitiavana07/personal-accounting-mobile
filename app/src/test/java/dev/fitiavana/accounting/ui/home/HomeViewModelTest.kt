@@ -177,6 +177,34 @@ class HomeViewModelTest {
         assertEquals(100, result.sixMonthPercent)
     }
 
+    private fun pinnableAccounts() {
+        val instrument = Instrument(code = "BTC", note = "", type = "cryptocurrency", decimalPlaces = 8, coingeckoId = "bitcoin")
+        val usdt = Instrument(code = "USDT", note = "", type = "currency", decimalPlaces = 2)
+        instruments.value = listOf(instrument, usdt)
+        accounts.value = listOf("a", "b").map {
+            Account(id = it, name = it, type = "asset", instrumentCode = "BTC", intermediaryInstrumentCode = "USDT")
+        }
+        balances.value = listOf(balance("a", 50_000), balance("b", 50_000))
+    }
+
+    @Test
+    fun `homeItems puts the pinned account first`() {
+        val viewModel = viewModel()
+        viewModel.homeItems.observeForever {}
+        pinnableAccounts()
+
+        settings.value = AppSettings(monthlyLivingExpenses = 0, pinnedAccountId = "b")
+
+        assertEquals(listOf("b", "a"), viewModel.homeItems.value!!.map { it.accountId })
+    }
+
+    @Test
+    fun `togglePin delegates to the settings repository`() {
+        viewModel().togglePin("a")
+
+        verify(settingsRepository).togglePin("a")
+    }
+
     @Test
     fun `emergencyFund recomputes when asset slices change`() {
         val viewModel = viewModel()

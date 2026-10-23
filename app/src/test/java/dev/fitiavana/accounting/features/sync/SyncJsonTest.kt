@@ -62,6 +62,25 @@ class SyncJsonTest {
     }
 
     @Test
+    fun `the pinned account survives an encode and decode`() {
+        val pinned = snapshot.copy(
+            data = snapshot.data.copy(settings = AppSettings(monthlyLivingExpenses = 5, pinnedAccountId = "a1"))
+        )
+
+        val decoded = SyncJson.decode(JSONObject(SyncJson.encode(pinned).toString()))
+
+        assertEquals("a1", decoded.data.settings?.pinnedAccountId)
+    }
+
+    @Test
+    fun `settings from an older peer have no pin`() {
+        val json = JSONObject(SyncJson.encode(snapshot).toString())
+        json.getJSONObject("settings").remove("pinnedAccountId")
+
+        assertEquals(null, SyncJson.decode(json).data.settings?.pinnedAccountId)
+    }
+
+    @Test
     fun `alerts survive an encode and decode`() {
         val withAlert = snapshot.copy(
             data = snapshot.data.copy(alerts = listOf(SyncFixtures.alert("al1", "a1", AlertTypes.CROSSING_BELOW, -7.5)))

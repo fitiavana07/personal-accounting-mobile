@@ -206,6 +206,40 @@ class HomeItemBuilderTest {
         assertEquals(1, result.size)
     }
 
+    private fun threeAccounts(pinnedAccountId: String?) = HomeItemBuilder.build(
+        balances = listOf(balance("a"), balance("b"), balance("c")),
+        accounts = listOf("a", "b", "c").map {
+            account(it, it, instrumentCode = "BTC", intermediaryInstrumentCode = "USDT")
+        },
+        instruments = mapOf("BTC" to btc, "USDT" to usdt),
+        rates = emptyMap(),
+        pinnedAccountId = pinnedAccountId
+    )
+
+    @Test
+    fun `the pinned account comes first and the others keep their order`() {
+        val result = threeAccounts("c")
+
+        assertEquals(listOf("c", "a", "b"), result.map { it.accountId })
+        assertEquals(listOf(true, false, false), result.map { it.isPinned })
+    }
+
+    @Test
+    fun `nothing is pinned or reordered without a pin`() {
+        val result = threeAccounts(null)
+
+        assertEquals(listOf("a", "b", "c"), result.map { it.accountId })
+        assertTrue(result.none { it.isPinned })
+    }
+
+    @Test
+    fun `a pin on an account that is not listed changes nothing`() {
+        val result = threeAccounts("gone")
+
+        assertEquals(listOf("a", "b", "c"), result.map { it.accountId })
+        assertTrue(result.none { it.isPinned })
+    }
+
     @Test
     fun `account with no balance row is excluded`() {
         val result = HomeItemBuilder.build(
