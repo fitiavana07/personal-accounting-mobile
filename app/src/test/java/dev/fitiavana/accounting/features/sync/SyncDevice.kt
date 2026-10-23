@@ -4,6 +4,7 @@ import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.db.inMemoryDatabase
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.alerts.AlertRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
@@ -18,6 +19,7 @@ class SyncDevice(val id: String, var now: Long = 1_000L, failOnRecalculate: Bool
     val accounts = AccountRepository(db.accountDao(), tracker)
     val transactions = TransactionRepository(db.transactionDao(), tracker)
     val templates = TemplateRepository(db.templateDao(), tracker, clock = { 1L }, idGenerator = IdSequence(id)::next)
+    val alerts = AlertRepository(db.alertDao(), tracker, clock = { 1L }, idGenerator = IdSequence("$id-alert")::next)
     val settings = AppSettingsRepository(db.appSettingsDao(), tracker)
     val balances = BalanceRepository(db.accountDao(), db.accountBalanceDao(), db.transactionDao())
     val sync = syncRepository(AppDatabase.SCHEMA_VERSION, failOnRecalculate)
@@ -31,6 +33,7 @@ class SyncDevice(val id: String, var now: Long = 1_000L, failOnRecalculate: Bool
         accountDao = db.accountDao(),
         transactionDao = db.transactionDao(),
         templateDao = db.templateDao(),
+        alertDao = db.alertDao(),
         appSettingsDao = db.appSettingsDao(),
         schemaVersion = schemaVersion,
         recalculateBalances = if (failOnRecalculate) ({ error("balances failed") }) else balances::recalculateAll,
@@ -70,6 +73,7 @@ class SyncDevice(val id: String, var now: Long = 1_000L, failOnRecalculate: Bool
             transactionEntries = data.transactionEntries.sortedBy { it.id },
             templates = data.templates.sortedBy { it.id },
             templateEntries = data.templateEntries.sortedBy { it.id },
+            alerts = data.alerts.sortedBy { it.id },
         ) to snapshot.meta
     }
 

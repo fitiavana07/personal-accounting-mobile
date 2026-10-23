@@ -1,6 +1,7 @@
 package dev.fitiavana.accounting.features.sync
 
 import dev.fitiavana.accounting.features.FormatException
+import dev.fitiavana.accounting.features.alerts.AlertTypes
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.sync.SyncFixtures.account
 import dev.fitiavana.accounting.features.sync.SyncFixtures.data
@@ -61,6 +62,17 @@ class SyncJsonTest {
     }
 
     @Test
+    fun `alerts survive an encode and decode`() {
+        val withAlert = snapshot.copy(
+            data = snapshot.data.copy(alerts = listOf(SyncFixtures.alert("al1", "a1", AlertTypes.CROSSING_BELOW, -7.5)))
+        )
+
+        val decoded = SyncJson.decode(JSONObject(SyncJson.encode(withAlert).toString()))
+
+        assertEquals(withAlert.data.alerts, decoded.data.alerts)
+    }
+
+    @Test
     fun `large amounts keep their exact value`() {
         val big = 9_007_199_254_740_993L
         val withBig = snapshot.copy(
@@ -74,7 +86,7 @@ class SyncJsonTest {
 
     @Test
     fun `a missing section is rejected`() {
-        listOf("schemaVersion", "instruments", "accounts", "transactions", "transactionEntries", "templates", "templateEntries", "meta")
+        listOf("schemaVersion", "instruments", "accounts", "transactions", "transactionEntries", "templates", "templateEntries", "alerts", "meta")
             .forEach { name ->
                 val broken = json().apply { remove(name) }
                 assertThrows(name, FormatException::class.java) { SyncJson.decode(broken) }

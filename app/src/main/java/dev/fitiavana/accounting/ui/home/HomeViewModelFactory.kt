@@ -3,8 +3,10 @@ package dev.fitiavana.accounting.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.alerts.AlertCheckManager
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
+import dev.fitiavana.accounting.features.exchangerates.RateRefresher
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.p2pprices.P2pPriceRepository
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
@@ -15,7 +17,9 @@ class HomeViewModelFactory(
     private val instrumentRepository: InstrumentRepository,
     private val exchangeRateRepository: ExchangeRateRepository,
     private val settingsRepository: AppSettingsRepository,
-    private val p2pPriceRepository: P2pPriceRepository
+    private val p2pPriceRepository: P2pPriceRepository,
+    private val rateRefresher: RateRefresher,
+    private val alertCheckManager: AlertCheckManager
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
@@ -25,7 +29,9 @@ class HomeViewModelFactory(
             instrumentRepository,
             exchangeRateRepository,
             settingsRepository,
-            p2pPriceRepository
+            p2pPriceRepository,
+            rateRefresher,
+            alertCheckManager
         ) as T
     }
 }

@@ -46,6 +46,17 @@ class SyncRulesTest {
     }
 
     @Test
+    fun `an alert on a missing account is a violation`() {
+        assertNull(SyncRules.violation(valid.copy(alerts = listOf(SyncFixtures.alert("al", "a1")))))
+        assertNotNull(SyncRules.violation(valid.copy(alerts = listOf(SyncFixtures.alert("al", "gone")))))
+    }
+
+    @Test
+    fun `two alerts with the same id are a violation`() {
+        assertNotNull(SyncRules.violation(valid.copy(alerts = listOf(SyncFixtures.alert("al"), SyncFixtures.alert("al")))))
+    }
+
+    @Test
     fun `duplicate ids are a violation`() {
         assertNotNull(SyncRules.violation(valid.copy(instruments = listOf(instrument("USD"), instrument("USD")))))
         assertNotNull(SyncRules.violation(valid.copy(accounts = listOf(account("a1"), account("a1")))))

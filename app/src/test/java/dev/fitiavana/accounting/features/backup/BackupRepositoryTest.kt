@@ -1,5 +1,8 @@
 package dev.fitiavana.accounting.features.backup
 
+import dev.fitiavana.accounting.features.alerts.AlertDao
+import dev.fitiavana.accounting.features.alerts.AlertTypes
+import dev.fitiavana.accounting.features.alerts.GainLossAlert
 import dev.fitiavana.accounting.features.balances.AccountBalanceDao
 import dev.fitiavana.accounting.features.accounts.AccountDao
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
@@ -50,7 +53,12 @@ class BackupRepositoryTest {
     private lateinit var exchangeRateCacheDao: ExchangeRateCacheDao
     private lateinit var appSettingsDao: AppSettingsDao
     private lateinit var templateDao: TemplateDao
+    private lateinit var alertDao: AlertDao
     private lateinit var repository: BackupRepository
+
+    private val alert = GainLossAlert(
+        id = "al1", accountId = "acc1", type = AlertTypes.CROSSING_BELOW, thresholdPercent = -7.5, createdAt = 600L
+    )
 
     private val instrument = Instrument(
         code = "BTC", note = "Bitcoin", type = "crypto", decimalPlaces = 8, coingeckoId = "bitcoin"
@@ -103,10 +111,12 @@ class BackupRepositoryTest {
         exchangeRateCacheDao = mock()
         appSettingsDao = mock()
         templateDao = mock()
+        alertDao = mock()
         repository = BackupRepository(
             database, accountDao, instrumentDao, transactionDao, balanceDao,
-            exchangeRateCacheDao, appSettingsDao, templateDao, inlineTracker()
+            exchangeRateCacheDao, appSettingsDao, templateDao, alertDao, inlineTracker()
         )
+        whenever(alertDao.getAllSync()).thenReturn(listOf(alert))
         whenever(templateDao.getAllTemplatesSync()).thenReturn(listOf(template))
         whenever(templateDao.getAllEntriesSync()).thenReturn(listOf(templateEntryFrom, templateEntryTo))
 
@@ -266,6 +276,49 @@ class BackupRepositoryTest {
         order.verify(transactionDao).insertAllEntries(any())
         order.verify(balanceDao).insertAll(any())
         order.verify(exchangeRateCacheDao).insertAll(any())
+    }
+
+    // --- alerts ---
+
+    @Test
+    fun `export includes the alerts but not their device-local state`() {
+        val json = JSONObject(repository.export())
+
+        val alerts = json.getJSONArray("gainLossAlerts")
+        assertEquals(1, alerts.length())
+        assertEquals("al1", alerts.getJSONObject(0).getString("id"))
+        assertEquals(-7.5, alerts.getJSONObject(0).getDouble("thresholdPercent"), 0.0)
+        assertTrue(!json.has("alertStates"))
+        verify(alertDao, never()).getAllStatesSync()
+    }
+
+    @Test
+    fun `restore round trip reproduces the alerts`() {
+        repository.restore(repository.export())
+
+        verify(alertDao).insertAll(listOf(alert))
+    }
+
+    @Test
+    fun `restore deletes alerts before accounts and inserts them after accounts`() {
+        repository.restore(repository.export())
+
+        val order = inOrder(alertDao, accountDao)
+        order.verify(alertDao).deleteAll()
+        order.verify(accountDao).deleteAll()
+        order.verify(accountDao).insertAll(any())
+        order.verify(alertDao).insertAll(any())
+    }
+
+    @Test
+    fun `restore tolerates a backup without alerts`() {
+        val json = JSONObject(repository.export())
+        json.remove("gainLossAlerts")
+
+        val result = repository.restore(json.toString())
+
+        assertTrue(result is RestoreResult.Success)
+        verify(alertDao).insertAll(emptyList())
     }
 
     // --- templates ---

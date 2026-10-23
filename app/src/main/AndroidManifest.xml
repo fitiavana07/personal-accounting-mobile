@@ -66,6 +66,11 @@
             android:exported="false"
             android:parentActivityName=".MainActivity" />
         <activity
+            android:name=".ui.alerts.AlertsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".ui.changelog.ChangelogActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
@@ -86,6 +91,9 @@
             android:exported="false" />
         <receiver
             android:name=".features.cloudbackup.CloudBackupReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".features.alerts.AlertCheckReceiver"
             android:exported="false" />
         <receiver
             android:name=".features.backup.BootReceiver"

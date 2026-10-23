@@ -49,11 +49,15 @@ class ChangeTracker(
     }
 
     /**
-     * Tombstones an account and restamps the templates that pick it (the foreign key cascade removes
-     * their entry). Must run before the account is deleted, because it reads what the cascade takes.
+     * Tombstones an account and its alerts (the foreign key cascade removes them) and restamps the
+     * templates that pick it (the cascade removes their entry). Must run before the account is deleted,
+     * because it reads what the cascade takes.
      */
     fun deletedAccount(id: String) {
-        deleted(listOf(RecordKey(SyncKind.ACCOUNT, id)))
+        deleted(
+            listOf(RecordKey(SyncKind.ACCOUNT, id)) +
+                dao.alertIdsOfAccount(id).map { RecordKey(SyncKind.ALERT, it) }
+        )
         touch(SyncKind.TEMPLATE, dao.templateIdsOfAccount(id))
     }
 

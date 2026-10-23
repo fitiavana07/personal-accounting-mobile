@@ -58,6 +58,7 @@ features/
   reports/        # AccountLines, ReportRow, BalanceSheetBuilder, IncomeStatementBuilder, EquityStatementBuilder
   cexprices/      # CexPrice, CexPriceRepository
   p2pprices/      # P2pPrices, P2pPriceRepository (Binance P2P USDT/MGA top ads on home)
+  alerts/         # GainLossAlert/AlertState (@Entity), AlertDao, AlertRepository, AlertEvaluator, AlertCheckManager, hourly alarm + notifier
   settings/       # AppSettings (@Entity), AppSettingsDao, AppSettingsRepository
   backup/         # BackupRepository, AutoBackupManager (daily backups)
   cloudbackup/    # CloudBackupManager/Repository, BackupEnvelope (.accbak), SafCloudFolder (Drive via SAF), CloudBackupStore
@@ -77,6 +78,7 @@ ui/
   reports/       # ReportsFragment, ReportsViewModel, ReportPeriodSelector
   home/          # HomeFragment, HomeViewModel (dashboard/metrics)
   earn/          # EarnActivity, EarnViewModel, EarnAdapter (interest on accounts with an APR)
+  alerts/        # AlertsActivity, AlertsViewModel, AlertsAdapter, EditAlertDialog (gain/loss % alerts)
   sync/          # SyncActivity, SyncViewModel, SyncPeersAdapter (passphrase, auto-sync, devices found)
   cloudbackup/   # CloudBackupActivity, CloudBackupViewModel (Drive folder, passphrase, daily backup, restore)
   changelog/     # ChangelogActivity, ChangelogViewModel, ChangelogAdapter (Release notes screen)
@@ -131,6 +133,11 @@ the selected type tab, combined with the hide-zero-balance toggle).
 
 See `docs/earn-feature.md` for Earn (an APR on asset accounts, projected
 interest, the Earn screen and the Balance Sheet APR row).
+
+See `docs/gain-loss-alerts-feature.md` for gain/loss % alerts (per-account notifications
+when the Home gain/loss crosses a threshold: crossing semantics with re-arming,
+the hourly alarm, the check after the Home rate fetch, device-local state, sync and
+backup).
 
 See `docs/changelog-feature.md` for `CHANGELOG.md` (Keep a Changelog, one section
 added per release by `scripts/release.sh`) and the Release notes screen that

@@ -1,6 +1,7 @@
 package dev.fitiavana.accounting.features.sync
 
 import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.alerts.AlertTypes
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.sync.SyncFixtures.entry
 import dev.fitiavana.accounting.features.sync.SyncFixtures.instrument
@@ -252,6 +253,79 @@ class SyncRepositoryTest {
 
         assertEquals(1, b.db.templateDao().getAllEntriesSync().size)
         assertNull(b.db.accountDao().getById("a2"))
+        assertInSync()
+    }
+
+    // --- alerts ---
+
+    @Test
+    fun `an alert created on one device reaches the other`() {
+        a.accounts.insert(bank("a1"))
+        val alert = a.alerts.create("a1", AlertTypes.CROSSING_BELOW, -10.0)
+
+        SyncDevice.sync(a, b)
+
+        assertEquals(listOf(alert), b.alerts.getAllSync())
+        assertInSync()
+    }
+
+    @Test
+    fun `an alert edited on one device updates the other`() {
+        a.accounts.insert(bank("a1"))
+        val alert = a.alerts.create("a1", AlertTypes.CROSSING_ABOVE, 10.0)
+        SyncDevice.sync(a, b)
+        a.now = 5_000
+
+        a.alerts.update(alert.copy(thresholdPercent = 25.0))
+        SyncDevice.sync(a, b)
+
+        assertEquals(25.0, b.alerts.get(alert.id)!!.thresholdPercent, 0.0)
+        assertInSync()
+    }
+
+    @Test
+    fun `an alert deleted on one device is deleted on the other`() {
+        a.accounts.insert(bank("a1"))
+        val alert = a.alerts.create("a1", AlertTypes.CROSSING_ABOVE, 10.0)
+        SyncDevice.sync(a, b)
+        a.now = 5_000
+
+        a.alerts.delete(alert.id)
+        SyncDevice.sync(a, b)
+
+        assertTrue(b.alerts.getAllSync().isEmpty())
+        assertInSync()
+    }
+
+    @Test
+    fun `an alert follows its account being deleted`() {
+        a.accounts.insert(bank("a1"))
+        a.alerts.create("a1", AlertTypes.CROSSING_ABOVE, 10.0)
+        SyncDevice.sync(a, b)
+        a.now = 5_000
+        a.accounts.delete(bank("a1"))
+
+        SyncDevice.sync(a, b)
+
+        assertTrue(b.alerts.getAllSync().isEmpty())
+        assertNull(b.db.accountDao().getById("a1"))
+        assertInSync()
+    }
+
+    @Test
+    fun `an alert made on an account that another device deleted is dropped on both`() {
+        a.accounts.insert(bank("a1"))
+        SyncDevice.sync(a, b)
+        a.now = 5_000
+        a.accounts.delete(bank("a1"))
+        b.now = 6_000
+        b.alerts.create("a1", AlertTypes.CROSSING_ABOVE, 10.0)
+
+        SyncDevice.sync(a, b)
+        SyncDevice.sync(a, b)
+
+        assertTrue(a.alerts.getAllSync().isEmpty())
+        assertTrue(b.alerts.getAllSync().isEmpty())
         assertInSync()
     }
 

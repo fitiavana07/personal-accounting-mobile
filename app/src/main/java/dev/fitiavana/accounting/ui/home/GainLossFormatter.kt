@@ -1,5 +1,6 @@
 package dev.fitiavana.accounting.ui.home
 
+import dev.fitiavana.accounting.features.balances.SignedPercent
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.ui.common.TransactionDisplay
 
@@ -17,8 +18,5 @@ object GainLossFormatter {
         return "${sign}Ar ${TransactionDisplay.formatAmount(Math.round(Math.abs(value)))}"
     }
 
-    fun formatSignedPercent(value: Double): String {
-        val sign = if (value >= 0) "+" else "-"
-        return String.format("%s%.1f%%", sign, Math.abs(value))
-    }
+    fun formatSignedPercent(value: Double): String = SignedPercent.format(value)
 }

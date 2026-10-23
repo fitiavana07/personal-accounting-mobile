@@ -102,9 +102,4 @@ class Migration21To22Test {
             assertTrue(c.isNull(0))
         }
     }
-
-    @Test
-    fun `the schema version is 22`() {
-        assertEquals(22, AppDatabase.SCHEMA_VERSION)
-    }
 }

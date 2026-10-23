@@ -8,7 +8,10 @@ import dev.fitiavana.accounting.features.accounts.LiquidityLevels
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
+import dev.fitiavana.accounting.features.alerts.AlertCheckManager
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
+import dev.fitiavana.accounting.features.exchangerates.RateRefresher
+import dev.fitiavana.accounting.features.exchangerates.RefreshResult
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.p2pprices.P2pPriceRepository
@@ -37,6 +40,8 @@ class HomeViewModelTest {
     private lateinit var exchangeRateRepository: ExchangeRateRepository
     private lateinit var settingsRepository: AppSettingsRepository
     private lateinit var p2pPriceRepository: P2pPriceRepository
+    private lateinit var rateRefresher: RateRefresher
+    private lateinit var alertCheckManager: AlertCheckManager
 
     private lateinit var balances: MutableLiveData<List<AccountBalance>>
     private lateinit var accounts: MutableLiveData<List<Account>>
@@ -75,6 +80,8 @@ class HomeViewModelTest {
         exchangeRateRepository = mock()
         settingsRepository = mock()
         p2pPriceRepository = mock()
+        rateRefresher = mock()
+        alertCheckManager = mock()
 
         whenever(balanceRepository.getAll()).thenReturn(balances)
         whenever(accountRepository.getAll()).thenReturn(accounts)
@@ -90,12 +97,37 @@ class HomeViewModelTest {
             instrumentRepository,
             exchangeRateRepository,
             settingsRepository,
-            p2pPriceRepository
+            p2pPriceRepository,
+            rateRefresher,
+            alertCheckManager
         )
         // MediatorLiveData only forwards source updates while it has an active observer.
         viewModel.emergencyFund.observeForever {}
         viewModel.metrics.observeForever {}
         return viewModel
+    }
+
+    @Test
+    fun `refreshRates refreshes the rates then checks the alerts against them`() {
+        val result = RefreshResult(listOf("BTC"), emptyList(), null)
+        whenever(rateRefresher.refresh()).thenReturn(result)
+        val viewModel = viewModel()
+
+        assertEquals(result, viewModel.refreshRates())
+
+        val inOrder = org.mockito.Mockito.inOrder(rateRefresher, alertCheckManager)
+        inOrder.verify(rateRefresher).refresh()
+        inOrder.verify(alertCheckManager).check()
+    }
+
+    @Test
+    fun `refreshRates still returns the result when the alert check fails`() {
+        val result = RefreshResult(listOf("BTC"), emptyList(), null)
+        whenever(rateRefresher.refresh()).thenReturn(result)
+        whenever(alertCheckManager.check()).thenThrow(RuntimeException("boom"))
+        val viewModel = viewModel()
+
+        assertEquals(result, viewModel.refreshRates())
     }
 
     @Test

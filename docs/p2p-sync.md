@@ -13,6 +13,7 @@ pulled), and conflicts are settled by a fixed merge rule. The design is ported f
 | Account | `exchange_rate_cache`, CEX and P2P prices |
 | **Transaction together with its entries** | Backup preferences, CEX pair choices |
 | **Template together with its entries** | The device id, the passphrase, the auto-sync switch |
+| Gain/loss alert (`gain_loss_alerts`, see `gain-loss-alerts-feature.md`) | `alert_states` (device-local detection state of each alert) |
 | The settings row (monthly living expenses; key `"0"`) | |
 
 A transaction and its entries are one record, and so are a template and its entries: they are stamped, merged
@@ -78,7 +79,8 @@ idempotent) because merging row by row can break rules across rows:
    likewise, an account whose pre-associated revenue account (`linkedRevenueAccountId`, a plain id, not a
    foreign key) is gone loses that link;
 2. a transaction with an entry on an account that is gone is dropped whole (and tombstoned);
-3. a template entry on an account that is gone is removed (the template counts as changed, as the foreign key does locally).
+3. a template entry on an account that is gone is removed (the template counts as changed, as the foreign key does locally);
+4. an alert on an account that is gone is removed (and tombstoned, as the foreign key cascade would delete it).
 
 Everything the repair modified or removed is stamped as a fresh local write, so peers take it. `SyncRules` then
 checks unique ids and every foreign key; if it fails, the whole merge is rolled back and the snapshot rejected.
@@ -99,8 +101,10 @@ loses that transaction (rule 2). A device left offline needs nothing special.
 
 `ChangeTracker` is the only place that stamps writes. Each repository calls it **inside its own transaction**
 (`tracker.inTransaction { ... }`): `InstrumentRepository`, `AccountRepository` (`deletedAccount` also restamps the
-templates that pick the account, since the cascade removes their entry), `TransactionRepository` (`save` stores a
+templates that pick the account, since the cascade removes their entry, and tombstones the alerts on it, which the
+cascade deletes), `TransactionRepository` (`save` stores a
 transaction with its entries atomically; `clearAll` tombstones every transaction), `TemplateRepository`,
+`AlertRepository` (alerts only; the device-local `alert_states` are written with `saveStates`, unstamped),
 `AppSettingsRepository`, and `BackupRepository.restore` (`replaceAll`: restamp what the backup brought, tombstone
 what it replaced, otherwise the next sync would bring the old data back). The debug *Clear all transactions* also
 recalculates balances.

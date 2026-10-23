@@ -1,5 +1,7 @@
 package dev.fitiavana.accounting.features.backup
 
+import dev.fitiavana.accounting.features.alerts.AlertDao
+import dev.fitiavana.accounting.features.alerts.GainLossAlert
 import dev.fitiavana.accounting.features.balances.AccountBalanceDao
 import dev.fitiavana.accounting.features.accounts.AccountDao
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
@@ -57,6 +59,7 @@ class BackupRepository(
     private val exchangeRateCacheDao: ExchangeRateCacheDao,
     private val appSettingsDao: AppSettingsDao,
     private val templateDao: TemplateDao,
+    private val alertDao: AlertDao,
     private val tracker: ChangeTracker
 ) {
 
@@ -89,6 +92,10 @@ class BackupRepository(
         root.put(
             KEY_TEMPLATE_ENTRIES,
             templateDao.getAllEntriesSync().toJsonArray { it.toJson() })
+        // The alerts only: their detection state is device-local and is re-seeded silently after a restore.
+        root.put(
+            KEY_ALERTS,
+            alertDao.getAllSync().toJsonArray { it.toJson() })
         val settings = appSettingsDao.getSync()
         if (settings != null) {
             root.put(KEY_APP_SETTINGS, settings.toJson())
@@ -126,6 +133,7 @@ class BackupRepository(
         val settings: AppSettings?
         val templates: List<TransactionTemplate>
         val templateEntries: List<TemplateEntry>
+        val alerts: List<GainLossAlert>
         try {
             instruments = root.getJSONArray(KEY_INSTRUMENTS)
                 .toList { instrumentFromJson(it) }
@@ -144,6 +152,9 @@ class BackupRepository(
                 .toList { templateFromJson(it) }
             templateEntries = (root.optJSONArray(KEY_TEMPLATE_ENTRIES) ?: JSONArray())
                 .toList { templateEntryFromJson(it) }
+            // Optional: backups made before alerts existed have none.
+            alerts = (root.optJSONArray(KEY_ALERTS) ?: JSONArray())
+                .toList { alertFromJson(it) }
             settings = if (root.has(KEY_APP_SETTINGS)) {
                 appSettingsFromJson(root.getJSONObject(KEY_APP_SETTINGS))
             } else {
@@ -155,6 +166,7 @@ class BackupRepository(
 
         database.runInTransaction {
             // Delete children before parents to respect RESTRICT foreign keys.
+            alertDao.deleteAll()
             templateDao.deleteAllEntries()
             templateDao.deleteAllTemplates()
             transactionDao.deleteAllEntries()
@@ -173,6 +185,7 @@ class BackupRepository(
             exchangeRateCacheDao.insertAll(rates)
             templateDao.insertTemplates(templates)
             templateDao.insertEntries(templateEntries)
+            alertDao.insertAll(alerts)
             if (settings != null) {
                 appSettingsDao.upsert(settings)
             }
@@ -184,6 +197,7 @@ class BackupRepository(
                         accounts.map { RecordKey(SyncKind.ACCOUNT, it.id) } +
                         transactions.map { RecordKey(SyncKind.TRANSACTION, it.id) } +
                         templates.map { RecordKey(SyncKind.TEMPLATE, it.id) } +
+                        alerts.map { RecordKey(SyncKind.ALERT, it.id) } +
                         listOfNotNull(
                             appSettingsDao.getSync()
                                 ?.let { RecordKey(SyncKind.SETTINGS, AppSettings.SINGLETON_ID.toString()) }
@@ -210,5 +224,6 @@ class BackupRepository(
         private const val KEY_APP_SETTINGS = "appSettings"
         private const val KEY_TEMPLATES = "transactionTemplates"
         private const val KEY_TEMPLATE_ENTRIES = "templateEntries"
+        private const val KEY_ALERTS = "gainLossAlerts"
     }
 }

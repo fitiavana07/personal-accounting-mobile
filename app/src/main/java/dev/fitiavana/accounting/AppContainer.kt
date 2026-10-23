@@ -4,6 +4,10 @@ import android.content.Context
 import androidx.annotation.VisibleForTesting
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.alerts.AlarmManagerAlertScheduler
+import dev.fitiavana.accounting.features.alerts.AlertCheckManager
+import dev.fitiavana.accounting.features.alerts.AlertRepository
+import dev.fitiavana.accounting.features.alerts.AndroidAlertNotifier
 import dev.fitiavana.accounting.features.backup.AlarmManagerBackupScheduler
 import dev.fitiavana.accounting.features.backup.AutoBackupManager
 import dev.fitiavana.accounting.features.backup.BackupRepository
@@ -14,6 +18,7 @@ import dev.fitiavana.accounting.features.changelog.ChangelogRepository
 import dev.fitiavana.accounting.features.cexprices.CexPriceRepository
 import dev.fitiavana.accounting.features.cexprices.SharedPreferencesCexPairStore
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
+import dev.fitiavana.accounting.features.exchangerates.RateRefresher
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.p2pprices.P2pPriceRepository
 import dev.fitiavana.accounting.features.p2pprices.SharedPreferencesP2pFilterStore
@@ -77,6 +82,20 @@ class AppContainer private constructor(context: Context) {
         CoinGeckoClient(httpClient),
         YahooFinanceClient(httpClient)
     )
+    val rateRefresher = RateRefresher(
+        balanceRepository, accountRepository, instrumentRepository, exchangeRateRepository
+    )
+    val alertRepository = AlertRepository(database.alertDao(), changeTracker)
+    val alertCheckManager = AlertCheckManager(
+        alertRepository,
+        balanceRepository,
+        accountRepository,
+        instrumentRepository,
+        exchangeRateRepository,
+        rateRefresher,
+        AndroidAlertNotifier(context),
+        AlarmManagerAlertScheduler(context)
+    )
     val cexPriceRepository = CexPriceRepository(
         HttpCexPriceFetcher.createAll(httpClient),
         SharedPreferencesCexPairStore(
@@ -100,6 +119,7 @@ class AppContainer private constructor(context: Context) {
         database.exchangeRateCacheDao(),
         database.appSettingsDao(),
         database.templateDao(),
+        database.alertDao(),
         changeTracker
     )
     val templateRepository = TemplateRepository(database.templateDao(), changeTracker)
@@ -112,6 +132,7 @@ class AppContainer private constructor(context: Context) {
         accountDao = database.accountDao(),
         transactionDao = database.transactionDao(),
         templateDao = database.templateDao(),
+        alertDao = database.alertDao(),
         appSettingsDao = database.appSettingsDao(),
         schemaVersion = AppDatabase.SCHEMA_VERSION,
         recalculateBalances = balanceRepository::recalculateAll

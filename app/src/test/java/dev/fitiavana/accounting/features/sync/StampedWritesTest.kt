@@ -5,6 +5,8 @@ import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.db.inMemoryDatabase
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.alerts.AlertRepository
+import dev.fitiavana.accounting.features.alerts.AlertTypes
 import dev.fitiavana.accounting.features.backup.BackupRepository
 import dev.fitiavana.accounting.features.backup.RestoreResult
 import dev.fitiavana.accounting.features.instruments.Instrument
@@ -219,17 +221,25 @@ class StampedWritesTest {
     fun `restoring a backup restamps what it brings and tombstones what it replaces`() {
         val backup = BackupRepository(
             db, db.accountDao(), db.instrumentDao(), db.transactionDao(), db.accountBalanceDao(),
-            db.exchangeRateCacheDao(), db.appSettingsDao(), db.templateDao(), tracker
+            db.exchangeRateCacheDao(), db.appSettingsDao(), db.templateDao(), db.alertDao(), tracker
         )
+        val alerts = AlertRepository(db.alertDao(), tracker, clock = { 1L }, idGenerator = { "alert${ids++}" })
         instruments.insert(usd)
         accounts.insert(account("a1", "USD"))
         settings.setMonthlyLivingExpenses(5)
+        val kept = alerts.create("a1", AlertTypes.CROSSING_ABOVE, 10.0)
         val json = backup.export()
         val usdStamp = stampOf(SyncKind.INSTRUMENT, "USD")
+        val keptStamp = stampOf(SyncKind.ALERT, kept.id)
         instruments.insert(Instrument("EUR", "Euro", "currency", 2))
         accounts.insert(account("extra"))
+        val extra = alerts.create("extra", AlertTypes.CROSSING_BELOW, -5.0)
 
         assertEquals(RestoreResult.Success, backup.restore(json))
+
+        assertTrue(stampOf(SyncKind.ALERT, kept.id) > keptStamp)
+        assertTrue(meta.getValue(key(SyncKind.ALERT, extra.id)).deleted)
+        assertEquals(listOf(kept.id), alerts.getAllSync().map { it.id })
 
         assertTrue(stampOf(SyncKind.INSTRUMENT, "USD") > usdStamp)
         assertTrue(!meta.getValue(key(SyncKind.ACCOUNT, "a1")).deleted)

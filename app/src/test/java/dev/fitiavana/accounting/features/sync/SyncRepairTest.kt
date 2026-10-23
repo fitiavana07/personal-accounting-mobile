@@ -33,6 +33,20 @@ class SyncRepairTest {
     }
 
     @Test
+    fun `an alert on an account that is gone is removed`() {
+        val data = data(
+            accounts = listOf(account("a1")),
+            alerts = listOf(SyncFixtures.alert("keep", "a1"), SyncFixtures.alert("drop", "gone")),
+        )
+
+        val result = SyncRepair.repair(data)
+
+        assertEquals(listOf(SyncFixtures.alert("keep", "a1")), result.data.alerts)
+        assertEquals(setOf(key(SyncKind.ALERT, "drop")), result.removed)
+        assertTrue(result.modified.isEmpty())
+    }
+
+    @Test
     fun `an account whose instrument is gone loses the reference but keeps its data`() {
         val data = data(
             instruments = listOf(instrument("EUR")),

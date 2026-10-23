@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
+import dev.fitiavana.accounting.ui.alerts.AlertsActivity
 import dev.fitiavana.accounting.ui.cexprices.CexPricesActivity
 import dev.fitiavana.accounting.ui.earn.EarnActivity
 import dev.fitiavana.accounting.ui.common.ReportAdapter
@@ -58,7 +59,9 @@ class HomeFragment : Fragment() {
                 instrumentRepo,
                 exchangeRateRepo,
                 settingsRepo,
-                container.p2pPriceRepository
+                container.p2pPriceRepository,
+                container.rateRefresher,
+                container.alertCheckManager
             )
         ).get(HomeViewModel::class.java)
 
@@ -78,7 +81,8 @@ class HomeFragment : Fragment() {
                 startActivity(CexPricesActivity.intent(requireContext()))
             },
             onMonthlyExpensesClick = { showEditMonthlyExpensesDialog() },
-            onEarnClick = { startActivity(EarnActivity.intent(requireContext())) }
+            onEarnClick = { startActivity(EarnActivity.intent(requireContext())) },
+            onAlertsClick = { startActivity(AlertsActivity.intent(requireContext())) }
         )
         p2pPricesAdapter = HomeP2pPricesAdapter { showP2pFilterDialog() }
         emergencyFundAdapter = EmergencyFundAdapter()

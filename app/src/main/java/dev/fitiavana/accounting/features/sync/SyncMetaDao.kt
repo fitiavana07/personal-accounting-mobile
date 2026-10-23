@@ -44,4 +44,8 @@ interface SyncMetaDao {
     /** The templates that pick [accountId]: deleting the account changes them, through the foreign key cascade. */
     @Query("SELECT DISTINCT templateId FROM template_entries WHERE accountId = :accountId")
     fun templateIdsOfAccount(accountId: String): List<String>
+
+    /** The alerts on [accountId]: deleting the account deletes them, through the foreign key cascade. */
+    @Query("SELECT id FROM gain_loss_alerts WHERE accountId = :accountId")
+    fun alertIdsOfAccount(accountId: String): List<String>
 }

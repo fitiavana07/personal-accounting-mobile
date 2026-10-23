@@ -16,7 +16,8 @@ data class RepairResult(val data: SyncData, val modified: Set<RecordKey>, val re
  *  1. an account that uses an instrument that is gone loses that reference (its data is kept: a
  *     missing reference is better than a deleted account with its transactions);
  *  2. a transaction with an entry on an account that is gone is dropped whole, entries included;
- *  3. a template entry on an account that is gone is removed (as the foreign key would locally).
+ *  3. a template entry on an account that is gone is removed (as the foreign key would locally);
+ *  4. an alert on an account that is gone is removed (it is tombstoned, as the foreign key would delete it).
  */
 object SyncRepair {
     fun repair(data: SyncData): RepairResult {
@@ -52,8 +53,17 @@ object SyncRepair {
             (entry.accountId in accountIds).also { if (!it) modified += RecordKey(SyncKind.TEMPLATE, entry.templateId) }
         }
 
+        val alerts = data.alerts.filter { it.accountId in accountIds }
+        removed += data.alerts.filter { it.accountId !in accountIds }.map { RecordKey(SyncKind.ALERT, it.id) }
+
         return RepairResult(
-            data.copy(accounts = accounts, transactions = transactions, transactionEntries = entries, templateEntries = templateEntries),
+            data.copy(
+                accounts = accounts,
+                transactions = transactions,
+                transactionEntries = entries,
+                templateEntries = templateEntries,
+                alerts = alerts,
+            ),
             modified,
             removed,
         )

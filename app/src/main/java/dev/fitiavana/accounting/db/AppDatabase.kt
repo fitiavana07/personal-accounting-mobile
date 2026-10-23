@@ -8,6 +8,9 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountDao
+import dev.fitiavana.accounting.features.alerts.AlertDao
+import dev.fitiavana.accounting.features.alerts.AlertState
+import dev.fitiavana.accounting.features.alerts.GainLossAlert
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.balances.AccountBalanceDao
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
@@ -29,7 +32,8 @@ import dev.fitiavana.accounting.features.transactions.TransactionEntry
 @Database(
     entities = [Account::class, Transaction::class, TransactionEntry::class,
         AccountBalance::class, Instrument::class, ExchangeRateCache::class, AppSettings::class,
-        TransactionTemplate::class, TemplateEntry::class, SyncMetaRow::class],
+        TransactionTemplate::class, TemplateEntry::class, SyncMetaRow::class,
+        GainLossAlert::class, AlertState::class],
     version = AppDatabase.SCHEMA_VERSION
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -42,9 +46,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun templateDao(): TemplateDao
     abstract fun syncMetaDao(): SyncMetaDao
     abstract fun syncDao(): SyncDao
+    abstract fun alertDao(): AlertDao
 
     companion object {
-        const val SCHEMA_VERSION = 22
+        const val SCHEMA_VERSION = 23
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -370,6 +375,36 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Adds the gain/loss alerts and their device-local state. Internal so its SQL can be checked
+         * against Room's generated schema.
+         */
+        internal val MIGRATION_22_23 = object : Migration(22, 23) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `gain_loss_alerts` (" +
+                            "`id` TEXT NOT NULL, " +
+                            "`accountId` TEXT NOT NULL, " +
+                            "`type` TEXT NOT NULL, " +
+                            "`thresholdPercent` REAL NOT NULL, " +
+                            "`createdAt` INTEGER NOT NULL, " +
+                            "PRIMARY KEY(`id`), " +
+                            "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_gain_loss_alerts_accountId` ON `gain_loss_alerts` (`accountId`)")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `alert_states` (" +
+                            "`alertId` TEXT NOT NULL, " +
+                            "`armed` INTEGER NOT NULL, " +
+                            "`signature` TEXT NOT NULL, " +
+                            "PRIMARY KEY(`alertId`), " +
+                            "FOREIGN KEY(`alertId`) REFERENCES `gain_loss_alerts`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -398,7 +433,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_18_19,
                         MIGRATION_19_20,
                         MIGRATION_20_21,
-                        MIGRATION_21_22
+                        MIGRATION_21_22,
+                        MIGRATION_22_23
                     )
                     .build().also { instance = it }
             }

@@ -10,7 +10,8 @@ import dev.fitiavana.accounting.R
 class HomeShortcutsAdapter(
     private val onCexPricesClick: () -> Unit,
     private val onMonthlyExpensesClick: () -> Unit,
-    private val onEarnClick: () -> Unit
+    private val onEarnClick: () -> Unit,
+    private val onAlertsClick: () -> Unit
 ): RecyclerView.Adapter<HomeShortcutsAdapter.ViewHolder>() {
 
     override fun getItemCount() = 1
@@ -22,6 +23,7 @@ class HomeShortcutsAdapter(
         view.findViewById<View>(R.id.button_monthly_expenses)
             .setOnClickListener { onMonthlyExpensesClick() }
         view.findViewById<View>(R.id.button_earn).setOnClickListener { onEarnClick() }
+        view.findViewById<View>(R.id.button_alerts).setOnClickListener { onAlertsClick() }
         return ViewHolder(view)
     }
 

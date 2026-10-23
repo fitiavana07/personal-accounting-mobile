@@ -1,15 +1,18 @@
 package dev.fitiavana.accounting.ui.home
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.alerts.AlertCheckManager
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
+import dev.fitiavana.accounting.features.exchangerates.RateRefresher
 import dev.fitiavana.accounting.features.exchangerates.RefreshResult
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
@@ -29,7 +32,9 @@ class HomeViewModel(
     private val instrumentRepository: InstrumentRepository,
     private val exchangeRateRepository: ExchangeRateRepository,
     private val settingsRepository: AppSettingsRepository,
-    private val p2pPriceRepository: P2pPriceRepository
+    private val p2pPriceRepository: P2pPriceRepository,
+    private val rateRefresher: RateRefresher,
+    private val alertCheckManager: AlertCheckManager
 ) : ViewModel() {
 
     private val balances: LiveData<List<AccountBalance>> =
@@ -274,15 +279,17 @@ class HomeViewModel(
     /** Synchronous — callers must invoke this off the main thread. */
     fun refreshRates(): RefreshResult {
         refreshMonthlyNetIncomesSync()
-        val items = HomeItemBuilder.build(
-            balanceRepository.getAllSync(),
-            accountRepository.getAllSync(),
-            instrumentRepository.getAllSync().associateBy { it.code },
-            emptyMap()
-        )
-        val pairs = items
-            .map { it.instrument to it.intermediaryInstrument }
-            .distinctBy { it.first.code to it.second.code }
-        return exchangeRateRepository.refresh(pairs)
+        val result = rateRefresher.refresh()
+        // A failing alert check must not hide the refresh result from the screen.
+        try {
+            alertCheckManager.check()
+        } catch (e: Exception) {
+            Log.w(TAG, "Gain/loss alert check failed", e)
+        }
+        return result
+    }
+
+    private companion object {
+        const val TAG = "HomeViewModel"
     }
 }

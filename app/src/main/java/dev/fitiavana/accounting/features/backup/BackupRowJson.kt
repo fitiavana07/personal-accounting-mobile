@@ -4,6 +4,7 @@ import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 import dev.fitiavana.accounting.features.instruments.Instrument
+import dev.fitiavana.accounting.features.alerts.GainLossAlert
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.templates.TemplateEntry
 import dev.fitiavana.accounting.features.templates.TransactionTemplate
@@ -102,6 +103,22 @@ internal fun templateFromJson(json: JSONObject) = TransactionTemplate(
     id = json.getString("id"),
     name = json.getString("name"),
     mode = json.getString("mode"),
+    createdAt = json.getLong("createdAt")
+)
+
+internal fun GainLossAlert.toJson() = JSONObject().apply {
+    put("id", id)
+    put("accountId", accountId)
+    put("type", type)
+    put("thresholdPercent", thresholdPercent)
+    put("createdAt", createdAt)
+}
+
+internal fun alertFromJson(json: JSONObject) = GainLossAlert(
+    id = json.getString("id"),
+    accountId = json.getString("accountId"),
+    type = json.getString("type"),
+    thresholdPercent = json.getDouble("thresholdPercent"),
     createdAt = json.getLong("createdAt")
 )
 

@@ -226,6 +226,7 @@
     <string name="home_shortcut_cex_prices">CEX Prices</string>
     <string name="home_shortcut_monthly_expenses">Mo. Expenses</string>
     <string name="home_shortcut_earn">Earn</string>
+    <string name="home_shortcut_alerts">Alerts</string>
     <string name="home_p2p_header">Binance P2P · USDT/MGA</string>
     <string name="home_p2p_buy_title">Buy USDT</string>
     <string name="home_p2p_sell_title">Sell USDT</string>
@@ -323,6 +324,30 @@
     <string name="cloud_backup_notification_channel">Cloud Backup problems</string>
     <string name="cloud_backup_notification_title">Cloud backup is failing</string>
     <string name="cloud_backup_notification_text">Your data has not been backed up to the cloud for a while. Tap to see why.</string>
+
+    <!-- Gain/loss alerts -->
+    <string name="title_alerts">Gain/loss alerts</string>
+    <string name="alerts_empty">No alerts yet. Add one to be notified when an account\'s gain/loss reaches a percentage.</string>
+    <string name="alerts_add">Add alert</string>
+    <string name="alerts_no_accounts">No account has a gain/loss on Home yet.</string>
+    <string name="alert_item_above">Crossing above %1$s</string>
+    <string name="alert_item_below">Crossing below %1$s</string>
+    <string name="dialog_edit_alert_title_new">New alert</string>
+    <string name="dialog_edit_alert_title_edit">Edit alert</string>
+    <string name="alert_field_account">Account</string>
+    <string name="alert_type_above">Crossing above</string>
+    <string name="alert_type_below">Crossing below</string>
+    <string name="alert_threshold_hint">Gain/loss</string>
+    <string name="alert_threshold_helper">Positive for a gain, negative for a loss</string>
+    <string name="error_alert_no_account">Choose an account</string>
+    <string name="error_alert_threshold">Enter a percentage other than 0</string>
+    <string name="dialog_delete_alert_title">Delete alert</string>
+    <string name="dialog_delete_alert_message">Delete the alert on \"%1$s\"?</string>
+    <string name="cd_delete_alert">Delete alert</string>
+    <string name="alert_notification_channel">Gain/loss alerts</string>
+    <string name="alert_notification_title">%1$s is at %2$s</string>
+    <string name="alert_notification_text_above">Crossed above %1$s</string>
+    <string name="alert_notification_text_below">Crossed below %1$s</string>
 
     <!-- Release notes -->
     <string name="action_release_notes">Release notes</string>

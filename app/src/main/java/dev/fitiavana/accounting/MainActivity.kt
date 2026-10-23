@@ -23,6 +23,8 @@ import dev.fitiavana.accounting.ui.common.RestoreConfirmDialog
 import dev.fitiavana.accounting.ui.common.RestoreResultPresenter
 import dev.fitiavana.accounting.ui.common.UiUtils
 import dev.fitiavana.accounting.ui.accounts.AccountsFragment
+import dev.fitiavana.accounting.ui.alerts.AlertsViewModel
+import dev.fitiavana.accounting.ui.alerts.AlertsViewModelFactory
 import dev.fitiavana.accounting.ui.backup.AutoBackupViewModel
 import dev.fitiavana.accounting.ui.backup.AutoBackupViewModelFactory
 import dev.fitiavana.accounting.ui.balances.BalancesActivity
@@ -73,6 +75,19 @@ class MainActivity : AppCompatActivity() {
             ViewModelProvider(this, CloudBackupViewModelFactory(container.cloudBackupRepository, container.cloudBackupManager))
                 .get(CloudBackupViewModel::class.java)
                 .runCatchUp()
+        }
+        // Re-arm the hourly gain/loss alert check, which a force stop clears.
+        if (savedInstanceState == null) {
+            ViewModelProvider(
+                this,
+                AlertsViewModelFactory(
+                    container.alertRepository,
+                    container.accountRepository,
+                    container.balanceRepository,
+                    container.instrumentRepository,
+                    container.alertCheckManager
+                )
+            ).get(AlertsViewModel::class.java).ensureScheduled()
         }
 
         UiUtils.setupActionBar(

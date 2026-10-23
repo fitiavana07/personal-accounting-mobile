@@ -1,6 +1,7 @@
 package dev.fitiavana.accounting.features.sync
 
 import dev.fitiavana.accounting.features.accounts.AccountDao
+import dev.fitiavana.accounting.features.alerts.AlertDao
 import dev.fitiavana.accounting.features.instruments.InstrumentDao
 import dev.fitiavana.accounting.features.settings.AppSettingsDao
 import dev.fitiavana.accounting.features.templates.TemplateDao
@@ -31,6 +32,7 @@ class SyncRepository(
     private val accountDao: AccountDao,
     private val transactionDao: TransactionDao,
     private val templateDao: TemplateDao,
+    private val alertDao: AlertDao,
     private val appSettingsDao: AppSettingsDao,
     private val schemaVersion: Int,
     private val recalculateBalances: () -> Unit,
@@ -60,6 +62,7 @@ class SyncRepository(
             transactionEntries = transactionDao.getAllEntriesSync(),
             templates = templateDao.getAllTemplatesSync(),
             templateEntries = templateDao.getAllEntriesSync(),
+            alerts = alertDao.getAllSync(),
             settings = appSettingsDao.getSync(),
         )
         val rows = data.recordKeys()
@@ -99,6 +102,7 @@ class SyncRepository(
         transactionEntries = merged(SyncKind.TRANSACTION, { it.transactionId }, local.transactionEntries, remote.transactionEntries, merge),
         templates = merged(SyncKind.TEMPLATE, { it.id }, local.templates, remote.templates, merge),
         templateEntries = merged(SyncKind.TEMPLATE, { it.templateId }, local.templateEntries, remote.templateEntries, merge),
+        alerts = merged(SyncKind.ALERT, { it.id }, local.alerts, remote.alerts, merge),
         settings = mergedSettings(local, remote, merge),
     )
 
@@ -130,6 +134,7 @@ class SyncRepository(
         val removedTransactions = removed(before.transactions, after.transactions) { it.id }
         val removedTemplateEntries = removed(before.templateEntries, after.templateEntries) { it.id }
         val removedTemplates = removed(before.templates, after.templates) { it.id }
+        val removedAlerts = removed(before.alerts, after.alerts) { it.id }
         val removedAccounts = removed(before.accounts, after.accounts) { it.id }
         val removedInstruments = removed(before.instruments, after.instruments) { it.code }
         val instruments = changed(before.instruments, after.instruments)
@@ -138,7 +143,9 @@ class SyncRepository(
         val transactionEntries = changed(before.transactionEntries, after.transactionEntries)
         val templates = changed(before.templates, after.templates)
         val templateEntries = changed(before.templateEntries, after.templateEntries)
+        val alerts = changed(before.alerts, after.alerts)
 
+        removedAlerts.inChunks(syncDao::deleteAlerts)
         removedTransactionEntries.inChunks(syncDao::deleteTransactionEntries)
         removedTransactions.inChunks(syncDao::deleteTransactions)
         removedTemplateEntries.inChunks(syncDao::deleteTemplateEntries)
@@ -151,14 +158,16 @@ class SyncRepository(
         syncDao.upsertTransactionEntries(transactionEntries)
         syncDao.upsertTemplates(templates)
         syncDao.upsertTemplateEntries(templateEntries)
+        syncDao.upsertAlerts(alerts)
 
         val settingsChanged = before.settings != after.settings
         if (settingsChanged) after.settings?.let(syncDao::upsertSettings) ?: syncDao.deleteSettings()
 
         return settingsChanged || listOf(
-            removedTransactionEntries, removedTransactions, removedTemplateEntries, removedTemplates, removedAccounts, removedInstruments,
+            removedTransactionEntries, removedTransactions, removedTemplateEntries, removedTemplates, removedAlerts, removedAccounts,
+            removedInstruments,
         ).any { it.isNotEmpty() } || listOf(
-            instruments, accounts, transactions, transactionEntries, templates, templateEntries,
+            instruments, accounts, transactions, transactionEntries, templates, templateEntries, alerts,
         ).any { it.isNotEmpty() }
     }
 

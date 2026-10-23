@@ -3,6 +3,7 @@ package dev.fitiavana.accounting.features.sync
 import dev.fitiavana.accounting.features.FormatException
 import dev.fitiavana.accounting.features.array
 import dev.fitiavana.accounting.features.backup.accountFromJson
+import dev.fitiavana.accounting.features.backup.alertFromJson
 import dev.fitiavana.accounting.features.backup.appSettingsFromJson
 import dev.fitiavana.accounting.features.backup.instrumentFromJson
 import dev.fitiavana.accounting.features.backup.templateEntryFromJson
@@ -34,6 +35,7 @@ object SyncJson {
             .put("transactionEntries", array(data.transactionEntries) { it.toJson() })
             .put("templates", array(data.templates) { it.toJson() })
             .put("templateEntries", array(data.templateEntries) { it.toJson() })
+            .put("alerts", array(data.alerts) { it.toJson() })
             .apply { data.settings?.let { put("settings", it.toJson()) } }
             .put("meta", array(snapshot.meta.entries) { (key, meta) ->
                 put("kind", key.kind.name)
@@ -54,6 +56,7 @@ object SyncJson {
             transactionEntries = root.rows("transactionEntries") { transactionEntryFromJson(this) },
             templates = root.rows("templates") { templateFromJson(this) },
             templateEntries = root.rows("templateEntries") { templateEntryFromJson(this) },
+            alerts = root.rows("alerts") { alertFromJson(this) },
             settings = if (root.has("settings")) appSettingsFromJson(root.obj("settings")) else null,
         )
         val meta = root.rows("meta") {
