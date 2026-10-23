@@ -15,8 +15,11 @@ class RateRefresher(
     private val instrumentRepository: InstrumentRepository,
     private val exchangeRateRepository: ExchangeRateRepository
 ) {
-    /** Synchronous — callers must invoke this off the main thread. */
-    fun refresh(): RefreshResult {
+    /**
+     * Refreshes every position's rate, or only [accountId]'s when given.
+     * Synchronous — callers must invoke this off the main thread.
+     */
+    fun refresh(accountId: String? = null): RefreshResult {
         val positions = AccountGainLoss.positions(
             balanceRepository.getAllSync(),
             accountRepository.getAllSync(),
@@ -24,6 +27,7 @@ class RateRefresher(
             emptyMap()
         )
         val pairs = positions
+            .filter { accountId == null || it.account.id == accountId }
             .map { it.instrument to it.intermediaryInstrument }
             .distinctBy { it.first.code to it.second.code }
         return exchangeRateRepository.refresh(pairs)

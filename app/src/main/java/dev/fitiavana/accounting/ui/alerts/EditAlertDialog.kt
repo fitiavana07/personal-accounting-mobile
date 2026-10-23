@@ -16,7 +16,7 @@ import dev.fitiavana.accounting.features.alerts.AlertTypes
 import java.math.BigDecimal
 
 /**
- * Dialog to add an alert, or edit [existing]. [onSave] gets the chosen account, type and the threshold as
+ * Dialog to add an alert (on [preselectAccountId] when given), or edit [existing]. [onSave] gets the chosen account, type and the threshold as
  * typed, and returns what is wrong with them (the dialog then stays open) or null once saving started.
  */
 object EditAlertDialog {
@@ -25,6 +25,7 @@ object EditAlertDialog {
         context: Context,
         choices: List<AccountChoice>,
         existing: AlertItem?,
+        preselectAccountId: String? = null,
         onSave: (accountId: String?, type: String, thresholdText: String) -> AlertSaveError?
     ) {
         // An alert whose account no longer qualifies for Home must still show its own account.
@@ -40,6 +41,9 @@ object EditAlertDialog {
         val input = content.findViewById<TextInputEditText>(R.id.input_alert_threshold)
 
         spinner.adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, accounts.map { it.name })
+        if (existing == null && preselectAccountId != null) {
+            spinner.setSelection(accounts.indexOfFirst { it.id == preselectAccountId }.coerceAtLeast(0))
+        }
         if (existing != null) {
             spinner.setSelection(accounts.indexOfFirst { it.id == existing.alert.accountId }.coerceAtLeast(0))
             typeGroup.check(

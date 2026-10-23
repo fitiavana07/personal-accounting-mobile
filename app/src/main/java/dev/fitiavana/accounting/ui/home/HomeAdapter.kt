@@ -118,9 +118,9 @@ class HomeAdapter(
         }
     }
 
-    private companion object {
-        const val TYPE_SUMMARY = 0
-        const val TYPE_ROW = 1
+    companion object {
+        private const val TYPE_SUMMARY = 0
+        private const val TYPE_ROW = 1
 
         /** Colors [view] green/red by the sign of [value], optionally as a tinted pill; hides it when [text] is null. */
         fun bindSigned(context: Context, view: TextView, value: Double?, text: String?, pill: Boolean) {

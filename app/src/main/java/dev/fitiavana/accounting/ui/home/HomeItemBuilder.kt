@@ -23,6 +23,8 @@ data class HomeItem(
     val bookRate: String?,
     val currentRate: String?,
     val rateFetchedAt: Long?,
+    /** Price move (%) from the current price to the book price; null without a rate. */
+    val breakEvenPercent: Double? = null,
     val isPinned: Boolean = false
 )
 
@@ -85,6 +87,7 @@ object HomeItemBuilder {
                 bookRate = bookRate,
                 currentRate = currentRate,
                 rateFetchedAt = cached?.fetchedAt,
+                breakEvenPercent = currentValue?.takeIf { it > 0 }?.let { (bookValue / it - 1) * 100 },
                 isPinned = balance.accountId == pinnedAccountId
             )
         }

@@ -2,9 +2,12 @@ package dev.fitiavana.accounting.ui.home
 
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
+import dev.fitiavana.accounting.features.alerts.AlertCheckManager
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
+import dev.fitiavana.accounting.features.exchangerates.RateRefresher
+import dev.fitiavana.accounting.features.exchangerates.RefreshResult
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import org.junit.Assert.assertEquals
@@ -12,6 +15,7 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 class HomeDetailViewModelTest {
@@ -20,6 +24,8 @@ class HomeDetailViewModelTest {
     private lateinit var accountRepository: AccountRepository
     private lateinit var instrumentRepository: InstrumentRepository
     private lateinit var exchangeRateRepository: ExchangeRateRepository
+    private lateinit var rateRefresher: RateRefresher
+    private lateinit var alertCheckManager: AlertCheckManager
     private lateinit var viewModel: HomeDetailViewModel
 
     private val btc = Instrument(
@@ -52,11 +58,15 @@ class HomeDetailViewModelTest {
         accountRepository = mock()
         instrumentRepository = mock()
         exchangeRateRepository = mock()
+        rateRefresher = mock()
+        alertCheckManager = mock()
         viewModel = HomeDetailViewModel(
             balanceRepository,
             accountRepository,
             instrumentRepository,
-            exchangeRateRepository
+            exchangeRateRepository,
+            rateRefresher,
+            alertCheckManager
         )
 
         whenever(balanceRepository.getAllSync()).thenReturn(listOf(balance))
@@ -75,5 +85,27 @@ class HomeDetailViewModelTest {
     @Test
     fun `findItem returns null when no item matches the account id`() {
         assertNull(viewModel.findItem("missing"))
+    }
+
+    @Test
+    fun `refreshRates refreshes only the shown account`() {
+        val expected = RefreshResult(listOf("BTC"), emptyList(), null)
+        whenever(rateRefresher.refresh("acc1")).thenReturn(expected)
+        assertEquals(expected, viewModel.refreshRates("acc1"))
+    }
+
+    @Test
+    fun `refreshRates checks the alerts once the price is fetched`() {
+        whenever(rateRefresher.refresh("acc1")).thenReturn(RefreshResult(listOf("BTC"), emptyList(), null))
+        viewModel.refreshRates("acc1")
+        verify(alertCheckManager).check()
+    }
+
+    @Test
+    fun `a failing alert check does not hide the refresh result`() {
+        val expected = RefreshResult(listOf("BTC"), emptyList(), null)
+        whenever(rateRefresher.refresh("acc1")).thenReturn(expected)
+        whenever(alertCheckManager.check()).thenThrow(RuntimeException("boom"))
+        assertEquals(expected, viewModel.refreshRates("acc1"))
     }
 }

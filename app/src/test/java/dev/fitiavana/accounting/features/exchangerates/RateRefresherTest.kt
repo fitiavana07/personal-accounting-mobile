@@ -27,9 +27,11 @@ class RateRefresherTest {
         balanceRepository, accountRepository, instrumentRepository, exchangeRateRepository
     )
 
-    private fun account(id: String) = Account(
+    private val eth = Instrument(code = "ETH", note = "", type = "cryptocurrency", decimalPlaces = 8, coingeckoId = "ethereum")
+
+    private fun account(id: String, instrumentCode: String = "BTC") = Account(
         id = id, name = id, type = "asset",
-        instrumentCode = "BTC", intermediaryInstrumentCode = "USDT"
+        instrumentCode = instrumentCode, intermediaryInstrumentCode = "USDT"
     )
 
     private fun balance(accountId: String) = AccountBalance(
@@ -52,5 +54,19 @@ class RateRefresherTest {
         val captor = argumentCaptor<List<Pair<Instrument, Instrument>>>()
         verify(exchangeRateRepository).refresh(captor.capture())
         assertEquals(listOf(btc to usdt), captor.firstValue)
+    }
+
+    @Test
+    fun `refreshing one account only fetches that account's pair`() {
+        whenever(balanceRepository.getAllSync()).thenReturn(listOf(balance("a"), balance("b")))
+        whenever(accountRepository.getAllSync()).thenReturn(listOf(account("a"), account("b", "ETH")))
+        whenever(instrumentRepository.getAllSync()).thenReturn(listOf(btc, eth, usdt))
+        whenever(exchangeRateRepository.refresh(any())).thenReturn(RefreshResult(emptyList(), emptyList(), null))
+
+        refresher.refresh(accountId = "b")
+
+        val captor = argumentCaptor<List<Pair<Instrument, Instrument>>>()
+        verify(exchangeRateRepository).refresh(captor.capture())
+        assertEquals(listOf(eth to usdt), captor.firstValue)
     }
 }

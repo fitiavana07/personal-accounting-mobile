@@ -250,4 +250,37 @@ class HomeItemBuilderTest {
         )
         assertTrue(result.isEmpty())
     }
+
+    private fun breakEven(rate: Double?): Double? {
+        val cache = rate?.let {
+            ExchangeRateCache(
+                pairKey = ExchangeRateCache.pairKey("BTC", "USDT"),
+                instrumentCode = "BTC",
+                intermediaryCode = "USDT",
+                rate = it,
+                fetchedAt = 1L
+            )
+        }
+        return HomeItemBuilder.build(
+            balances = listOf(balance("acc1", instrumentBalance = 100_000_000, intermediaryBalance = 6_000_000)),
+            accounts = listOf(account("acc1", "Crypto", instrumentCode = "BTC", intermediaryInstrumentCode = "USDT")),
+            instruments = mapOf("BTC" to btc, "USDT" to usdt),
+            rates = cache?.let { mapOf(it.pairKey to it) } ?: emptyMap()
+        )[0].breakEvenPercent
+    }
+
+    @Test
+    fun `break even percent is the rise needed when at a loss`() {
+        assertEquals(20.0, breakEven(50000.0)!!, 0.0001)
+    }
+
+    @Test
+    fun `break even percent is negative cushion when in gain`() {
+        assertEquals(-7.6923, breakEven(65000.0)!!, 0.001)
+    }
+
+    @Test
+    fun `break even percent is null without a rate`() {
+        assertNull(breakEven(null))
+    }
 }

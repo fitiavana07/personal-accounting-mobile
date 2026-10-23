@@ -10,6 +10,11 @@
         android:layout_height="wrap_content"
         android:minHeight="?attr/actionBarSize" />
 
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresh_detail"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -20,211 +25,105 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_metrics_card"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:id="@+id/text_detail_instrument"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/metrics_card_label"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/text_detail_gain_loss_ar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="30sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/text_detail_gain_loss_percent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="3dp"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/text_detail_gain_loss_amount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
             <TextView
-                android:id="@+id/text_detail_gain_loss_percent"
+                style="@style/DetailSectionTitle"
+                android:text="@string/home_detail_section_position" />
+
+            <LinearLayout
+                android:id="@+id/card_detail_position"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="32sp"
-                android:textStyle="bold" />
+                android:background="@drawable/bg_section_card"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="6dp" />
 
             <TextView
-                android:id="@+id/text_detail_gain_loss_ar"
+                style="@style/DetailSectionTitle"
+                android:text="@string/home_detail_section_price" />
+
+            <LinearLayout
+                android:id="@+id/card_detail_price"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="22sp"
-                android:layout_marginTop="4dp" />
+                android:background="@drawable/bg_section_card"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="6dp" />
 
             <TextView
-                android:id="@+id/text_detail_gain_loss_amount"
+                style="@style/DetailSectionTitle"
+                android:text="@string/home_detail_section_alerts" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_detail_alerts"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="20sp"
-                android:layout_marginTop="4dp" />
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="12dp"
-                android:background="?android:attr/listDivider" />
-
-            <LinearLayout
-                android:id="@+id/row_balance"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_detail_add_alert"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textSize="14sp"
-                    android:alpha="0.7"
-                    android:text="@string/home_detail_label_balance" />
-
-                <TextView
-                    android:id="@+id/text_detail_balance"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:gravity="end" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/row_market_value"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textSize="14sp"
-                    android:alpha="0.7"
-                    android:text="@string/home_detail_label_market_value" />
-
-                <TextView
-                    android:id="@+id/text_detail_market_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:gravity="end" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/row_market_value_ar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textSize="14sp"
-                    android:alpha="0.7"
-                    android:text="@string/home_detail_label_market_value_ar" />
-
-                <TextView
-                    android:id="@+id/text_detail_market_value_ar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:gravity="end" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/row_market_price"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textSize="14sp"
-                    android:alpha="0.7"
-                    android:text="@string/home_detail_label_market_price" />
-
-                <TextView
-                    android:id="@+id/text_detail_market_price"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:gravity="end" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/row_book_value"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textSize="14sp"
-                    android:alpha="0.7"
-                    android:text="@string/home_detail_label_book_value" />
-
-                <TextView
-                    android:id="@+id/text_detail_book_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:gravity="end" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/row_book_price"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textSize="14sp"
-                    android:alpha="0.7"
-                    android:text="@string/home_detail_label_book_price" />
-
-                <TextView
-                    android:id="@+id/text_detail_book_price"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:gravity="end" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/row_price_updated_at"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textSize="14sp"
-                    android:alpha="0.7"
-                    android:text="@string/home_detail_label_price_updated_at" />
-
-                <TextView
-                    android:id="@+id/text_detail_price_updated_at"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:gravity="end" />
-
-            </LinearLayout>
+                android:text="@string/alerts_add" />
 
         </LinearLayout>
 
     </ScrollView>
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </LinearLayout>

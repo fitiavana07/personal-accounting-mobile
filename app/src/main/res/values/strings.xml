@@ -121,6 +121,12 @@
     <string name="dialog_edit_apr_title">Yearly interest (APR)</string>
     <string name="error_invalid_apr">Enter a rate greater than 0</string>
     <string name="title_home_detail">Position Details</string>
+    <string name="home_detail_section_position">POSITION</string>
+    <string name="home_detail_section_price">PRICE</string>
+    <string name="home_detail_section_alerts">ALERTS</string>
+    <string name="home_detail_label_cost_basis">Cost basis (Ar)</string>
+    <string name="home_detail_label_break_even">To break even</string>
+    <string name="home_detail_label_cushion">Price can fall by</string>
     <string name="home_detail_label_balance">Balance</string>
     <string name="home_detail_label_market_value">Market value</string>
     <string name="home_detail_label_market_value_ar">Market value (Ar)</string>
