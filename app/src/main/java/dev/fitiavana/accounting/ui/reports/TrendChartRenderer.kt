@@ -21,6 +21,11 @@ import dev.fitiavana.accounting.ui.home.CompactNumberFormatter
 object TrendChartRenderer {
 
     private const val MIN_POINTS = 2
+    private const val BAR_WIDTH = 0.6f
+    /** Low tension keeps the curve from overshooting between points, which would misstate the data. */
+    private const val CURVE_INTENSITY = 0.1f
+    private const val ANIMATION_MS = 600
+    private const val TEXT_SIZE_SP = 10f
     private val POSITIVE_COLOR = Color.rgb(46, 125, 50)
     private val NEGATIVE_COLOR = Color.rgb(198, 40, 40)
     private val LINE_COLOR = Color.rgb(25, 118, 210)
@@ -50,14 +55,18 @@ object TrendChartRenderer {
         val entries = points.mapIndexed { index, point -> Entry(index.toFloat(), point.netWorth.toFloat()) }
         val dataSet = LineDataSet(entries, "").apply {
             color = LINE_COLOR
-            setCircleColor(LINE_COLOR)
-            lineWidth = 2f
-            circleRadius = 3f
+            lineWidth = 2.5f
+            mode = LineDataSet.Mode.CUBIC_BEZIER
+            cubicIntensity = CURVE_INTENSITY
+            setDrawCircles(false)
             setDrawValues(false)
+            setDrawFilled(true)
+            fillColor = LINE_COLOR
+            fillAlpha = 40
         }
         chart.xAxis.valueFormatter = MonthLabelFormatter(points)
         chart.data = LineData(dataSet)
-        chart.invalidate()
+        chart.animateX(ANIMATION_MS)
     }
 
     fun renderNetIncome(chart: BarChart, points: List<TrendPoint>) {
@@ -67,8 +76,8 @@ object TrendChartRenderer {
             setDrawValues(false)
         }
         chart.xAxis.valueFormatter = MonthLabelFormatter(points)
-        chart.data = BarData(dataSet)
-        chart.invalidate()
+        chart.data = BarData(dataSet).apply { barWidth = BAR_WIDTH }
+        chart.animateY(ANIMATION_MS)
     }
 
     private fun configureCommon(chart: BarLineChartBase<*>) {
@@ -77,18 +86,32 @@ object TrendChartRenderer {
         chart.legend.isEnabled = false
         chart.setTouchEnabled(false)
         chart.axisRight.isEnabled = false
+        chart.setExtraOffsets(0f, 8f, 8f, 8f)
         chart.axisLeft.apply {
             this.textColor = textColor
+            textSize = TEXT_SIZE_SP
+            setDrawAxisLine(false)
             setDrawGridLines(true)
+            gridColor = gridColor(textColor)
+            enableGridDashedLine(8f, 8f, 0f)
+            setDrawZeroLine(true)
+            zeroLineColor = textColor
+            zeroLineWidth = 1f
             valueFormatter = AmountAxisFormatter
         }
         chart.xAxis.apply {
             this.textColor = textColor
+            textSize = TEXT_SIZE_SP
+            setDrawAxisLine(false)
+            yOffset = 6f
             position = XAxis.XAxisPosition.BOTTOM
             granularity = 1f
             setDrawGridLines(false)
         }
     }
+
+    /** The text colour at low opacity, so the grid stays in the background. */
+    private fun gridColor(textColor: Int): Int = Color.argb(40, Color.red(textColor), Color.green(textColor), Color.blue(textColor))
 
     /** White on dark theme, black on light theme, matching the Home pie charts' contrast approach. */
     private fun axisTextColor(context: Context): Int {

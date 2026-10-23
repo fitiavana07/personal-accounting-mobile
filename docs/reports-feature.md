@@ -179,6 +179,9 @@ Collapse all" control (`text_reports_expand_all`) sits under the as-of date.
   block is then `INVISIBLE` (keeps its height, so the report below does not jump when the charts arrive), and
   becomes `GONE` only if the loaded trend has fewer than 2 points (`TrendChartRenderer.blockVisibility`).
 - Rendering lives in `TrendChartRenderer` (MPAndroidChart, same approach as the Home `PieChartRenderer`).
+- Look: net worth is a low-tension (`CURVE_INTENSITY`, so it does not overshoot the data) filled curve without point
+  dots; net income bars are 0.6 wide with a zero baseline; both charts have no axis lines, a faint dashed grid, small
+  axis text, extra offsets (so the x labels are not clipped) and a short entry animation.
 
 ## Tests
 

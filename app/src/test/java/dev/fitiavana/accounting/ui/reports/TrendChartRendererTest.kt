@@ -104,4 +104,43 @@ class TrendChartRendererTest {
             formatter.getFormattedValue(2f)
         )
     }
+
+    @Test
+    fun `net worth line is smooth, filled and only marks the latest month`() {
+        val chart = LineChart(context)
+        TrendChartRenderer.configureLine(chart)
+
+        TrendChartRenderer.renderNetWorth(chart, points)
+
+        val set = chart.data.getDataSetByIndex(0) as com.github.mikephil.charting.data.LineDataSet
+        assertEquals(com.github.mikephil.charting.data.LineDataSet.Mode.CUBIC_BEZIER, set.mode)
+        assertTrue(set.isDrawFilledEnabled)
+        assertFalse(set.isDrawCirclesEnabled)
+        assertFalse(set.isDrawValuesEnabled)
+    }
+
+    @Test
+    fun `charts have a quiet look without axis lines and with dashed grid`() {
+        val line = LineChart(context)
+        val bar = BarChart(context)
+        TrendChartRenderer.configureLine(line)
+        TrendChartRenderer.configureBar(bar)
+
+        listOf(line, bar).forEach { chart ->
+            assertFalse(chart.axisLeft.isDrawAxisLineEnabled)
+            assertFalse(chart.xAxis.isDrawAxisLineEnabled)
+            assertTrue(chart.axisLeft.isGridDashedLineEnabled)
+        }
+    }
+
+    @Test
+    fun `net income bars are slimmer than the slot and the zero line is drawn`() {
+        val chart = BarChart(context)
+        TrendChartRenderer.configureBar(chart)
+
+        TrendChartRenderer.renderNetIncome(chart, points)
+
+        assertEquals(0.6f, (chart.data as com.github.mikephil.charting.data.BarData).barWidth, 0.001f)
+        assertTrue(chart.axisLeft.isDrawZeroLineEnabled)
+    }
 }
