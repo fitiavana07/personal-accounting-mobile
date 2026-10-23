@@ -7,6 +7,12 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.57] - 2026-10-23
+
+### Added
+
+- reports: redesign report bodies as section cards
+
 ## [1.56] - 2026-10-23
 
 ### Added
@@ -476,7 +482,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.56...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.57...HEAD
+[1.57]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.56...v1.57
 [1.56]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.55...v1.56
 [1.55]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.54...v1.55
 [1.54]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.53...v1.54
