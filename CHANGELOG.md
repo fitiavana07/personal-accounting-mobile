@@ -7,6 +7,12 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.55] - 2026-10-23
+
+### Added
+
+- alerts: notify when an account's gain/loss % crosses a threshold
+
 ## [1.54] - 2026-10-22
 
 ### Added
@@ -458,7 +464,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.54...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.55...HEAD
+[1.55]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.54...v1.55
 [1.54]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.53...v1.54
 [1.53]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.52...v1.53
 [1.52]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.51...v1.52
