@@ -134,6 +134,71 @@ class TrendChartRendererTest {
     }
 
     @Test
+    fun `charts do not drag or zoom`() {
+        val chart = BarChart(context)
+        TrendChartRenderer.configureBar(chart)
+
+        assertFalse(chart.isDragEnabled)
+        assertFalse(chart.isScaleXEnabled)
+        assertFalse(chart.isScaleYEnabled)
+        assertFalse(chart.isDoubleTapToZoomEnabled)
+    }
+
+    @Test
+    fun `the selected month is highlighted on the line chart`() {
+        val chart = LineChart(context)
+        TrendChartRenderer.configureLine(chart)
+
+        TrendChartRenderer.renderNetWorth(chart, points, YearMonth(2025, 1))
+
+        assertEquals(1f, chart.highlighted.single().x, 0f)
+    }
+
+    @Test
+    fun `no month is highlighted when the selection is not charted`() {
+        val chart = LineChart(context)
+        TrendChartRenderer.configureLine(chart)
+
+        TrendChartRenderer.renderNetWorth(chart, points, YearMonth(2030, 1))
+
+        assertTrue(chart.highlighted.isNullOrEmpty())
+    }
+
+    @Test
+    fun `updateSelection fades the bars other than the selected month`() {
+        val chart = BarChart(context)
+        TrendChartRenderer.configureBar(chart)
+        TrendChartRenderer.renderNetIncome(chart, points)
+
+        TrendChartRenderer.updateSelection(chart, points, YearMonth(2025, 2))
+
+        val set = chart.data.getDataSetByIndex(0)
+        assertEquals(255, android.graphics.Color.alpha(set.getColor(2)))
+        assertTrue(android.graphics.Color.alpha(set.getColor(0)) < 255)
+        assertTrue(android.graphics.Color.alpha(set.getColor(1)) < 255)
+
+        TrendChartRenderer.updateSelection(chart, points, null)
+
+        assertEquals(255, android.graphics.Color.alpha(set.getColor(0)))
+    }
+
+    @Test
+    fun `selecting a value reports the tapped month`() {
+        val chart = LineChart(context)
+        TrendChartRenderer.configureLine(chart)
+        var selected: YearMonth? = null
+        TrendChartRenderer.renderNetWorth(chart, points, null) { selected = it }
+
+        // MPAndroidChart exposes no getter for the listener; read the field the chart notifies on a tap.
+        val listener = com.github.mikephil.charting.charts.Chart::class.java
+            .getDeclaredField("mSelectionListener").apply { isAccessible = true }
+            .get(chart) as com.github.mikephil.charting.listener.OnChartValueSelectedListener
+        listener.onValueSelected(com.github.mikephil.charting.data.Entry(2f, 1_500f), null)
+
+        assertEquals(YearMonth(2025, 2), selected)
+    }
+
+    @Test
     fun `net income bars are slimmer than the slot and the zero line is drawn`() {
         val chart = BarChart(context)
         TrendChartRenderer.configureBar(chart)

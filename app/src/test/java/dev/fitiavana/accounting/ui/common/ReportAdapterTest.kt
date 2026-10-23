@@ -35,6 +35,18 @@ class ReportAdapterTest {
     private fun amount(h: RecyclerView.ViewHolder) = h.itemView.findViewById<TextView>(R.id.text_report_amount)
 
     @Test
+    fun `amounts are trimmed and non-parenthesized ones reserve the closing paren width`() {
+        val adapter = ReportAdapter(onAccountClick = {})
+        val plain = bind(adapter, listOf(ReportDisplayRow.NativeLine("USDT", "1,250.5 ")), 0)
+        val contra = bind(adapter, listOf(ReportDisplayRow.NativeLine("USDT", "(1,250.5)")), 0)
+
+        assertEquals("1,250.5", amount(plain).text.toString())
+        assertTrue(amount(plain).paddingEnd > 0)
+        assertEquals("(1,250.5)", amount(contra).text.toString())
+        assertEquals(0, amount(contra).paddingEnd)
+    }
+
+    @Test
     fun `expandable account line shows a collapsed chevron and reports clicks with its account id`() {
         var clicked: String? = null
         val adapter = ReportAdapter(onAccountClick = { clicked = it })
@@ -107,7 +119,8 @@ class ReportAdapterTest {
         val h = bind(adapter, listOf(ReportDisplayRow.NativeLine("USDT", "1,250.5 ")), 0)
 
         assertEquals("USDT", label(h).text.toString())
-        assertEquals("1,250.5 ", amount(h).text.toString())
+        // The trailing alignment space is dropped; the column alignment comes from the view's end padding.
+        assertEquals("1,250.5", amount(h).text.toString())
         assertFalse(h.itemView.isClickable)
     }
 
@@ -117,7 +130,7 @@ class ReportAdapterTest {
         val h = bind(adapter, listOf(ReportDisplayRow.AprLine("5.5% ", "a1", 5.5, "Earn")), 0)
 
         assertEquals("APR", label(h).text.toString())
-        assertEquals("5.5% ", amount(h).text.toString())
+        assertEquals("5.5%", amount(h).text.toString())
         assertFalse(h.itemView.isClickable)
         assertFalse(label(h).isClickable)
     }

@@ -32,15 +32,19 @@ class ReportsFragmentTest {
     }
 
     @Test
-    fun `trend charts are shown above the period selector`() {
+    fun `trend charts are shown above the report and the period selector stays pinned outside the scroll`() {
         val activity = launch()
 
         assertNotNull(activity.findViewById<View>(R.id.chart_net_worth))
         assertNotNull(activity.findViewById<View>(R.id.chart_net_income))
-        val content = activity.findViewById<ViewGroup>(R.id.layout_reports_content)
+        val scrollContent = activity.findViewById<ViewGroup>(R.id.layout_reports_scroll_content)
         val trend = activity.findViewById<View>(R.id.layout_trend)
-        val years = activity.findViewById<View>(R.id.recycler_reports_years)
-        assertTrue(content.indexOfChild(trend) < content.indexOfChild(years))
+        val report = activity.findViewById<View>(R.id.recycler_reports_content)
+        assertTrue(scrollContent.indexOfChild(trend) < scrollContent.indexOfChild(report))
+        val header = activity.findViewById<View>(R.id.layout_reports_header)
+        val scroll = activity.findViewById<View>(R.id.scroll_reports)
+        assertTrue(header.parent === scroll.parent)
+        assertTrue(activity.findViewById<View>(R.id.text_reports_year).parent.parent === header)
     }
 
     @Test
@@ -62,6 +66,26 @@ class ReportsFragmentTest {
 
         assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.chart_net_worth).visibility)
         assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.chart_net_income).visibility)
+    }
+
+    @Test
+    fun `the trend block is visible by default and tapping the title collapses then expands it`() {
+        val activity = launch()
+        val trend = activity.findViewById<View>(R.id.layout_trend)
+        val toggle = activity.findViewById<android.widget.TextView>(R.id.text_trend_toggle)
+        assertEquals(View.VISIBLE, trend.visibility)
+        assertTrue(toggle.text.endsWith("▼"))
+
+        toggle.performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(View.GONE, trend.visibility)
+        assertTrue(toggle.text.endsWith("►"))
+
+        toggle.performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(View.VISIBLE, trend.visibility)
     }
 
     @Test

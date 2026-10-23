@@ -90,6 +90,7 @@
     <string name="empty_balances">No balances yet</string>
     <string name="empty_reports">No transactions yet</string>
     <string name="trend_loading">Loading trends</string>
+    <string name="trend_toggle_title">Trends</string>
     <string name="trend_net_worth_title">Net worth</string>
     <string name="trend_net_income_title">Net income</string>
     <string name="empty_home">No cryptocurrency positions with an intermediary instrument yet</string>

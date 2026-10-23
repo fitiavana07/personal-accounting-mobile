@@ -5,6 +5,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.graphics.Typeface
+import android.widget.ArrayAdapter
+import androidx.appcompat.widget.ListPopupWindow
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,6 +20,7 @@ import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.ui.common.EditAprDialog
 import dev.fitiavana.accounting.ui.common.EquityStatementAdapter
 import dev.fitiavana.accounting.ui.common.ReportAdapter
+import dev.fitiavana.accounting.ui.common.UiUtils
 
 class ReportsFragment : Fragment() {
 
@@ -24,7 +29,6 @@ class ReportsFragment : Fragment() {
     private lateinit var viewModel: ReportsViewModel
     private lateinit var contentAdapter: ReportAdapter
     private lateinit var equityAdapter: EquityStatementAdapter
-    private lateinit var yearsAdapter: PeriodSelectorAdapter<Int>
     private lateinit var monthsAdapter: PeriodSelectorAdapter<Int?>
     private lateinit var reportTypeAdapter: PeriodSelectorAdapter<ReportType>
 
@@ -40,18 +44,22 @@ class ReportsFragment : Fragment() {
         val balanceRepo = container.balanceRepository
         val instrumentRepo = container.instrumentRepository
 
-        viewModel = ViewModelProvider(this, ReportsViewModelFactory(accountRepo, balanceRepo, instrumentRepo))
+        viewModel = ViewModelProvider(
+            this,
+            ReportsViewModelFactory(accountRepo, balanceRepo, instrumentRepo, container.trendVisibilityStore)
+        )
             .get(ReportsViewModel::class.java)
 
-        yearsAdapter = PeriodSelectorAdapter(labelFor = { it.toString() }, onSelected = { viewModel.selectYear(it) })
         monthsAdapter = PeriodSelectorAdapter(
-            labelFor = { it?.let { month -> ReportPeriodSelector.monthName(month) } ?: "Year" },
-            onSelected = { viewModel.selectMonth(it) }
+            labelFor = { it?.let { month -> ReportPeriodSelector.shortMonthName(month) } ?: "Year" },
+            onSelected = { viewModel.selectMonth(it) },
+            layoutRes = R.layout.item_period_compact
         )
         reportTypeAdapter = PeriodSelectorAdapter(
-            labelFor = { it.label },
+            labelFor = { it.shortLabel },
             onSelected = { viewModel.selectReportType(it) },
-            iconFor = { it.iconRes }
+            iconFor = { it.iconRes },
+            layoutRes = R.layout.item_period_segment
         )
         contentAdapter = ReportAdapter(
             onAccountClick = { viewModel.toggleAccount(it) },
@@ -63,15 +71,14 @@ class ReportsFragment : Fragment() {
         )
         equityAdapter = EquityStatementAdapter()
 
-        view.findViewById<RecyclerView>(R.id.recycler_reports_years).apply {
-            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-            adapter = yearsAdapter
-        }
+        val yearView = view.findViewById<TextView>(R.id.text_reports_year)
+        yearView.setOnClickListener { showYearDropdown(yearView) }
         view.findViewById<RecyclerView>(R.id.recycler_reports_months).apply {
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = monthsAdapter
         }
         view.findViewById<RecyclerView>(R.id.recycler_reports_type).apply {
+            // Short labels keep all three report types visible without scrolling.
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = reportTypeAdapter
         }
@@ -100,8 +107,7 @@ class ReportsFragment : Fragment() {
             contentLayout.visibility = if (hasTransactions) View.VISIBLE else View.GONE
             emptyView.visibility = if (hasTransactions) View.GONE else View.VISIBLE
         }
-        viewModel.availableYears.observe(viewLifecycleOwner) { yearsAdapter.submitList(it, viewModel.selectedYear.value) }
-        viewModel.selectedYear.observe(viewLifecycleOwner) { yearsAdapter.submitList(viewModel.availableYears.value ?: emptyList(), it) }
+        viewModel.selectedYear.observe(viewLifecycleOwner) { yearView.text = "$it $YEAR_CHEVRON" }
         viewModel.availableMonths.observe(viewLifecycleOwner) { monthsAdapter.submitList(it, viewModel.selectedMonth.value) }
         viewModel.selectedMonth.observe(viewLifecycleOwner) { monthsAdapter.submitList(viewModel.availableMonths.value ?: emptyList(), it) }
         viewModel.selectedReportType.observe(viewLifecycleOwner) { reportType ->
@@ -121,6 +127,33 @@ class ReportsFragment : Fragment() {
         viewModel.start()
     }
 
+    /** The years in a dropdown right below the chip (like a spinner), the selected one in bold gold. */
+    private fun showYearDropdown(anchor: View) {
+        val years = viewModel.availableYears.value.orEmpty()
+        if (years.isEmpty()) return
+        val selected = viewModel.selectedYear.value
+        val context = requireContext()
+        val gold = ContextCompat.getColor(context, R.color.gold_500)
+        val adapter = object : ArrayAdapter<Int>(context, android.R.layout.simple_list_item_1, years) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View =
+                (super.getView(position, convertView, parent) as TextView).apply {
+                    val isSelected = getItem(position) == selected
+                    setTypeface(null, if (isSelected) Typeface.BOLD else Typeface.NORMAL)
+                    if (isSelected) setTextColor(gold)
+                }
+        }
+        ListPopupWindow(context).apply {
+            anchorView = anchor
+            setAdapter(adapter)
+            width = (DROPDOWN_MIN_WIDTH_DP * context.resources.displayMetrics.density).toInt().coerceAtLeast(anchor.width)
+            isModal = true
+            setOnItemClickListener { _, _, position, _ ->
+                viewModel.selectYear(years[position])
+                dismiss()
+            }
+        }.show()
+    }
+
     /** Reloads the reports on returning from another screen (e.g. Add Transaction); the first resume follows the initial load. */
     override fun onResume() {
         super.onResume()
@@ -128,22 +161,67 @@ class ReportsFragment : Fragment() {
         resumedBefore = true
     }
 
-    /** Net worth and net income charts above the period selector; they scroll away with the screen. */
+    /**
+     * Net worth and net income charts above the report, collapsible (the choice is remembered). Tapping a month
+     * selects that period; the selected month is highlighted and its values are shown next to each chart title.
+     */
     private fun setUpTrendCharts(view: View) {
+        val trendBlock = view.findViewById<View>(R.id.layout_trend)
+        val toggleView = view.findViewById<TextView>(R.id.text_trend_toggle)
         val chartsBlock = view.findViewById<View>(R.id.layout_trend_charts)
         val progress = view.findViewById<View>(R.id.progress_trend)
         val netWorthChart = view.findViewById<LineChart>(R.id.chart_net_worth)
         val netIncomeChart = view.findViewById<BarChart>(R.id.chart_net_income)
+        val netWorthValue = view.findViewById<TextView>(R.id.text_net_worth_value)
+        val netIncomeValue = view.findViewById<TextView>(R.id.text_net_income_value)
         TrendChartRenderer.configureLine(netWorthChart)
         TrendChartRenderer.configureBar(netIncomeChart)
+        toggleView.setOnClickListener { viewModel.toggleTrendVisible() }
 
+        fun selectedYearMonth(): YearMonth? {
+            val year = viewModel.selectedYear.value ?: return null
+            val month = viewModel.selectedMonth.value ?: return null
+            return YearMonth(year, month)
+        }
+
+        fun refreshSelection() {
+            val points = viewModel.trendPoints.value ?: return
+            if (!TrendChartRenderer.hasEnoughData(points)) return
+            val selected = selectedYearMonth()
+            TrendChartRenderer.updateSelection(netWorthChart, points, selected)
+            TrendChartRenderer.updateSelection(netIncomeChart, points, selected)
+            val point = points.firstOrNull { it.yearMonth == selected }
+            fun valueText(amount: Long?) = amount?.let {
+                "${ReportPeriodSelector.shortMonthName(point!!.yearMonth.month)}  ${UiUtils.formatAmountAr(requireContext(), it)}"
+            }.orEmpty()
+            netWorthValue.text = valueText(point?.netWorth)
+            netIncomeValue.text = valueText(point?.netIncome)
+        }
+
+        viewModel.trendVisible.observe(viewLifecycleOwner) { visible ->
+            trendBlock.visibility = if (visible) View.VISIBLE else View.GONE
+            toggleView.text = "${getString(R.string.trend_toggle_title)} ${if (visible) CHEVRON_EXPANDED else CHEVRON_COLLAPSED}"
+        }
         viewModel.trendPoints.observe(viewLifecycleOwner) { points ->
             chartsBlock.visibility = TrendChartRenderer.blockVisibility(points)
             progress.visibility = TrendChartRenderer.loadingVisibility(points)
+            toggleView.visibility = if (points != null && !TrendChartRenderer.hasEnoughData(points)) View.GONE else View.VISIBLE
             if (points != null && TrendChartRenderer.hasEnoughData(points)) {
-                TrendChartRenderer.renderNetWorth(netWorthChart, points)
-                TrendChartRenderer.renderNetIncome(netIncomeChart, points)
+                val onMonthSelected = { month: YearMonth -> viewModel.selectPeriod(month.year, month.month) }
+                TrendChartRenderer.renderNetWorth(netWorthChart, points, selectedYearMonth(), onMonthSelected)
+                TrendChartRenderer.renderNetIncome(netIncomeChart, points, selectedYearMonth(), onMonthSelected)
+                refreshSelection()
             }
         }
+        viewModel.selectedYear.observe(viewLifecycleOwner) { refreshSelection() }
+        viewModel.selectedMonth.observe(viewLifecycleOwner) { refreshSelection() }
+    }
+
+    private companion object {
+        // ▼ (U+25BC) renders on API 19's system font, unlike ▾; ► and ▼ match the Balance Sheet's chevrons.
+        const val YEAR_CHEVRON = "▼"
+        const val CHEVRON_COLLAPSED = "►"
+        const val CHEVRON_EXPANDED = "▼"
+        const val DROPDOWN_MIN_WIDTH_DP = 112
     }
 }

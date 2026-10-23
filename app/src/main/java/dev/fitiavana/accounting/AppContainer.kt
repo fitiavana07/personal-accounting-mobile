@@ -22,6 +22,7 @@ import dev.fitiavana.accounting.features.exchangerates.RateRefresher
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.p2pprices.P2pPriceRepository
 import dev.fitiavana.accounting.features.p2pprices.SharedPreferencesP2pFilterStore
+import dev.fitiavana.accounting.features.reports.SharedPreferencesTrendVisibilityStore
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
 import dev.fitiavana.accounting.features.sync.ChangeTracker
 import dev.fitiavana.accounting.features.sync.SyncCoordinator
@@ -107,6 +108,9 @@ class AppContainer private constructor(context: Context) {
         SharedPreferencesP2pFilterStore(
             context.getSharedPreferences(SharedPreferencesP2pFilterStore.PREFS_NAME, Context.MODE_PRIVATE)
         )
+    )
+    val trendVisibilityStore = SharedPreferencesTrendVisibilityStore(
+        context.getSharedPreferences(SharedPreferencesTrendVisibilityStore.PREFS_NAME, Context.MODE_PRIVATE)
     )
     val changelogRepository = ChangelogRepository(AssetChangelogSource(context.assets))
     val settingsRepository = AppSettingsRepository(database.appSettingsDao(), changeTracker)

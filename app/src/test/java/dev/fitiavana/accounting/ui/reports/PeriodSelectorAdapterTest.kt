@@ -52,6 +52,58 @@ class PeriodSelectorAdapterTest {
         assertEquals(View.VISIBLE, icon.visibility)
     }
 
+    @Suppress("UNCHECKED_CAST")
+    @Test
+    fun `layoutRes selects the item layout`() {
+        val adapter = PeriodSelectorAdapter<Int>(
+            labelFor = { it.toString() },
+            onSelected = {},
+            layoutRes = R.layout.item_period_compact
+        )
+        adapter.submitList(listOf(2024), 2024)
+        val holder = inflateHolder(adapter)
+        adapter.onBindViewHolder(holder as PeriodSelectorAdapter<Int>.ViewHolder, 0)
+
+        assertEquals("2024", holder.itemView.findViewById<android.widget.TextView>(R.id.text_period_selector).text.toString())
+    }
+
+    @Test
+    fun `submitList also brings the item after the selected one into view`() {
+        val activity = Robolectric.buildActivity(android.app.Activity::class.java).setup().get()
+        val recycler = RecyclerView(activity)
+        val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false)
+        recycler.layoutManager = layoutManager
+        val adapter = PeriodSelectorAdapter<Int>(labelFor = { it.toString() }, onSelected = {})
+        recycler.adapter = adapter
+        fun layout() {
+            recycler.measure(
+                View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(100, View.MeasureSpec.EXACTLY)
+            )
+            recycler.layout(0, 0, 300, 100)
+        }
+        layout()
+
+        adapter.submitList((0..11).toList(), 9)
+        layout()
+
+        val next = layoutManager.findViewByPosition(10)
+        assertEquals(true, next != null && next.right <= 300 && next.left >= 0)
+    }
+
+    @Test
+    fun `submitList with the last item selected does not scroll out of range`() {
+        val activity = Robolectric.buildActivity(android.app.Activity::class.java).setup().get()
+        val recycler = RecyclerView(activity)
+        recycler.layoutManager = LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false)
+        val adapter = PeriodSelectorAdapter<Int>(labelFor = { it.toString() }, onSelected = {})
+        recycler.adapter = adapter
+
+        adapter.submitList((0..11).toList(), 11)
+
+        assertEquals(12, adapter.itemCount)
+    }
+
     @Test
     fun `submitList scrolls the selected item fully into view`() {
         val activity = Robolectric.buildActivity(android.app.Activity::class.java).setup().get()

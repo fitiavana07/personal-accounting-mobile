@@ -677,4 +677,74 @@ class ReportsViewModelTest {
 
         assertEquals(before, viewModel.trendPoints.value)
     }
+
+    // --- trend visibility ---
+
+    @Test
+    fun `trendVisible starts from the stored choice`() {
+        val vm = ReportsViewModel(
+            accountRepository, balanceRepository, instrumentRepository,
+            dev.fitiavana.accounting.features.reports.InMemoryTrendVisibilityStore(visible = false)
+        )
+
+        assertEquals(false, vm.trendVisible.value)
+    }
+
+    @Test
+    fun `toggleTrendVisible flips the value and stores it`() {
+        val store = dev.fitiavana.accounting.features.reports.InMemoryTrendVisibilityStore()
+        val vm = ReportsViewModel(accountRepository, balanceRepository, instrumentRepository, store)
+
+        vm.toggleTrendVisible()
+
+        assertEquals(false, vm.trendVisible.value)
+        assertEquals(false, store.isVisible())
+
+        vm.toggleTrendVisible()
+
+        assertEquals(true, vm.trendVisible.value)
+        assertEquals(true, store.isVisible())
+    }
+
+    // --- selectPeriodSync ---
+
+    private fun loadTwoYears() {
+        whenever(balanceRepository.getTransactionDateRange())
+            .thenReturn(millisFor(2025, Calendar.NOVEMBER, 15) to millisFor(2026, Calendar.FEBRUARY, 3))
+        viewModel.loadInitialSync()
+    }
+
+    @Test
+    fun `selectPeriodSync in another year switches year, months and month at once`() {
+        loadTwoYears()
+
+        viewModel.selectPeriodSync(2025, Calendar.NOVEMBER)
+
+        assertEquals(2025, viewModel.selectedYear.value)
+        assertEquals(Calendar.NOVEMBER, viewModel.selectedMonth.value)
+        assertEquals(listOf(Calendar.NOVEMBER, Calendar.DECEMBER, null), viewModel.availableMonths.value)
+    }
+
+    @Test
+    fun `selectPeriodSync in the same year only changes the month`() {
+        loadTwoYears()
+        val monthsBefore = viewModel.availableMonths.value
+
+        viewModel.selectPeriodSync(2026, Calendar.JANUARY)
+
+        assertEquals(2026, viewModel.selectedYear.value)
+        assertEquals(Calendar.JANUARY, viewModel.selectedMonth.value)
+        assertEquals(monthsBefore, viewModel.availableMonths.value)
+    }
+
+    @Test
+    fun `selectPeriodSync ignores an unknown year or a month without transactions`() {
+        loadTwoYears()
+
+        viewModel.selectPeriodSync(1999, Calendar.JANUARY)
+        viewModel.selectPeriodSync(2025, Calendar.JANUARY)
+
+        assertEquals(2026, viewModel.selectedYear.value)
+        assertEquals(Calendar.FEBRUARY, viewModel.selectedMonth.value)
+    }
 }

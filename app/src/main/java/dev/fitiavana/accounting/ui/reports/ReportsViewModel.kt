@@ -12,7 +12,9 @@ import dev.fitiavana.accounting.features.reports.EquityStatementBuilder
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.reports.IncomeStatementBuilder
+import dev.fitiavana.accounting.features.reports.InMemoryTrendVisibilityStore
 import dev.fitiavana.accounting.features.reports.NativeAmount
+import dev.fitiavana.accounting.features.reports.TrendVisibilityStore
 import dev.fitiavana.accounting.ui.common.EquityStatementDisplay
 import dev.fitiavana.accounting.ui.common.EquityStatementPresenter
 import dev.fitiavana.accounting.ui.common.ReportDisplayRow
@@ -21,8 +23,19 @@ import dev.fitiavana.accounting.ui.common.ReportPresenter
 class ReportsViewModel(
     private val accountRepository: AccountRepository,
     private val balanceRepository: BalanceRepository,
-    private val instrumentRepository: InstrumentRepository
+    private val instrumentRepository: InstrumentRepository,
+    private val trendVisibilityStore: TrendVisibilityStore = InMemoryTrendVisibilityStore()
 ) : ViewModel() {
+
+    private val _trendVisible = MutableLiveData(trendVisibilityStore.isVisible())
+    /** Whether the user wants the trend charts shown; remembered across launches. */
+    val trendVisible: LiveData<Boolean> = _trendVisible
+
+    fun toggleTrendVisible() {
+        val visible = _trendVisible.value != true
+        trendVisibilityStore.setVisible(visible)
+        _trendVisible.value = visible
+    }
 
     /** All months that have transactions, grouped by year, for populating the year/month pickers. */
     private var monthsByYear: Map<Int, List<Int>> = emptyMap()
@@ -225,6 +238,22 @@ class ReportsViewModel(
                 }
             )
         )
+    }
+
+    /** Selects a month of any year at once (a tap on a trend chart), with a single recompute. */
+    fun selectPeriod(year: Int, month: Int) {
+        Thread { selectPeriodSync(year, month) }.start()
+    }
+
+    internal fun selectPeriodSync(year: Int, month: Int) {
+        val months = monthsByYear[year] ?: return
+        if (month !in months) return
+        if (year != _selectedYear.value) {
+            _selectedYear.postValue(year)
+            _availableMonths.postValue(months + null)
+        }
+        _selectedMonth.postValue(month)
+        recomputeSync(year, month)
     }
 
     /** Synchronous version of [selectYear], for use on a background thread (or directly in tests). */

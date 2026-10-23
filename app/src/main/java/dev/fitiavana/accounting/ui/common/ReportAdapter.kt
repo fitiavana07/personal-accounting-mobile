@@ -4,6 +4,7 @@ import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.ShapeDrawable
 import android.graphics.drawable.shapes.OvalShape
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -121,7 +122,7 @@ class ReportAdapter(
             } else {
                 resetClick()
             }
-            amountView.text = row.amountText
+            setAmountText(row.amountText)
             setBold(false, 15f)
             setLabelIndent(labelIndentPadding)
             setTextColor(defaultTextColor())
@@ -134,7 +135,7 @@ class ReportAdapter(
         /** Sub-row of an expanded account (an instrument's amount or the APR): [label] and [amountText] in the same right-aligned column. */
         fun bindNative(label: String, amountText: String) {
             labelView.text = label
-            amountView.text = amountText
+            setAmountText(amountText)
             setBold(false, 14f)
             setLabelIndent(labelIndentPadding + dpToPx(16f))
             setTextColor(secondaryTextColor())
@@ -171,7 +172,7 @@ class ReportAdapter(
 
         fun bindTotal(row: ReportDisplayRow.TotalLine) {
             labelView.text = row.label
-            amountView.text = row.amountText
+            setAmountText(row.amountText)
             setBold(true, if (row.emphasized) 16f else 15f)
             setLabelIndent(labelStartPadding)
             setTextColor(defaultTextColor())
@@ -200,12 +201,30 @@ class ReportAdapter(
             content.setPaddingRelative(content.paddingStart, verticalPx, content.paddingEnd, verticalPx)
         }
 
+        /**
+         * Right-aligns the digits of every amount in one column: a parenthesized (contra) amount
+         * keeps its closing ")" in the margin, the others reserve that same width.
+         */
+        private fun setAmountText(text: String) {
+            amountView.text = text.trimEnd()
+            reserveParenWidth()
+        }
+
+        /** Also called after the text size changes, since the reserved width depends on it. */
+        private fun reserveParenWidth() {
+            val parenWidth = if (amountView.text.startsWith("(")) 0 else amountView.paint.measureText(")").toInt()
+            amountView.setPaddingRelative(0, 0, parenWidth, 0)
+        }
+
         private fun setBold(bold: Boolean, textSizeSp: Float) {
             val style = if (bold) Typeface.BOLD else Typeface.NORMAL
             labelView.setTypeface(Typeface.DEFAULT, style)
-            amountView.setTypeface(Typeface.MONOSPACE, style)
+            amountView.setTypeface(Typeface.DEFAULT, style)
+            // Tabular figures keep digits aligned in a proportional font (no-op below API 21).
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) amountView.fontFeatureSettings = "tnum"
             labelView.textSize = textSizeSp
             amountView.textSize = textSizeSp
+            reserveParenWidth()
         }
 
         private fun setTextColor(color: Int) {

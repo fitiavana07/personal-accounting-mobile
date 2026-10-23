@@ -233,6 +233,19 @@ class ReportPeriodSelectorTest {
         assertEquals("December", ReportPeriodSelector.monthName(Calendar.DECEMBER))
     }
 
+    @Test
+    fun `shortMonthName returns the abbreviated month name`() {
+        assertEquals(ReportPeriodSelector.monthName(Calendar.JANUARY).take(3), ReportPeriodSelector.shortMonthName(Calendar.JANUARY))
+        assertEquals(ReportPeriodSelector.monthName(Calendar.DECEMBER).take(3), ReportPeriodSelector.shortMonthName(Calendar.DECEMBER))
+    }
+
+    @Test
+    fun `report types have short labels for the segmented selector`() {
+        assertEquals("Balance Sheet", ReportType.BALANCE_SHEET.shortLabel)
+        assertEquals("Income", ReportType.INCOME_STATEMENT.shortLabel)
+        assertEquals("Equity", ReportType.CHANGES_IN_EQUITY.shortLabel)
+    }
+
     // --- isLastDayOfMonth ---
 
     @Test

@@ -131,6 +131,7 @@ object ReportPeriodSelector {
 
     private val dateFormat = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
     private val monthNameFormat = SimpleDateFormat("MMMM", Locale.getDefault())
+    private val shortMonthNameFormat = SimpleDateFormat("MMM", Locale.getDefault())
 
     fun formatDate(ms: Long): String = dateFormat.format(Date(ms))
 
@@ -153,6 +154,12 @@ object ReportPeriodSelector {
     fun monthName(month: Int): String {
         val cal = Calendar.getInstance().apply { set(Calendar.MONTH, month) }
         return monthNameFormat.format(cal.time)
+    }
+
+    /** 0-11 → abbreviated month name (e.g. "Oct"), for the compact month tabs. */
+    fun shortMonthName(month: Int): String {
+        val cal = Calendar.getInstance().apply { set(Calendar.MONTH, month) }
+        return shortMonthNameFormat.format(cal.time)
     }
 
     /**

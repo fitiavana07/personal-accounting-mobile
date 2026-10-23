@@ -15,6 +15,8 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.charts.BarLineChartBase
 import com.github.mikephil.charting.formatter.ValueFormatter
+import com.github.mikephil.charting.highlight.Highlight
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import dev.fitiavana.accounting.ui.home.CompactNumberFormatter
 
 /** Shared setup/rendering for the Reports tab's net worth (line) and net income (bar) trend charts. */
@@ -29,6 +31,8 @@ object TrendChartRenderer {
     private val POSITIVE_COLOR = Color.rgb(46, 125, 50)
     private val NEGATIVE_COLOR = Color.rgb(198, 40, 40)
     private val LINE_COLOR = Color.rgb(25, 118, 210)
+    private val SELECTION_COLOR = Color.rgb(184, 134, 11)
+    private const val UNSELECTED_ALPHA = 90
 
     /** A trend needs at least two months to be worth drawing. */
     fun hasEnoughData(points: List<TrendPoint>): Boolean = points.size >= MIN_POINTS
@@ -51,7 +55,16 @@ object TrendChartRenderer {
 
     fun configureBar(chart: BarChart) = configureCommon(chart)
 
-    fun renderNetWorth(chart: LineChart, points: List<TrendPoint>) {
+    /**
+     * [onMonthSelected] is called when the user taps a month; [selected] is the month currently chosen
+     * in the period selector (highlighted), or null when it is not one of the charted months.
+     */
+    fun renderNetWorth(
+        chart: LineChart,
+        points: List<TrendPoint>,
+        selected: YearMonth? = null,
+        onMonthSelected: (YearMonth) -> Unit = {}
+    ) {
         val entries = points.mapIndexed { index, point -> Entry(index.toFloat(), point.netWorth.toFloat()) }
         val dataSet = LineDataSet(entries, "").apply {
             color = LINE_COLOR
@@ -63,28 +76,74 @@ object TrendChartRenderer {
             setDrawFilled(true)
             fillColor = LINE_COLOR
             fillAlpha = 40
+            highLightColor = SELECTION_COLOR
+            highlightLineWidth = 1.5f
+            enableDashedHighlightLine(8f, 6f, 0f)
+            setDrawHorizontalHighlightIndicator(false)
         }
         chart.xAxis.valueFormatter = MonthLabelFormatter(points)
         chart.data = LineData(dataSet)
+        listenForTaps(chart, points, onMonthSelected)
+        updateSelection(chart, points, selected)
         chart.animateX(ANIMATION_MS)
     }
 
-    fun renderNetIncome(chart: BarChart, points: List<TrendPoint>) {
+    fun renderNetIncome(
+        chart: BarChart,
+        points: List<TrendPoint>,
+        selected: YearMonth? = null,
+        onMonthSelected: (YearMonth) -> Unit = {}
+    ) {
         val entries = points.mapIndexed { index, point -> BarEntry(index.toFloat(), point.netIncome.toFloat()) }
         val dataSet = BarDataSet(entries, "").apply {
-            colors = points.map { if (it.netIncome >= 0) POSITIVE_COLOR else NEGATIVE_COLOR }
             setDrawValues(false)
+            // The tap highlight would repaint the bar; the selection is shown by fading the other bars instead.
+            highLightAlpha = 0
         }
         chart.xAxis.valueFormatter = MonthLabelFormatter(points)
         chart.data = BarData(dataSet).apply { barWidth = BAR_WIDTH }
+        listenForTaps(chart, points, onMonthSelected)
+        updateSelection(chart, points, selected)
         chart.animateY(ANIMATION_MS)
+    }
+
+    /** Highlights [selected] without redrawing the whole chart (no animation); null clears the selection. */
+    fun updateSelection(chart: BarLineChartBase<*>, points: List<TrendPoint>, selected: YearMonth?) {
+        val index = points.indexOfFirst { it.yearMonth == selected }.takeIf { it >= 0 }
+        chart.tag = index
+        when (val dataSet = chart.data?.getDataSetByIndex(0)) {
+            is BarDataSet -> dataSet.colors = points.mapIndexed { i, point ->
+                val base = if (point.netIncome >= 0) POSITIVE_COLOR else NEGATIVE_COLOR
+                if (index == null || i == index) base else Color.argb(UNSELECTED_ALPHA, Color.red(base), Color.green(base), Color.blue(base))
+            }
+        }
+        if (index == null) chart.highlightValues(null) else chart.highlightValue(index.toFloat(), 0, false)
+        chart.invalidate()
+    }
+
+    private fun listenForTaps(chart: BarLineChartBase<*>, points: List<TrendPoint>, onMonthSelected: (YearMonth) -> Unit) {
+        chart.setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
+            override fun onValueSelected(e: Entry?, h: Highlight?) {
+                e?.let { points.getOrNull(it.x.toInt()) }?.let { onMonthSelected(it.yearMonth) }
+            }
+
+            // Tapping the highlighted month again would clear it; the period selector still has it selected.
+            override fun onNothingSelected() {
+                (chart.tag as? Int)?.let { chart.highlightValue(it.toFloat(), 0, false) }
+            }
+        })
     }
 
     private fun configureCommon(chart: BarLineChartBase<*>) {
         val textColor = axisTextColor(chart.context)
         chart.description.isEnabled = false
         chart.legend.isEnabled = false
-        chart.setTouchEnabled(false)
+        // Tap to select a month; no dragging or zooming, so vertical scrolling of the screen is not captured.
+        chart.setTouchEnabled(true)
+        chart.isDragEnabled = false
+        chart.setScaleEnabled(false)
+        chart.setPinchZoom(false)
+        chart.isDoubleTapToZoomEnabled = false
         chart.axisRight.isEnabled = false
         chart.setExtraOffsets(0f, 8f, 8f, 8f)
         chart.axisLeft.apply {

@@ -20,8 +20,9 @@ import dev.fitiavana.accounting.R
 class PeriodSelectorAdapter<T>(
     private val labelFor: (T) -> String,
     private val onSelected: (T) -> Unit,
-    private val iconFor: ((T) -> Int?)? = null
-) : RecyclerView.Adapter<PeriodSelectorAdapter<T>.ViewHolder>() {
+    private val iconFor: ((T) -> Int?)? = null,
+    private val layoutRes: Int = R.layout.item_period_selector
+) :RecyclerView.Adapter<PeriodSelectorAdapter<T>.ViewHolder>() {
 
     private var items: List<T> = emptyList()
     private var selected: T? = null
@@ -40,15 +41,17 @@ class PeriodSelectorAdapter<T>(
         this.items = items
         this.selected = selected
         notifyDataSetChanged()
-        // Minimal scroll: brings the selected item fully into view (e.g. current month)
-        items.indexOf(selected).takeIf { it >= 0 }?.let { recyclerView?.scrollToPosition(it) }
+        // Minimal scroll: brings the selected item (e.g. current month) and the one after it (e.g. the
+        // trailing "Year" tab) fully into view
+        items.indexOf(selected).takeIf { it >= 0 }
+            ?.let { recyclerView?.scrollToPosition((it + 1).coerceAtMost(items.lastIndex)) }
     }
 
     override fun getItemCount() = items.size
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_period_selector, parent, false)
+            .inflate(layoutRes, parent, false)
         return ViewHolder(view)
     }
 
