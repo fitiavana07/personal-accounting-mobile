@@ -106,12 +106,11 @@
                 style="@style/DetailSectionTitle"
                 android:text="@string/home_detail_section_alerts" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_detail_alerts"
+            <LinearLayout
+                android:id="@+id/container_detail_alerts"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:overScrollMode="never" />
+                android:orientation="vertical" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_detail_add_alert"

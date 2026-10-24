@@ -24,24 +24,28 @@ class AlertsAdapter(
 
     override fun getItemCount() = items.size
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
-        ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_alert, parent, false))
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = ViewHolder.inflate(parent)
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = items[position]
-        val context = holder.itemView.context
-        holder.account.text = item.accountName
-        holder.condition.text = context.getString(
-            if (item.alert.type == AlertTypes.CROSSING_ABOVE) R.string.alert_item_above else R.string.alert_item_below,
-            SignedPercent.format(item.alert.thresholdPercent)
-        )
-        holder.itemView.setOnClickListener { onClick(item) }
-        holder.delete.setOnClickListener { onDelete(item) }
-    }
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) = holder.bind(items[position], onClick, onDelete)
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val account: TextView = view.findViewById(R.id.text_alert_account)
-        val condition: TextView = view.findViewById(R.id.text_alert_condition)
-        val delete: View = view.findViewById(R.id.btn_delete_alert)
+        private val account: TextView = view.findViewById(R.id.text_alert_account)
+        private val condition: TextView = view.findViewById(R.id.text_alert_condition)
+        private val delete: View = view.findViewById(R.id.btn_delete_alert)
+
+        fun bind(item: AlertItem, onClick: (AlertItem) -> Unit, onDelete: (AlertItem) -> Unit) {
+            account.text = item.accountName
+            condition.text = itemView.context.getString(
+                if (item.alert.type == AlertTypes.CROSSING_ABOVE) R.string.alert_item_above else R.string.alert_item_below,
+                SignedPercent.format(item.alert.thresholdPercent)
+            )
+            itemView.setOnClickListener { onClick(item) }
+            delete.setOnClickListener { onDelete(item) }
+        }
+
+        companion object {
+            fun inflate(parent: ViewGroup) =
+                ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_alert, parent, false))
+        }
     }
 }

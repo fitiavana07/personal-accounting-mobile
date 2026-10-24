@@ -5,12 +5,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
@@ -63,19 +62,21 @@ class HomeDetailActivity : AppCompatActivity() {
         loadItem(finishIfMissing = true)
     }
 
-    /** Lists this account's alerts under the price card, with a button to add one for it. */
+    /**
+     * Lists this account's alerts under the price card, with a button to add one for it. The cards are added to a
+     * plain LinearLayout: a wrap_content RecyclerView inside the ScrollView was measured too short at large font
+     * scales (125%), hiding every alert after the first.
+     */
     private fun bindAlerts() {
         val controller = AlertsController(this)
-        val adapter = AlertsAdapter(
-            onClick = controller::edit,
-            onDelete = controller::confirmDelete
-        )
-        findViewById<RecyclerView>(R.id.recycler_detail_alerts).apply {
-            layoutManager = LinearLayoutManager(this@HomeDetailActivity)
-            this.adapter = adapter
-        }
+        val container = findViewById<LinearLayout>(R.id.container_detail_alerts)
         controller.viewModel.items.observe(this) { items ->
-            adapter.submit(items.filter { it.alert.accountId == accountId })
+            container.removeAllViews()
+            items.filter { it.alert.accountId == accountId }.forEach { item ->
+                val holder = AlertsAdapter.ViewHolder.inflate(container)
+                holder.bind(item, controller::edit, controller::confirmDelete)
+                container.addView(holder.itemView)
+            }
         }
         findViewById<View>(R.id.button_detail_add_alert).setOnClickListener { controller.add(accountId) }
     }
