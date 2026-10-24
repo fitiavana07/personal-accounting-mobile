@@ -1,5 +1,7 @@
 package dev.fitiavana.accounting.ui.alerts
 
+import android.os.Handler
+import android.os.Looper
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.ViewModel
@@ -106,12 +108,21 @@ class AlertsViewModel(
 
     internal fun deleteSync(id: String) = alertRepository.delete(id)
 
-    /** App start: arms the hourly alarm, which a reboot or a force stop clears. */
-    fun ensureScheduled() {
-        Thread { ensureScheduledSync() }.start()
+    /**
+     * App start: arms the hourly alarm, which a reboot or a force stop clears. [onHasAlerts] runs on the
+     * main thread when alerts exist, so the caller can make sure notifications are allowed.
+     */
+    fun ensureScheduled(onHasAlerts: () -> Unit = {}) {
+        Thread {
+            if (ensureScheduledSync()) Handler(Looper.getMainLooper()).post(onHasAlerts)
+        }.start()
     }
 
-    internal fun ensureScheduledSync() = alertCheckManager.ensureScheduled()
+    /** Arms the alarm; returns whether any alert exists. */
+    internal fun ensureScheduledSync(): Boolean {
+        alertCheckManager.ensureScheduled()
+        return alertRepository.getAllSync().isNotEmpty()
+    }
 
     private fun validate(accountId: String?, thresholdText: String): AlertSaveError? = when {
         accountId == null -> AlertSaveError.NO_ACCOUNT

@@ -156,4 +156,19 @@ class AlertsViewModelTest {
 
         verify(alertCheckManager).ensureScheduled()
     }
+
+    @Test
+    fun `ensureScheduled reports no alerts when there are none`() {
+        whenever(alertRepository.getAllSync()).thenReturn(emptyList())
+
+        assertEquals(false, viewModel().ensureScheduledSync())
+    }
+
+    @Test
+    fun `ensureScheduled reports alerts so the notification permission can be checked`() {
+        whenever(alertRepository.getAllSync())
+            .thenReturn(listOf(GainLossAlert("al1", "acc", AlertTypes.CROSSING_ABOVE, 10.0, 5L)))
+
+        assertEquals(true, viewModel().ensureScheduledSync())
+    }
 }

@@ -337,6 +337,9 @@
     <string name="title_alerts">Gain/loss alerts</string>
     <string name="alerts_empty">No alerts yet. Add one to be notified when an account\'s gain/loss reaches a percentage.</string>
     <string name="alerts_add">Add alert</string>
+    <string name="dialog_notifications_off_title">Notifications are off</string>
+    <string name="dialog_notifications_off_message">Alerts can\'t notify you while notifications are turned off for this app. Turn them on in Settings.</string>
+    <string name="action_open_settings">Open settings</string>
     <string name="alerts_no_accounts">No account has a gain/loss on Home yet.</string>
     <string name="alert_item_above">Crossing above %1$s</string>
     <string name="alert_item_below">Crossing below %1$s</string>

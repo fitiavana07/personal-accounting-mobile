@@ -42,7 +42,10 @@ a state that no longer matches (the alert was edited here or on another device) 
    alarms (`setAndAllowWhileIdle` on API 23+, `set` below), so "hourly" is approximate and Doze may defer it.
 3. **Saving an alert** arms the alarm and runs `check()` straight away, which seeds the new alert.
 4. **App start and boot** re-arm the alarm (`MainActivity` through `AlertsViewModel.ensureScheduled`, `BootReceiver`),
-   since a reboot or a force stop clears it.
+   since a reboot or a force stop clears it. At app start, when at least one alert exists, `MainActivity` also asks for
+   the notification permission if it is missing (`NotificationPermission.request`, Android 13+; when Android refuses to show its dialog, because notifications were
+   turned off in Settings or refused twice, a dialog sends the user to the app notification settings), e.g. after a
+   reinstall reset it.
 
 A failed fetch or check never throws out of the alarm; the next alarm tries again. States are saved before the
 notification is posted, so a crash cannot notify the same crossing twice.

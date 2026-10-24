@@ -24,6 +24,7 @@ import dev.fitiavana.accounting.ui.common.RestoreResultPresenter
 import dev.fitiavana.accounting.ui.common.UiUtils
 import dev.fitiavana.accounting.ui.accounts.AccountsFragment
 import dev.fitiavana.accounting.ui.alerts.AlertsViewModel
+import dev.fitiavana.accounting.ui.alerts.NotificationPermission
 import dev.fitiavana.accounting.ui.alerts.AlertsViewModelFactory
 import dev.fitiavana.accounting.ui.backup.AutoBackupViewModel
 import dev.fitiavana.accounting.ui.backup.AutoBackupViewModelFactory
@@ -47,6 +48,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var backupRepository: BackupRepository
     private lateinit var autoBackupViewModel: AutoBackupViewModel
+    private val notificationPermission = NotificationPermission(this)
     private var pendingRestoreUri: Uri? = null
     private var operationInProgress = false
 
@@ -87,7 +89,10 @@ class MainActivity : AppCompatActivity() {
                     container.instrumentRepository,
                     container.alertCheckManager
                 )
-            ).get(AlertsViewModel::class.java).ensureScheduled()
+            ).get(AlertsViewModel::class.java).ensureScheduled {
+                // Alerts exist, so make sure they can notify (e.g. after a reinstall reset the permission).
+                if (!isFinishing && !isDestroyed) notificationPermission.request()
+            }
         }
 
         UiUtils.setupActionBar(
