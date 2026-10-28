@@ -49,6 +49,11 @@
     <string name="mode_title_classic">Classic</string>
     <string name="mode_title_transfer">Transfer</string>
     <string name="mode_title_instrument_income">Instrument Income</string>
+    <string name="mode_title_swap">Swap</string>
+    <string name="mode_description_swap">Buy an instrument with another one, carrying the cost basis.</string>
+    <string name="label_swap_from_amount">Amount to swap</string>
+    <string name="label_swap_to_amount">Amount to receive</string>
+    <string name="error_swap_amounts_required">Enter both the amount to swap and the amount to receive</string>
     <string name="mode_description_classic">Manually enter debit and credit amounts across two or more accounts.</string>
     <string name="mode_description_transfer">Move money, or a stock, crypto or other instrument, between two accounts.</string>
     <string name="mode_description_instrument_income">Record dividends, interest, or other income received as an instrument.</string>

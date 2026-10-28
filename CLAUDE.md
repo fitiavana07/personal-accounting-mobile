@@ -128,6 +128,9 @@ See `docs/transaction-templates-feature.md` for transaction templates (saved
 mode + accounts for Add Transaction): data model, slots, and how templates are
 applied per mode.
 
+See `docs/swap-feature.md` for the Swap transaction mode (buy T with F, carrying
+the cost basis into T's intermediary balance; eligible accounts, entries).
+
 See `docs/accounts-search.md` for the Accounts screen name search (scoped to
 the selected type tab, combined with the hide-zero-balance toggle).
 

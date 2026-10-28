@@ -59,15 +59,7 @@ class AccountSideController(
                 position: Int,
                 id: Long
             ) {
-                val selected = selectedAccount()
-                account = selected
-                resetBalances()
-                onAccountSelected(selected)
-                if (selected == null) {
-                    hideBalance()
-                    return
-                }
-                loadBalance(selected)
+                applySelection()
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -105,7 +97,22 @@ class AccountSideController(
         val index = accounts.indexOfFirst { it.id == accountId }
         if (index < 0) return false
         spinner.setSelection(index + 1)
+        // The spinner's own callback is delivered later (or not at all while its form is hidden), so apply now.
+        applySelection()
         return true
+    }
+
+    /** Takes the spinner's current pick as the selected account and loads its balance. */
+    private fun applySelection() {
+        val selected = selectedAccount()
+        account = selected
+        resetBalances()
+        onAccountSelected(selected)
+        if (selected == null) {
+            hideBalance()
+            return
+        }
+        loadBalance(selected)
     }
 
     fun hideBalance() {

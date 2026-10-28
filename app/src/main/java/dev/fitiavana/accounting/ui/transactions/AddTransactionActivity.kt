@@ -42,7 +42,7 @@ import java.util.UUID
 class AddTransactionActivity : AppCompatActivity() {
 
     /** Data-entry mode chosen in step 1; only the inputs differ, not the saved transaction. */
-    private enum class Mode { CLASSIC, TRANSFER, INSTRUMENT_INCOME }
+    private enum class Mode { CLASSIC, TRANSFER, INSTRUMENT_INCOME, SWAP }
 
     /** The two-step wizard flow: pick a mode, then fill in its form. */
     private enum class Step { MODE_SELECTION, TRANSACTION_FORM }
@@ -68,10 +68,12 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var modeClassic: View
     private lateinit var modeTransfer: View
     private lateinit var modeInstrumentIncome: View
+    private lateinit var modeSwap: View
     private lateinit var sectionTemplates: View
     private lateinit var listTemplates: LinearLayout
     private lateinit var transferController: TransferController
     private lateinit var instrumentIncomeController: InstrumentIncomeController
+    private lateinit var swapController: SwapController
 
     private val entryRows = mutableListOf<EntryRowController>()
 
@@ -109,6 +111,7 @@ class AddTransactionActivity : AppCompatActivity() {
         modeClassic = findViewById(R.id.mode_classic)
         modeTransfer = findViewById(R.id.mode_transfer)
         modeInstrumentIncome = findViewById(R.id.mode_instrument_income)
+        modeSwap = findViewById(R.id.mode_swap)
         sectionTemplates = findViewById(R.id.section_templates)
         listTemplates = findViewById(R.id.list_templates)
 
@@ -164,6 +167,29 @@ class AddTransactionActivity : AppCompatActivity() {
                     runOnUiThread = uiThreadRunner
                 )
                 instrumentIncomeController.populateSpinners(accounts, loaded.balancesByAccountId)
+                swapController = SwapController(
+                    context = this,
+                    viewModel = viewModel,
+                    instrumentsMap = instrumentsMap,
+                    fromSpinner = findViewById(R.id.spinner_swap_from),
+                    fromTextBalance = findViewById(R.id.text_swap_from_balance),
+                    fromTextNewBalance = findViewById(R.id.text_swap_from_new_balance),
+                    fromTextZeroBalanceError = findViewById(R.id.text_swap_from_zero_balance),
+                    toSpinner = findViewById(R.id.spinner_swap_to),
+                    toTextBalance = findViewById(R.id.text_swap_to_balance),
+                    toTextNewBalance = findViewById(R.id.text_swap_to_new_balance),
+                    fromAmountCode = findViewById(R.id.text_swap_from_amount_code),
+                    editFromAmount = findViewById(R.id.edit_swap_from_amount),
+                    buttonAll = findViewById(R.id.btn_swap_from_amount_all),
+                    toAmountCode = findViewById(R.id.text_swap_to_amount_code),
+                    editToAmount = findViewById(R.id.edit_swap_to_amount),
+                    textAmountBase = findViewById(R.id.text_swap_amount_base),
+                    textRate = findViewById(R.id.text_swap_rate),
+                    onChanged = { recalculateBalanceSummary() },
+                    runInBackground = backgroundRunner,
+                    runOnUiThread = uiThreadRunner
+                )
+                swapController.populateSpinners(accounts, loaded.balancesByAccountId)
                 recalculateBalanceSummary()
                 // Templates need the controllers above, so they are shown (and can be applied) only now.
                 showTemplates(templates)
@@ -199,7 +225,8 @@ class AddTransactionActivity : AppCompatActivity() {
         val modeOptions = listOf(
             R.id.mode_option_classic to Mode.CLASSIC,
             R.id.mode_option_transfer to Mode.TRANSFER,
-            R.id.mode_option_instrument_income to Mode.INSTRUMENT_INCOME
+            R.id.mode_option_instrument_income to Mode.INSTRUMENT_INCOME,
+            R.id.mode_option_swap to Mode.SWAP
         )
         modeOptions.forEach { (viewId, optionMode) ->
             val optionView = findViewById<View>(viewId)
@@ -263,6 +290,8 @@ class AddTransactionActivity : AppCompatActivity() {
             if (newMode == Mode.TRANSFER) View.VISIBLE else View.GONE
         modeInstrumentIncome.visibility =
             if (newMode == Mode.INSTRUMENT_INCOME) View.VISIBLE else View.GONE
+        modeSwap.visibility =
+            if (newMode == Mode.SWAP) View.VISIBLE else View.GONE
         recalculateBalanceSummary()
     }
 
@@ -369,6 +398,12 @@ class AddTransactionActivity : AppCompatActivity() {
                 } else {
                     emptyList()
                 }
+            Mode.SWAP ->
+                if (::swapController.isInitialized) {
+                    swapController.summaryEntries()
+                } else {
+                    emptyList()
+                }
         }
 
     private fun recalculateBalanceSummary() {
@@ -420,6 +455,12 @@ class AddTransactionActivity : AppCompatActivity() {
             Mode.INSTRUMENT_INCOME ->
                 if (::instrumentIncomeController.isInitialized) {
                     instrumentIncomeController.collectEntries()
+                } else {
+                    null
+                }
+            Mode.SWAP ->
+                if (::swapController.isInitialized) {
+                    swapController.collectEntries()
                 } else {
                     null
                 }
@@ -552,6 +593,7 @@ class AddTransactionActivity : AppCompatActivity() {
         if (::instrumentIncomeController.isInitialized && instrumentIncomeController.hasContent()) {
             return true
         }
+        if (::swapController.isInitialized && swapController.hasContent()) return true
         return entryRows.any { it.hasContent() }
     }
 
@@ -582,6 +624,7 @@ class AddTransactionActivity : AppCompatActivity() {
         entryRows.forEach { it.clear() }
         if (::transferController.isInitialized) transferController.clear()
         if (::instrumentIncomeController.isInitialized) instrumentIncomeController.clear()
+        if (::swapController.isInitialized) swapController.clear()
         showStep(Step.MODE_SELECTION)
     }
 
@@ -591,6 +634,7 @@ class AddTransactionActivity : AppCompatActivity() {
         Mode.CLASSIC -> TemplateModes.CLASSIC
         Mode.TRANSFER -> TemplateModes.TRANSFER
         Mode.INSTRUMENT_INCOME -> TemplateModes.INSTRUMENT_INCOME
+        Mode.SWAP -> TemplateModes.SWAP
     }
 
     private fun modeOf(templateMode: String): Mode? =
@@ -600,12 +644,14 @@ class AddTransactionActivity : AppCompatActivity() {
         Mode.CLASSIC -> R.string.mode_title_classic
         Mode.TRANSFER -> R.string.mode_title_transfer
         Mode.INSTRUMENT_INCOME -> R.string.mode_title_instrument_income
+        Mode.SWAP -> R.string.mode_title_swap
     }
 
     private fun Mode.iconRes(): Int = when (this) {
         Mode.CLASSIC -> R.drawable.ic_mode_classic
         Mode.TRANSFER -> R.drawable.ic_mode_transfer
         Mode.INSTRUMENT_INCOME -> R.drawable.ic_mode_instrument_income
+        Mode.SWAP -> R.drawable.ic_mode_swap
     }
 
     /** Lists the saved templates under the mode cards; the whole section is hidden when there are none. */
@@ -634,6 +680,8 @@ class AddTransactionActivity : AppCompatActivity() {
                 ::transferController.isInitialized && transferController.applyTemplate(template)
             Mode.INSTRUMENT_INCOME ->
                 ::instrumentIncomeController.isInitialized && instrumentIncomeController.applyTemplate(template)
+            Mode.SWAP ->
+                ::swapController.isInitialized && swapController.applyTemplate(template)
         }
         showStep(Step.TRANSACTION_FORM)
         if (!applied) {
@@ -664,6 +712,8 @@ class AddTransactionActivity : AppCompatActivity() {
                 if (::transferController.isInitialized) transferController.templateSlots() else null
             Mode.INSTRUMENT_INCOME ->
                 if (::instrumentIncomeController.isInitialized) instrumentIncomeController.templateSlots() else null
+            Mode.SWAP ->
+                if (::swapController.isInitialized) swapController.templateSlots() else null
         }
         if (slots == null || slots.map { it.accountId }.distinct().size != slots.size) {
             Toast.makeText(this, R.string.error_template_accounts_required, Toast.LENGTH_SHORT).show()

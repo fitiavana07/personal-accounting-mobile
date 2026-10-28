@@ -20,9 +20,7 @@ import dev.fitiavana.accounting.ui.common.TransactionDisplay
 import dev.fitiavana.accounting.ui.common.baseAmountNoWrap
 import dev.fitiavana.accounting.ui.common.emphasizeMainAmount
 import dev.fitiavana.accounting.ui.common.enableAmountFormatting
-import dev.fitiavana.accounting.ui.common.plainText
-import kotlin.math.pow
-import kotlin.math.roundToLong
+import dev.fitiavana.accounting.ui.common.plainAmount
 
 /**
  * Owns the Transfer mode's two account sides and shared amount field. What the
@@ -165,12 +163,7 @@ class TransferController(
     }
 
     /** The typed amount in the From account's unit: instrument units, or whole base currency. */
-    private fun parsedAmount(instrument: Instrument?): Long {
-        val text = editTransferAmount.plainText()
-        if (instrument == null) return text.toLongOrNull() ?: 0L
-        val factor = 10.0.pow(instrument.decimalPlaces)
-        return text.toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
-    }
+    private fun parsedAmount(instrument: Instrument?): Long = editTransferAmount.plainAmount(instrument)
 
     /** The base-currency amount moved: the typed amount itself, or derived from the From account's rate. */
     private fun computedBaseAmount(instrument: Instrument?): Long? =

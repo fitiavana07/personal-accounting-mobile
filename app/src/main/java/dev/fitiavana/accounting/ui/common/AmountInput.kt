@@ -3,6 +3,9 @@ package dev.fitiavana.accounting.ui.common
 import android.text.Editable
 import android.text.TextWatcher
 import android.widget.EditText
+import dev.fitiavana.accounting.features.instruments.Instrument
+import kotlin.math.pow
+import kotlin.math.roundToLong
 
 /**
  * Live thousands separators ("," — English style only) for amount fields. The displayed text is
@@ -94,3 +97,14 @@ fun EditText.enableAmountFormatting(allowDecimal: () -> Boolean) {
 
 /** The field's number without thousands separators, e.g. "1234567" (or "1234.5"). Blank if empty. */
 fun EditText.plainText(): String = AmountInput.plain(text.toString().trim())
+
+/**
+ * The typed amount as an integer in [instrument]'s smallest unit (scaled by its decimal places), or as
+ * whole base currency when [instrument] is null. 0 when empty or unparsable.
+ */
+fun EditText.plainAmount(instrument: Instrument?): Long {
+    val text = plainText()
+    if (instrument == null) return text.toLongOrNull() ?: 0L
+    val factor = 10.0.pow(instrument.decimalPlaces)
+    return text.toDoubleOrNull()?.let { (it * factor).roundToLong() } ?: 0L
+}

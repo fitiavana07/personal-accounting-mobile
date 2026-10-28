@@ -9,7 +9,7 @@ notes are never stored.
 - **Save:** on the form step of *New transaction* (any mode), tap **Save as template**, pick every account first
   (all different; Classic needs at least two rows), then give it a name. It works without amounts, and no
   transaction is created.
-- **Use:** the mode-selection step lists saved templates under the three mode cards (newest first; the section
+- **Use:** the mode-selection step lists saved templates under the mode cards (newest first; the section
   is hidden when there are none). Tap one: the form opens in that mode with the accounts already selected.
 - **Delete:** the trash icon on a template row, with a confirmation. Transactions already made are not affected.
 - If an account in a template can no longer be picked (for example, in Transfer, the TO account
@@ -23,7 +23,7 @@ notes are never stored.
 | `transaction_templates` | `id`, `name`, `mode`, `createdAt` |
 | `template_entries` | `id`, `templateId` (FK, cascade), `accountId` (FK to `accounts`, cascade), `slot`, `position` |
 
-- `mode` is one of `TemplateModes` (`classic`, `transfer`, `instrument_income`).
+- `mode` is one of `TemplateModes` (`classic`, `transfer`, `instrument_income`, `swap`; swap uses the `from`/`to` slots like transfer).
 - `slot` says which account picker an entry belongs to (`TemplateSlots`): `from`/`to` for the two transfer modes,
   `asset`/`revenue` for Instrument Income, `row` for Classic.
 - **The debit or credit side is not stored.** It follows from the slot (`from` is credited, `to` is debited, as

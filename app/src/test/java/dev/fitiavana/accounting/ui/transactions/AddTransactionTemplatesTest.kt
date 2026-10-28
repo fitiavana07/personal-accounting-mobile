@@ -15,6 +15,7 @@ import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.accounts.Account
+import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.templates.TemplateModes
 import dev.fitiavana.accounting.features.templates.TemplateSlot
 import dev.fitiavana.accounting.features.templates.TemplateSlots
@@ -144,6 +145,39 @@ class AddTransactionTemplatesTest {
         assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.mode_transfer).visibility)
         assertEquals("Tpl Bank", selectedName(activity.findViewById(R.id.spinner_transfer_from)))
         assertEquals("Tpl Cash", selectedName(activity.findViewById(R.id.spinner_transfer_to)))
+    }
+
+    @Test
+    fun `tapping a swap template shows the from balance and both amount unit codes`() {
+        onBackground {
+            container.instrumentRepository.insert(Instrument(code = "TSU", note = "", type = "fiat", decimalPlaces = 2))
+            container.instrumentRepository.insert(Instrument(code = "TSB", note = "", type = "cryptocurrency", decimalPlaces = 8))
+            container.accountRepository.insert(
+                Account(id = "tpl_sw_from", name = "Tpl Sw From", type = "asset", instrumentCode = "TSU")
+            )
+            container.accountRepository.insert(
+                Account(
+                    id = "tpl_sw_to", name = "Tpl Sw To", type = "asset",
+                    instrumentCode = "TSB", intermediaryInstrumentCode = "TSU"
+                )
+            )
+            AppDatabase.getInstance(context).accountBalanceDao().insert(
+                AccountBalance(
+                    accountId = "tpl_sw_from", balance = 1_000L, instrumentBalance = 100L,
+                    updatedAt = 0L, createdAt = 0L
+                )
+            )
+        }
+        saveTemplate("Buy", TemplateModes.SWAP, TemplateSlots.FROM to "tpl_sw_from", TemplateSlots.TO to "tpl_sw_to")
+        val activity = launch().get()
+        waitUntil { activity.templateList().childCount == 1 }
+
+        activity.templateList().getChildAt(0).performClick()
+        waitUntil { activity.findViewById<View>(R.id.text_swap_from_balance).visibility == View.VISIBLE }
+
+        assertEquals("TSU", activity.findViewById<TextView>(R.id.text_swap_from_amount_code).text.toString())
+        assertEquals("TSB", activity.findViewById<TextView>(R.id.text_swap_to_amount_code).text.toString())
+        assertEquals("Tpl Sw To", selectedName(activity.findViewById(R.id.spinner_swap_to)))
     }
 
     @Test

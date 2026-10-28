@@ -414,4 +414,31 @@ class AccountSideControllerTest {
         val sut = controller(isDebit = false)
         assertFalse(sut.isDebit)
     }
+
+    /** A spinner whose selection callback never fires, like one whose notification got lost. */
+    private class SilentSpinner(context: Context) : Spinner(context) {
+        override fun setOnItemSelectedListener(listener: android.widget.AdapterView.OnItemSelectedListener?) {}
+    }
+
+    @Test
+    fun `select applies the account and loads its balance without waiting for the spinner callback`() {
+        var selected: Account? = null
+        var loaded = false
+        val textBalance = TextView(context)
+        val controller = controller(
+            getBalance = { SideBalance(balance = 100L, instrumentBalance = 10L) },
+            spinner = SilentSpinner(context),
+            textBalance = textBalance,
+            onAccountSelected = { selected = it },
+            onBalanceLoaded = { loaded = true }
+        )
+        controller.populate(listOf(accountNoInstrument, accountUsd))
+
+        assertTrue(controller.select("a2"))
+
+        assertSame(accountUsd, controller.account)
+        assertSame(accountUsd, selected)
+        assertTrue(loaded)
+        assertEquals(View.VISIBLE, textBalance.visibility)
+    }
 }

@@ -85,6 +85,18 @@ class AddTransactionActivityTest {
     }
 
     @Test
+    fun `tapping the swap mode card shows only the swap section`() {
+        val activity = launch().get()
+
+        activity.findViewById<View>(R.id.mode_option_swap).performClick()
+
+        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.mode_swap).visibility)
+        assertEquals(View.GONE, activity.findViewById<View>(R.id.mode_classic).visibility)
+        assertEquals(View.GONE, activity.findViewById<View>(R.id.mode_transfer).visibility)
+        assertEquals(View.GONE, activity.findViewById<View>(R.id.mode_instrument_income).visibility)
+    }
+
+    @Test
     fun `back from step 2 with no data entered returns to step 1 without a dialog`() {
         val activity = launch().get()
         activity.findViewById<View>(R.id.mode_option_classic).performClick()

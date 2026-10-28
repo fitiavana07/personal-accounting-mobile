@@ -13,6 +13,7 @@ object TemplateModes {
     const val CLASSIC = "classic"
     const val TRANSFER = "transfer"
     const val INSTRUMENT_INCOME = "instrument_income"
+    const val SWAP = "swap"
 }
 
 /**
@@ -84,7 +85,7 @@ data class TemplateWithEntries(
 
     /** False when an account was deleted and the template can no longer fill its mode's form. */
     fun isComplete(): Boolean = when {
-        template.mode == TemplateModes.TRANSFER ->
+        template.mode == TemplateModes.TRANSFER || template.mode == TemplateModes.SWAP ->
             accountFor(TemplateSlots.FROM) != null && accountFor(TemplateSlots.TO) != null
 
         template.mode == TemplateModes.INSTRUMENT_INCOME ->
