@@ -7,6 +7,12 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.59] - 2026-10-28
+
+### Added
+
+- transactions: add Swap transaction mode
+
 ## [1.58] - 2026-10-24
 
 ### Fixed
@@ -489,7 +495,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.58...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.59...HEAD
+[1.59]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.58...v1.59
 [1.58]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.57...v1.58
 [1.57]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.56...v1.57
 [1.56]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.55...v1.56
