@@ -26,6 +26,8 @@ import dev.fitiavana.accounting.ui.accounts.AccountsFragment
 import dev.fitiavana.accounting.ui.alerts.AlertsViewModel
 import dev.fitiavana.accounting.ui.alerts.NotificationPermission
 import dev.fitiavana.accounting.ui.alerts.AlertsViewModelFactory
+import dev.fitiavana.accounting.ui.chainmonitors.ChainMonitorsViewModel
+import dev.fitiavana.accounting.ui.chainmonitors.ChainMonitorsViewModelFactory
 import dev.fitiavana.accounting.ui.backup.AutoBackupViewModel
 import dev.fitiavana.accounting.ui.backup.AutoBackupViewModelFactory
 import dev.fitiavana.accounting.ui.balances.BalancesActivity
@@ -91,6 +93,17 @@ class MainActivity : AppCompatActivity() {
                 )
             ).get(AlertsViewModel::class.java).ensureScheduled {
                 // Alerts exist, so make sure they can notify (e.g. after a reinstall reset the permission).
+                if (!isFinishing && !isDestroyed) notificationPermission.request()
+            }
+            // The same for the chain monitor check.
+            ViewModelProvider(
+                this,
+                ChainMonitorsViewModelFactory(
+                    container.chainMonitorRepository,
+                    container.erc20BalanceFetcher,
+                    container.chainMonitorCheckManager
+                )
+            ).get(ChainMonitorsViewModel::class.java).ensureScheduled {
                 if (!isFinishing && !isDestroyed) notificationPermission.request()
             }
         }

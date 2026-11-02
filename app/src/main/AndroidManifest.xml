@@ -71,6 +71,11 @@
             android:parentActivityName=".MainActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name=".ui.chainmonitors.ChainMonitorsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".ui.changelog.ChangelogActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
