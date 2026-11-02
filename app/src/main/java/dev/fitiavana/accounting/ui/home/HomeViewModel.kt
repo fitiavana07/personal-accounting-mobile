@@ -10,6 +10,8 @@ import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.alerts.AlertCheckManager
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.balances.BalanceRepository
+import dev.fitiavana.accounting.features.chainmonitors.ChainMonitorCheckManager
+import dev.fitiavana.accounting.features.chainmonitors.MonitorRow
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
 import dev.fitiavana.accounting.features.exchangerates.RateRefresher
@@ -34,7 +36,8 @@ class HomeViewModel(
     private val settingsRepository: AppSettingsRepository,
     private val p2pPriceRepository: P2pPriceRepository,
     private val rateRefresher: RateRefresher,
-    private val alertCheckManager: AlertCheckManager
+    private val alertCheckManager: AlertCheckManager,
+    private val chainMonitorCheckManager: ChainMonitorCheckManager
 ) : ViewModel() {
 
     private val balances: LiveData<List<AccountBalance>> =
@@ -50,6 +53,9 @@ class HomeViewModel(
 
     private val p2pPricesLiveData = MutableLiveData<P2pPrices?>(null)
     val p2pPrices: LiveData<P2pPrices?> = p2pPricesLiveData
+
+    private val monitorRowsLiveData = MutableLiveData<List<MonitorRow>>(emptyList())
+    val monitorRows: LiveData<List<MonitorRow>> = monitorRowsLiveData
 
     val homeItems = MediatorLiveData<List<HomeItem>>().apply {
         var latestBalances: List<AccountBalance> = emptyList()
@@ -265,6 +271,20 @@ class HomeViewModel(
     /** Fetches and publishes [p2pPrices]. Synchronous — callers must invoke this off the main thread. */
     fun refreshP2pPrices() {
         p2pPricesLiveData.postValue(p2pPriceRepository.fetch())
+    }
+
+    /**
+     * Reads every chain monitor's balance now (notifying the ones that went above their threshold) and publishes
+     * [monitorRows]; a failed check still publishes the last known balances. Synchronous — callers must invoke
+     * this off the main thread.
+     */
+    fun refreshMonitors() {
+        try {
+            chainMonitorCheckManager.check(true)
+        } catch (e: Exception) {
+            Log.w(TAG, "Chain monitor check failed", e)
+        }
+        monitorRowsLiveData.postValue(chainMonitorCheckManager.rows())
     }
 
     /** Payment methods P2P ads can be filtered on. Synchronous — may hit the network; call off the main thread. */

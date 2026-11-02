@@ -128,4 +128,34 @@
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="12sp" />
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/button_monitors"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:importantForAccessibility="no"
+            app:srcCompat="@drawable/ic_home_monitors"
+            app:tint="?attr/colorControlNormal" />
+
+        <TextView
+            android:id="@+id/text_shortcut_monitors"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center_horizontal"
+            android:text="@string/home_shortcut_monitors"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="12sp" />
+    </LinearLayout>
 </LinearLayout>

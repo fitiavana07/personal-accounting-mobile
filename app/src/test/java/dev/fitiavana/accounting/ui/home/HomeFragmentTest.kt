@@ -92,6 +92,30 @@ class HomeFragmentTest {
     }
 
     @Test
+    fun `the monitors block follows the P2P prices`() {
+        val activity = launchHomeFragment()
+        val recycler = activity.findViewById<RecyclerView>(R.id.recycler_home)
+
+        val sections = (recycler.adapter as ConcatAdapter).adapters.map { it.javaClass.simpleName }
+
+        assertEquals(sections.indexOf("HomeP2pPricesAdapter") + 1, sections.indexOf("HomeMonitorsAdapter"))
+    }
+
+    @Test
+    fun `tapping the Monitors shortcut opens ChainMonitorsActivity`() {
+        val activity = launchHomeFragment()
+        layOutRecycler(activity)
+
+        activity.findViewById<View>(R.id.button_monitors).performClick()
+
+        val started = shadowOf(activity).nextStartedActivity
+        assertEquals(
+            dev.fitiavana.accounting.ui.chainmonitors.ChainMonitorsActivity::class.java.name,
+            started.component?.className
+        )
+    }
+
+    @Test
     fun `shortcuts row and P2P prices sit between the metrics and emergency fund blocks`() {
         val activity = launchHomeFragment()
         val recycler = layOutRecycler(activity)

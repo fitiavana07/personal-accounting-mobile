@@ -252,6 +252,9 @@
     <string name="home_shortcut_monthly_expenses">Monthly Spend</string>
     <string name="home_shortcut_earn">Earn</string>
     <string name="home_shortcut_alerts">Alerts</string>
+    <string name="home_shortcut_monitors">Monitors</string>
+    <string name="home_monitors_header">Monitors</string>
+    <string name="home_monitor_amount">%1$s %2$s</string>
     <string name="home_p2p_header">Binance P2P · USDT/MGA</string>
     <string name="home_p2p_buy_title">Buy USDT</string>
     <string name="home_p2p_sell_title">Sell USDT</string>

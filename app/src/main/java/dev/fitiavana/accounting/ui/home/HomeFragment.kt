@@ -17,6 +17,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.ui.alerts.AlertsActivity
+import dev.fitiavana.accounting.ui.chainmonitors.ChainMonitorsActivity
 import dev.fitiavana.accounting.ui.cexprices.CexPricesActivity
 import dev.fitiavana.accounting.ui.earn.EarnActivity
 import dev.fitiavana.accounting.ui.common.ReportAdapter
@@ -32,6 +33,7 @@ class HomeFragment : Fragment() {
     private lateinit var pieChartsAdapter: HomePieChartsAdapter
     private lateinit var shortcutsAdapter: HomeShortcutsAdapter
     private lateinit var p2pPricesAdapter: HomeP2pPricesAdapter
+    private lateinit var monitorsAdapter: HomeMonitorsAdapter
     private lateinit var emergencyFundAdapter: EmergencyFundAdapter
     private lateinit var incomeToExpensesAdapter: IncomeToExpensesAdapter
     private lateinit var noteAdapter: HomeNoteAdapter
@@ -61,7 +63,8 @@ class HomeFragment : Fragment() {
                 settingsRepo,
                 container.p2pPriceRepository,
                 container.rateRefresher,
-                container.alertCheckManager
+                container.alertCheckManager,
+                container.chainMonitorCheckManager
             )
         ).get(HomeViewModel::class.java)
 
@@ -84,9 +87,11 @@ class HomeFragment : Fragment() {
             },
             onMonthlyExpensesClick = { showEditMonthlyExpensesDialog() },
             onEarnClick = { startActivity(EarnActivity.intent(requireContext())) },
-            onAlertsClick = { startActivity(AlertsActivity.intent(requireContext())) }
+            onAlertsClick = { startActivity(AlertsActivity.intent(requireContext())) },
+            onMonitorsClick = { startActivity(ChainMonitorsActivity.intent(requireContext())) }
         )
         p2pPricesAdapter = HomeP2pPricesAdapter { showP2pFilterDialog() }
+        monitorsAdapter = HomeMonitorsAdapter { startActivity(ChainMonitorsActivity.intent(requireContext())) }
         emergencyFundAdapter = EmergencyFundAdapter()
         incomeToExpensesAdapter = IncomeToExpensesAdapter()
         noteAdapter = HomeNoteAdapter()
@@ -99,6 +104,7 @@ class HomeFragment : Fragment() {
                 adapter,
                 noteAdapter,
                 p2pPricesAdapter,
+                monitorsAdapter,
                 emergencyFundAdapter,
                 incomeToExpensesAdapter,
                 pieChartsAdapter,
@@ -137,6 +143,10 @@ class HomeFragment : Fragment() {
 
         viewModel.p2pPrices.observe(viewLifecycleOwner) { prices ->
             p2pPricesAdapter.submit(prices)
+        }
+
+        viewModel.monitorRows.observe(viewLifecycleOwner) { rows ->
+            monitorsAdapter.submit(rows)
         }
 
         viewModel.emergencyFund.observe(viewLifecycleOwner) { info ->
@@ -207,9 +217,11 @@ class HomeFragment : Fragment() {
     private fun refreshRates() {
         swipeRefresh.isRefreshing = true
         val p2pRefresh = Thread { viewModel.refreshP2pPrices() }.apply { start() }
+        val monitorsRefresh = Thread { viewModel.refreshMonitors() }.apply { start() }
         Thread {
             val result = viewModel.refreshRates()
             p2pRefresh.join()
+            monitorsRefresh.join()
             activity?.runOnUiThread {
                 swipeRefresh.isRefreshing = false
                 if (result.failed.isNotEmpty() && result.succeeded.isEmpty()) {

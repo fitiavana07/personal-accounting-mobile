@@ -26,8 +26,9 @@ class HomeShortcutsAdapterTest {
         onCex: () -> Unit = {},
         onExpenses: () -> Unit = {},
         onEarn: () -> Unit = {},
-        onAlerts: () -> Unit = {}
-    ) = HomeShortcutsAdapter(onCex, onExpenses, onEarn, onAlerts)
+        onAlerts: () -> Unit = {},
+        onMonitors: () -> Unit = {}
+    ) = HomeShortcutsAdapter(onCex, onExpenses, onEarn, onAlerts, onMonitors)
         .let { it.onCreateViewHolder(FrameLayout(context), 0).itemView }
 
     @Test
@@ -61,13 +62,37 @@ class HomeShortcutsAdapterTest {
     }
 
     @Test
+    fun monitorsButtonInvokesOnlyItsCallback() {
+        var monitors = 0
+        var alerts = 0
+        val view = inflate(onAlerts = { alerts++ }, onMonitors = { monitors++ })
+
+        view.findViewById<android.view.View>(R.id.button_monitors).performClick()
+
+        assertEquals(1, monitors)
+        assertEquals(0, alerts)
+    }
+
+    @Test
+    fun monitorsButtonIsLabelled() {
+        val view = inflate()
+        val label = view.findViewById<android.view.View>(R.id.button_monitors)
+            .findViewById<TextView>(R.id.text_shortcut_monitors)
+
+        assertEquals("Monitors", label.text.toString())
+    }
+
+    @Test
     fun alertsButtonComesAfterEarn() {
         val row = inflate() as android.view.ViewGroup
 
         val ids = (0 until row.childCount).map { row.getChildAt(it).id }
 
         assertEquals(
-            listOf(R.id.button_cex_prices, R.id.button_monthly_expenses, R.id.button_earn, R.id.button_alerts),
+            listOf(
+                R.id.button_cex_prices, R.id.button_monthly_expenses, R.id.button_earn, R.id.button_alerts,
+                R.id.button_monitors
+            ),
             ids
         )
     }
@@ -78,10 +103,10 @@ class HomeShortcutsAdapterTest {
 
         val params = (0 until row.childCount).map { row.getChildAt(it).layoutParams as android.widget.LinearLayout.LayoutParams }
 
-        assertEquals(4, params.size)
-        assertEquals(listOf(0, 0, 0, 0), params.map { it.width })
-        assertEquals(listOf(1f, 1f, 1f, 1f), params.map { it.weight })
-        assertEquals(listOf(0, 0, 0, 0), params.map { it.marginStart })
+        assertEquals(5, params.size)
+        assertEquals(List(5) { 0 }, params.map { it.width })
+        assertEquals(List(5) { 1f }, params.map { it.weight })
+        assertEquals(List(5) { 0 }, params.map { it.marginStart })
     }
 
     @Test
@@ -90,7 +115,7 @@ class HomeShortcutsAdapterTest {
 
         val labels = (0 until row.childCount).map { (row.getChildAt(it) as android.view.ViewGroup).getChildAt(1) as TextView }
 
-        assertEquals(4, labels.size)
+        assertEquals(5, labels.size)
         labels.forEach {
             assertEquals(android.view.ViewGroup.LayoutParams.MATCH_PARENT, it.layoutParams.width)
             assertEquals(android.view.Gravity.CENTER_HORIZONTAL, it.gravity and android.view.Gravity.HORIZONTAL_GRAVITY_MASK)

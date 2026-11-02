@@ -11,7 +11,8 @@ class HomeShortcutsAdapter(
     private val onCexPricesClick: () -> Unit,
     private val onMonthlyExpensesClick: () -> Unit,
     private val onEarnClick: () -> Unit,
-    private val onAlertsClick: () -> Unit
+    private val onAlertsClick: () -> Unit,
+    private val onMonitorsClick: () -> Unit
 ): RecyclerView.Adapter<HomeShortcutsAdapter.ViewHolder>() {
 
     override fun getItemCount() = 1
@@ -24,6 +25,7 @@ class HomeShortcutsAdapter(
             .setOnClickListener { onMonthlyExpensesClick() }
         view.findViewById<View>(R.id.button_earn).setOnClickListener { onEarnClick() }
         view.findViewById<View>(R.id.button_alerts).setOnClickListener { onAlertsClick() }
+        view.findViewById<View>(R.id.button_monitors).setOnClickListener { onMonitorsClick() }
         return ViewHolder(view)
     }
 

@@ -9,6 +9,9 @@ import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.balances.BalanceRepository
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 import dev.fitiavana.accounting.features.alerts.AlertCheckManager
+import dev.fitiavana.accounting.features.chainmonitors.ChainMonitor
+import dev.fitiavana.accounting.features.chainmonitors.ChainMonitorCheckManager
+import dev.fitiavana.accounting.features.chainmonitors.MonitorRow
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateRepository
 import dev.fitiavana.accounting.features.exchangerates.RateRefresher
 import dev.fitiavana.accounting.features.exchangerates.RefreshResult
@@ -42,6 +45,7 @@ class HomeViewModelTest {
     private lateinit var p2pPriceRepository: P2pPriceRepository
     private lateinit var rateRefresher: RateRefresher
     private lateinit var alertCheckManager: AlertCheckManager
+    private lateinit var chainMonitorCheckManager: ChainMonitorCheckManager
 
     private lateinit var balances: MutableLiveData<List<AccountBalance>>
     private lateinit var accounts: MutableLiveData<List<Account>>
@@ -82,6 +86,7 @@ class HomeViewModelTest {
         p2pPriceRepository = mock()
         rateRefresher = mock()
         alertCheckManager = mock()
+        chainMonitorCheckManager = mock()
 
         whenever(balanceRepository.getAll()).thenReturn(balances)
         whenever(accountRepository.getAll()).thenReturn(accounts)
@@ -99,12 +104,47 @@ class HomeViewModelTest {
             settingsRepository,
             p2pPriceRepository,
             rateRefresher,
-            alertCheckManager
+            alertCheckManager,
+            chainMonitorCheckManager
         )
         // MediatorLiveData only forwards source updates while it has an active observer.
         viewModel.emergencyFund.observeForever {}
         viewModel.metrics.observeForever {}
         return viewModel
+    }
+
+    private val monitorRow = MonitorRow(
+        ChainMonitor("m", "Vault", "0x" + "a".repeat(40), "0x" + "b".repeat(40), "USDC", 6, "0", 15, 1L),
+        "12.5"
+    )
+
+    @Test
+    fun `refreshMonitors forces a check then publishes the rows`() {
+        whenever(chainMonitorCheckManager.rows()).thenReturn(listOf(monitorRow))
+        val viewModel = viewModel()
+
+        viewModel.refreshMonitors()
+
+        val inOrder = org.mockito.Mockito.inOrder(chainMonitorCheckManager)
+        inOrder.verify(chainMonitorCheckManager).check(true)
+        inOrder.verify(chainMonitorCheckManager).rows()
+        assertEquals(listOf(monitorRow), viewModel.monitorRows.value)
+    }
+
+    @Test
+    fun `refreshMonitors still publishes the last known rows when the check fails`() {
+        whenever(chainMonitorCheckManager.check(true)).thenThrow(RuntimeException("boom"))
+        whenever(chainMonitorCheckManager.rows()).thenReturn(listOf(monitorRow))
+        val viewModel = viewModel()
+
+        viewModel.refreshMonitors()
+
+        assertEquals(listOf(monitorRow), viewModel.monitorRows.value)
+    }
+
+    @Test
+    fun `there are no monitor rows before the first refresh`() {
+        assertEquals(emptyList<MonitorRow>(), viewModel().monitorRows.value)
     }
 
     @Test
