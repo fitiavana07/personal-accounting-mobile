@@ -4,7 +4,10 @@ import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
@@ -46,6 +49,13 @@ class SwapController(
     private val editToAmount: EditText,
     private val textAmountBase: TextView,
     private val textRate: TextView,
+    private val switchFee: CompoundButton,
+    private val feeGroup: View,
+    private val feeAmountCode: TextView,
+    private val editFee: EditText,
+    private val feeSpinner: Spinner,
+    private val textFeePreview: TextView,
+    private val textFeeReceived: TextView,
     private val onChanged: () -> Unit,
     runInBackground: (() -> Unit) -> Unit,
     runOnUiThread: (() -> Unit) -> Unit
@@ -55,6 +65,9 @@ class SwapController(
 
     /** All accounts loaded, from which [SwapBuilder] derives each spinner's options. */
     private var allAccounts: List<Account> = emptyList()
+
+    /** The expense accounts offered as the swap fee's destination. */
+    private var feeAccounts: List<Account> = emptyList()
 
     /** The TO account of a template being applied, selected once the TO list has been narrowed to FROM's. */
     private var pendingToAccountId: String? = null
@@ -103,6 +116,25 @@ class SwapController(
         showAmountUnits()
         editFromAmount.enableAmountFormatting { fromInstrument() != null }
         editToAmount.enableAmountFormatting { toInstrument() != null }
+        editFee.enableAmountFormatting { toInstrument() != null }
+        switchFee.isChecked = false
+        feeGroup.visibility = View.GONE
+        switchFee.setOnCheckedChangeListener { _, checked ->
+            feeGroup.visibility = if (checked) View.VISIBLE else View.GONE
+            if (!checked) {
+                editFee.text = null
+                feeSpinner.setSelection(0)
+            }
+            refreshPreviews()
+            onChanged()
+        }
+        feeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                refreshPreviews()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
         val watcher = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
             override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
@@ -113,6 +145,7 @@ class SwapController(
         }
         editFromAmount.addTextChangedListener(watcher)
         editToAmount.addTextChangedListener(watcher)
+        editFee.addTextChangedListener(watcher)
         buttonAll.setOnClickListener { fillFromAmountWithBalance() }
     }
 
@@ -123,6 +156,7 @@ class SwapController(
     private fun showAmountUnits() {
         fromAmountCode.text = fromInstrument()?.code.orEmpty()
         toAmountCode.text = toInstrument()?.code.orEmpty()
+        feeAmountCode.text = toInstrument()?.code.orEmpty()
     }
 
     /** "ALL": sets the From amount to the From account's whole instrument balance. */
@@ -136,6 +170,24 @@ class SwapController(
 
     private fun toAmount(): Long = editToAmount.plainAmount(toInstrument())
 
+    /** The fee typed in To's instrument; 0 while the fee toggle is off or nothing is typed. */
+    private fun feeAmount(): Long = if (switchFee.isChecked) editFee.plainAmount(toInstrument()) else 0L
+
+    private fun selectedFeeAccountId(): String? {
+        val position = feeSpinner.selectedItemPosition
+        return if (position > 0 && position <= feeAccounts.size) feeAccounts[position - 1].id else null
+    }
+
+    /** The fee's value, or null with no fee typed (or an invalid/unrated one, see [collectEntries]). */
+    private fun computedFee(): SwapBuilder.SwapFee? = SwapBuilder.computeFee(
+        expenseAccountId = selectedFeeAccountId().orEmpty(),
+        feeAmount = feeAmount(),
+        fromAmount = fromAmount(),
+        toAmount = toAmount(),
+        fromBalance = from.balance,
+        fromInstrumentBalance = from.instrumentBalance
+    )
+
     /** The base-currency value of the amount spent, from the From account's own prior rate; null without one. */
     private fun computedBaseAmount(): Long? = InstrumentValueCalculator.computeBaseAmount(
         instrumentAmount = fromAmount(),
@@ -147,6 +199,8 @@ class SwapController(
         updateNewBalances()
         updateAmountBasePreview()
         updateRatePreview()
+        updateFeePreview()
+        updateFeeReceived()
     }
 
     /** "1 <To code> = <price> <From code>", from the two typed amounts; hidden until both are positive. */
@@ -191,19 +245,62 @@ class SwapController(
             toTextNewBalance.visibility = View.GONE
             return
         }
+        val fee = computedFee()
         val newInstrument = TransactionDisplay.formatInstrumentAmountNoWrap(
-            to.instrumentBalance + toAmount(), toInstrument
+            to.instrumentBalance + toAmount() - (fee?.feeAmount ?: 0L), toInstrument
         )
         showNewBalance(
             toTextNewBalance,
             context.getString(
                 R.string.label_new_balance_ar_instrument_intermediary,
-                TransactionDisplay.formatAmount(to.balance + (computedBaseAmount() ?: 0L)),
+                TransactionDisplay.formatAmount(to.balance + (computedBaseAmount() ?: 0L) - (fee?.feeBaseAmount ?: 0L)),
                 newInstrument,
-                TransactionDisplay.formatInstrumentAmountNoWrap(to.intermediaryBalance + fromAmount(), intermediary)
+                TransactionDisplay.formatInstrumentAmountNoWrap(
+                    to.intermediaryBalance + fromAmount() - (fee?.feeFromAmount ?: 0L), intermediary
+                )
             ),
             newInstrument
         )
+    }
+
+    /**
+     * "+ <To amount> · <intermediary amount> · <Ar> Ar": what To really gets once the fee is deducted, in
+     * its three instruments; hidden without a valid fee.
+     */
+    private fun updateFeeReceived() {
+        val fee = computedFee()
+        val toInstrument = toInstrument()
+        val baseAmount = computedBaseAmount()
+        val intermediary = to.account?.intermediaryInstrumentCode?.let { instrumentsMap[it] }
+        if (fee == null || toInstrument == null || intermediary == null || baseAmount == null) {
+            textFeeReceived.visibility = View.GONE
+            return
+        }
+        val received = TransactionDisplay.formatInstrumentAmountNoWrap(toAmount() - fee.feeAmount, toInstrument)
+        val line = context.getString(
+            R.string.label_amount_plus_ar_instrument_intermediary,
+            TransactionDisplay.formatAmount(baseAmount - fee.feeBaseAmount),
+            received,
+            TransactionDisplay.formatInstrumentAmountNoWrap(fromAmount() - fee.feeFromAmount, intermediary)
+        )
+        textFeeReceived.text = emphasizeMainAmount(context, line, received)
+        textFeeReceived.visibility = View.VISIBLE
+    }
+
+    /** "Fee ≈ <From units> · <Ar> Ar": the fee's value in From's instrument and base currency; hidden without a valid fee. */
+    private fun updateFeePreview() {
+        val fee = computedFee()
+        val fromInstrument = fromInstrument()
+        if (fee == null || fromInstrument == null) {
+            textFeePreview.visibility = View.GONE
+            return
+        }
+        textFeePreview.text = context.getString(
+            R.string.label_swap_fee_preview,
+            TransactionDisplay.formatInstrumentAmountNoWrap(fee.feeFromAmount, fromInstrument),
+            TransactionDisplay.formatAmount(fee.feeBaseAmount)
+        )
+        textFeePreview.visibility = View.VISIBLE
     }
 
     private fun showNewBalance(view: TextView, line: String, main: String) {
@@ -226,6 +323,16 @@ class SwapController(
         allAccounts = accounts
         from.populate(SwapBuilder.selectableFromAccounts(accounts, balances))
         repopulateToSpinner(null)
+        populateFeeSpinner(SwapBuilder.selectableFeeAccounts(accounts))
+    }
+
+    private fun populateFeeSpinner(accounts: List<Account>) {
+        feeAccounts = accounts
+        val names = listOf(context.getString(R.string.spinner_select_account)) + accounts.map { it.name }
+        val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, names)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        feeSpinner.adapter = adapter
+        feeSpinner.setSelection(0)
     }
 
     /**
@@ -280,7 +387,19 @@ class SwapController(
             toast(R.string.error_transfer_from_zero_balance)
             return null
         }
-        return SwapBuilder.buildEntries(fromAccount.id, toAccount.id, fromAmount(), toAmount(), baseAmount)
+        var fee: SwapBuilder.SwapFee? = null
+        if (feeAmount() > 0L) {
+            fee = computedFee()
+            if (fee == null) {
+                toast(R.string.error_swap_fee_invalid)
+                return null
+            }
+            if (selectedFeeAccountId() == null) {
+                toast(R.string.error_swap_fee_account_required)
+                return null
+            }
+        }
+        return SwapBuilder.buildEntries(fromAccount.id, toAccount.id, fromAmount(), toAmount(), baseAmount, fee)
     }
 
     /** Entries as typed so far, for the running totals line — ignores validity. */
@@ -289,12 +408,14 @@ class SwapController(
         toAccountId = to.account?.id ?: "",
         fromAmount = fromAmount(),
         toAmount = toAmount(),
-        baseAmount = computedBaseAmount()
+        baseAmount = computedBaseAmount(),
+        fee = computedFee()
     )
 
     fun hasContent(): Boolean =
         editFromAmount.text.toString().trim().isNotEmpty() ||
             editToAmount.text.toString().trim().isNotEmpty() ||
+            switchFee.isChecked ||
             from.spinner.selectedItemPosition > 0 ||
             to.spinner.selectedItemPosition > 0
 
@@ -302,6 +423,7 @@ class SwapController(
     fun clear() {
         editFromAmount.text = null
         editToAmount.text = null
+        switchFee.isChecked = false
         from.clearSelection()
         repopulateToSpinner(null)
     }

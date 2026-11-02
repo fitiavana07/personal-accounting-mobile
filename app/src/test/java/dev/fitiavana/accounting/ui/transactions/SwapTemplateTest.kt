@@ -68,6 +68,13 @@ class SwapTemplateTest {
             editToAmount = EditText(context),
             textAmountBase = TextView(context),
             textRate = TextView(context),
+            switchFee = androidx.appcompat.widget.SwitchCompat(context),
+            feeGroup = android.view.View(context),
+            feeAmountCode = TextView(context),
+            editFee = EditText(context),
+            feeSpinner = Spinner(context),
+            textFeePreview = TextView(context),
+            textFeeReceived = TextView(context),
             onChanged = {},
             runInBackground = { it() },
             runOnUiThread = { it() }
@@ -137,6 +144,9 @@ class SwapTemplateTest {
             toSpinner = toS, toTextBalance = TextView(activity), toTextNewBalance = TextView(activity), fromAmountCode = fromCode,
             editFromAmount = EditText(activity), buttonAll = android.widget.Button(activity), toAmountCode = TextView(activity),
             editToAmount = EditText(activity), textAmountBase = TextView(activity), textRate = TextView(activity),
+            switchFee = androidx.appcompat.widget.SwitchCompat(activity), feeGroup = android.view.View(activity),
+            feeAmountCode = TextView(activity), editFee = EditText(activity), feeSpinner = Spinner(activity),
+            textFeePreview = TextView(activity), textFeeReceived = TextView(activity),
             onChanged = {}, runInBackground = { it() }, runOnUiThread = { it() }
         )
         c.populateSpinners(accounts, accounts.associate { a -> a.id to 1L })

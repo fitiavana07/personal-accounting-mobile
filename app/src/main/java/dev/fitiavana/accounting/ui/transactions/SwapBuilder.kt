@@ -2,6 +2,7 @@ package dev.fitiavana.accounting.ui.transactions
 
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountTypes
+import kotlin.math.roundToLong
 
 /**
  * Pure logic behind the "Swap" transaction mode: buying an amount of the To
@@ -44,11 +45,49 @@ object SwapBuilder {
         }
     }
 
+    /** The accounts offered for the swap fee: expense accounts (always in base currency). */
+    fun selectableFeeAccounts(accounts: List<Account>): List<Account> =
+        accounts.filter { it.type == AccountTypes.EXPENSE }
+
     /**
-     * The two entries of a swap: [fromAccountId] credited [fromAmount] units of
+     * A swap fee deducted from the received amount: [feeAmount] units of To's instrument, worth
+     * [feeFromAmount] units of From's instrument and [feeBaseAmount] base units, expensed to
+     * [expenseAccountId].
+     */
+    data class SwapFee(
+        val expenseAccountId: String,
+        val feeAmount: Long,
+        val feeFromAmount: Long,
+        val feeBaseAmount: Long
+    )
+
+    /**
+     * Values [feeAmount] (To's instrument): in From's instrument at the swap's own price
+     * ([fromAmount] per [toAmount]), then in base currency at From's own prior rate. Null when
+     * the fee is not in (0, [toAmount]) or From has no rate.
+     */
+    fun computeFee(
+        expenseAccountId: String,
+        feeAmount: Long,
+        fromAmount: Long,
+        toAmount: Long,
+        fromBalance: Long,
+        fromInstrumentBalance: Long
+    ): SwapFee? {
+        if (feeAmount <= 0L || feeAmount >= toAmount || fromAmount <= 0L) return null
+        val feeFrom = (feeAmount.toDouble() * fromAmount.toDouble() / toAmount.toDouble()).roundToLong()
+        val feeBase = InstrumentValueCalculator.computeBaseAmount(feeFrom, fromBalance, fromInstrumentBalance)
+            ?: return null
+        return SwapFee(expenseAccountId, feeAmount, feeFrom, feeBase)
+    }
+
+    /**
+     * The entries of a swap: [fromAccountId] credited [fromAmount] units of
      * its instrument and [baseAmount] base units; [toAccountId] debited
      * [toAmount] units of its instrument, [fromAmount] of its intermediary
-     * instrument and the same [baseAmount]. A null or non-positive amount yields
+     * instrument and the same [baseAmount]. With a [fee], To receives net of it
+     * (amounts and base reduced by the fee's) and a third entry debits the fee's
+     * base value to the expense account. A null or non-positive amount yields
      * null, which [TransactionValidator.validate] reports as incomplete.
      */
     fun buildEntries(
@@ -56,12 +95,13 @@ object SwapBuilder {
         toAccountId: String,
         fromAmount: Long?,
         toAmount: Long?,
-        baseAmount: Long?
+        baseAmount: Long?,
+        fee: SwapFee? = null
     ): List<TransactionValidator.EntryData> {
         val from = fromAmount?.takeIf { it > 0L }
         val to = toAmount?.takeIf { it > 0L }
         val base = baseAmount?.takeIf { it > 0L }
-        return listOf(
+        val entries = listOf(
             TransactionValidator.EntryData(
                 accountId = fromAccountId,
                 debitAmount = null,
@@ -70,11 +110,17 @@ object SwapBuilder {
             ),
             TransactionValidator.EntryData(
                 accountId = toAccountId,
-                debitAmount = base,
+                debitAmount = base?.minus(fee?.feeBaseAmount ?: 0L),
                 creditAmount = null,
-                instrumentDebitAmount = to,
-                intermediaryDebitAmount = from
+                instrumentDebitAmount = to?.minus(fee?.feeAmount ?: 0L),
+                intermediaryDebitAmount = from?.minus(fee?.feeFromAmount ?: 0L)
             )
+        )
+        if (fee == null) return entries
+        return entries + TransactionValidator.EntryData(
+            accountId = fee.expenseAccountId,
+            debitAmount = fee.feeBaseAmount,
+            creditAmount = null
         )
     }
 }

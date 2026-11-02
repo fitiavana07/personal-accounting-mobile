@@ -185,6 +185,13 @@ class AddTransactionActivity : AppCompatActivity() {
                     editToAmount = findViewById(R.id.edit_swap_to_amount),
                     textAmountBase = findViewById(R.id.text_swap_amount_base),
                     textRate = findViewById(R.id.text_swap_rate),
+                    switchFee = findViewById(R.id.switch_swap_fee),
+                    feeGroup = findViewById(R.id.group_swap_fee),
+                    feeAmountCode = findViewById(R.id.text_swap_fee_amount_code),
+                    editFee = findViewById(R.id.edit_swap_fee),
+                    feeSpinner = findViewById(R.id.spinner_swap_fee_account),
+                    textFeePreview = findViewById(R.id.text_swap_fee_preview),
+                    textFeeReceived = findViewById(R.id.text_swap_fee_received),
                     onChanged = { recalculateBalanceSummary() },
                     runInBackground = backgroundRunner,
                     runOnUiThread = uiThreadRunner

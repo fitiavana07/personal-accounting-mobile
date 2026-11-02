@@ -6,6 +6,7 @@ import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
+import androidx.appcompat.widget.SwitchCompat
 import androidx.test.core.app.ApplicationProvider
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
@@ -49,6 +50,13 @@ class SwapControllerTest {
     private lateinit var editToAmount: EditText
     private lateinit var textAmountBase: TextView
     private lateinit var textRate: TextView
+    private lateinit var switchFee: SwitchCompat
+    private lateinit var feeGroup: View
+    private lateinit var feeAmountCode: TextView
+    private lateinit var editFee: EditText
+    private lateinit var feeSpinner: Spinner
+    private lateinit var textFeePreview: TextView
+    private lateinit var textFeeReceived: TextView
 
     private val usd = Instrument(code = "USD", note = "", type = "fiat", decimalPlaces = 2)
     private val btc = Instrument(code = "BTC", note = "", type = "crypto", decimalPlaces = 8)
@@ -63,7 +71,8 @@ class SwapControllerTest {
     private val ethViaUsd = Account(
         id = "eth", name = "ETH", type = "asset", instrumentCode = "ETH", intermediaryInstrumentCode = "USD"
     )
-    private val accounts = listOf(cash, usdWallet, btcViaUsd, ethViaUsd)
+    private val fees = Account(id = "fees", name = "Swap fees", type = "expense")
+    private val accounts = listOf(cash, usdWallet, btcViaUsd, ethViaUsd, fees)
     private val balances = mapOf("cash" to 1L, "usd" to 1L, "btc" to 0L, "eth" to 0L)
 
     @Before
@@ -83,6 +92,13 @@ class SwapControllerTest {
         editToAmount = EditText(context)
         textAmountBase = TextView(context)
         textRate = TextView(context)
+        switchFee = SwitchCompat(context)
+        feeGroup = View(context)
+        feeAmountCode = TextView(context)
+        editFee = EditText(context)
+        feeSpinner = Spinner(context)
+        textFeePreview = TextView(context)
+        textFeeReceived = TextView(context)
     }
 
     private fun controller(onChanged: () -> Unit = {}) = SwapController(
@@ -103,6 +119,13 @@ class SwapControllerTest {
         editToAmount = editToAmount,
         textAmountBase = textAmountBase,
         textRate = textRate,
+        switchFee = switchFee,
+        feeGroup = feeGroup,
+        feeAmountCode = feeAmountCode,
+        editFee = editFee,
+        feeSpinner = feeSpinner,
+        textFeePreview = textFeePreview,
+        textFeeReceived = textFeeReceived,
         onChanged = onChanged,
         runInBackground = { it() },
         runOnUiThread = { it() }
@@ -270,6 +293,152 @@ class SwapControllerTest {
 
         assertEquals(450_000L, entries[0].creditAmount)
         assertNull(entries[1].instrumentDebitAmount)
+    }
+
+    /** From: 100.00 USD worth 4,500,000 Ar (45 Ar/unit); To: ETH (4 dp), receiving 0.0022 for 100.00 USD. */
+    private fun selectUsdToEth() {
+        stubBalance("usd", balance = 4_500_000L, instrument = 100_000L)
+        stubBalance("eth", balance = 0L)
+        fromSpinner.setSelection(1)
+        toSpinner.setSelection(2)
+        editFromAmount.setText("100")
+        editToAmount.setText("0.0022")
+    }
+
+    @Test
+    fun `fee is off by default with its inputs hidden`() {
+        controller()
+
+        assertFalse(switchFee.isChecked)
+        assertEquals(View.GONE, feeGroup.visibility)
+    }
+
+    @Test
+    fun `toggling the fee shows its inputs and toggling off clears them`() {
+        controller()
+        switchFee.isChecked = true
+        assertEquals(View.VISIBLE, feeGroup.visibility)
+        editFee.setText("0.0001")
+        feeSpinner.setSelection(1)
+
+        switchFee.isChecked = false
+
+        assertEquals(View.GONE, feeGroup.visibility)
+        assertEquals("", editFee.text.toString())
+        assertEquals(0, feeSpinner.selectedItemPosition)
+    }
+
+    @Test
+    fun `fee account spinner offers expense accounts and the fee is in the to instrument`() {
+        controller()
+        fromSpinner.setSelection(1)
+        toSpinner.setSelection(2)
+
+        assertEquals(listOf("Swap fees"), names(feeSpinner))
+        assertEquals("ETH", feeAmountCode.text.toString())
+    }
+
+    @Test
+    fun `collectEntries with a fee nets the to side and debits the expense account`() {
+        val controller = controller()
+        selectUsdToEth()
+        switchFee.isChecked = true
+        editFee.setText("0.0001")
+        feeSpinner.setSelection(1)
+
+        val entries = controller.collectEntries()!!
+
+        // fee 1 unit -> 1 * 10,000 / 22 = 455 USD units -> 455 * 45 = 20,475 Ar
+        assertEquals(3, entries.size)
+        assertEquals(450_000L, entries[0].creditAmount)
+        assertEquals(429_525L, entries[1].debitAmount)
+        assertEquals(21L, entries[1].instrumentDebitAmount)
+        assertEquals(9_545L, entries[1].intermediaryDebitAmount)
+        assertEquals("fees", entries[2].accountId)
+        assertEquals(20_475L, entries[2].debitAmount)
+    }
+
+    @Test
+    fun `collectEntries ignores a fee while the toggle is off`() {
+        val controller = controller()
+        selectUsdToEth()
+
+        assertEquals(2, controller.collectEntries()!!.size)
+    }
+
+    @Test
+    fun `collectEntries blocks a fee without an expense account`() {
+        val controller = controller()
+        selectUsdToEth()
+        switchFee.isChecked = true
+        editFee.setText("0.0001")
+
+        assertNull(controller.collectEntries())
+        assertEquals(
+            context.getString(R.string.error_swap_fee_account_required),
+            ShadowToast.getTextOfLatestToast()
+        )
+    }
+
+    @Test
+    fun `collectEntries blocks a fee that is not smaller than the received amount`() {
+        val controller = controller()
+        selectUsdToEth()
+        switchFee.isChecked = true
+        editFee.setText("0.0022")
+        feeSpinner.setSelection(1)
+
+        assertNull(controller.collectEntries())
+        assertEquals(context.getString(R.string.error_swap_fee_invalid), ShadowToast.getTextOfLatestToast())
+    }
+
+    @Test
+    fun `fee preview and to new balance use the net amounts`() {
+        controller()
+        selectUsdToEth()
+        switchFee.isChecked = true
+        editFee.setText("0.0001")
+        feeSpinner.setSelection(1)
+
+        assertEquals(View.VISIBLE, textFeePreview.visibility)
+        assertTrue(textFeePreview.text.toString().contains("20,475"))
+        assertTrue(toTextNewBalance.text.toString().contains("0.0021"))
+    }
+
+    @Test
+    fun `received line shows the real amounts added to to as instrument, intermediary and Ar`() {
+        controller()
+        selectUsdToEth()
+        switchFee.isChecked = true
+        editFee.setText("0.0001")
+        feeSpinner.setSelection(1)
+
+        assertEquals(View.VISIBLE, textFeeReceived.visibility)
+        // net 21 units ETH, 10,000 - 455 USD units, 450,000 - 20,475 Ar
+        assertEquals("+ 0.0021 ETH · 95.45 USD · 429,525 Ar", textFeeReceived.text.toString().replace(' ', ' '))
+    }
+
+    @Test
+    fun `received line is hidden without a valid fee`() {
+        controller()
+        selectUsdToEth()
+        assertEquals(View.GONE, textFeeReceived.visibility)
+
+        switchFee.isChecked = true
+        assertEquals(View.GONE, textFeeReceived.visibility)
+
+        editFee.setText("0.0022")
+        assertEquals(View.GONE, textFeeReceived.visibility)
+    }
+
+    @Test
+    fun `clear resets the fee`() {
+        val controller = controller()
+        switchFee.isChecked = true
+
+        controller.clear()
+
+        assertFalse(switchFee.isChecked)
     }
 
     @Test
