@@ -108,6 +108,7 @@ class AlertAlarmTest {
             managerProvider = { mock<AutoBackupManager>() }
             cloudManagerProvider = { mock() }
             alertManagerProvider = { manager }
+            chainMonitorManagerProvider = { mock() }
         }
 
         receiver.onReceive(context, Intent(Intent.ACTION_BOOT_COMPLETED))

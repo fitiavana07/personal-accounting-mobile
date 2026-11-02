@@ -376,6 +376,9 @@
     <string name="alert_notification_title">%1$s is at %2$s</string>
     <string name="alert_notification_text_above">Crossed above %1$s</string>
     <string name="alert_notification_text_below">Crossed below %1$s</string>
+    <string name="chain_monitor_notification_channel">Chain monitors</string>
+    <string name="chain_monitor_notification_title">%1$s: %2$s %3$s</string>
+    <string name="chain_monitor_notification_text">Above %1$s %2$s</string>
 
     <!-- Release notes -->
     <string name="action_release_notes">Release notes</string>

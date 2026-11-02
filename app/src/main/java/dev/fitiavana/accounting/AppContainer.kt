@@ -8,6 +8,11 @@ import dev.fitiavana.accounting.features.alerts.AlarmManagerAlertScheduler
 import dev.fitiavana.accounting.features.alerts.AlertCheckManager
 import dev.fitiavana.accounting.features.alerts.AlertRepository
 import dev.fitiavana.accounting.features.alerts.AndroidAlertNotifier
+import dev.fitiavana.accounting.features.chainmonitors.AlarmManagerMonitorScheduler
+import dev.fitiavana.accounting.features.chainmonitors.AndroidMonitorNotifier
+import dev.fitiavana.accounting.features.chainmonitors.ChainMonitorCheckManager
+import dev.fitiavana.accounting.features.chainmonitors.ChainMonitorRepository
+import dev.fitiavana.accounting.network.evm.HttpErc20BalanceFetcher
 import dev.fitiavana.accounting.features.backup.AlarmManagerBackupScheduler
 import dev.fitiavana.accounting.features.backup.AutoBackupManager
 import dev.fitiavana.accounting.features.backup.BackupRepository
@@ -96,6 +101,14 @@ class AppContainer private constructor(context: Context) {
         rateRefresher,
         AndroidAlertNotifier(context),
         AlarmManagerAlertScheduler(context)
+    )
+    val chainMonitorRepository = ChainMonitorRepository(database.chainMonitorDao(), changeTracker)
+    val erc20BalanceFetcher = HttpErc20BalanceFetcher(client = httpClient)
+    val chainMonitorCheckManager = ChainMonitorCheckManager(
+        chainMonitorRepository,
+        erc20BalanceFetcher,
+        AndroidMonitorNotifier(context),
+        AlarmManagerMonitorScheduler(context)
     )
     val cexPriceRepository = CexPriceRepository(
         HttpCexPriceFetcher.createAll(httpClient),
