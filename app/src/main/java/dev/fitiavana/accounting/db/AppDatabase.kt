@@ -11,6 +11,9 @@ import dev.fitiavana.accounting.features.accounts.AccountDao
 import dev.fitiavana.accounting.features.alerts.AlertDao
 import dev.fitiavana.accounting.features.alerts.AlertState
 import dev.fitiavana.accounting.features.alerts.GainLossAlert
+import dev.fitiavana.accounting.features.chainmonitors.ChainMonitor
+import dev.fitiavana.accounting.features.chainmonitors.ChainMonitorDao
+import dev.fitiavana.accounting.features.chainmonitors.MonitorState
 import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.balances.AccountBalanceDao
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
@@ -33,7 +36,7 @@ import dev.fitiavana.accounting.features.transactions.TransactionEntry
     entities = [Account::class, Transaction::class, TransactionEntry::class,
         AccountBalance::class, Instrument::class, ExchangeRateCache::class, AppSettings::class,
         TransactionTemplate::class, TemplateEntry::class, SyncMetaRow::class,
-        GainLossAlert::class, AlertState::class],
+        GainLossAlert::class, AlertState::class, ChainMonitor::class, MonitorState::class],
     version = AppDatabase.SCHEMA_VERSION
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -47,9 +50,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun syncMetaDao(): SyncMetaDao
     abstract fun syncDao(): SyncDao
     abstract fun alertDao(): AlertDao
+    abstract fun chainMonitorDao(): ChainMonitorDao
 
     companion object {
-        const val SCHEMA_VERSION = 24
+        const val SCHEMA_VERSION = 25
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -421,6 +425,39 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Adds the chain monitors and their device-local state. Internal so its SQL can be checked
+         * against Room's generated schema.
+         */
+        internal val MIGRATION_24_25 = object : Migration(24, 25) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `chain_monitors` (" +
+                            "`id` TEXT NOT NULL, " +
+                            "`label` TEXT NOT NULL, " +
+                            "`holderAddress` TEXT NOT NULL, " +
+                            "`tokenAddress` TEXT NOT NULL, " +
+                            "`tokenSymbol` TEXT NOT NULL, " +
+                            "`tokenDecimals` INTEGER NOT NULL, " +
+                            "`threshold` TEXT NOT NULL, " +
+                            "`intervalMinutes` INTEGER NOT NULL, " +
+                            "`createdAt` INTEGER NOT NULL, " +
+                            "PRIMARY KEY(`id`))"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `chain_monitor_states` (" +
+                            "`monitorId` TEXT NOT NULL, " +
+                            "`armed` INTEGER NOT NULL, " +
+                            "`signature` TEXT NOT NULL, " +
+                            "`lastCheckedAt` INTEGER NOT NULL, " +
+                            "`lastBalance` TEXT, " +
+                            "PRIMARY KEY(`monitorId`), " +
+                            "FOREIGN KEY(`monitorId`) REFERENCES `chain_monitors`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -451,7 +488,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_20_21,
                         MIGRATION_21_22,
                         MIGRATION_22_23,
-                        MIGRATION_23_24
+                        MIGRATION_23_24,
+                        MIGRATION_24_25
                     )
                     .build().also { instance = it }
             }

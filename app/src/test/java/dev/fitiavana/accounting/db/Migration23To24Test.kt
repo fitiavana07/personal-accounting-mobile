@@ -94,8 +94,8 @@ class Migration23To24Test {
     }
 
     @Test
-    fun `the schema version is 24`() {
-        assertEquals(24, AppDatabase.SCHEMA_VERSION)
+    fun `the schema version is at least 24`() {
+        assertTrue(AppDatabase.SCHEMA_VERSION >= 24)
     }
 
     @Test
