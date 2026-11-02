@@ -104,8 +104,19 @@ class SyncJsonTest {
     }
 
     @Test
+    fun `chain monitors survive an encode and decode`() {
+        val withMonitor = snapshot.copy(
+            data = snapshot.data.copy(chainMonitors = listOf(SyncFixtures.chainMonitor("m1", "0.000001")))
+        )
+
+        val decoded = SyncJson.decode(JSONObject(SyncJson.encode(withMonitor).toString()))
+
+        assertEquals(withMonitor.data.chainMonitors, decoded.data.chainMonitors)
+    }
+
+    @Test
     fun `a missing section is rejected`() {
-        listOf("schemaVersion", "instruments", "accounts", "transactions", "transactionEntries", "templates", "templateEntries", "alerts", "meta")
+        listOf("schemaVersion", "instruments", "accounts", "transactions", "transactionEntries", "templates", "templateEntries", "alerts", "chainMonitors", "meta")
             .forEach { name ->
                 val broken = json().apply { remove(name) }
                 assertThrows(name, FormatException::class.java) { SyncJson.decode(broken) }

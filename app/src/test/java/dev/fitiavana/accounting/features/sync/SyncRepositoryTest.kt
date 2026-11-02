@@ -256,6 +256,61 @@ class SyncRepositoryTest {
         assertInSync()
     }
 
+    // --- chain monitors ---
+
+    private fun createMonitor(device: SyncDevice, threshold: String = "0") = device.chainMonitors.create(
+        "Vault", "0x" + "a".repeat(40), "0x" + "b".repeat(40), "USDC", 6, threshold, 15
+    )
+
+    @Test
+    fun `a chain monitor created on one device reaches the other`() {
+        val monitor = createMonitor(a)
+
+        SyncDevice.sync(a, b)
+
+        assertEquals(listOf(monitor), b.chainMonitors.getAllSync())
+        assertInSync()
+    }
+
+    @Test
+    fun `a chain monitor edited on one device updates the other`() {
+        val monitor = createMonitor(a)
+        SyncDevice.sync(a, b)
+        a.now = 5_000
+
+        a.chainMonitors.update(monitor.copy(threshold = "25.5", intervalMinutes = 30))
+        SyncDevice.sync(a, b)
+
+        assertEquals("25.5", b.chainMonitors.get(monitor.id)!!.threshold)
+        assertEquals(30, b.chainMonitors.get(monitor.id)!!.intervalMinutes)
+        assertInSync()
+    }
+
+    @Test
+    fun `a chain monitor deleted on one device is deleted on the other`() {
+        val monitor = createMonitor(a)
+        SyncDevice.sync(a, b)
+        a.now = 5_000
+
+        a.chainMonitors.delete(monitor.id)
+        SyncDevice.sync(a, b)
+
+        assertTrue(b.chainMonitors.getAllSync().isEmpty())
+        assertInSync()
+    }
+
+    @Test
+    fun `the detection state of a chain monitor stays on its device`() {
+        val monitor = createMonitor(a)
+        a.chainMonitors.saveStates(
+            listOf(dev.fitiavana.accounting.features.chainmonitors.MonitorState(monitor.id, false, monitor.signature, 9L, "3"))
+        )
+
+        SyncDevice.sync(a, b)
+
+        assertTrue(b.chainMonitors.getStatesSync().isEmpty())
+    }
+
     // --- alerts ---
 
     @Test

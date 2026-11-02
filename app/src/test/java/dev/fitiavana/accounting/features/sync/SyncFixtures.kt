@@ -4,6 +4,7 @@ import dev.fitiavana.accounting.db.AppDatabase
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.alerts.AlertTypes
 import dev.fitiavana.accounting.features.alerts.GainLossAlert
+import dev.fitiavana.accounting.features.chainmonitors.ChainMonitor
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.templates.TemplateEntry
@@ -23,10 +24,16 @@ object SyncFixtures {
         templates: List<TransactionTemplate> = emptyList(),
         templateEntries: List<TemplateEntry> = emptyList(),
         alerts: List<GainLossAlert> = emptyList(),
+        chainMonitors: List<ChainMonitor> = emptyList(),
         settings: AppSettings? = null,
         schemaVersion: Int = AppDatabase.SCHEMA_VERSION,
     ) = SyncData(
-        schemaVersion, instruments, accounts, transactions, transactionEntries, templates, templateEntries, alerts, settings,
+        schemaVersion, instruments, accounts, transactions, transactionEntries, templates, templateEntries, alerts,
+        chainMonitors, settings,
+    )
+
+    fun chainMonitor(id: String, threshold: String = "0") = ChainMonitor(
+        id, "Label $id", "0x" + "a".repeat(40), "0x" + "b".repeat(40), "USDC", 6, threshold, 15, 7L
     )
 
     fun alert(id: String, accountId: String = "a1", type: String = AlertTypes.CROSSING_ABOVE, threshold: Double = 10.0) =

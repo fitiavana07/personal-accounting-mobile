@@ -4,6 +4,8 @@ import dev.fitiavana.accounting.features.alerts.AlertDao
 import dev.fitiavana.accounting.features.alerts.AlertTypes
 import dev.fitiavana.accounting.features.alerts.GainLossAlert
 import dev.fitiavana.accounting.features.balances.AccountBalanceDao
+import dev.fitiavana.accounting.features.chainmonitors.ChainMonitor
+import dev.fitiavana.accounting.features.chainmonitors.ChainMonitorDao
 import dev.fitiavana.accounting.features.accounts.AccountDao
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCacheDao
 import dev.fitiavana.accounting.features.instruments.InstrumentDao
@@ -54,6 +56,12 @@ class BackupRepositoryTest {
     private lateinit var appSettingsDao: AppSettingsDao
     private lateinit var templateDao: TemplateDao
     private lateinit var alertDao: AlertDao
+    private lateinit var chainMonitorDao: ChainMonitorDao
+
+    private val monitor = ChainMonitor(
+        id = "cm1", label = "Vault", holderAddress = "0x" + "a".repeat(40), tokenAddress = "0x" + "b".repeat(40),
+        tokenSymbol = "USDC", tokenDecimals = 6, threshold = "0.5", intervalMinutes = 30, createdAt = 700L
+    )
     private lateinit var repository: BackupRepository
 
     private val alert = GainLossAlert(
@@ -112,11 +120,13 @@ class BackupRepositoryTest {
         appSettingsDao = mock()
         templateDao = mock()
         alertDao = mock()
+        chainMonitorDao = mock()
         repository = BackupRepository(
             database, accountDao, instrumentDao, transactionDao, balanceDao,
-            exchangeRateCacheDao, appSettingsDao, templateDao, alertDao, inlineTracker()
+            exchangeRateCacheDao, appSettingsDao, templateDao, alertDao, chainMonitorDao, inlineTracker()
         )
         whenever(alertDao.getAllSync()).thenReturn(listOf(alert))
+        whenever(chainMonitorDao.getAllSync()).thenReturn(listOf(monitor))
         whenever(templateDao.getAllTemplatesSync()).thenReturn(listOf(template))
         whenever(templateDao.getAllEntriesSync()).thenReturn(listOf(templateEntryFrom, templateEntryTo))
 
@@ -319,6 +329,47 @@ class BackupRepositoryTest {
 
         assertTrue(result is RestoreResult.Success)
         verify(alertDao).insertAll(emptyList())
+    }
+
+    // --- chain monitors ---
+
+    @Test
+    fun `export includes the chain monitors but not their device-local state`() {
+        val json = JSONObject(repository.export())
+
+        val monitors = json.getJSONArray("chainMonitors")
+        assertEquals(1, monitors.length())
+        assertEquals("cm1", monitors.getJSONObject(0).getString("id"))
+        assertEquals("0.5", monitors.getJSONObject(0).getString("threshold"))
+        assertTrue(!json.has("chainMonitorStates"))
+        verify(chainMonitorDao, never()).getAllStatesSync()
+    }
+
+    @Test
+    fun `restore round trip reproduces the chain monitors`() {
+        repository.restore(repository.export())
+
+        verify(chainMonitorDao).insertAll(listOf(monitor))
+    }
+
+    @Test
+    fun `restore replaces the chain monitors`() {
+        repository.restore(repository.export())
+
+        val order = inOrder(chainMonitorDao)
+        order.verify(chainMonitorDao).deleteAll()
+        order.verify(chainMonitorDao).insertAll(any())
+    }
+
+    @Test
+    fun `restore tolerates a backup without chain monitors`() {
+        val json = JSONObject(repository.export())
+        json.remove("chainMonitors")
+
+        val result = repository.restore(json.toString())
+
+        assertTrue(result is RestoreResult.Success)
+        verify(chainMonitorDao).insertAll(emptyList())
     }
 
     // --- templates ---

@@ -14,6 +14,7 @@ object SyncRules {
         duplicate("template", data.templates.map { it.id })?.let { return it }
         duplicate("template entry", data.templateEntries.map { it.id })?.let { return it }
         duplicate("alert", data.alerts.map { it.id })?.let { return it }
+        duplicate("chain monitor", data.chainMonitors.map { it.id })?.let { return it }
 
         val instruments = data.instruments.map { it.code }.toSet()
         val accounts = data.accounts.map { it.id }.toSet()

@@ -124,6 +124,7 @@ class AppContainer private constructor(context: Context) {
         database.appSettingsDao(),
         database.templateDao(),
         database.alertDao(),
+        database.chainMonitorDao(),
         changeTracker
     )
     val templateRepository = TemplateRepository(database.templateDao(), changeTracker)
@@ -137,6 +138,7 @@ class AppContainer private constructor(context: Context) {
         transactionDao = database.transactionDao(),
         templateDao = database.templateDao(),
         alertDao = database.alertDao(),
+        chainMonitorDao = database.chainMonitorDao(),
         appSettingsDao = database.appSettingsDao(),
         schemaVersion = AppDatabase.SCHEMA_VERSION,
         recalculateBalances = balanceRepository::recalculateAll

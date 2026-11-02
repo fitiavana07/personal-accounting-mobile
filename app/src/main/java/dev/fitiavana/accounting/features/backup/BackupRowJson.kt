@@ -5,6 +5,7 @@ import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.alerts.GainLossAlert
+import dev.fitiavana.accounting.features.chainmonitors.ChainMonitor
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.templates.TemplateEntry
 import dev.fitiavana.accounting.features.templates.TransactionTemplate
@@ -119,6 +120,30 @@ internal fun alertFromJson(json: JSONObject) = GainLossAlert(
     accountId = json.getString("accountId"),
     type = json.getString("type"),
     thresholdPercent = json.getDouble("thresholdPercent"),
+    createdAt = json.getLong("createdAt")
+)
+
+internal fun ChainMonitor.toJson() = JSONObject().apply {
+    put("id", id)
+    put("label", label)
+    put("holderAddress", holderAddress)
+    put("tokenAddress", tokenAddress)
+    put("tokenSymbol", tokenSymbol)
+    put("tokenDecimals", tokenDecimals)
+    put("threshold", threshold)
+    put("intervalMinutes", intervalMinutes)
+    put("createdAt", createdAt)
+}
+
+internal fun chainMonitorFromJson(json: JSONObject) = ChainMonitor(
+    id = json.getString("id"),
+    label = json.getString("label"),
+    holderAddress = json.getString("holderAddress"),
+    tokenAddress = json.getString("tokenAddress"),
+    tokenSymbol = json.getString("tokenSymbol"),
+    tokenDecimals = json.getInt("tokenDecimals"),
+    threshold = json.getString("threshold"),
+    intervalMinutes = json.getInt("intervalMinutes"),
     createdAt = json.getLong("createdAt")
 )
 

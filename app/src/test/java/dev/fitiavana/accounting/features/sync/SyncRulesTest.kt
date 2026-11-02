@@ -52,6 +52,16 @@ class SyncRulesTest {
     }
 
     @Test
+    fun `two chain monitors with the same id are a violation`() {
+        assertNull(SyncRules.violation(valid.copy(chainMonitors = listOf(SyncFixtures.chainMonitor("m")))))
+        assertNotNull(
+            SyncRules.violation(
+                valid.copy(chainMonitors = listOf(SyncFixtures.chainMonitor("m"), SyncFixtures.chainMonitor("m")))
+            )
+        )
+    }
+
+    @Test
     fun `two alerts with the same id are a violation`() {
         assertNotNull(SyncRules.violation(valid.copy(alerts = listOf(SyncFixtures.alert("al"), SyncFixtures.alert("al")))))
     }

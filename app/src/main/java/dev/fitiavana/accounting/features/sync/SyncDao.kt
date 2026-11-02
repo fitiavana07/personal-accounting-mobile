@@ -5,6 +5,7 @@ import androidx.room.Query
 import androidx.room.Upsert
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.alerts.GainLossAlert
+import dev.fitiavana.accounting.features.chainmonitors.ChainMonitor
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.templates.TemplateEntry
@@ -41,6 +42,9 @@ interface SyncDao {
     fun upsertAlerts(rows: List<GainLossAlert>)
 
     @Upsert
+    fun upsertChainMonitors(rows: List<ChainMonitor>)
+
+    @Upsert
     fun upsertSettings(settings: AppSettings)
 
     @Query("DELETE FROM instruments WHERE code IN (:codes)")
@@ -63,6 +67,9 @@ interface SyncDao {
 
     @Query("DELETE FROM gain_loss_alerts WHERE id IN (:ids)")
     fun deleteAlerts(ids: List<String>)
+
+    @Query("DELETE FROM chain_monitors WHERE id IN (:ids)")
+    fun deleteChainMonitors(ids: List<String>)
 
     @Query("DELETE FROM app_settings")
     fun deleteSettings()
