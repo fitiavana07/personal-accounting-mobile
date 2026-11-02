@@ -7,6 +7,12 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.60] - 2026-11-02
+
+### Added
+
+- transactions: add optional swap fee to Swap mode
+
 ## [1.59] - 2026-10-28
 
 ### Added
@@ -495,7 +501,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.59...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.60...HEAD
+[1.60]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.59...v1.60
 [1.59]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.58...v1.59
 [1.58]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.57...v1.58
 [1.57]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.56...v1.57
