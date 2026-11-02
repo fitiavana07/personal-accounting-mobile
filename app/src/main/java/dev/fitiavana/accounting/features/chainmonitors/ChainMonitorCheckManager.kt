@@ -15,8 +15,11 @@ interface MonitorNotifier {
     fun notifyFired(fired: FiredMonitor)
 }
 
-/** A monitor with the last balance read for it, in token units, or null if none was read yet. */
-data class MonitorRow(val monitor: ChainMonitor, val lastBalance: String?)
+/**
+ * A monitor with the last balance read for it, in token units, and when it was read (epoch millis).
+ * Both are null if none was read yet; a failed fetch leaves them at the last successful reading.
+ */
+data class MonitorRow(val monitor: ChainMonitor, val lastBalance: String?, val lastCheckedAt: Long? = null)
 
 /**
  * Checks the chain monitors. One alarm ticks at the shortest monitor interval and [check] fetches only the
@@ -61,7 +64,8 @@ class ChainMonitorCheckManager(
     fun rows(): List<MonitorRow> {
         val states = repository.getStatesSync().associateBy { it.monitorId }
         return repository.getAllSync().map { monitor ->
-            MonitorRow(monitor, states[monitor.id]?.takeIf { it.signature == monitor.signature }?.lastBalance)
+            val state = states[monitor.id]?.takeIf { it.signature == monitor.signature }
+            MonitorRow(monitor, state?.lastBalance, state?.lastCheckedAt)
         }
     }
 

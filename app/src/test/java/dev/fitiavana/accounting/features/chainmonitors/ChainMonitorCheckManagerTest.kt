@@ -229,7 +229,7 @@ class ChainMonitorCheckManagerTest {
     }
 
     @Test
-    fun `rows pair each monitor with its last known balance`() {
+    fun `rows pair each monitor with its last known balance and when it was read`() {
         val m = monitor()
         val other = monitor(holderB)
         balance(holderA, "12.5")
@@ -238,7 +238,7 @@ class ChainMonitorCheckManagerTest {
 
         val rows = manager.rows()
 
-        assertEquals(listOf(MonitorRow(m, "12.5"), MonitorRow(other, null)), rows)
+        assertEquals(listOf(MonitorRow(m, "12.5", now), MonitorRow(other, null, null)), rows)
     }
 
     @Test
@@ -250,6 +250,21 @@ class ChainMonitorCheckManagerTest {
         repository.update(m.copy(holderAddress = holderB))
 
         assertNull(manager.rows().single().lastBalance)
+        assertNull(manager.rows().single().lastCheckedAt)
+    }
+
+    @Test
+    fun `a failed fetch keeps the time of the last successful one`() {
+        val m = monitor()
+        balance(holderA, "1")
+        manager.check()
+        val readAt = now
+        fetcher.balances[holderA] = RpcException.Timeout(null)
+
+        now += 15 * minute
+        manager.check()
+
+        assertEquals(MonitorRow(m, "1", readAt), manager.rows().single())
     }
 
     @Test

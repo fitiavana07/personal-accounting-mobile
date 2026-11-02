@@ -21,10 +21,18 @@ class HomeMonitorsAdapterTest {
 
     private val context = ContextThemeWrapper(ApplicationProvider.getApplicationContext(), R.style.Theme_Accounting)
 
-    private fun row(label: String, balance: String?, symbol: String = "USDC") = MonitorRow(
+    private fun row(label: String, balance: String?, symbol: String = "USDC", checkedAt: Long? = null) = MonitorRow(
         ChainMonitor("id-$label", label, "0x" + "a".repeat(40), "0x" + "b".repeat(40), symbol, 6, "0", 15, 1L),
-        balance
+        balance,
+        checkedAt
     )
+
+    private fun updated(view: View): List<String> {
+        val container = view.findViewById<ViewGroup>(R.id.container_home_monitors_rows)
+        return (0 until container.childCount).map {
+            container.getChildAt(it).findViewById<TextView>(R.id.text_monitor_row_updated).text.toString()
+        }
+    }
 
     private fun bound(rows: List<MonitorRow>, onClick: () -> Unit = {}): View {
         val adapter = HomeMonitorsAdapter(onClick)
@@ -76,6 +84,33 @@ class HomeMonitorsAdapterTest {
         val view = bound(listOf(row("Vault", null)))
 
         assertEquals(listOf("Vault" to "–"), lines(view))
+    }
+
+    @Test
+    fun `a reading from today shows its time of day`() {
+        val at = System.currentTimeMillis()
+        val view = bound(listOf(row("Vault", "1", checkedAt = at)))
+
+        val time = java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(at))
+        assertEquals(listOf("Updated $time"), updated(view))
+    }
+
+    @Test
+    fun `an older reading shows its date and time`() {
+        val at = System.currentTimeMillis() - 3 * 24 * 3_600_000L
+        val view = bound(listOf(row("Vault", "1", checkedAt = at)))
+
+        val text = java.text.DateFormat
+            .getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT)
+            .format(java.util.Date(at))
+        assertEquals(listOf("Updated $text"), updated(view))
+    }
+
+    @Test
+    fun `a monitor never read says so`() {
+        val view = bound(listOf(row("Vault", null)))
+
+        assertEquals(listOf("Not fetched yet"), updated(view))
     }
 
     @Test

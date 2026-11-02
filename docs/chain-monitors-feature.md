@@ -72,7 +72,10 @@ receiver (`goAsync`).
 ## Home
 
 A **Monitors** block after the P2P prices (`ui/home/HomeMonitorsAdapter`): one line per monitor, label and last balance
-with the token (`1,234.5 USDC`), `–` before the first reading. It is hidden when there is no monitor. Tapping its
+with the token (`1,234.5 USDC`), `–` before the first reading, and under the label when it was last read: "Updated
+14:32" for a reading from today, "Updated 11/1/26, 14:32" for an older one, "Not fetched yet" before the first one.
+That is the time of the last **successful** fetch (`MonitorState.lastCheckedAt`), so after a failed fetch the old time
+stays, which shows the balance is stale. It is hidden when there is no monitor. Tapping its
 header opens the Monitors screen. The fifth shortcut (`button_monitors`) opens it too.
 
 ## Notification

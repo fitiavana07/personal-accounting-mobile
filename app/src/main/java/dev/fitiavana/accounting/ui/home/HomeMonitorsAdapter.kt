@@ -8,6 +8,9 @@ import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.chainmonitors.MonitorAmount
 import dev.fitiavana.accounting.features.chainmonitors.MonitorRow
+import java.text.DateFormat
+import java.util.Calendar
+import java.util.Date
 
 /**
  * Single-row block after the P2P prices: one line per chain monitor with its label and last balance
@@ -52,8 +55,28 @@ class HomeMonitorsAdapter(
                     MonitorAmount.format(row.lastBalance)
                         ?.let { container.context.getString(R.string.home_monitor_amount, it, row.monitor.tokenSymbol) }
                         ?: PLACEHOLDER
+                line.findViewById<TextView>(R.id.text_monitor_row_updated).text =
+                    row.lastCheckedAt?.let { container.context.getString(R.string.home_monitor_updated, formatTime(it)) }
+                        ?: container.context.getString(R.string.home_monitor_not_fetched)
                 container.addView(line)
             }
+        }
+
+        /** The time of day for a reading from today, otherwise the date and time. */
+        private fun formatTime(millis: Long): String {
+            val date = Date(millis)
+            return if (isToday(millis)) {
+                DateFormat.getTimeInstance(DateFormat.SHORT).format(date)
+            } else {
+                DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(date)
+            }
+        }
+
+        private fun isToday(millis: Long): Boolean {
+            val then = Calendar.getInstance().apply { timeInMillis = millis }
+            val now = Calendar.getInstance()
+            return then.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
+                then.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)
         }
     }
 
