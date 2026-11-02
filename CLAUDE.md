@@ -59,6 +59,7 @@ features/
   cexprices/      # CexPrice, CexPriceRepository
   p2pprices/      # P2pPrices, P2pPriceRepository (Binance P2P USDT/MGA top ads on home)
   alerts/         # GainLossAlert/AlertState (@Entity), AlertDao, AlertRepository, AlertEvaluator, AlertCheckManager, hourly alarm + notifier
+  chainmonitors/  # ChainMonitor/MonitorState (@Entity), ChainMonitorDao, ChainMonitorRepository, MonitorEvaluator, ChainMonitorCheckManager, 15/30 min alarm + notifier
   settings/       # AppSettings (@Entity), AppSettingsDao, AppSettingsRepository
   backup/         # BackupRepository, AutoBackupManager (daily backups)
   cloudbackup/    # CloudBackupManager/Repository, BackupEnvelope (.accbak), SafCloudFolder (Drive via SAF), CloudBackupStore
@@ -70,6 +71,7 @@ db/               # AppDatabase singleton (Room, migrations)
 network/          # HTTP clients for exchange-rate providers (CoinGecko, Yahoo Finance)
   p2p/            # Binance P2P ad search (BinanceP2pApi, P2pPriceFetcher)
   cex/            # per-exchange ticker endpoints/parsers (Binance, Bybit, Bitget, OKX, KuCoin, MEXC, Kraken)
+  evm/            # Base JSON-RPC eth_call (ERC-20 balanceOf/symbol/decimals): Erc20Codec, HttpErc20BalanceFetcher, RpcException, RetryPolicy
 ui/
   accounts/      # AccountsFragment, AccountsViewModel, AccountsAdapter, EditAccountActivity
   balances/      # BalancesFragment, BalancesViewModel, BalancesAdapter
@@ -79,6 +81,7 @@ ui/
   home/          # HomeFragment, HomeViewModel (dashboard/metrics)
   earn/          # EarnActivity, EarnViewModel, EarnAdapter (interest on accounts with an APR)
   alerts/        # AlertsActivity, AlertsViewModel, AlertsAdapter, EditAlertDialog (gain/loss % alerts)
+  chainmonitors/ # ChainMonitorsActivity, ChainMonitorsViewModel, ChainMonitorsAdapter, EditChainMonitorDialog (contract token-balance monitors)
   sync/          # SyncActivity, SyncViewModel, SyncPeersAdapter (passphrase, auto-sync, devices found)
   cloudbackup/   # CloudBackupActivity, CloudBackupViewModel (Drive folder, passphrase, daily backup, restore)
   changelog/     # ChangelogActivity, ChangelogViewModel, ChangelogAdapter (Release notes screen)
@@ -144,6 +147,12 @@ See `docs/gain-loss-alerts-feature.md` for gain/loss % alerts (per-account notif
 when the Home gain/loss crosses a threshold: crossing semantics with re-arming,
 the hourly alarm, the check after the Home rate fetch, device-local state, sync and
 backup).
+
+See `docs/chain-monitors-feature.md` for chain monitors (a notification when a
+contract's ERC-20 balance on Base is greater than X, e.g. the Acres 40 vault's USDC:
+Base JSON-RPC `eth_call`, fire-once-per-crossing with re-arming, a seeded-armed
+first check, per-monitor 15/30 min interval on one alarm, retry policy, the Home
+block, sync and backup of the config with device-local state).
 
 See `docs/changelog-feature.md` for `CHANGELOG.md` (Keep a Changelog, one section
 added per release by `scripts/release.sh`) and the Release notes screen that
