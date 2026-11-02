@@ -323,7 +323,7 @@ class SwapController(
         allAccounts = accounts
         from.populate(SwapBuilder.selectableFromAccounts(accounts, balances))
         repopulateToSpinner(null)
-        populateFeeSpinner(SwapBuilder.selectableFeeAccounts(accounts))
+        populateFeeSpinner(FeeAccounts.selectable(accounts))
     }
 
     private fun populateFeeSpinner(accounts: List<Account>) {

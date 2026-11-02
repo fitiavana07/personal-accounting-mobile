@@ -89,14 +89,6 @@ class SwapBuilderTest {
         assertNull(entries[1].intermediaryDebitAmount)
     }
 
-    @Test
-    fun `selectableFeeAccounts offers only expense accounts`() {
-        val fuel = Account(id = "fuel", name = "Fees", type = "expense")
-        val rent = Account(id = "rent", name = "Rent", type = "expense")
-
-        assertEquals(listOf(fuel, rent), SwapBuilder.selectableFeeAccounts(all + fuel + rent))
-    }
-
     // 5.031686 USDT (6 dp) for 0.0022 ETH (4+ dp), fee 0.0000022 ETH; USDT worth 4,500 Ar per unit.
     private val fromAmount = 5_031_686L
     private val toAmount = 22_000L

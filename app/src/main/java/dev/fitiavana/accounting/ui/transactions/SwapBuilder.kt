@@ -45,10 +45,6 @@ object SwapBuilder {
         }
     }
 
-    /** The accounts offered for the swap fee: expense accounts (always in base currency). */
-    fun selectableFeeAccounts(accounts: List<Account>): List<Account> =
-        accounts.filter { it.type == AccountTypes.EXPENSE }
-
     /**
      * A swap fee deducted from the received amount: [feeAmount] units of To's instrument, worth
      * [feeFromAmount] units of From's instrument and [feeBaseAmount] base units, expensed to

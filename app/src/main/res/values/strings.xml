@@ -58,6 +58,12 @@
     <string name="label_swap_fee_amount">Swap fee to deduct</string>
     <string name="label_swap_fee_account">Fee expense account</string>
     <string name="label_swap_fee_preview">Fee ≈ %1$s · %2$s Ar</string>
+    <string name="label_transfer_fee_toggle">Deduct a transfer fee</string>
+    <string name="label_transfer_fee_amount">Transfer fee to deduct</string>
+    <string name="label_transfer_fee_account">Fee expense account</string>
+    <string name="label_transfer_fee_preview">Fee ≈ %1$s Ar</string>
+    <string name="error_transfer_fee_invalid">The transfer fee must be smaller than the amount to transfer</string>
+    <string name="error_transfer_fee_account_required">Select the expense account for the transfer fee</string>
     <string name="error_swap_fee_invalid">The swap fee must be smaller than the amount to receive</string>
     <string name="error_swap_fee_account_required">Select the expense account for the swap fee</string>
     <string name="mode_description_classic">Manually enter debit and credit amounts across two or more accounts.</string>

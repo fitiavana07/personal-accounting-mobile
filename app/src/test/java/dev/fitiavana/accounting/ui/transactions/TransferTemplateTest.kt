@@ -1,11 +1,13 @@
 package dev.fitiavana.accounting.ui.transactions
 
 import android.content.Context
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
+import androidx.appcompat.widget.SwitchCompat
 import androidx.test.core.app.ApplicationProvider
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.features.accounts.Account
@@ -66,6 +68,13 @@ class TransferTemplateTest {
             editTransferAmount = EditText(context),
             buttonAll = Button(context),
             textAmountBase = TextView(context),
+            switchFee = SwitchCompat(context),
+            feeGroup = View(context),
+            feeAmountCode = TextView(context),
+            editFee = EditText(context),
+            feeSpinner = Spinner(context),
+            textFeePreview = TextView(context),
+            textFeeReceived = TextView(context),
             onChanged = {},
             runInBackground = { it() },
             runOnUiThread = { it() }

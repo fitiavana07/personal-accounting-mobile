@@ -154,6 +154,23 @@ account's `intermediaryBalance`, and saved as `intermediaryCreditAmount` on
 the From entry and `intermediaryDebitAmount` on the To entry. The balance,
 new balance and "≈ … · … Ar" preview lines gain the intermediary part.
 
+### Transfer fee (optional)
+
+A "Deduct a transfer fee" switch (off by default; off = the plain transfer) reveals a fee amount and an
+expense account spinner. Same approach as the swap fee (`docs/swap-feature.md`): the fee is **deducted from
+the received amount** (`TransferBuilder.computeBaseFee` / `computeInstrumentFee`, `FeeAccounts.selectable`).
+
+- The fee is in the transfer's unit (Ar for an instrument-free From, From's instrument otherwise) and must be
+  in (0, amount); a blank/zero fee means no fee; it needs an expense account.
+- From's entry is unchanged. To is debited net of the fee. The expense account is debited the fee's base
+  value only.
+- Instrument transfer: `feeBase = computeBaseAmount(fee, F.balance, F.instrumentBalance)` and, with an
+  intermediary, `feeIntermediary = computeBaseAmount(fee, F.intermediaryBalance, F.instrumentBalance)`; To's
+  base, instrument and intermediary amounts are all reduced by the fee's. No rate blocks the fee.
+- An instrument transfer shows "Fee ≈ … Ar" and the real amounts added to To
+  (`+ <instrument> · <intermediary> · <Ar> Ar`); To's "New balance" uses the net amounts.
+- Toggling off, or switching From to another unit, clears the fee input. Templates do not store the fee.
+
 ### Zero-balance accounts hidden from From
 
 The From spinner hides accounts whose base balance is zero (or has no balance

@@ -9,6 +9,7 @@ import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import androidx.test.core.app.ApplicationProvider
 import dev.fitiavana.accounting.R
@@ -55,6 +56,15 @@ class TransferControllerTest {
     private lateinit var editTransferAmount: EditText
     private lateinit var buttonAll: Button
     private lateinit var textAmountBase: TextView
+    private lateinit var switchFee: SwitchCompat
+    private lateinit var feeGroup: View
+    private lateinit var feeAmountCode: TextView
+    private lateinit var editFee: EditText
+    private lateinit var feeSpinner: Spinner
+    private lateinit var textFeePreview: TextView
+    private lateinit var textFeeReceived: TextView
+
+    private val feesAccount = Account(id = "fees", name = "Transfer fees", type = "expense")
 
     private val usdInstrument = Instrument(code = "USD", note = "", type = "fiat", decimalPlaces = 2)
     private val eurInstrument = Instrument(code = "EUR", note = "", type = "fiat", decimalPlaces = 2)
@@ -99,6 +109,13 @@ class TransferControllerTest {
         editTransferAmount = EditText(context)
         buttonAll = Button(context)
         textAmountBase = TextView(context)
+        switchFee = SwitchCompat(context)
+        feeGroup = View(context)
+        feeAmountCode = TextView(context)
+        editFee = EditText(context)
+        feeSpinner = Spinner(context)
+        textFeePreview = TextView(context)
+        textFeeReceived = TextView(context)
     }
 
     private fun controller(
@@ -121,6 +138,13 @@ class TransferControllerTest {
             editTransferAmount = editTransferAmount,
             buttonAll = buttonAll,
             textAmountBase = textAmountBase,
+            switchFee = switchFee,
+            feeGroup = feeGroup,
+            feeAmountCode = feeAmountCode,
+            editFee = editFee,
+            feeSpinner = feeSpinner,
+            textFeePreview = textFeePreview,
+            textFeeReceived = textFeeReceived,
             onChanged = onChanged,
             runInBackground = { it() },
             runOnUiThread = { it() }
@@ -128,11 +152,11 @@ class TransferControllerTest {
 
     /** Accounts without an instrument: Cash, Bank. */
     private fun baseController(onChanged: () -> Unit = {}) =
-        controller(listOf(cashAccount, bankAccount), baseBalances, onChanged)
+        controller(listOf(cashAccount, bankAccount, feesAccount), baseBalances, onChanged)
 
     /** Accounts with an instrument: USD Wallet, USD Savings, EUR Wallet, USD via EUR (+ Savings). */
     private fun instrumentController(onChanged: () -> Unit = {}) = controller(
-        listOf(usdWallet, usdSavings, eurWallet, usdViaEur, usdViaEurSavings), instrumentBalances, onChanged
+        listOf(usdWallet, usdSavings, eurWallet, usdViaEur, usdViaEurSavings, feesAccount), instrumentBalances, onChanged
     )
 
     /** Both kinds; From positions: Cash, Bank, USD Wallet, USD Savings. */
@@ -931,6 +955,143 @@ class TransferControllerTest {
     }
 
 
+
+    private fun enableFee(amount: String, accountPosition: Int = 1) {
+        switchFee.isChecked = true
+        editFee.setText(amount)
+        feeSpinner.setSelection(accountPosition)
+    }
+
+    /** Cash (5,000 Ar) -> Bank, transferring 1,000 Ar. */
+    private fun selectCashToBank(controller: TransferController) {
+        stubBalance("cash", 5_000L)
+        fromSpinner.setSelection(1)
+        toSpinner.setSelection(1)
+        editTransferAmount.setText("1000")
+    }
+
+    @Test
+    fun `fee is off by default with its inputs hidden`() {
+        baseController()
+
+        assertFalse(switchFee.isChecked)
+        assertEquals(View.GONE, feeGroup.visibility)
+    }
+
+    @Test
+    fun `toggling the fee shows its inputs and toggling off clears them`() {
+        baseController()
+        switchFee.isChecked = true
+        assertEquals(View.VISIBLE, feeGroup.visibility)
+        editFee.setText("100")
+        feeSpinner.setSelection(1)
+
+        switchFee.isChecked = false
+
+        assertEquals(View.GONE, feeGroup.visibility)
+        assertEquals("", editFee.text.toString())
+        assertEquals(0, feeSpinner.selectedItemPosition)
+    }
+
+    @Test
+    fun `fee account spinner offers expense accounts and the fee unit follows from`() {
+        val controller = mixedController()
+        assertEquals(context.getString(R.string.label_currency_ar), textAmountCode.text.toString())
+        assertEquals(context.getString(R.string.label_currency_ar), feeAmountCode.text.toString())
+        fromSpinner.setSelection(3) // USD Wallet
+
+        assertEquals("USD", feeAmountCode.text.toString())
+        assertEquals(emptyList<String>(), names(feeSpinner)) // no expense account in the mixed set
+        assertNull(controller.summaryEntries().getOrNull(2))
+    }
+
+    @Test
+    fun `Ar transfer with a fee nets the to side and debits the expense account`() {
+        val controller = baseController()
+        selectCashToBank(controller)
+        assertEquals(listOf("Transfer fees"), names(feeSpinner))
+        enableFee("100")
+
+        val entries = controller.collectEntries()!!
+
+        assertEquals(3, entries.size)
+        assertEquals(1_000L, entries[0].creditAmount)
+        assertEquals(900L, entries[1].debitAmount)
+        assertEquals("fees", entries[2].accountId)
+        assertEquals(100L, entries[2].debitAmount)
+        assertTrue(toTextNewBalance.text.toString().contains("900"))
+    }
+
+    @Test
+    fun `instrument transfer with a fee nets amounts and values the fee at the from rate`() {
+        val controller = instrumentController()
+        selectIntermediaryAccounts("5.00")
+        enableFee("0.50")
+
+        val entries = controller.collectEntries()!!
+
+        // 5.00 USD = 200,000 Ar, 250 intermediary; fee 0.50 USD = 20,000 Ar, 25 intermediary.
+        assertEquals(200_000L, entries[0].creditAmount)
+        assertEquals(500L, entries[0].instrumentCreditAmount)
+        assertEquals(180_000L, entries[1].debitAmount)
+        assertEquals(450L, entries[1].instrumentDebitAmount)
+        assertEquals(225L, entries[1].intermediaryDebitAmount)
+        assertEquals("fees", entries[2].accountId)
+        assertEquals(20_000L, entries[2].debitAmount)
+    }
+
+    @Test
+    fun `instrument fee preview and received line show the real amounts added to to`() {
+        instrumentController()
+        selectIntermediaryAccounts("5.00")
+        enableFee("0.50")
+
+        assertEquals(View.VISIBLE, textFeePreview.visibility)
+        assertTrue(textFeePreview.text.toString().contains("20,000"))
+        assertEquals(View.VISIBLE, textFeeReceived.visibility)
+        assertEquals("+ 4.5 USD · 2.25 EUR · 180,000 Ar", textFeeReceived.text.toString().replace(' ', ' '))
+    }
+
+    @Test
+    fun `collectEntries ignores a fee while the toggle is off`() {
+        val controller = baseController()
+        selectCashToBank(controller)
+
+        assertEquals(2, controller.collectEntries()!!.size)
+    }
+
+    @Test
+    fun `collectEntries blocks a fee without an expense account`() {
+        val controller = baseController()
+        selectCashToBank(controller)
+        enableFee("100", accountPosition = 0)
+
+        assertNull(controller.collectEntries())
+        assertEquals(
+            context.getString(R.string.error_transfer_fee_account_required),
+            ShadowToast.getTextOfLatestToast()
+        )
+    }
+
+    @Test
+    fun `collectEntries blocks a fee that is not smaller than the amount`() {
+        val controller = baseController()
+        selectCashToBank(controller)
+        enableFee("1000")
+
+        assertNull(controller.collectEntries())
+        assertEquals(context.getString(R.string.error_transfer_fee_invalid), ShadowToast.getTextOfLatestToast())
+    }
+
+    @Test
+    fun `hasContent is true once the fee switch is on`() {
+        val controller = baseController()
+        assertFalse(controller.hasContent())
+
+        switchFee.isChecked = true
+
+        assertTrue(controller.hasContent())
+    }
 
     /** The text the gold main-amount span covers in [view], or null when nothing is emphasized. */
     private fun emphasized(view: TextView): String? {

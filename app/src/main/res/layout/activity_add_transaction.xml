@@ -512,6 +512,85 @@
                     android:alpha="0.7"
                     android:visibility="gone" />
 
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_transfer_fee"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/label_transfer_fee_toggle" />
+
+                <LinearLayout
+                    android:id="@+id/group_transfer_fee"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/label_transfer_fee_amount"
+                        android:textSize="12sp"
+                        android:alpha="0.7" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/text_transfer_fee_amount_code"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="14sp"
+                            android:paddingEnd="8dp" />
+
+                        <EditText
+                            android:id="@+id/edit_transfer_fee"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:hint="@string/hint_amount"
+                            android:inputType="numberDecimal"
+                            android:maxLines="1" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/text_transfer_fee_preview"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="6dp"
+                        android:paddingTop="2dp"
+                        android:textSize="11sp"
+                        android:alpha="0.7"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/text_transfer_fee_received"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="6dp"
+                        android:paddingTop="2dp"
+                        android:textSize="11sp"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/label_transfer_fee_account"
+                        android:textSize="12sp"
+                        android:alpha="0.7" />
+
+                    <Spinner
+                        android:id="@+id/spinner_transfer_fee_account"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+
             </LinearLayout>
 
             <LinearLayout

@@ -4,7 +4,10 @@ import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
@@ -49,6 +52,13 @@ class TransferController(
     private val editTransferAmount: EditText,
     buttonAll: Button,
     private val textAmountBase: TextView,
+    private val switchFee: CompoundButton,
+    private val feeGroup: View,
+    private val feeAmountCode: TextView,
+    private val editFee: EditText,
+    private val feeSpinner: Spinner,
+    private val textFeePreview: TextView,
+    private val textFeeReceived: TextView,
     private val onChanged: () -> Unit,
     runInBackground: (() -> Unit) -> Unit,
     runOnUiThread: (() -> Unit) -> Unit
@@ -61,6 +71,9 @@ class TransferController(
 
     /** The last From account picked, to notice when the amount's unit changes with it. */
     private var lastFromAccount: Account? = null
+
+    /** The expense accounts offered as the transfer fee's destination. */
+    private var feeAccounts: List<Account> = emptyList()
 
     private val from: AccountSideController = AccountSideController(
         context = context,
@@ -77,6 +90,7 @@ class TransferController(
                 // Ar and instrument units are not comparable, so a typed amount can't carry over.
                 if (previous != null && previous.instrumentCode != account.instrumentCode) {
                     editTransferAmount.text = null
+                    editFee.text = null
                 }
             }
             repopulateToSpinner(account)
@@ -116,20 +130,43 @@ class TransferController(
 
     /** Labels the amount field with the From account's instrument code, or Ar for base currency. */
     private fun showAmountUnit() {
-        textAmountCode.text = currentInstrument()?.code ?: context.getString(R.string.label_currency_ar)
+        val unit = currentInstrument()?.code ?: context.getString(R.string.label_currency_ar)
+        textAmountCode.text = unit
+        feeAmountCode.text = unit
     }
 
     init {
         showAmountUnit()
         editTransferAmount.enableAmountFormatting { currentInstrument() != null }
-        editTransferAmount.addTextChangedListener(object : TextWatcher {
+        editFee.enableAmountFormatting { currentInstrument() != null }
+        switchFee.isChecked = false
+        feeGroup.visibility = View.GONE
+        switchFee.setOnCheckedChangeListener { _, checked ->
+            feeGroup.visibility = if (checked) View.VISIBLE else View.GONE
+            if (!checked) {
+                editFee.text = null
+                feeSpinner.setSelection(0)
+            }
+            refreshPreviews()
+            onChanged()
+        }
+        feeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                refreshPreviews()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+        val watcher = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
             override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 refreshPreviews()
                 onChanged()
             }
-        })
+        }
+        editTransferAmount.addTextChangedListener(watcher)
+        editFee.addTextChangedListener(watcher)
         buttonAll.setOnClickListener { fillAmountWithFromBalance() }
     }
 
@@ -137,6 +174,93 @@ class TransferController(
         updateNewBalances(from)
         updateNewBalances(to)
         updateAmountBasePreview()
+        updateFeePreview()
+        updateFeeReceived()
+    }
+
+    /** The fee typed in the transfer's unit; 0 while the fee toggle is off or nothing is typed. */
+    private fun feeAmount(): Long = if (switchFee.isChecked) editFee.plainAmount(currentInstrument()) else 0L
+
+    private fun selectedFeeAccountId(): String? {
+        val position = feeSpinner.selectedItemPosition
+        return if (position > 0 && position <= feeAccounts.size) feeAccounts[position - 1].id else null
+    }
+
+    /** The fee's value, or null with no fee typed (or an invalid/unrated one, see [checkFee]). */
+    private fun computedFee(): TransferBuilder.TransferFee? {
+        val instrument = currentInstrument()
+        val expenseAccountId = selectedFeeAccountId().orEmpty()
+        return if (instrument == null) {
+            TransferBuilder.computeBaseFee(expenseAccountId, feeAmount(), parsedAmount(null))
+        } else {
+            TransferBuilder.computeInstrumentFee(
+                expenseAccountId = expenseAccountId,
+                feeAmount = feeAmount(),
+                amount = parsedAmount(instrument),
+                fromBalance = from.balance,
+                fromInstrumentBalance = from.instrumentBalance,
+                fromIntermediaryBalance = from.intermediaryBalance,
+                hasIntermediary = intermediaryInstrument() != null
+            )
+        }
+    }
+
+    /** False, with a Toast shown, when a fee is typed but invalid or lacks an expense account. */
+    private fun checkFee(): Boolean {
+        if (feeAmount() <= 0L) return true
+        if (computedFee() == null) {
+            toast(R.string.error_transfer_fee_invalid)
+            return false
+        }
+        if (selectedFeeAccountId() == null) {
+            toast(R.string.error_transfer_fee_account_required)
+            return false
+        }
+        return true
+    }
+
+    /** "Fee ≈ <Ar> Ar": the fee's base value for an instrument transfer; hidden without a valid fee. */
+    private fun updateFeePreview() {
+        val fee = computedFee()
+        if (fee == null || currentInstrument() == null) {
+            textFeePreview.visibility = View.GONE
+            return
+        }
+        textFeePreview.text =
+            context.getString(R.string.label_transfer_fee_preview, TransactionDisplay.formatAmount(fee.feeBaseAmount))
+        textFeePreview.visibility = View.VISIBLE
+    }
+
+    /**
+     * "+ <instrument> · <intermediary> · <Ar> Ar": what To really gets once the fee is deducted; shown
+     * only for an instrument transfer with a valid fee.
+     */
+    private fun updateFeeReceived() {
+        val fee = computedFee()
+        val instrument = currentInstrument()
+        val baseAmount = instrument?.let { computedBaseAmount(it) }
+        if (fee == null || instrument == null || baseAmount == null) {
+            textFeeReceived.visibility = View.GONE
+            return
+        }
+        val received = TransactionDisplay.formatInstrumentAmountNoWrap(parsedAmount(instrument) - fee.feeAmount, instrument)
+        val formattedBase = TransactionDisplay.formatAmount(baseAmount - fee.feeBaseAmount)
+        val intermediary = intermediaryInstrument()
+        val intermediaryAmount = computedIntermediaryAmount(instrument)
+        val line = if (intermediary != null && intermediaryAmount != null) {
+            context.getString(
+                R.string.label_amount_plus_ar_instrument_intermediary,
+                formattedBase,
+                received,
+                TransactionDisplay.formatInstrumentAmountNoWrap(
+                    intermediaryAmount - (fee.feeIntermediaryAmount ?: 0L), intermediary
+                )
+            )
+        } else {
+            context.getString(R.string.label_amount_plus_ar_instrument, formattedBase, received)
+        }
+        textFeeReceived.text = emphasizeMainAmount(context, line, received)
+        textFeeReceived.visibility = View.VISIBLE
     }
 
     /** The From account's instrument, or null when no account is picked or it holds only base currency. */
@@ -202,7 +326,9 @@ class TransferController(
             textNewBalance.visibility = View.GONE
             return
         }
-        val baseAmount = computedBaseAmount(instrument) ?: 0L
+        // To receives net of the fee; From is moved by the full amount.
+        val fee = if (side.isDebit) computedFee() else null
+        val baseAmount = (computedBaseAmount(instrument) ?: 0L) - (fee?.feeBaseAmount ?: 0L)
         val newBalance = BalanceCalculator.project(
             accountType = account.type,
             currentBalance = side.balance,
@@ -219,7 +345,7 @@ class TransferController(
             textNewBalance.visibility = View.VISIBLE
             return
         }
-        val instrumentAmount = parsedAmount(instrument)
+        val instrumentAmount = parsedAmount(instrument) - (fee?.feeAmount ?: 0L)
         val newInstrumentBalance = BalanceCalculator.project(
             accountType = account.type,
             currentBalance = side.instrumentBalance,
@@ -229,7 +355,7 @@ class TransferController(
         val formattedInstrument = TransactionDisplay.formatInstrumentAmountNoWrap(newInstrumentBalance, instrument)
         val intermediary = intermediaryInstrument()
         val line = if (intermediary != null) {
-            val intermediaryAmount = computedIntermediaryAmount(instrument) ?: 0L
+            val intermediaryAmount = (computedIntermediaryAmount(instrument) ?: 0L) - (fee?.feeIntermediaryAmount ?: 0L)
             val newIntermediaryBalance = BalanceCalculator.project(
                 accountType = account.type,
                 currentBalance = side.intermediaryBalance,
@@ -281,6 +407,16 @@ class TransferController(
         allAccounts = accounts
         from.populate(TransferBuilder.selectableFromAccounts(accounts, balances))
         repopulateToSpinner(null)
+        populateFeeSpinner(FeeAccounts.selectable(accounts))
+    }
+
+    private fun populateFeeSpinner(accounts: List<Account>) {
+        feeAccounts = accounts
+        val names = listOf(context.getString(R.string.spinner_select_account)) + accounts.map { it.name }
+        val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, names)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        feeSpinner.adapter = adapter
+        feeSpinner.setSelection(0)
     }
 
     /**
@@ -337,7 +473,8 @@ class TransferController(
                 toast(R.string.error_transfer_from_zero_balance)
                 return null
             }
-            return TransferBuilder.buildBaseEntries(fromAccount.id, toAccount.id, parsedAmount(null))
+            if (!checkFee()) return null
+            return TransferBuilder.buildBaseEntries(fromAccount.id, toAccount.id, parsedAmount(null), computedFee())
         }
         val instrumentAmount = parsedAmount(instrument)
         if (instrumentAmount <= 0L) {
@@ -349,12 +486,14 @@ class TransferController(
             toast(R.string.error_transfer_from_zero_balance)
             return null
         }
+        if (!checkFee()) return null
         return TransferBuilder.buildInstrumentEntries(
             fromAccountId = fromAccount.id,
             toAccountId = toAccount.id,
             instrumentAmount = instrumentAmount,
             baseAmount = baseAmount,
-            intermediaryAmount = computedIntermediaryAmount(instrument)
+            intermediaryAmount = computedIntermediaryAmount(instrument),
+            fee = computedFee()
         )
     }
 
@@ -363,24 +502,27 @@ class TransferController(
         val fromId = from.account?.id ?: ""
         val toId = to.account?.id ?: ""
         val instrument = currentInstrument()
-            ?: return TransferBuilder.buildBaseEntries(fromId, toId, parsedAmount(null))
+            ?: return TransferBuilder.buildBaseEntries(fromId, toId, parsedAmount(null), computedFee())
         return TransferBuilder.buildInstrumentEntries(
             fromAccountId = fromId,
             toAccountId = toId,
             instrumentAmount = parsedAmount(instrument),
             baseAmount = computedBaseAmount(instrument),
-            intermediaryAmount = computedIntermediaryAmount(instrument)
+            intermediaryAmount = computedIntermediaryAmount(instrument),
+            fee = computedFee()
         )
     }
 
     fun hasContent(): Boolean =
         editTransferAmount.text.toString().trim().isNotEmpty() ||
+                switchFee.isChecked ||
                 from.spinner.selectedItemPosition > 0 ||
                 to.spinner.selectedItemPosition > 0
 
     /** Resets both sides and the amount back to their initial, empty state. */
     fun clear() {
         editTransferAmount.text = null
+        switchFee.isChecked = false
         lastFromAccount = null
         from.clearSelection()
         repopulateToSpinner(null)
