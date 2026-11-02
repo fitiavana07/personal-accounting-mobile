@@ -7,6 +7,20 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.61] - 2026-11-02
+
+### Added
+
+- transactions: add optional transfer fee to Transfer mode
+- monitors: add ERC-20 codec, monitor evaluator and retry policy
+- monitors: add Base JSON-RPC ERC-20 balance fetcher
+- monitors: persist chain monitors (schema 25)
+- monitors: sync and back up chain monitors
+- monitors: check chain monitors periodically and notify
+- monitors: add Monitors screen to manage chain monitors
+- home: show chain monitors on Home with a Monitors shortcut
+- home: show when each chain monitor was last fetched
+
 ## [1.60] - 2026-11-02
 
 ### Added
@@ -501,7 +515,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.60...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.61...HEAD
+[1.61]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.60...v1.61
 [1.60]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.59...v1.60
 [1.59]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.58...v1.59
 [1.58]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.57...v1.58
