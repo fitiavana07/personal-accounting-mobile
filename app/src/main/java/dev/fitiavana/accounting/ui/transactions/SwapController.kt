@@ -439,7 +439,18 @@ class SwapController(
     fun templateSlots(): List<TemplateSlot>? {
         val fromId = from.selectedAccountId() ?: return null
         val toId = to.selectedAccountId() ?: return null
-        return listOf(TemplateSlot(TemplateSlots.FROM, fromId), TemplateSlot(TemplateSlots.TO, toId))
+        return listOfNotNull(
+            TemplateSlot(TemplateSlots.FROM, fromId),
+            TemplateSlot(TemplateSlots.TO, toId),
+            feeSlot(TemplateSlots.FEE, swapFee),
+            feeSlot(TemplateSlots.SECONDARY_FEE, secondaryFee).takeIf { isBaseFrom() }
+        )
+    }
+
+    /** The fee's expense account as a template slot, or null while the fee is off or has no account. */
+    private fun feeSlot(slot: String, fee: FeeSection): TemplateSlot? {
+        val accountId = fee.selectedAccountId() ?: return null
+        return if (fee.isOn) TemplateSlot(slot, accountId) else null
     }
 
     /** Selects the template's accounts; false, changing nothing, when one is gone or TO no longer fits FROM. */
@@ -453,7 +464,21 @@ class SwapController(
         from.select(fromId)
         // The FROM listener may only fire later (or not at all if FROM is unchanged), so narrow TO now.
         repopulateToSpinner(fromAccount)
+        restoreFeeAccounts(template, fromAccount)
         return true
+    }
+
+    /**
+     * Turns on and selects the template's fee accounts (none are required, so an account that is gone or no
+     * longer offered is skipped). The FROM listener may fire later and would reset the fees to the kind's
+     * default, so the kind is applied here first: the later call then finds nothing changed.
+     */
+    private fun restoreFeeAccounts(template: TemplateWithEntries, fromAccount: Account) {
+        applyFromKind(fromAccount)
+        template.accountFor(TemplateSlots.FEE)?.let { swapFee.select(it) }
+        // The secondary list leaves out the swap fee's account, so refresh it before choosing from it.
+        refreshSecondaryFeeAccounts()
+        if (isBaseFrom()) template.accountFor(TemplateSlots.SECONDARY_FEE)?.let { secondaryFee.select(it) }
     }
 
     private fun toast(messageRes: Int) =

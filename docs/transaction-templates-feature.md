@@ -26,6 +26,12 @@ notes are never stored.
 - `mode` is one of `TemplateModes` (`classic`, `transfer`, `instrument_income`, `swap`; swap uses the `from`/`to` slots like transfer).
 - `slot` says which account picker an entry belongs to (`TemplateSlots`): `from`/`to` for the two transfer modes,
   `asset`/`revenue` for Instrument Income, `row` for Classic.
+- Swap templates may also hold two **optional** slots, `fee` (swap fee expense account) and `secondary_fee`
+  (secondary fee account, base-currency From only). They are saved only while that fee's switch is on and an
+  account is chosen. Applying turns the fee on and selects the account (amounts stay empty); a template without
+  them leaves the fee defaults alone. They never affect `isComplete()`: if the fee account is deleted (cascade)
+  or no longer offered, the template still applies, just without that fee account. No migration: `slot` is text.
+  `SwapController.restoreFeeAccounts` applies the From kind first, so the later FROM listener can't reset them.
 - **The debit or credit side is not stored.** It follows from the slot (`from` is credited, `to` is debited, as
   the controllers already do), and Classic rows only have an account until you type an amount into the debit or
   credit field, so there is no side to remember. Classic rows keep their order in `position`.

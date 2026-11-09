@@ -27,6 +27,12 @@ object TemplateSlots {
     const val ASSET = "asset"
     const val REVENUE = "revenue"
     const val ROW = "row"
+
+    /** Swap only: the expense account of the swap fee. Optional, a template stays complete without it. */
+    const val FEE = "fee"
+
+    /** Swap only: the expense account of the secondary fee (base-currency From). Optional like [FEE]. */
+    const val SECONDARY_FEE = "secondary_fee"
 }
 
 /** A named, reusable choice of mode and accounts. Amounts and notes are never stored. */

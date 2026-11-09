@@ -40,6 +40,9 @@ class SwapTemplateTest {
     private lateinit var secondaryFeeSection: android.view.View
     private lateinit var switchSecondaryFee: androidx.appcompat.widget.SwitchCompat
     private lateinit var secondaryFeeGroup: android.view.View
+    private lateinit var switchFee: androidx.appcompat.widget.SwitchCompat
+    private lateinit var feeSpinner: Spinner
+    private lateinit var secondaryFeeSpinner: Spinner
 
     private val usd = Instrument(code = "USD", note = "", type = "fiat", decimalPlaces = 2)
     private val btc = Instrument(code = "BTC", note = "", type = "crypto", decimalPlaces = 8)
@@ -50,6 +53,8 @@ class SwapTemplateTest {
     )
     private val btcWallet = Account(id = "btcw", name = "BTC Wallet", type = "asset", instrumentCode = "BTC")
     private val accounts = listOf(usdWallet, btcViaUsd)
+    private val feeExpense = Account(id = "fee", name = "Swap fees", type = "expense")
+    private val otherExpense = Account(id = "fee2", name = "Other fees", type = "expense")
 
     @Before
     fun setUp() {
@@ -58,6 +63,9 @@ class SwapTemplateTest {
         secondaryFeeSection = android.view.View(context)
         switchSecondaryFee = androidx.appcompat.widget.SwitchCompat(context)
         secondaryFeeGroup = android.view.View(context)
+        switchFee = androidx.appcompat.widget.SwitchCompat(context)
+        feeSpinner = Spinner(context)
+        secondaryFeeSpinner = Spinner(context)
         controller = SwapController(
             context = context,
             viewModel = mock(),
@@ -76,11 +84,11 @@ class SwapTemplateTest {
             editToAmount = EditText(context),
             textAmountBase = TextView(context),
             textRate = TextView(context),
-            switchFee = androidx.appcompat.widget.SwitchCompat(context),
+            switchFee = switchFee,
             feeGroup = android.view.View(context),
             feeAmountCode = TextView(context),
             editFee = EditText(context),
-            feeSpinner = Spinner(context),
+            feeSpinner = feeSpinner,
             textFeePreview = TextView(context),
             textFeeReceived = TextView(context),
             secondaryFeeSection = secondaryFeeSection,
@@ -88,11 +96,11 @@ class SwapTemplateTest {
             secondaryFeeGroup = secondaryFeeGroup,
             secondaryFeeAmountCode = TextView(context),
             editSecondaryFee = EditText(context),
-            secondaryFeeSpinner = Spinner(context),
+            secondaryFeeSpinner = secondaryFeeSpinner,
             onChanged = {},
             runInBackground = { it() },
             runOnUiThread = { it() }
-        ).also { it.populateSpinners(accounts, accounts.associate { a -> a.id to 1L }) }
+        ).also { it.populateSpinners(accounts + listOf(feeExpense, otherExpense), accounts.associate { a -> a.id to 1L }) }
     }
 
     private fun template(vararg slots: Pair<String, String>) = TemplateWithEntries(
@@ -136,7 +144,7 @@ class SwapTemplateTest {
 
     /** Reloads the controller's accounts so a funded base account and a no-intermediary target are offered. */
     private fun withBaseAccounts() = controller.populateSpinners(
-        accounts + listOf(cash, btcWallet),
+        accounts + listOf(cash, btcWallet, feeExpense, otherExpense),
         mapOf("usd" to 1L, "cash" to 1L)
     )
 
@@ -259,5 +267,107 @@ class SwapTemplateTest {
 
         assertEquals("USD", fromCode.text.toString())
         assertEquals(android.view.View.VISIBLE, fromBalance.visibility)
+    }
+
+    private fun spinnerSelectedName(spinner: Spinner) = spinner.selectedItem?.toString()
+
+    @Test
+    fun `templateSlots saves the swap fee account while the fee is on`() {
+        fromSpinner.setSelection(1)
+        toSpinner.setSelection(1)
+        switchFee.isChecked = true
+        feeSpinner.setSelection(1)
+
+        assertEquals(
+            listOf(
+                TemplateSlot(TemplateSlots.FROM, "usd"),
+                TemplateSlot(TemplateSlots.TO, "btc"),
+                TemplateSlot(TemplateSlots.FEE, "fee")
+            ),
+            controller.templateSlots()
+        )
+    }
+
+    @Test
+    fun `templateSlots leaves the fee out when it is off or has no account`() {
+        fromSpinner.setSelection(1)
+        toSpinner.setSelection(1)
+        assertEquals(2, controller.templateSlots()?.size)
+
+        switchFee.isChecked = true
+        assertEquals(2, controller.templateSlots()?.size)
+    }
+
+    @Test
+    fun `templateSlots saves both fee accounts for a base FROM`() {
+        withBaseAccounts()
+        fromSpinner.setSelection(indexOfName(fromSpinner, cash.name))
+        toSpinner.setSelection(indexOfName(toSpinner, btcWallet.name))
+        feeSpinner.setSelection(1)
+        secondaryFeeSpinner.setSelection(indexOfName(secondaryFeeSpinner, otherExpense.name))
+
+        assertEquals(
+            listOf(
+                TemplateSlot(TemplateSlots.FROM, "cash"),
+                TemplateSlot(TemplateSlots.TO, "btcw"),
+                TemplateSlot(TemplateSlots.FEE, "fee"),
+                TemplateSlot(TemplateSlots.SECONDARY_FEE, "fee2")
+            ),
+            controller.templateSlots()
+        )
+    }
+
+    private fun indexOfName(spinner: Spinner, name: String): Int =
+        (0 until spinner.count).first { spinner.getItemAtPosition(it).toString() == name }
+
+    @Test
+    fun `applyTemplate restores the swap fee account and turns the fee on`() {
+        assertTrue(
+            controller.applyTemplate(
+                template(TemplateSlots.FROM to "usd", TemplateSlots.TO to "btc", TemplateSlots.FEE to "fee")
+            )
+        )
+
+        assertTrue(switchFee.isChecked)
+        assertEquals("Swap fees", spinnerSelectedName(feeSpinner))
+        assertFalse(switchSecondaryFee.isChecked)
+    }
+
+    @Test
+    fun `applyTemplate keeps the fee off when the template has no fee account`() {
+        controller.applyTemplate(template(TemplateSlots.FROM to "usd", TemplateSlots.TO to "btc"))
+
+        assertFalse(switchFee.isChecked)
+    }
+
+    @Test
+    fun `applyTemplate restores both fee accounts for a base FROM even though the kind change resets the fees`() {
+        withBaseAccounts()
+
+        assertTrue(
+            controller.applyTemplate(
+                template(
+                    TemplateSlots.FROM to "cash", TemplateSlots.TO to "btcw",
+                    TemplateSlots.FEE to "fee", TemplateSlots.SECONDARY_FEE to "fee2"
+                )
+            )
+        )
+
+        assertTrue(switchFee.isChecked)
+        assertEquals("Swap fees", spinnerSelectedName(feeSpinner))
+        assertTrue(switchSecondaryFee.isChecked)
+        assertEquals("Other fees", spinnerSelectedName(secondaryFeeSpinner))
+    }
+
+    @Test
+    fun `applyTemplate ignores a fee account that is no longer offered but still applies`() {
+        assertTrue(
+            controller.applyTemplate(
+                template(TemplateSlots.FROM to "usd", TemplateSlots.TO to "btc", TemplateSlots.FEE to "gone")
+            )
+        )
+
+        assertEquals("usd", controller.templateSlots()?.first()?.accountId)
+        assertEquals(2, controller.templateSlots()?.size)
     }
 }

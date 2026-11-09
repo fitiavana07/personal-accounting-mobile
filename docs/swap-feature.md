@@ -42,7 +42,7 @@ from the amount received (`SwapBuilder.computeFee`):
 
 The fee must be in (0, toAmount) and needs an expense account; a blank/zero fee means no fee.
 With a valid fee a line shows what To really gets, in the usual order
-(`+ <I_T amount> · <I_F amount> · <Ar> Ar`). Toggling off clears the fee inputs. Templates do not store the fee.
+(`+ <I_T amount> · <I_F amount> · <Ar> Ar`). Toggling off clears the fee inputs. Templates store the fee's **expense account** (never the amount), see `docs/transaction-templates-feature.md`.
 
 Transfer mode has the same optional fee, see `docs/instrument-transfer-base-amount.md`; both use
 `FeeAccounts.selectable` for the expense spinner (and the fee section UI, `FeeSection`).

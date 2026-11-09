@@ -61,6 +61,18 @@ class FeeSection(
         return if (position > 0 && position <= accounts.size) accounts[position - 1].id else null
     }
 
+    /**
+     * Turns the fee on and selects the expense account [accountId]; false, leaving the fee as it was, when
+     * that account is not offered.
+     */
+    fun select(accountId: String): Boolean {
+        val index = accounts.indexOfFirst { it.id == accountId }
+        if (index < 0) return false
+        isOn = true
+        accountSpinner.setSelection(index + 1)
+        return true
+    }
+
     /** Offers [accounts] after "Select account", keeping the current choice when it is still offered. */
     fun populate(accounts: List<Account>) {
         val keep = selectedAccountId()
