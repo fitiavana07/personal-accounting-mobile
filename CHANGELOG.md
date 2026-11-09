@@ -7,6 +7,14 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.64] - 2026-11-09
+
+### Added
+
+- bank-accounts: add transaction FAB on list, move add account to overflow
+- swap: support base-currency From accounts and shared fee section
+- templates: save and restore swap fee expense accounts
+
 ## [1.63] - 2026-11-09
 
 ### Added
@@ -528,7 +536,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.63...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.64...HEAD
+[1.64]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.63...v1.64
 [1.63]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.62...v1.63
 [1.62]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.61...v1.62
 [1.61]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.60...v1.61
