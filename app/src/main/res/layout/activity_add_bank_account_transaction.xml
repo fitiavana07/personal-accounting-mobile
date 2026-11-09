@@ -22,6 +22,29 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <LinearLayout
+                android:id="@+id/layout_bank_account_picker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:alpha="0.7"
+                    android:text="@string/bank_transaction_account_label"
+                    android:textSize="12sp" />
+
+                <Spinner
+                    android:id="@+id/spinner_bank_account"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp" />
+
+            </LinearLayout>
+
             <RadioGroup
                 android:id="@+id/group_bank_direction"
                 android:layout_width="match_parent"
@@ -29,19 +52,19 @@
                 android:orientation="horizontal">
 
                 <RadioButton
-                    android:id="@+id/radio_bank_credit"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:checked="true"
-                    android:text="@string/bank_transaction_credit" />
-
-                <RadioButton
                     android:id="@+id/radio_bank_debit"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:checked="true"
                     android:text="@string/bank_transaction_debit" />
+
+                <RadioButton
+                    android:id="@+id/radio_bank_credit"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/bank_transaction_credit" />
 
             </RadioGroup>
 

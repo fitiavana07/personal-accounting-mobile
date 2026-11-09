@@ -426,6 +426,7 @@
     <string name="bank_account_transactions_empty">No transactions yet.</string>
     <string name="cd_add_bank_account_transaction">Add transaction</string>
     <string name="title_new_bank_account_transaction">New transaction</string>
+    <string name="bank_transaction_account_label">Bank account</string>
     <string name="bank_transaction_credit">Credit (+)</string>
     <string name="bank_transaction_debit">Debit (-)</string>
     <string name="bank_transaction_amount_hint">Amount (Ar)</string>

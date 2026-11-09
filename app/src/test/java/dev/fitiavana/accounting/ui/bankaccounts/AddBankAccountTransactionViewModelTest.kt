@@ -50,6 +50,23 @@ class AddBankAccountTransactionViewModelTest {
     }
 
     @Test
+    fun `without a preselected account the picked one is used`() {
+        val vm = AddBankAccountTransactionViewModel(repository, null)
+        vm.selectedAccountId = "a2"
+
+        assertNull(vm.saveSync(Direction.CREDIT, "10", "", 1))
+        verify(repository).addTransaction("a2", 10, "", 1)
+    }
+
+    @Test
+    fun `without any account selected nothing is saved`() {
+        val vm = AddBankAccountTransactionViewModel(repository, null)
+
+        assertEquals(AddTransactionError.ACCOUNT, vm.saveSync(Direction.CREDIT, "10", "", 1))
+        verify(repository, never()).addTransaction(any(), any(), any(), any())
+    }
+
+    @Test
     fun `parseAmount gives a positive whole number or null`() {
         assertEquals(42L, AddBankAccountTransactionViewModel.parseAmount(" 42 "))
         assertNull(AddBankAccountTransactionViewModel.parseAmount("0"))

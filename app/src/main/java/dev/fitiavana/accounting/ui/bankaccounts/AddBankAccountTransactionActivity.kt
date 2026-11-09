@@ -5,7 +5,11 @@ import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.RadioGroup
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
@@ -26,8 +30,11 @@ class AddBankAccountTransactionActivity : AppCompatActivity() {
         private const val EXTRA_ACCOUNT_ID = "account_id"
         private const val STATE_DATETIME = "datetime"
 
-        fun intent(context: Context, accountId: String): Intent =
-            Intent(context, AddBankAccountTransactionActivity::class.java).putExtra(EXTRA_ACCOUNT_ID, accountId)
+        /** With an [accountId] the transaction goes to that account; without, the user picks one. */
+        fun intent(context: Context, accountId: String? = null): Intent =
+            Intent(context, AddBankAccountTransactionActivity::class.java).apply {
+                if (accountId != null) putExtra(EXTRA_ACCOUNT_ID, accountId)
+            }
     }
 
     private val selectedCalendar: Calendar = Calendar.getInstance()
@@ -36,10 +43,6 @@ class AddBankAccountTransactionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val accountId = intent.getStringExtra(EXTRA_ACCOUNT_ID)
-        if (accountId == null) {
-            finish()
-            return
-        }
         setContentView(R.layout.activity_add_bank_account_transaction)
 
         UiUtils.setupActionBar(this)
@@ -65,18 +68,47 @@ class AddBankAccountTransactionActivity : AppCompatActivity() {
         val save = findViewById<MaterialButton>(R.id.button_save_bank_transaction)
         amountInput.enableAmountFormatting()
 
+        if (accountId == null) setupAccountPicker(viewModel, save)
+
         save.setOnClickListener {
             amountLayout.error = null
             val direction =
-                if (directionGroup.checkedRadioButtonId == R.id.radio_bank_debit) Direction.DEBIT else Direction.CREDIT
+                if (directionGroup.checkedRadioButtonId == R.id.radio_bank_credit) Direction.CREDIT else Direction.DEBIT
             save.isEnabled = false
             viewModel.save(
                 direction, amountInput.plainText(), noteInput.text.toString(), selectedCalendar.timeInMillis
             ) { error ->
                 save.isEnabled = true
-                if (error == null) finish()
-                else amountLayout.error = getString(R.string.error_bank_transaction_amount)
+                when (error) {
+                    null -> finish()
+                    AddTransactionError.AMOUNT -> amountLayout.error = getString(R.string.error_bank_transaction_amount)
+                    AddTransactionError.ACCOUNT -> Unit
+                }
             }
+        }
+    }
+
+    /** Shows the account spinner; the first account (the only one, when there is one) is selected by default. */
+    private fun setupAccountPicker(viewModel: AddBankAccountTransactionViewModel, save: MaterialButton) {
+        findViewById<View>(R.id.layout_bank_account_picker).visibility = View.VISIBLE
+        val spinner = findViewById<Spinner>(R.id.spinner_bank_account)
+        var ids = emptyList<String>()
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                viewModel.selectedAccountId = ids.getOrNull(position)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                viewModel.selectedAccountId = null
+            }
+        }
+        viewModel.accounts.observe(this) { accounts ->
+            ids = accounts.map { it.id }
+            spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, accounts.map { it.name })
+            val current = ids.indexOf(viewModel.selectedAccountId).takeIf { it >= 0 } ?: 0
+            spinner.setSelection(current)
+            viewModel.selectedAccountId = ids.getOrNull(current)
+            save.isEnabled = ids.isNotEmpty()
         }
     }
 

@@ -41,16 +41,20 @@ Both are included.
 ## UI (`ui/bankaccounts/`)
 
 - Home shortcuts (second row, "Bank accounts") → `BankAccountsActivity`: list of
-  name, balance and "As of <date>" (or "No transactions yet"); "Add bank
-  account" button opens `EditBankAccountDialog` (name only).
+  name, balance and "As of <date>" (or "No transactions yet"); the overflow
+  menu "Add bank account" opens `EditBankAccountDialog` (name only); a FAB opens
+  `AddBankAccountTransactionActivity` without a preselected account.
 - Tap an account → `BankAccountDetailActivity`: name, balance and balance date
   on top, transactions below (newest first; green `+` credit, red `-` debit,
   each with the running "Balance: Ar …" after it, computed in the ViewModel
   from the sum of that transaction and all older ones),
   a FAB to add a transaction, and an overflow menu "Edit" that renames the
   account (name is the only editable field).
-- FAB → `AddBankAccountTransactionActivity`: Credit/Debit toggle, positive whole
-  amount, optional note, date and time (defaults to now).
+- FAB → `AddBankAccountTransactionActivity`: Debit (left, default) / Credit
+  (right) toggle, positive whole amount, optional note, date and time (defaults
+  to now). Opened from the detail screen it targets that account; opened from
+  the list (no `account_id` extra) it shows an account spinner, defaulting to
+  the first account (so the only one, when there is one).
 - Layering: Activity → ViewModel → `BankAccountRepository` → `BankAccountDao`.
 
 ## Tests

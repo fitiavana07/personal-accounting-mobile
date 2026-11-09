@@ -3,6 +3,8 @@ package dev.fitiavana.accounting.ui.bankaccounts
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
@@ -19,6 +21,8 @@ class BankAccountsActivity : AppCompatActivity() {
         fun intent(context: Context): Intent = Intent(context, BankAccountsActivity::class.java)
     }
 
+    private lateinit var viewModel: BankAccountsViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_bank_accounts)
@@ -26,7 +30,7 @@ class BankAccountsActivity : AppCompatActivity() {
         UiUtils.setupActionBar(this)
         title = getString(R.string.title_bank_accounts)
 
-        val viewModel = ViewModelProvider(
+        viewModel = ViewModelProvider(
             this,
             BankAccountsViewModelFactory(AppContainer.getInstance(this).bankAccountRepository)
         ).get(BankAccountsViewModel::class.java)
@@ -47,9 +51,20 @@ class BankAccountsActivity : AppCompatActivity() {
             emptyView.visibility = if (hasItems) View.GONE else View.VISIBLE
         }
 
-        findViewById<View>(R.id.button_add_bank_account).setOnClickListener {
-            EditBankAccountDialog.show(this, null) { name, onDone -> viewModel.create(name, onDone) }
+        findViewById<View>(R.id.fab_add_bank_transaction).setOnClickListener {
+            startActivity(AddBankAccountTransactionActivity.intent(this))
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_bank_accounts, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId != R.id.action_add_bank_account) return super.onOptionsItemSelected(item)
+        EditBankAccountDialog.show(this, null) { name, onDone -> viewModel.create(name, onDone) }
+        return true
     }
 
     override fun onSupportNavigateUp(): Boolean {
