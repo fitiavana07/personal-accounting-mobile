@@ -432,6 +432,7 @@
     <string name="bank_transaction_note_hint">Note</string>
     <string name="bank_transaction_date_label">Date and time</string>
     <string name="error_bank_transaction_amount">Enter a whole amount above 0</string>
+    <string name="bank_transaction_balance_after">Balance: %1$s</string>
     <string name="bank_transaction_credit_amount">+%1$s</string>
     <string name="bank_transaction_debit_amount">-%1$s</string>
 

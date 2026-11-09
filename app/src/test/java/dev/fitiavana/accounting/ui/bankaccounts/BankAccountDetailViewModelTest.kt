@@ -41,9 +41,25 @@ class BankAccountDetailViewModelTest {
         transactions.value = listOf(tx)
 
         val vm = viewModel()
+        vm.transactions.observeForever { }
 
         assertEquals("BOA", vm.account.value?.name)
-        assertEquals(listOf(tx), vm.transactions.value)
+        assertEquals(listOf(BankAccountTransactionRow(tx, -5)), vm.transactions.value)
+    }
+
+    @Test
+    fun `each transaction carries the balance after it, newest first`() {
+        val newest = BankAccountTransaction("c", "a1", -30, "", 3, 30)
+        val middle = BankAccountTransaction("b", "a1", 100, "", 2, 20)
+        val oldest = BankAccountTransaction("a", "a1", 50, "", 1, 10)
+        transactions.value = listOf(newest, middle, oldest)
+
+        val vm = viewModel()
+        vm.transactions.observeForever { }
+        val rows = vm.transactions.value!!
+
+        assertEquals(listOf(120L, 150L, 50L), rows.map { it.balanceAfter })
+        assertEquals(listOf(newest, middle, oldest), rows.map { it.transaction })
     }
 
     @Test

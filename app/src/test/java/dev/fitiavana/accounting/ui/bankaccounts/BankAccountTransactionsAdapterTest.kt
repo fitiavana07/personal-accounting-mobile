@@ -23,9 +23,9 @@ class BankAccountTransactionsAdapterTest {
 
     private val context: Context = ContextThemeWrapper(ApplicationProvider.getApplicationContext(), R.style.Theme_Accounting)
 
-    private fun bind(tx: BankAccountTransaction): View {
+    private fun bind(tx: BankAccountTransaction, balanceAfter: Long = 0): View {
         val adapter = BankAccountTransactionsAdapter()
-        adapter.submitList(listOf(tx))
+        adapter.submitList(listOf(BankAccountTransactionRow(tx, balanceAfter)))
         // ListAdapter diffs on a background thread unless the executor is idle; Robolectric runs it inline.
         val holder = adapter.onCreateViewHolder(FrameLayout(context), 0)
         adapter.onBindViewHolder(holder, 0)
@@ -61,6 +61,20 @@ class BankAccountTransactionsAdapterTest {
         assertEquals(expected, textView(view, R.id.text_bank_tx_date).text.toString())
         assertEquals("salary", textView(view, R.id.text_bank_tx_note).text.toString())
         assertEquals(View.VISIBLE, textView(view, R.id.text_bank_tx_note).visibility)
+    }
+
+    @Test
+    fun `the balance after the transaction is shown`() {
+        val balance = textView(bind(tx(5), balanceAfter = 12_345), R.id.text_bank_tx_balance)
+
+        assertEquals("Balance: Ar 12,345", balance.text.toString())
+    }
+
+    @Test
+    fun `a negative balance after the transaction is shown with a minus sign`() {
+        val balance = textView(bind(tx(-5), balanceAfter = -2_000), R.id.text_bank_tx_balance)
+
+        assertEquals("Balance: Ar -2,000", balance.text.toString())
     }
 
     @Test

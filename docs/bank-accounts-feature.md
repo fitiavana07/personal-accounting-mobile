@@ -44,7 +44,9 @@ Both are included.
   name, balance and "As of <date>" (or "No transactions yet"); "Add bank
   account" button opens `EditBankAccountDialog` (name only).
 - Tap an account → `BankAccountDetailActivity`: name, balance and balance date
-  on top, transactions below (newest first; green `+` credit, red `-` debit),
+  on top, transactions below (newest first; green `+` credit, red `-` debit,
+  each with the running "Balance: Ar …" after it, computed in the ViewModel
+  from the sum of that transaction and all older ones),
   a FAB to add a transaction, and an overflow menu "Edit" that renames the
   account (name is the only editable field).
 - FAB → `AddBankAccountTransactionActivity`: Credit/Debit toggle, positive whole
