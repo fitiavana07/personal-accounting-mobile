@@ -15,6 +15,8 @@ import com.google.android.material.textfield.TextInputLayout
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.ui.common.UiUtils
+import dev.fitiavana.accounting.ui.common.enableAmountFormatting
+import dev.fitiavana.accounting.ui.common.plainText
 import java.util.Calendar
 
 /** Adds a credit or a debit to one bank account: a positive amount, a direction, an optional note and a date. */
@@ -61,6 +63,7 @@ class AddBankAccountTransactionActivity : AppCompatActivity() {
         val amountInput = findViewById<TextInputEditText>(R.id.input_bank_amount)
         val noteInput = findViewById<TextInputEditText>(R.id.input_bank_note)
         val save = findViewById<MaterialButton>(R.id.button_save_bank_transaction)
+        amountInput.enableAmountFormatting()
 
         save.setOnClickListener {
             amountLayout.error = null
@@ -68,7 +71,7 @@ class AddBankAccountTransactionActivity : AppCompatActivity() {
                 if (directionGroup.checkedRadioButtonId == R.id.radio_bank_debit) Direction.DEBIT else Direction.CREDIT
             save.isEnabled = false
             viewModel.save(
-                direction, amountInput.text.toString(), noteInput.text.toString(), selectedCalendar.timeInMillis
+                direction, amountInput.plainText(), noteInput.text.toString(), selectedCalendar.timeInMillis
             ) { error ->
                 save.isEnabled = true
                 if (error == null) finish()
