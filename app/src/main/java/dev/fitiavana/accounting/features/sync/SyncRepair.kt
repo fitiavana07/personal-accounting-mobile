@@ -17,7 +17,9 @@ data class RepairResult(val data: SyncData, val modified: Set<RecordKey>, val re
  *     missing reference is better than a deleted account with its transactions);
  *  2. a transaction with an entry on an account that is gone is dropped whole, entries included;
  *  3. a template entry on an account that is gone is removed (as the foreign key would locally);
- *  4. an alert on an account that is gone is removed (it is tombstoned, as the foreign key would delete it).
+ *  4. an alert on an account that is gone is removed (it is tombstoned, as the foreign key would delete it);
+ *  5. a bank account transaction on a bank account that is gone is removed (tombstoned, like an alert);
+ *  6. each bank account's balance and balance date are recomputed from its transactions (not a local write).
  */
 object SyncRepair {
     fun repair(data: SyncData): RepairResult {
@@ -56,6 +58,18 @@ object SyncRepair {
         val alerts = data.alerts.filter { it.accountId in accountIds }
         removed += data.alerts.filter { it.accountId !in accountIds }.map { RecordKey(SyncKind.ALERT, it.id) }
 
+        val bankAccountIds = data.bankAccounts.map { it.id }.toSet()
+        val bankTransactions = data.bankAccountTransactions.filter { it.accountId in bankAccountIds }
+        removed += data.bankAccountTransactions.filter { it.accountId !in bankAccountIds }
+            .map { RecordKey(SyncKind.BANK_ACCOUNT_TRANSACTION, it.id) }
+        // The balance and its date are derived from the transactions, so every device computes the same
+        // ones and they need no stamp of their own.
+        val byAccount = bankTransactions.groupBy { it.accountId }
+        val bankAccounts = data.bankAccounts.map { account ->
+            val own = byAccount[account.id].orEmpty()
+            account.copy(balance = own.sumOf { it.amount }, balanceDate = own.maxOfOrNull { it.transactionDateTime })
+        }
+
         return RepairResult(
             data.copy(
                 accounts = accounts,
@@ -63,6 +77,8 @@ object SyncRepair {
                 transactionEntries = entries,
                 templateEntries = templateEntries,
                 alerts = alerts,
+                bankAccounts = bankAccounts,
+                bankAccountTransactions = bankTransactions,
             ),
             modified,
             removed,

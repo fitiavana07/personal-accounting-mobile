@@ -59,6 +59,7 @@ features/
   cexprices/      # CexPrice, CexPriceRepository
   p2pprices/      # P2pPrices, P2pPriceRepository (Binance P2P USDT/MGA top ads on home)
   alerts/         # GainLossAlert/AlertState (@Entity), AlertDao, AlertRepository, AlertEvaluator, AlertCheckManager, hourly alarm + notifier
+  bankaccounts/   # BankAccount/BankAccountTransaction (@Entity), BankAccountDao, BankAccountRepository (single-entry bank accounts)
   chainmonitors/  # ChainMonitor/MonitorState (@Entity), ChainMonitorDao, ChainMonitorRepository, MonitorEvaluator, ChainMonitorCheckManager, 15/30 min alarm + notifier
   settings/       # AppSettings (@Entity), AppSettingsDao, AppSettingsRepository
   backup/         # BackupRepository, AutoBackupManager (daily backups)
@@ -81,6 +82,7 @@ ui/
   home/          # HomeFragment, HomeViewModel (dashboard/metrics)
   earn/          # EarnActivity, EarnViewModel, EarnAdapter (interest on accounts with an APR)
   alerts/        # AlertsActivity, AlertsViewModel, AlertsAdapter, EditAlertDialog (gain/loss % alerts)
+  bankaccounts/  # BankAccountsActivity, BankAccountDetailActivity, AddBankAccountTransactionActivity, ViewModels, adapters, EditBankAccountDialog
   chainmonitors/ # ChainMonitorsActivity, ChainMonitorsViewModel, ChainMonitorsAdapter, EditChainMonitorDialog (contract token-balance monitors)
   sync/          # SyncActivity, SyncViewModel, SyncPeersAdapter (passphrase, auto-sync, devices found)
   cloudbackup/   # CloudBackupActivity, CloudBackupViewModel (Drive folder, passphrase, daily backup, restore)
@@ -154,9 +156,14 @@ Base JSON-RPC `eth_call`, fire-once-per-crossing with re-arming, a seeded-armed
 first check, per-monitor 15/30 min interval on one alarm, retry policy, the Home
 block, sync and backup of the config with device-local state).
 
-See `docs/changelog-feature.md` for `CHANGELOG.md` (Keep a Changelog, one section
-added per release by `scripts/release.sh`) and the Release notes screen that
-shows it.
+See `docs/bank-accounts-feature.md` for bank account tracking (single-entry
+accounts outside the double-entry ledger: balance stored on the entity, signed
+transactions, derived balance after sync merge, Home shortcut, screens).
+
+See `docs/changelog-feature.md` for `CHANGELOG.md` (Keep a Changelog, one
+section added per release by `scripts/release.sh`) and the Release notes screen
+that shows it. Never modify CHANGELOG.md by yourself, it's the role of the
+developer to modify it using scripts.
 
 See `docs/p2p-sync.md` for peer-to-peer sync over the local Wi-Fi (what syncs,
 stamps and tombstones, merge and repair, the protocol, and why debug and

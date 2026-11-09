@@ -7,6 +7,7 @@ import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.alerts.AlertRepository
 import dev.fitiavana.accounting.features.alerts.AlertTypes
+import dev.fitiavana.accounting.features.bankaccounts.BankAccountRepository
 import dev.fitiavana.accounting.features.chainmonitors.ChainMonitorRepository
 import dev.fitiavana.accounting.features.backup.BackupRepository
 import dev.fitiavana.accounting.features.backup.RestoreResult
@@ -223,7 +224,7 @@ class StampedWritesTest {
         val backup = BackupRepository(
             db, db.accountDao(), db.instrumentDao(), db.transactionDao(), db.accountBalanceDao(),
             db.exchangeRateCacheDao(), db.appSettingsDao(), db.templateDao(), db.alertDao(),
-            db.chainMonitorDao(), tracker
+            db.chainMonitorDao(), db.bankAccountDao(), tracker
         )
         val monitors = ChainMonitorRepository(
             db.chainMonitorDao(), tracker, clock = { 1L }, idGenerator = { "monitor${ids++}" }
@@ -258,5 +259,31 @@ class StampedWritesTest {
         assertTrue(!meta.getValue(key(SyncKind.SETTINGS, "0")).deleted)
         assertTrue(meta.getValue(key(SyncKind.INSTRUMENT, "EUR")).deleted)
         assertTrue(meta.getValue(key(SyncKind.ACCOUNT, "extra")).deleted)
+    }
+
+    @Test
+    fun `restoring a backup restamps the bank accounts it brings and tombstones the others`() {
+        val backup = BackupRepository(
+            db, db.accountDao(), db.instrumentDao(), db.transactionDao(), db.accountBalanceDao(),
+            db.exchangeRateCacheDao(), db.appSettingsDao(), db.templateDao(), db.alertDao(),
+            db.chainMonitorDao(), db.bankAccountDao(), tracker
+        )
+        val bank = BankAccountRepository(db.bankAccountDao(), tracker, clock = { 1L }, idGenerator = { "bank${ids++}" })
+        val kept = bank.createAccount("Kept")
+        val keptTx = bank.addTransaction(kept.id, 100, "in", 10)
+        val json = backup.export()
+        val keptStamp = stampOf(SyncKind.BANK_ACCOUNT, kept.id)
+        val keptTxStamp = stampOf(SyncKind.BANK_ACCOUNT_TRANSACTION, keptTx.id)
+        val extra = bank.createAccount("Extra")
+        val extraTx = bank.addTransaction(extra.id, 5, "", 20)
+
+        assertEquals(RestoreResult.Success, backup.restore(json))
+
+        assertTrue(stampOf(SyncKind.BANK_ACCOUNT, kept.id) > keptStamp)
+        assertTrue(stampOf(SyncKind.BANK_ACCOUNT_TRANSACTION, keptTx.id) > keptTxStamp)
+        assertTrue(meta.getValue(key(SyncKind.BANK_ACCOUNT, extra.id)).deleted)
+        assertTrue(meta.getValue(key(SyncKind.BANK_ACCOUNT_TRANSACTION, extraTx.id)).deleted)
+        assertEquals(listOf(kept.id), db.bankAccountDao().getAllAccountsSync().map { it.id })
+        assertEquals(100L, bank.getAccount(kept.id)!!.balance)
     }
 }

@@ -2,6 +2,7 @@ package dev.fitiavana.accounting.features.sync
 
 import dev.fitiavana.accounting.features.accounts.AccountDao
 import dev.fitiavana.accounting.features.alerts.AlertDao
+import dev.fitiavana.accounting.features.bankaccounts.BankAccountDao
 import dev.fitiavana.accounting.features.chainmonitors.ChainMonitorDao
 import dev.fitiavana.accounting.features.instruments.InstrumentDao
 import dev.fitiavana.accounting.features.settings.AppSettingsDao
@@ -35,6 +36,7 @@ class SyncRepository(
     private val templateDao: TemplateDao,
     private val alertDao: AlertDao,
     private val chainMonitorDao: ChainMonitorDao,
+    private val bankAccountDao: BankAccountDao,
     private val appSettingsDao: AppSettingsDao,
     private val schemaVersion: Int,
     private val recalculateBalances: () -> Unit,
@@ -67,6 +69,8 @@ class SyncRepository(
             alerts = alertDao.getAllSync(),
             chainMonitors = chainMonitorDao.getAllSync(),
             settings = appSettingsDao.getSync(),
+            bankAccounts = bankAccountDao.getAllAccountsSync(),
+            bankAccountTransactions = bankAccountDao.getAllTransactionsSync(),
         )
         val rows = data.recordKeys()
         val stored = metaDao.all().map { it.key() to it.meta() }.filter { (key, meta) -> meta.deleted || key in rows }
@@ -108,6 +112,10 @@ class SyncRepository(
         alerts = merged(SyncKind.ALERT, { it.id }, local.alerts, remote.alerts, merge),
         chainMonitors = merged(SyncKind.CHAIN_MONITOR, { it.id }, local.chainMonitors, remote.chainMonitors, merge),
         settings = mergedSettings(local, remote, merge),
+        bankAccounts = merged(SyncKind.BANK_ACCOUNT, { it.id }, local.bankAccounts, remote.bankAccounts, merge),
+        bankAccountTransactions = merged(
+            SyncKind.BANK_ACCOUNT_TRANSACTION, { it.id }, local.bankAccountTransactions, remote.bankAccountTransactions, merge,
+        ),
     )
 
     /** [recordId] gives the record a row belongs to: its own id, or its parent's for entries. */
@@ -150,7 +158,12 @@ class SyncRepository(
         val templateEntries = changed(before.templateEntries, after.templateEntries)
         val alerts = changed(before.alerts, after.alerts)
         val chainMonitors = changed(before.chainMonitors, after.chainMonitors)
+        val removedBankTransactions = removed(before.bankAccountTransactions, after.bankAccountTransactions) { it.id }
+        val removedBankAccounts = removed(before.bankAccounts, after.bankAccounts) { it.id }
+        val bankAccounts = changed(before.bankAccounts, after.bankAccounts)
+        val bankTransactions = changed(before.bankAccountTransactions, after.bankAccountTransactions)
 
+        removedBankTransactions.inChunks(syncDao::deleteBankAccountTransactions)
         removedAlerts.inChunks(syncDao::deleteAlerts)
         removedChainMonitors.inChunks(syncDao::deleteChainMonitors)
         removedTransactionEntries.inChunks(syncDao::deleteTransactionEntries)
@@ -167,16 +180,19 @@ class SyncRepository(
         syncDao.upsertTemplateEntries(templateEntries)
         syncDao.upsertAlerts(alerts)
         syncDao.upsertChainMonitors(chainMonitors)
+        syncDao.upsertBankAccounts(bankAccounts)
+        removedBankAccounts.inChunks(syncDao::deleteBankAccounts)
+        syncDao.upsertBankAccountTransactions(bankTransactions)
 
         val settingsChanged = before.settings != after.settings
         if (settingsChanged) after.settings?.let(syncDao::upsertSettings) ?: syncDao.deleteSettings()
 
         return settingsChanged || listOf(
             removedTransactionEntries, removedTransactions, removedTemplateEntries, removedTemplates, removedAlerts, removedChainMonitors,
-            removedAccounts, removedInstruments,
+            removedAccounts, removedInstruments, removedBankTransactions, removedBankAccounts,
         ).any { it.isNotEmpty() } || listOf(
             instruments, accounts, transactions, transactionEntries, templates, templateEntries, alerts,
-            chainMonitors,
+            chainMonitors, bankAccounts, bankTransactions,
         ).any { it.isNotEmpty() }
     }
 

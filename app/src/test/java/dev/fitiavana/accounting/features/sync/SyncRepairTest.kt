@@ -158,4 +158,38 @@ class SyncRepairTest {
         assertTrue(twice.removed.isEmpty())
         assertNull(SyncRules.violation(once.data))
     }
+
+    @Test
+    fun `a bank account transaction on an account that is gone is removed`() {
+        val data = data(
+            bankAccounts = listOf(SyncFixtures.bankAccount("b1", balance = 10, balanceDate = 100)),
+            bankAccountTransactions = listOf(
+                SyncFixtures.bankTransaction("keep", "b1"),
+                SyncFixtures.bankTransaction("drop", "gone"),
+            ),
+        )
+
+        val result = SyncRepair.repair(data)
+
+        assertEquals(listOf("keep"), result.data.bankAccountTransactions.map { it.id })
+        assertEquals(setOf(key(SyncKind.BANK_ACCOUNT_TRANSACTION, "drop")), result.removed)
+        assertTrue(result.modified.isEmpty())
+    }
+
+    @Test
+    fun `a bank account balance and date are derived from its transactions`() {
+        val data = data(
+            bankAccounts = listOf(SyncFixtures.bankAccount("b1", balance = 999, balanceDate = 1), SyncFixtures.bankAccount("b2", balance = 5, balanceDate = 5)),
+            bankAccountTransactions = listOf(
+                SyncFixtures.bankTransaction("t1", "b1", amount = 100, date = 10),
+                SyncFixtures.bankTransaction("t2", "b1", amount = -30, date = 50),
+            ),
+        )
+
+        val result = SyncRepair.repair(data)
+
+        assertEquals(SyncFixtures.bankAccount("b1", balance = 70, balanceDate = 50), result.data.bankAccounts[0])
+        assertEquals(SyncFixtures.bankAccount("b2", balance = 0, balanceDate = null), result.data.bankAccounts[1])
+        assertTrue("derived values are not a local write", result.modified.isEmpty())
+    }
 }

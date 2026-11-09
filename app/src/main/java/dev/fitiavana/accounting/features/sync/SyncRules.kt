@@ -15,6 +15,8 @@ object SyncRules {
         duplicate("template entry", data.templateEntries.map { it.id })?.let { return it }
         duplicate("alert", data.alerts.map { it.id })?.let { return it }
         duplicate("chain monitor", data.chainMonitors.map { it.id })?.let { return it }
+        duplicate("bank account", data.bankAccounts.map { it.id })?.let { return it }
+        duplicate("bank account transaction", data.bankAccountTransactions.map { it.id })?.let { return it }
 
         val instruments = data.instruments.map { it.code }.toSet()
         val accounts = data.accounts.map { it.id }.toSet()
@@ -34,6 +36,9 @@ object SyncRules {
             ?.let { return "The template entry ${it.id} uses an account that does not exist" }
         data.alerts.firstOrNull { it.accountId !in accounts }
             ?.let { return "The alert ${it.id} uses an account that does not exist" }
+        val bankAccounts = data.bankAccounts.map { it.id }.toSet()
+        data.bankAccountTransactions.firstOrNull { it.accountId !in bankAccounts }
+            ?.let { return "The bank account transaction ${it.id} uses a bank account that does not exist" }
         return null
     }
 

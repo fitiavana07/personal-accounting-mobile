@@ -27,9 +27,67 @@ class HomeShortcutsAdapterTest {
         onExpenses: () -> Unit = {},
         onEarn: () -> Unit = {},
         onAlerts: () -> Unit = {},
-        onMonitors: () -> Unit = {}
-    ) = HomeShortcutsAdapter(onCex, onExpenses, onEarn, onAlerts, onMonitors)
+        onMonitors: () -> Unit = {},
+        onBankAccounts: () -> Unit = {}
+    ) = HomeShortcutsAdapter(onCex, onExpenses, onEarn, onAlerts, onMonitors, onBankAccounts)
         .let { it.onCreateViewHolder(FrameLayout(context), 0).itemView }
+
+    /** The first row of shortcuts: the five that share the width equally. */
+    private fun mainRow() = inflate().findViewById<android.view.ViewGroup>(R.id.row_home_shortcuts_main)
+
+    @Test
+    fun bankAccountsButtonInvokesOnlyItsCallback() {
+        var bank = 0
+        var monitors = 0
+        val view = inflate(onMonitors = { monitors++ }, onBankAccounts = { bank++ })
+
+        view.findViewById<android.view.View>(R.id.button_bank_accounts).performClick()
+
+        assertEquals(1, bank)
+        assertEquals(0, monitors)
+    }
+
+    @Test
+    fun otherButtonsDoNotTriggerBankAccounts() {
+        var bank = 0
+        val view = inflate(onBankAccounts = { bank++ })
+
+        view.findViewById<android.view.View>(R.id.button_monitors).performClick()
+        view.findViewById<android.view.View>(R.id.button_earn).performClick()
+
+        assertEquals(0, bank)
+    }
+
+    @Test
+    fun bankAccountsButtonIsLabelled() {
+        val view = inflate()
+        val label = view.findViewById<android.view.View>(R.id.button_bank_accounts)
+            .findViewById<TextView>(R.id.text_shortcut_bank_accounts)
+
+        assertEquals("Bank accounts", label.text.toString())
+    }
+
+    @Test
+    fun bankAccountsButtonSitsOnASecondRow() {
+        val root = inflate() as android.view.ViewGroup
+        val main = root.findViewById<android.view.View>(R.id.row_home_shortcuts_main)
+        val more = root.findViewById<android.view.ViewGroup>(R.id.row_home_shortcuts_more)
+
+        assertEquals(listOf(main.id, more.id), (0 until root.childCount).map { root.getChildAt(it).id })
+        assertEquals(null, main.findViewById<android.view.View>(R.id.button_bank_accounts))
+        assertEquals(R.id.button_bank_accounts, more.getChildAt(0).id)
+    }
+
+    @Test
+    fun bankAccountsButtonHasTheWidthOfOneShortcut() {
+        val more = inflate().findViewById<android.view.ViewGroup>(R.id.row_home_shortcuts_more)
+
+        val params = (0 until more.childCount).map { more.getChildAt(it).layoutParams as android.widget.LinearLayout.LayoutParams }
+
+        assertEquals(5, params.size)
+        assertEquals(List(5) { 0 }, params.map { it.width })
+        assertEquals(List(5) { 1f }, params.map { it.weight })
+    }
 
     @Test
     fun earnButtonInvokesCallback() {
@@ -84,7 +142,7 @@ class HomeShortcutsAdapterTest {
 
     @Test
     fun alertsButtonComesAfterEarn() {
-        val row = inflate() as android.view.ViewGroup
+        val row = mainRow()
 
         val ids = (0 until row.childCount).map { row.getChildAt(it).id }
 
@@ -99,7 +157,7 @@ class HomeShortcutsAdapterTest {
 
     @Test
     fun buttonsShareTheRowWidthEqually() {
-        val row = inflate() as android.view.ViewGroup
+        val row = mainRow()
 
         val params = (0 until row.childCount).map { row.getChildAt(it).layoutParams as android.widget.LinearLayout.LayoutParams }
 
@@ -111,7 +169,7 @@ class HomeShortcutsAdapterTest {
 
     @Test
     fun labelsAreCenteredUnderTheirIcons() {
-        val row = inflate() as android.view.ViewGroup
+        val row = mainRow()
 
         val labels = (0 until row.childCount).map { (row.getChildAt(it) as android.view.ViewGroup).getChildAt(1) as TextView }
 

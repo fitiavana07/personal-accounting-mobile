@@ -10,6 +10,7 @@ import dev.fitiavana.accounting.features.alerts.AlertRepository
 import dev.fitiavana.accounting.features.alerts.AndroidAlertNotifier
 import dev.fitiavana.accounting.features.chainmonitors.AlarmManagerMonitorScheduler
 import dev.fitiavana.accounting.features.chainmonitors.AndroidMonitorNotifier
+import dev.fitiavana.accounting.features.bankaccounts.BankAccountRepository
 import dev.fitiavana.accounting.features.chainmonitors.ChainMonitorCheckManager
 import dev.fitiavana.accounting.features.chainmonitors.ChainMonitorRepository
 import dev.fitiavana.accounting.network.evm.HttpErc20BalanceFetcher
@@ -103,6 +104,7 @@ class AppContainer private constructor(context: Context) {
         AlarmManagerAlertScheduler(context)
     )
     val chainMonitorRepository = ChainMonitorRepository(database.chainMonitorDao(), changeTracker)
+    val bankAccountRepository = BankAccountRepository(database.bankAccountDao(), changeTracker)
     val erc20BalanceFetcher = HttpErc20BalanceFetcher(client = httpClient)
     val chainMonitorCheckManager = ChainMonitorCheckManager(
         chainMonitorRepository,
@@ -138,6 +140,7 @@ class AppContainer private constructor(context: Context) {
         database.templateDao(),
         database.alertDao(),
         database.chainMonitorDao(),
+        database.bankAccountDao(),
         changeTracker
     )
     val templateRepository = TemplateRepository(database.templateDao(), changeTracker)
@@ -152,6 +155,7 @@ class AppContainer private constructor(context: Context) {
         templateDao = database.templateDao(),
         alertDao = database.alertDao(),
         chainMonitorDao = database.chainMonitorDao(),
+        bankAccountDao = database.bankAccountDao(),
         appSettingsDao = database.appSettingsDao(),
         schemaVersion = AppDatabase.SCHEMA_VERSION,
         recalculateBalances = balanceRepository::recalculateAll

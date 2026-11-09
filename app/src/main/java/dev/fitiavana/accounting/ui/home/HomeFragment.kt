@@ -17,6 +17,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import dev.fitiavana.accounting.AppContainer
 import dev.fitiavana.accounting.R
 import dev.fitiavana.accounting.ui.alerts.AlertsActivity
+import dev.fitiavana.accounting.ui.bankaccounts.BankAccountsActivity
 import dev.fitiavana.accounting.ui.chainmonitors.ChainMonitorsActivity
 import dev.fitiavana.accounting.ui.cexprices.CexPricesActivity
 import dev.fitiavana.accounting.ui.earn.EarnActivity
@@ -88,7 +89,8 @@ class HomeFragment : Fragment() {
             onMonthlyExpensesClick = { showEditMonthlyExpensesDialog() },
             onEarnClick = { startActivity(EarnActivity.intent(requireContext())) },
             onAlertsClick = { startActivity(AlertsActivity.intent(requireContext())) },
-            onMonitorsClick = { startActivity(ChainMonitorsActivity.intent(requireContext())) }
+            onMonitorsClick = { startActivity(ChainMonitorsActivity.intent(requireContext())) },
+            onBankAccountsClick = { startActivity(BankAccountsActivity.intent(requireContext())) }
         )
         p2pPricesAdapter = HomeP2pPricesAdapter { showP2pFilterDialog() }
         monitorsAdapter = HomeMonitorsAdapter { startActivity(ChainMonitorsActivity.intent(requireContext())) }

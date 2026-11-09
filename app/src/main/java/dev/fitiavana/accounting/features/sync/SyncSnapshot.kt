@@ -2,6 +2,8 @@ package dev.fitiavana.accounting.features.sync
 
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.alerts.GainLossAlert
+import dev.fitiavana.accounting.features.bankaccounts.BankAccount
+import dev.fitiavana.accounting.features.bankaccounts.BankAccountTransaction
 import dev.fitiavana.accounting.features.chainmonitors.ChainMonitor
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.settings.AppSettings
@@ -25,6 +27,8 @@ data class SyncData(
     val alerts: List<GainLossAlert>,
     val chainMonitors: List<ChainMonitor>,
     val settings: AppSettings?,
+    val bankAccounts: List<BankAccount> = emptyList(),
+    val bankAccountTransactions: List<BankAccountTransaction> = emptyList(),
 ) {
     /** One key per record (entries belong to their transaction or template), duplicates kept. */
     fun keyList(): List<RecordKey> =
@@ -34,6 +38,8 @@ data class SyncData(
             templates.map { RecordKey(SyncKind.TEMPLATE, it.id) } +
             alerts.map { RecordKey(SyncKind.ALERT, it.id) } +
             chainMonitors.map { RecordKey(SyncKind.CHAIN_MONITOR, it.id) } +
+            bankAccounts.map { RecordKey(SyncKind.BANK_ACCOUNT, it.id) } +
+            bankAccountTransactions.map { RecordKey(SyncKind.BANK_ACCOUNT_TRANSACTION, it.id) } +
             listOfNotNull(settings?.let { RecordKey(SyncKind.SETTINGS, SETTINGS_ID) })
 
     fun recordKeys(): Set<RecordKey> = keyList().toSet()

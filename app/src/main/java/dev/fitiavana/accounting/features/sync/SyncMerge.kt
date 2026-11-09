@@ -4,7 +4,7 @@ package dev.fitiavana.accounting.features.sync
  * The kinds of synced record. A transaction is one record together with its entries, and a template
  * one record together with its entries, so their versions can never be mixed.
  */
-enum class SyncKind { INSTRUMENT, ACCOUNT, TRANSACTION, TEMPLATE, SETTINGS, ALERT, CHAIN_MONITOR }
+enum class SyncKind { INSTRUMENT, ACCOUNT, TRANSACTION, TEMPLATE, SETTINGS, ALERT, CHAIN_MONITOR, BANK_ACCOUNT, BANK_ACCOUNT_TRANSACTION }
 
 /** [id] is the row id, the instrument code for instruments, and a fixed id for the singleton settings. */
 data class RecordKey(val kind: SyncKind, val id: String)

@@ -2,6 +2,7 @@ package dev.fitiavana.accounting.features.sync
 
 import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.alerts.AlertTypes
+import dev.fitiavana.accounting.features.bankaccounts.BankAccount
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.sync.SyncFixtures.entry
 import dev.fitiavana.accounting.features.sync.SyncFixtures.instrument
@@ -495,5 +496,54 @@ class SyncRepositoryTest {
         assertEquals(before, failing.state())
         assertTrue(failing.db.accountDao().getAllSync().isEmpty())
         assertFalse(failing.meta.isNotEmpty())
+    }
+
+    // --- bank accounts ---
+
+    @Test
+    fun `a bank account with its transactions reaches the other device with the same balance`() {
+        val account = a.bankAccounts.createAccount("BOA")
+        a.bankAccounts.addTransaction(account.id, 1_000, "salary", 5_000)
+        a.bankAccounts.addTransaction(account.id, -250, "rent", 7_000)
+
+        SyncDevice.sync(a, b)
+
+        assertEquals(BankAccount(account.id, "BOA", 750, 7_000), b.bankAccounts.getAccount(account.id))
+        assertEquals(2, b.db.bankAccountDao().getTransactionsSync(account.id).size)
+        assertInSync()
+    }
+
+    @Test
+    fun `transactions added on both devices are all kept and the balance is their sum`() {
+        val account = a.bankAccounts.createAccount("BOA")
+        SyncDevice.sync(a, b)
+        a.now = 5_000
+        b.now = 6_000
+
+        a.bankAccounts.addTransaction(account.id, 100, "on a", 10_000)
+        b.bankAccounts.addTransaction(account.id, -30, "on b", 20_000)
+        SyncDevice.sync(a, b)
+
+        assertEquals(BankAccount(account.id, "BOA", 70, 20_000), a.bankAccounts.getAccount(account.id))
+        assertEquals(BankAccount(account.id, "BOA", 70, 20_000), b.bankAccounts.getAccount(account.id))
+        assertEquals(2, a.db.bankAccountDao().getTransactionsSync(account.id).size)
+        assertInSync()
+    }
+
+    @Test
+    fun `a rename on one device and a transaction on the other both survive`() {
+        val account = a.bankAccounts.createAccount("BOA")
+        SyncDevice.sync(a, b)
+        a.now = 5_000
+        b.now = 6_000
+
+        a.bankAccounts.rename(account.id, "BOA Main")
+        b.bankAccounts.addTransaction(account.id, 40, "", 9_000)
+        SyncDevice.sync(a, b)
+
+        val expected = BankAccount(account.id, "BOA Main", 40, 9_000)
+        assertEquals(expected, a.bankAccounts.getAccount(account.id))
+        assertEquals(expected, b.bankAccounts.getAccount(account.id))
+        assertInSync()
     }
 }

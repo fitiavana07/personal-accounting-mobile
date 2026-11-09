@@ -115,8 +115,23 @@ class SyncJsonTest {
     }
 
     @Test
+    fun `bank accounts and their transactions survive an encode and decode`() {
+        val withBank = snapshot.copy(
+            data = snapshot.data.copy(
+                bankAccounts = listOf(SyncFixtures.bankAccount("b1", balance = -25, balanceDate = 9), SyncFixtures.bankAccount("b2")),
+                bankAccountTransactions = listOf(SyncFixtures.bankTransaction("bt1", "b1", amount = -25, date = 9)),
+            )
+        )
+
+        val decoded = SyncJson.decode(JSONObject(SyncJson.encode(withBank).toString()))
+
+        assertEquals(withBank.data.bankAccounts, decoded.data.bankAccounts)
+        assertEquals(withBank.data.bankAccountTransactions, decoded.data.bankAccountTransactions)
+    }
+
+    @Test
     fun `a missing section is rejected`() {
-        listOf("schemaVersion", "instruments", "accounts", "transactions", "transactionEntries", "templates", "templateEntries", "alerts", "chainMonitors", "meta")
+        listOf("schemaVersion", "instruments", "accounts", "transactions", "transactionEntries", "templates", "templateEntries", "alerts", "chainMonitors", "bankAccounts", "bankAccountTransactions", "meta")
             .forEach { name ->
                 val broken = json().apply { remove(name) }
                 assertThrows(name, FormatException::class.java) { SyncJson.decode(broken) }

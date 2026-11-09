@@ -6,14 +6,15 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import dev.fitiavana.accounting.R
 
-/** Single-row set of shortcut buttons shown between the metrics and emergency fund blocks. */
+/** Two rows of shortcut buttons (five slots each) shown between the metrics and emergency fund blocks. */
 class HomeShortcutsAdapter(
     private val onCexPricesClick: () -> Unit,
     private val onMonthlyExpensesClick: () -> Unit,
     private val onEarnClick: () -> Unit,
     private val onAlertsClick: () -> Unit,
-    private val onMonitorsClick: () -> Unit
-): RecyclerView.Adapter<HomeShortcutsAdapter.ViewHolder>() {
+    private val onMonitorsClick: () -> Unit,
+    private val onBankAccountsClick: () -> Unit
+):RecyclerView.Adapter<HomeShortcutsAdapter.ViewHolder>() {
 
     override fun getItemCount() = 1
 
@@ -26,6 +27,7 @@ class HomeShortcutsAdapter(
         view.findViewById<View>(R.id.button_earn).setOnClickListener { onEarnClick() }
         view.findViewById<View>(R.id.button_alerts).setOnClickListener { onAlertsClick() }
         view.findViewById<View>(R.id.button_monitors).setOnClickListener { onMonitorsClick() }
+        view.findViewById<View>(R.id.button_bank_accounts).setOnClickListener { onBankAccountsClick() }
         return ViewHolder(view)
     }
 

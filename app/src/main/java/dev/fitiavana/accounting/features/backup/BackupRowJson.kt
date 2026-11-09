@@ -5,6 +5,8 @@ import dev.fitiavana.accounting.features.balances.AccountBalance
 import dev.fitiavana.accounting.features.exchangerates.ExchangeRateCache
 import dev.fitiavana.accounting.features.instruments.Instrument
 import dev.fitiavana.accounting.features.alerts.GainLossAlert
+import dev.fitiavana.accounting.features.bankaccounts.BankAccount
+import dev.fitiavana.accounting.features.bankaccounts.BankAccountTransaction
 import dev.fitiavana.accounting.features.chainmonitors.ChainMonitor
 import dev.fitiavana.accounting.features.settings.AppSettings
 import dev.fitiavana.accounting.features.templates.TemplateEntry
@@ -145,6 +147,38 @@ internal fun chainMonitorFromJson(json: JSONObject) = ChainMonitor(
     threshold = json.getString("threshold"),
     intervalMinutes = json.getInt("intervalMinutes"),
     createdAt = json.getLong("createdAt")
+)
+
+internal fun BankAccount.toJson() = JSONObject().apply {
+    put("id", id)
+    put("name", name)
+    put("balance", balance)
+    balanceDate?.let { put("balanceDate", it) }
+}
+
+internal fun bankAccountFromJson(json: JSONObject) = BankAccount(
+    id = json.getString("id"),
+    name = json.getString("name"),
+    balance = json.getLong("balance"),
+    balanceDate = json.optLongOrNull("balanceDate")
+)
+
+internal fun BankAccountTransaction.toJson() = JSONObject().apply {
+    put("id", id)
+    put("accountId", accountId)
+    put("amount", amount)
+    put("note", note)
+    put("createdAt", createdAt)
+    put("transactionDateTime", transactionDateTime)
+}
+
+internal fun bankAccountTransactionFromJson(json: JSONObject) = BankAccountTransaction(
+    id = json.getString("id"),
+    accountId = json.getString("accountId"),
+    amount = json.getLong("amount"),
+    note = json.getString("note"),
+    createdAt = json.getLong("createdAt"),
+    transactionDateTime = json.getLong("transactionDateTime")
 )
 
 internal fun TemplateEntry.toJson() = JSONObject().apply {

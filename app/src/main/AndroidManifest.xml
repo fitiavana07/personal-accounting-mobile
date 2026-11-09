@@ -71,6 +71,20 @@
             android:parentActivityName=".MainActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name=".ui.bankaccounts.BankAccountsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.bankaccounts.BankAccountDetailActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.bankaccounts.BankAccountsActivity" />
+        <activity
+            android:name=".ui.bankaccounts.AddBankAccountTransactionActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.bankaccounts.BankAccountDetailActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".ui.chainmonitors.ChainMonitorsActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity"

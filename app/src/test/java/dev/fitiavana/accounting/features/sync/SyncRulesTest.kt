@@ -62,6 +62,22 @@ class SyncRulesTest {
     }
 
     @Test
+    fun `duplicate bank accounts or transactions are a violation`() {
+        val account = SyncFixtures.bankAccount("b")
+        val tx = SyncFixtures.bankTransaction("t", "b")
+        assertNull(SyncRules.violation(valid.copy(bankAccounts = listOf(account), bankAccountTransactions = listOf(tx))))
+        assertNotNull(SyncRules.violation(valid.copy(bankAccounts = listOf(account, account))))
+        assertNotNull(
+            SyncRules.violation(valid.copy(bankAccounts = listOf(account), bankAccountTransactions = listOf(tx, tx)))
+        )
+    }
+
+    @Test
+    fun `a bank account transaction on a missing bank account is a violation`() {
+        assertNotNull(SyncRules.violation(valid.copy(bankAccountTransactions = listOf(SyncFixtures.bankTransaction("t", "gone")))))
+    }
+
+    @Test
     fun `two alerts with the same id are a violation`() {
         assertNotNull(SyncRules.violation(valid.copy(alerts = listOf(SyncFixtures.alert("al"), SyncFixtures.alert("al")))))
     }

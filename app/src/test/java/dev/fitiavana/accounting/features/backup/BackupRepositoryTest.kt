@@ -4,6 +4,9 @@ import dev.fitiavana.accounting.features.alerts.AlertDao
 import dev.fitiavana.accounting.features.alerts.AlertTypes
 import dev.fitiavana.accounting.features.alerts.GainLossAlert
 import dev.fitiavana.accounting.features.balances.AccountBalanceDao
+import dev.fitiavana.accounting.features.bankaccounts.BankAccount
+import dev.fitiavana.accounting.features.bankaccounts.BankAccountDao
+import dev.fitiavana.accounting.features.bankaccounts.BankAccountTransaction
 import dev.fitiavana.accounting.features.chainmonitors.ChainMonitor
 import dev.fitiavana.accounting.features.chainmonitors.ChainMonitorDao
 import dev.fitiavana.accounting.features.accounts.AccountDao
@@ -57,6 +60,10 @@ class BackupRepositoryTest {
     private lateinit var templateDao: TemplateDao
     private lateinit var alertDao: AlertDao
     private lateinit var chainMonitorDao: ChainMonitorDao
+    private lateinit var bankAccountDao: BankAccountDao
+
+    private val bankAccount = BankAccount("ba1", "BOA", -250L, 800L)
+    private val bankTransaction = BankAccountTransaction("bt1", "ba1", -250L, "rent", 700L, 800L)
 
     private val monitor = ChainMonitor(
         id = "cm1", label = "Vault", holderAddress = "0x" + "a".repeat(40), tokenAddress = "0x" + "b".repeat(40),
@@ -121,12 +128,15 @@ class BackupRepositoryTest {
         templateDao = mock()
         alertDao = mock()
         chainMonitorDao = mock()
+        bankAccountDao = mock()
         repository = BackupRepository(
             database, accountDao, instrumentDao, transactionDao, balanceDao,
-            exchangeRateCacheDao, appSettingsDao, templateDao, alertDao, chainMonitorDao, inlineTracker()
+            exchangeRateCacheDao, appSettingsDao, templateDao, alertDao, chainMonitorDao, bankAccountDao, inlineTracker()
         )
         whenever(alertDao.getAllSync()).thenReturn(listOf(alert))
         whenever(chainMonitorDao.getAllSync()).thenReturn(listOf(monitor))
+        whenever(bankAccountDao.getAllAccountsSync()).thenReturn(listOf(bankAccount))
+        whenever(bankAccountDao.getAllTransactionsSync()).thenReturn(listOf(bankTransaction))
         whenever(templateDao.getAllTemplatesSync()).thenReturn(listOf(template))
         whenever(templateDao.getAllEntriesSync()).thenReturn(listOf(templateEntryFrom, templateEntryTo))
 
@@ -370,6 +380,73 @@ class BackupRepositoryTest {
 
         assertTrue(result is RestoreResult.Success)
         verify(chainMonitorDao).insertAll(emptyList())
+    }
+
+    // --- bank accounts ---
+
+    @Test
+    fun `export includes the bank accounts and their transactions`() {
+        val json = JSONObject(repository.export())
+
+        val accounts = json.getJSONArray("bankAccounts")
+        assertEquals(1, accounts.length())
+        assertEquals("BOA", accounts.getJSONObject(0).getString("name"))
+        assertEquals(-250L, accounts.getJSONObject(0).getLong("balance"))
+        assertEquals(800L, accounts.getJSONObject(0).getLong("balanceDate"))
+        val transactions = json.getJSONArray("bankAccountTransactions")
+        assertEquals(1, transactions.length())
+        assertEquals("ba1", transactions.getJSONObject(0).getString("accountId"))
+        assertEquals(-250L, transactions.getJSONObject(0).getLong("amount"))
+    }
+
+    @Test
+    fun `export omits the balance date of an account without transactions`() {
+        whenever(bankAccountDao.getAllAccountsSync()).thenReturn(listOf(BankAccount("ba2", "Empty", 0, null)))
+
+        val account = JSONObject(repository.export()).getJSONArray("bankAccounts").getJSONObject(0)
+
+        assertTrue(!account.has("balanceDate"))
+    }
+
+    @Test
+    fun `restore round trip reproduces the bank accounts and their transactions`() {
+        repository.restore(repository.export())
+
+        verify(bankAccountDao).insertAccounts(listOf(bankAccount))
+        verify(bankAccountDao).insertTransactions(listOf(bankTransaction))
+    }
+
+    @Test
+    fun `restore round trip keeps an account without balance date`() {
+        val empty = BankAccount("ba2", "Empty", 0, null)
+        whenever(bankAccountDao.getAllAccountsSync()).thenReturn(listOf(empty))
+
+        repository.restore(repository.export())
+
+        verify(bankAccountDao).insertAccounts(listOf(empty))
+    }
+
+    @Test
+    fun `restore replaces the bank accounts, inserting accounts before their transactions`() {
+        repository.restore(repository.export())
+
+        val order = inOrder(bankAccountDao)
+        order.verify(bankAccountDao).deleteAllAccounts()
+        order.verify(bankAccountDao).insertAccounts(any())
+        order.verify(bankAccountDao).insertTransactions(any())
+    }
+
+    @Test
+    fun `restore tolerates a backup without bank accounts`() {
+        val json = JSONObject(repository.export())
+        json.remove("bankAccounts")
+        json.remove("bankAccountTransactions")
+
+        val result = repository.restore(json.toString())
+
+        assertTrue(result is RestoreResult.Success)
+        verify(bankAccountDao).insertAccounts(emptyList())
+        verify(bankAccountDao).insertTransactions(emptyList())
     }
 
     // --- templates ---

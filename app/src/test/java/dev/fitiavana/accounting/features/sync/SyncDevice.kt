@@ -6,6 +6,7 @@ import dev.fitiavana.accounting.features.accounts.Account
 import dev.fitiavana.accounting.features.accounts.AccountRepository
 import dev.fitiavana.accounting.features.alerts.AlertRepository
 import dev.fitiavana.accounting.features.balances.BalanceRepository
+import dev.fitiavana.accounting.features.bankaccounts.BankAccountRepository
 import dev.fitiavana.accounting.features.chainmonitors.ChainMonitorRepository
 import dev.fitiavana.accounting.features.instruments.InstrumentRepository
 import dev.fitiavana.accounting.features.settings.AppSettingsRepository
@@ -24,6 +25,9 @@ class SyncDevice(val id: String, var now: Long = 1_000L, failOnRecalculate: Bool
     val chainMonitors = ChainMonitorRepository(
         db.chainMonitorDao(), tracker, clock = { 1L }, idGenerator = IdSequence("$id-monitor")::next
     )
+    val bankAccounts = BankAccountRepository(
+        db.bankAccountDao(), tracker, clock = { 1L }, idGenerator = IdSequence("$id-bank")::next
+    )
     val settings = AppSettingsRepository(db.appSettingsDao(), tracker)
     val balances = BalanceRepository(db.accountDao(), db.accountBalanceDao(), db.transactionDao())
     val sync = syncRepository(AppDatabase.SCHEMA_VERSION, failOnRecalculate)
@@ -39,6 +43,7 @@ class SyncDevice(val id: String, var now: Long = 1_000L, failOnRecalculate: Bool
         templateDao = db.templateDao(),
         alertDao = db.alertDao(),
         chainMonitorDao = db.chainMonitorDao(),
+        bankAccountDao = db.bankAccountDao(),
         appSettingsDao = db.appSettingsDao(),
         schemaVersion = schemaVersion,
         recalculateBalances = if (failOnRecalculate) ({ error("balances failed") }) else balances::recalculateAll,
@@ -79,6 +84,8 @@ class SyncDevice(val id: String, var now: Long = 1_000L, failOnRecalculate: Bool
             templates = data.templates.sortedBy { it.id },
             templateEntries = data.templateEntries.sortedBy { it.id },
             alerts = data.alerts.sortedBy { it.id },
+            bankAccounts = data.bankAccounts.sortedBy { it.id },
+            bankAccountTransactions = data.bankAccountTransactions.sortedBy { it.id },
         ) to snapshot.meta
     }
 

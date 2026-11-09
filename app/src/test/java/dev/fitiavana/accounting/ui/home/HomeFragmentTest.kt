@@ -116,6 +116,20 @@ class HomeFragmentTest {
     }
 
     @Test
+    fun `tapping the Bank accounts shortcut opens BankAccountsActivity`() {
+        val activity = launchHomeFragment()
+        layOutRecycler(activity)
+
+        activity.findViewById<View>(R.id.button_bank_accounts).performClick()
+
+        val started = shadowOf(activity).nextStartedActivity
+        assertEquals(
+            dev.fitiavana.accounting.ui.bankaccounts.BankAccountsActivity::class.java.name,
+            started.component?.className
+        )
+    }
+
+    @Test
     fun `shortcuts row and P2P prices sit between the metrics and emergency fund blocks`() {
         val activity = launchHomeFragment()
         val recycler = layOutRecycler(activity)

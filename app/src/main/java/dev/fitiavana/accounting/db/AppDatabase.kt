@@ -11,6 +11,9 @@ import dev.fitiavana.accounting.features.accounts.AccountDao
 import dev.fitiavana.accounting.features.alerts.AlertDao
 import dev.fitiavana.accounting.features.alerts.AlertState
 import dev.fitiavana.accounting.features.alerts.GainLossAlert
+import dev.fitiavana.accounting.features.bankaccounts.BankAccount
+import dev.fitiavana.accounting.features.bankaccounts.BankAccountDao
+import dev.fitiavana.accounting.features.bankaccounts.BankAccountTransaction
 import dev.fitiavana.accounting.features.chainmonitors.ChainMonitor
 import dev.fitiavana.accounting.features.chainmonitors.ChainMonitorDao
 import dev.fitiavana.accounting.features.chainmonitors.MonitorState
@@ -36,7 +39,8 @@ import dev.fitiavana.accounting.features.transactions.TransactionEntry
     entities = [Account::class, Transaction::class, TransactionEntry::class,
         AccountBalance::class, Instrument::class, ExchangeRateCache::class, AppSettings::class,
         TransactionTemplate::class, TemplateEntry::class, SyncMetaRow::class,
-        GainLossAlert::class, AlertState::class, ChainMonitor::class, MonitorState::class],
+        GainLossAlert::class, AlertState::class, ChainMonitor::class, MonitorState::class,
+        BankAccount::class, BankAccountTransaction::class],
     version = AppDatabase.SCHEMA_VERSION
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -51,9 +55,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun syncDao(): SyncDao
     abstract fun alertDao(): AlertDao
     abstract fun chainMonitorDao(): ChainMonitorDao
+    abstract fun bankAccountDao(): BankAccountDao
 
     companion object {
-        const val SCHEMA_VERSION = 25
+        const val SCHEMA_VERSION = 26
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -458,6 +463,39 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Adds the bank accounts and their transactions. Internal so its SQL can be checked
+         * against Room's generated schema.
+         */
+        internal val MIGRATION_25_26 = object : Migration(25, 26) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `bank_accounts` (" +
+                            "`id` TEXT NOT NULL, " +
+                            "`name` TEXT NOT NULL, " +
+                            "`balance` INTEGER NOT NULL, " +
+                            "`balanceDate` INTEGER, " +
+                            "PRIMARY KEY(`id`))"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `bank_account_transactions` (" +
+                            "`id` TEXT NOT NULL, " +
+                            "`accountId` TEXT NOT NULL, " +
+                            "`amount` INTEGER NOT NULL, " +
+                            "`note` TEXT NOT NULL, " +
+                            "`createdAt` INTEGER NOT NULL, " +
+                            "`transactionDateTime` INTEGER NOT NULL, " +
+                            "PRIMARY KEY(`id`), " +
+                            "FOREIGN KEY(`accountId`) REFERENCES `bank_accounts`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_bank_account_transactions_accountId` " +
+                            "ON `bank_account_transactions` (`accountId`)"
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -489,7 +527,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_21_22,
                         MIGRATION_22_23,
                         MIGRATION_23_24,
-                        MIGRATION_24_25
+                        MIGRATION_24_25,
+                        MIGRATION_25_26
                     )
                     .build().also { instance = it }
             }
