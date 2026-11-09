@@ -7,6 +7,13 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.62] - 2026-11-09
+
+### Added
+
+- bank-accounts: track single-entry bank accounts
+- bank-accounts: format amount input with thousands separators
+
 ## [1.61] - 2026-11-02
 
 ### Added
@@ -515,7 +522,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.61...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.62...HEAD
+[1.62]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.61...v1.62
 [1.61]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.60...v1.61
 [1.60]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.59...v1.60
 [1.59]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.58...v1.59
