@@ -2,8 +2,7 @@
 
 Accounting app with features like accounts, balances, transactions, reports.
 
-Build and test. Make sure to run it after every change. Remember to use TDD for
-every change: RED → GREEN → REFACTOR.
+## Build and test command
 
 ```
 ./gradlew assembleDebug testDebugUnitTest
