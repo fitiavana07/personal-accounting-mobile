@@ -189,15 +189,16 @@ Transaction amounts stored as integers
   `app/build.gradle.kts` sets `isIncludeAndroidResources = true` (so resources
   resolve under Robolectric) and `isReturnDefaultValues = true` (so
   non-Robolectric unit tests calling stray Android APIs don't crash).
-- **TDD is mandatory**: for every change (new feature, bug fix, refactor),
-  write a failing test first, verify it actually fails by running the test
-  command, then write the minimum code to make it pass, then refactor. Never
-  write production code before there is a test that requires it. When doing the
-  RED check for the tests, only run the new/changed tests instead of
-  everything, because some other agents may be adding new tests. Because
-  running all the tests at once may be long, run the green CHECK in two steps:
-  (1) running the new/changed tests only, (2) running all the tests. That way,
-  we catch failing tests early.
+- **TDD is mandatory**, RED-GREEN-REFACTOR: for every change (new feature, bug
+  fix, refactor), write a failing test first, verify it actually fails by
+  running the test command, then write the minimum code to make it pass, then
+  REFACTOR. Never write production code before there is a test that requires
+  it. When doing the RED check for the tests, only run the new/changed tests
+  instead of everything, because some other agents may be adding new tests.
+  Because running all the tests at once may be long, run the green CHECK in two
+  steps: (1) running the new/changed tests only, (2) running all the tests.
+  That way, we catch failing tests early. For the REFACTOR phase, improve code
+  quality and remove duplications. Tests must stay GREEN after refactoring.
 - **Add a Robolectric test whenever it's relevant**, not just Mockito-mocked
   coverage: any new or changed `@Dao` interface with a non-trivial `@Query`
   (`WHERE`/`JOIN`/date-range filter/ordering/aggregation) needs its own

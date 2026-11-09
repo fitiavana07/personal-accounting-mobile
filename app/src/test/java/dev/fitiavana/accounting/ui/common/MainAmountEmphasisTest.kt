@@ -37,6 +37,17 @@ class MainAmountEmphasisTest {
     }
 
     @Test
+    fun `uses the loss color for a negative main amount`() {
+        val line = "New balance: -8.5 USD · 340,000 Ar"
+
+        val result = emphasizeMainAmount(context, line, "-8.5 USD", negative = true) as Spanned
+
+        val span = result.getSpans(0, result.length, ForegroundColorSpan::class.java).single()
+        assertEquals(ContextCompat.getColor(context, R.color.loss), span.foregroundColor)
+        assertEquals(line.indexOf("-8.5 USD"), result.getSpanStart(span))
+    }
+
+    @Test
     fun `leaves the text plain when the main amount is not in it`() {
         val result = emphasizeMainAmount(context, "Balance: 1 Ar", "2 USD") as Spanned
 

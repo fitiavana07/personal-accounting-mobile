@@ -37,19 +37,27 @@ class SwapTemplateTest {
     private lateinit var fromSpinner: Spinner
     private lateinit var toSpinner: Spinner
     private lateinit var controller: SwapController
+    private lateinit var secondaryFeeSection: android.view.View
+    private lateinit var switchSecondaryFee: androidx.appcompat.widget.SwitchCompat
+    private lateinit var secondaryFeeGroup: android.view.View
 
     private val usd = Instrument(code = "USD", note = "", type = "fiat", decimalPlaces = 2)
     private val btc = Instrument(code = "BTC", note = "", type = "crypto", decimalPlaces = 8)
+    private val cash = Account(id = "cash", name = "Cash", type = "asset")
     private val usdWallet = Account(id = "usd", name = "USD Wallet", type = "asset", instrumentCode = "USD")
     private val btcViaUsd = Account(
         id = "btc", name = "BTC", type = "asset", instrumentCode = "BTC", intermediaryInstrumentCode = "USD"
     )
+    private val btcWallet = Account(id = "btcw", name = "BTC Wallet", type = "asset", instrumentCode = "BTC")
     private val accounts = listOf(usdWallet, btcViaUsd)
 
     @Before
     fun setUp() {
         fromSpinner = Spinner(context)
         toSpinner = Spinner(context)
+        secondaryFeeSection = android.view.View(context)
+        switchSecondaryFee = androidx.appcompat.widget.SwitchCompat(context)
+        secondaryFeeGroup = android.view.View(context)
         controller = SwapController(
             context = context,
             viewModel = mock(),
@@ -75,6 +83,12 @@ class SwapTemplateTest {
             feeSpinner = Spinner(context),
             textFeePreview = TextView(context),
             textFeeReceived = TextView(context),
+            secondaryFeeSection = secondaryFeeSection,
+            switchSecondaryFee = switchSecondaryFee,
+            secondaryFeeGroup = secondaryFeeGroup,
+            secondaryFeeAmountCode = TextView(context),
+            editSecondaryFee = EditText(context),
+            secondaryFeeSpinner = Spinner(context),
             onChanged = {},
             runInBackground = { it() },
             runOnUiThread = { it() }
@@ -120,6 +134,81 @@ class SwapTemplateTest {
         assertNull(controller.templateSlots())
     }
 
+    /** Reloads the controller's accounts so a funded base account and a no-intermediary target are offered. */
+    private fun withBaseAccounts() = controller.populateSpinners(
+        accounts + listOf(cash, btcWallet),
+        mapOf("usd" to 1L, "cash" to 1L)
+    )
+
+    @Test
+    fun `applyTemplate with a base FROM selects both accounts and turns the fees on`() {
+        withBaseAccounts()
+
+        assertTrue(controller.applyTemplate(template(TemplateSlots.FROM to "cash", TemplateSlots.TO to "btcw")))
+
+        assertEquals("cash", controller.templateSlots()?.first()?.accountId)
+        assertEquals("btcw", controller.templateSlots()?.last()?.accountId)
+        assertEquals(android.view.View.VISIBLE, secondaryFeeSection.visibility)
+        assertTrue(switchSecondaryFee.isChecked)
+        assertEquals(android.view.View.VISIBLE, secondaryFeeGroup.visibility)
+    }
+
+    @Test
+    fun `applyTemplate with a base FROM is false when TO needs an intermediary`() {
+        withBaseAccounts()
+
+        assertFalse(controller.applyTemplate(template(TemplateSlots.FROM to "cash", TemplateSlots.TO to "btc")))
+        assertNull(controller.templateSlots())
+    }
+
+    @Test
+    fun `applyTemplate with an instrument FROM after a base one hides the secondary fee`() {
+        withBaseAccounts()
+        controller.applyTemplate(template(TemplateSlots.FROM to "cash", TemplateSlots.TO to "btcw"))
+
+        assertTrue(controller.applyTemplate(template(TemplateSlots.FROM to "usd", TemplateSlots.TO to "btc")))
+
+        assertEquals(android.view.View.GONE, secondaryFeeSection.visibility)
+        assertFalse(switchSecondaryFee.isChecked)
+    }
+
+    @Test
+    fun `applyTemplate with a base FROM adapts the form before the deferred FROM listener fires`() {
+        val activity = org.robolectric.Robolectric.buildActivity(androidx.appcompat.app.AppCompatActivity::class.java)
+            .create().start().resume().get()
+        activity.setTheme(R.style.Theme_Accounting)
+        val root = android.widget.LinearLayout(activity)
+        root.visibility = android.view.View.GONE
+        val fromS = Spinner(activity)
+        val toS = Spinner(activity)
+        listOf(fromS, toS).forEach { root.addView(it) }
+        activity.setContentView(root)
+        val section = android.view.View(activity)
+        val secondarySwitch = androidx.appcompat.widget.SwitchCompat(activity)
+        val c = SwapController(
+            context = activity, viewModel = mock(),
+            instrumentsMap = mapOf("USD" to usd, "BTC" to btc),
+            fromSpinner = fromS, fromTextBalance = TextView(activity), fromTextNewBalance = TextView(activity),
+            fromTextZeroBalanceError = TextView(activity), toSpinner = toS, toTextBalance = TextView(activity),
+            toTextNewBalance = TextView(activity), fromAmountCode = TextView(activity),
+            editFromAmount = EditText(activity), buttonAll = android.widget.Button(activity),
+            toAmountCode = TextView(activity), editToAmount = EditText(activity), textAmountBase = TextView(activity),
+            textRate = TextView(activity), switchFee = androidx.appcompat.widget.SwitchCompat(activity),
+            feeGroup = android.view.View(activity), feeAmountCode = TextView(activity), editFee = EditText(activity),
+            feeSpinner = Spinner(activity), textFeePreview = TextView(activity), textFeeReceived = TextView(activity),
+            secondaryFeeSection = section, switchSecondaryFee = secondarySwitch,
+            secondaryFeeGroup = android.view.View(activity), secondaryFeeAmountCode = TextView(activity),
+            editSecondaryFee = EditText(activity), secondaryFeeSpinner = Spinner(activity),
+            onChanged = {}, runInBackground = { it() }, runOnUiThread = { it() }
+        )
+        c.populateSpinners(accounts + listOf(cash, btcWallet), mapOf("usd" to 1L, "cash" to 1L))
+
+        assertTrue(c.applyTemplate(template(TemplateSlots.FROM to "cash", TemplateSlots.TO to "btcw")))
+
+        assertEquals(android.view.View.VISIBLE, section.visibility)
+        assertTrue(secondarySwitch.isChecked)
+    }
+
     @Test
     fun `applyTemplate on spinners attached to a hidden window still shows from balance and unit codes once shown`() {
         val activity = org.robolectric.Robolectric.buildActivity(androidx.appcompat.app.AppCompatActivity::class.java)
@@ -147,6 +236,10 @@ class SwapTemplateTest {
             switchFee = androidx.appcompat.widget.SwitchCompat(activity), feeGroup = android.view.View(activity),
             feeAmountCode = TextView(activity), editFee = EditText(activity), feeSpinner = Spinner(activity),
             textFeePreview = TextView(activity), textFeeReceived = TextView(activity),
+            secondaryFeeSection = android.view.View(activity),
+            switchSecondaryFee = androidx.appcompat.widget.SwitchCompat(activity),
+            secondaryFeeGroup = android.view.View(activity), secondaryFeeAmountCode = TextView(activity),
+            editSecondaryFee = EditText(activity), secondaryFeeSpinner = Spinner(activity),
             onChanged = {}, runInBackground = { it() }, runOnUiThread = { it() }
         )
         c.populateSpinners(accounts, accounts.associate { a -> a.id to 1L })

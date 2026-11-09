@@ -15,15 +15,22 @@ fun baseAmountNoWrap(amount: Long): String = "${TransactionDisplay.formatAmount(
 /**
  * [line] with [mainAmount] (the amount in the account's main instrument: its own instrument, or Ar
  * for an account without one) shown bold in the app's gold. [mainAmount] must be spelled exactly as in
- * [line]; if it isn't found the line is returned unstyled.
+ * [line]; if it isn't found the line is returned unstyled. A [negative] amount is shown in the loss red
+ * instead of the gold.
  */
-fun emphasizeMainAmount(context: Context, line: String, mainAmount: String): CharSequence {
+fun emphasizeMainAmount(
+    context: Context,
+    line: String,
+    mainAmount: String,
+    negative: Boolean = false
+): CharSequence {
     val spannable = SpannableString(line)
     val start = line.indexOf(mainAmount)
     if (start < 0) return spannable
     val end = start + mainAmount.length
+    val color = if (negative) R.color.loss else R.color.balance_main
     spannable.setSpan(
-        ForegroundColorSpan(ContextCompat.getColor(context, R.color.balance_main)),
+        ForegroundColorSpan(ContextCompat.getColor(context, color)),
         start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
     )
     spannable.setSpan(StyleSpan(Typeface.BOLD), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)

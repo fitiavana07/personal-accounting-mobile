@@ -66,6 +66,12 @@
     <string name="error_transfer_fee_account_required">Select the expense account for the transfer fee</string>
     <string name="error_swap_fee_invalid">The swap fee must be smaller than the amount to receive</string>
     <string name="error_swap_fee_account_required">Select the expense account for the swap fee</string>
+    <string name="label_swap_fee_preview_base">Fee ≈ %1$s Ar</string>
+    <string name="label_swap_secondary_fee_toggle">Add a fee on top</string>
+    <string name="label_swap_secondary_fee_amount">Fee to add to the amount</string>
+    <string name="label_swap_secondary_fee_account">Expense account of the added fee</string>
+    <string name="error_swap_insufficient_balance">The From account doesn\'t have enough balance for this swap</string>
+    <string name="error_swap_secondary_fee_account_required">Select the expense account for the added fee</string>
     <string name="mode_description_classic">Manually enter debit and credit amounts across two or more accounts.</string>
     <string name="mode_description_transfer">Move money, or a stock, crypto or other instrument, between two accounts.</string>
     <string name="mode_description_instrument_income">Record dividends, interest, or other income received as an instrument.</string>

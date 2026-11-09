@@ -18,14 +18,20 @@ object SwapBuilder {
             account.instrumentCode != null &&
             account.intermediaryInstrumentCode == null
 
+    /** A base-currency asset (no instrument, no intermediary): a swap From that buys To with base currency. */
+    fun isBaseFrom(account: Account): Boolean =
+        account.type == AccountTypes.ASSET &&
+            account.instrumentCode == null &&
+            account.intermediaryInstrumentCode == null
+
     /**
-     * The accounts offered in the From spinner: swap-eligible assets whose base
-     * balance in [balances] is not zero (or unknown) and that have at least one
-     * To account in [accounts]. Input order is preserved.
+     * The accounts offered in the From spinner: swap-eligible assets (with an instrument, or in
+     * base currency) whose base balance in [balances] is not zero (or unknown) and that have at
+     * least one To account in [accounts]. Input order is preserved.
      */
     fun selectableFromAccounts(accounts: List<Account>, balances: Map<String, Long>): List<Account> =
         accounts.filter {
-            isSwapFrom(it) &&
+            (isSwapFrom(it) || isBaseFrom(it)) &&
                 (balances[it.id] ?: 0L) != 0L &&
                 selectableToAccounts(accounts, it).isNotEmpty()
         }
@@ -70,11 +76,75 @@ object SwapBuilder {
         fromBalance: Long,
         fromInstrumentBalance: Long
     ): SwapFee? {
-        if (feeAmount <= 0L || feeAmount >= toAmount || fromAmount <= 0L) return null
-        val feeFrom = (feeAmount.toDouble() * fromAmount.toDouble() / toAmount.toDouble()).roundToLong()
+        val feeFrom = feeInFromUnits(feeAmount, fromAmount, toAmount) ?: return null
         val feeBase = InstrumentValueCalculator.computeBaseAmount(feeFrom, fromBalance, fromInstrumentBalance)
             ?: return null
         return SwapFee(expenseAccountId, feeAmount, feeFrom, feeBase)
+    }
+
+    /**
+     * [feeAmount] (To's instrument) valued in From's unit at the swap's own price ([fromAmount] per
+     * [toAmount]). Null when the fee is not in (0, [toAmount]) or [fromAmount] is not positive.
+     */
+    private fun feeInFromUnits(feeAmount: Long, fromAmount: Long, toAmount: Long): Long? {
+        if (feeAmount <= 0L || feeAmount >= toAmount || fromAmount <= 0L) return null
+        return (feeAmount.toDouble() * fromAmount.toDouble() / toAmount.toDouble()).roundToLong()
+    }
+
+    /**
+     * Fee of a base-currency swap: [feeAmount] (To's instrument) valued at the swap's own price
+     * ([fromAmount] base units per [toAmount]). The base value is also the From-unit value. Null
+     * when the fee is not in (0, [toAmount]) or [fromAmount] is not positive.
+     */
+    fun computeBaseSwapFee(
+        expenseAccountId: String,
+        feeAmount: Long,
+        fromAmount: Long,
+        toAmount: Long
+    ): SwapFee? {
+        val feeBase = feeInFromUnits(feeAmount, fromAmount, toAmount) ?: return null
+        return SwapFee(expenseAccountId, feeAmount, feeBase, feeBase)
+    }
+
+    /** A base-currency fee charged on top of a base-currency swap, expensed to [expenseAccountId]. */
+    data class SecondaryFee(val expenseAccountId: String, val amount: Long)
+
+    /**
+     * The entries of a swap bought with base currency: [fromAccountId] credited [amount] base
+     * units (plus the [secondaryFee], charged on top); [toAccountId] debited [toAmount] units of
+     * its instrument and [amount] base units, which is its cost basis. With a [fee], To receives
+     * net of it and an expense entry debits its base value. The [secondaryFee] has its own expense
+     * entry. A non-positive [amount] or [toAmount] yields null amounts, which
+     * [TransactionValidator.validate] reports as incomplete.
+     */
+    fun buildBaseEntries(
+        fromAccountId: String,
+        toAccountId: String,
+        amount: Long,
+        toAmount: Long,
+        fee: SwapFee? = null,
+        secondaryFee: SecondaryFee? = null
+    ): List<TransactionValidator.EntryData> {
+        val base = amount.takeIf { it > 0L }
+        val to = toAmount.takeIf { it > 0L }
+        val entries = listOf(
+            TransactionValidator.EntryData(
+                accountId = fromAccountId,
+                debitAmount = null,
+                creditAmount = base?.plus(secondaryFee?.amount ?: 0L)
+            ),
+            TransactionValidator.EntryData(
+                accountId = toAccountId,
+                debitAmount = base?.minus(fee?.feeBaseAmount ?: 0L),
+                creditAmount = null,
+                instrumentDebitAmount = to?.minus(fee?.feeAmount ?: 0L)
+            )
+        )
+        return entries +
+            listOfNotNull(
+                fee?.let { FeeAccounts.expenseEntry(it.expenseAccountId, it.feeBaseAmount) },
+                secondaryFee?.let { FeeAccounts.expenseEntry(it.expenseAccountId, it.amount) }
+            )
     }
 
     /**
@@ -112,11 +182,6 @@ object SwapBuilder {
                 intermediaryDebitAmount = from?.minus(fee?.feeFromAmount ?: 0L)
             )
         )
-        if (fee == null) return entries
-        return entries + TransactionValidator.EntryData(
-            accountId = fee.expenseAccountId,
-            debitAmount = fee.feeBaseAmount,
-            creditAmount = null
-        )
+        return if (fee == null) entries else entries + FeeAccounts.expenseEntry(fee.expenseAccountId, fee.feeBaseAmount)
     }
 }

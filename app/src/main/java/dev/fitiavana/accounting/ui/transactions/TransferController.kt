@@ -4,8 +4,6 @@ import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CompoundButton
 import android.widget.EditText
@@ -52,11 +50,11 @@ class TransferController(
     private val editTransferAmount: EditText,
     buttonAll: Button,
     private val textAmountBase: TextView,
-    private val switchFee: CompoundButton,
-    private val feeGroup: View,
+    switchFee: CompoundButton,
+    feeGroup: View,
     private val feeAmountCode: TextView,
-    private val editFee: EditText,
-    private val feeSpinner: Spinner,
+    editFee: EditText,
+    feeSpinner: Spinner,
     private val textFeePreview: TextView,
     private val textFeeReceived: TextView,
     private val onChanged: () -> Unit,
@@ -72,8 +70,12 @@ class TransferController(
     /** The last From account picked, to notice when the amount's unit changes with it. */
     private var lastFromAccount: Account? = null
 
-    /** The expense accounts offered as the transfer fee's destination. */
-    private var feeAccounts: List<Account> = emptyList()
+    /** The transfer fee, deducted from the received amount. */
+    private val feeSection = FeeSection(
+        context, switchFee, feeGroup, editFee, feeSpinner,
+        onToggled = { refreshPreviews(); onChanged() },
+        onAccountChosen = { refreshPreviews() }
+    )
 
     private val from: AccountSideController = AccountSideController(
         context = context,
@@ -90,7 +92,7 @@ class TransferController(
                 // Ar and instrument units are not comparable, so a typed amount can't carry over.
                 if (previous != null && previous.instrumentCode != account.instrumentCode) {
                     editTransferAmount.text = null
-                    editFee.text = null
+                    feeSection.amountField.text = null
                 }
             }
             repopulateToSpinner(account)
@@ -138,25 +140,7 @@ class TransferController(
     init {
         showAmountUnit()
         editTransferAmount.enableAmountFormatting { currentInstrument() != null }
-        editFee.enableAmountFormatting { currentInstrument() != null }
-        switchFee.isChecked = false
-        feeGroup.visibility = View.GONE
-        switchFee.setOnCheckedChangeListener { _, checked ->
-            feeGroup.visibility = if (checked) View.VISIBLE else View.GONE
-            if (!checked) {
-                editFee.text = null
-                feeSpinner.setSelection(0)
-            }
-            refreshPreviews()
-            onChanged()
-        }
-        feeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                refreshPreviews()
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
+        feeSection.amountField.enableAmountFormatting { currentInstrument() != null }
         val watcher = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
             override fun onTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
@@ -166,7 +150,7 @@ class TransferController(
             }
         }
         editTransferAmount.addTextChangedListener(watcher)
-        editFee.addTextChangedListener(watcher)
+        feeSection.amountField.addTextChangedListener(watcher)
         buttonAll.setOnClickListener { fillAmountWithFromBalance() }
     }
 
@@ -179,12 +163,10 @@ class TransferController(
     }
 
     /** The fee typed in the transfer's unit; 0 while the fee toggle is off or nothing is typed. */
-    private fun feeAmount(): Long = if (switchFee.isChecked) editFee.plainAmount(currentInstrument()) else 0L
+    private fun feeAmount(): Long =
+        if (feeSection.isOn) feeSection.amountField.plainAmount(currentInstrument()) else 0L
 
-    private fun selectedFeeAccountId(): String? {
-        val position = feeSpinner.selectedItemPosition
-        return if (position > 0 && position <= feeAccounts.size) feeAccounts[position - 1].id else null
-    }
+    private fun selectedFeeAccountId(): String? = feeSection.selectedAccountId()
 
     /** The fee's value, or null with no fee typed (or an invalid/unrated one, see [checkFee]). */
     private fun computedFee(): TransferBuilder.TransferFee? {
@@ -407,16 +389,7 @@ class TransferController(
         allAccounts = accounts
         from.populate(TransferBuilder.selectableFromAccounts(accounts, balances))
         repopulateToSpinner(null)
-        populateFeeSpinner(FeeAccounts.selectable(accounts))
-    }
-
-    private fun populateFeeSpinner(accounts: List<Account>) {
-        feeAccounts = accounts
-        val names = listOf(context.getString(R.string.spinner_select_account)) + accounts.map { it.name }
-        val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, names)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        feeSpinner.adapter = adapter
-        feeSpinner.setSelection(0)
+        feeSection.populate(FeeAccounts.selectable(accounts))
     }
 
     /**
@@ -515,14 +488,14 @@ class TransferController(
 
     fun hasContent(): Boolean =
         editTransferAmount.text.toString().trim().isNotEmpty() ||
-                switchFee.isChecked ||
+                feeSection.isOn ||
                 from.spinner.selectedItemPosition > 0 ||
                 to.spinner.selectedItemPosition > 0
 
     /** Resets both sides and the amount back to their initial, empty state. */
     fun clear() {
         editTransferAmount.text = null
-        switchFee.isChecked = false
+        feeSection.isOn = false
         lastFromAccount = null
         from.clearSelection()
         repopulateToSpinner(null)

@@ -87,11 +87,7 @@ object TransferBuilder {
     }
 
     /** The expense entry of a [fee]: debits its base value to the expense account. */
-    private fun feeEntry(fee: TransferFee) = TransactionValidator.EntryData(
-        accountId = fee.expenseAccountId,
-        debitAmount = fee.feeBaseAmount,
-        creditAmount = null
-    )
+    private fun feeEntry(fee: TransferFee) = FeeAccounts.expenseEntry(fee.expenseAccountId, fee.feeBaseAmount)
 
     /**
      * The entries of a base-currency transfer: [fromAccountId] credited by [amount] and

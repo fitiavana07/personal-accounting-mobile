@@ -24,11 +24,34 @@ class SwapBuilderTest {
     private val funded = all.associate { it.id to 1L }
 
     @Test
-    fun `selectableFromAccounts offers instrument assets without intermediary that have a swap target`() {
+    fun `selectableFromAccounts offers base and instrument assets without intermediary that have a swap target`() {
         assertEquals(
-            listOf(usdWallet, usdSavings, eurWallet),
+            listOf(cash, usdWallet, usdSavings, eurWallet),
             SwapBuilder.selectableFromAccounts(all, funded)
         )
+    }
+
+    @Test
+    fun `selectableFromAccounts hides a base asset without a target`() {
+        assertEquals(emptyList<Account>(), SwapBuilder.selectableFromAccounts(listOf(cash, btcViaUsd), funded))
+    }
+
+    @Test
+    fun `selectableFromAccounts hides an unfunded base asset`() {
+        assertEquals(listOf(usdWallet), SwapBuilder.selectableFromAccounts(all, mapOf("usd" to 1L)))
+    }
+
+    @Test
+    fun `isBaseFrom is true only for an asset without instrument and intermediary`() {
+        assertTrue(SwapBuilder.isBaseFrom(cash))
+        assertTrue(!SwapBuilder.isBaseFrom(usdWallet))
+        assertTrue(!SwapBuilder.isBaseFrom(btcViaUsd))
+        assertTrue(!SwapBuilder.isBaseFrom(revenue.copy(type = "expense")))
+    }
+
+    @Test
+    fun `selectableToAccounts for a base from offers instrument assets without intermediary`() {
+        assertEquals(listOf(usdWallet, usdSavings, eurWallet), SwapBuilder.selectableToAccounts(all, cash))
     }
 
     @Test
@@ -152,5 +175,107 @@ class SwapBuilderTest {
         val entries = SwapBuilder.buildEntries("usd", "btc", fromAmount = 100L, toAmount = 3L, baseAmount = 450L)
 
         assertTrue(TransactionValidator.validate(entries) is TransactionValidator.ValidationResult.Valid)
+    }
+
+    // Base-currency From: 100,000 Ar buys 3,000 units of To.
+    private fun assertValid(entries: List<TransactionValidator.EntryData>) =
+        assertTrue(TransactionValidator.validate(entries) is TransactionValidator.ValidationResult.Valid)
+
+    @Test
+    fun `buildBaseEntries credits from in base and debits to its instrument with no intermediary`() {
+        val entries = SwapBuilder.buildBaseEntries("cash", "usd", amount = 100_000L, toAmount = 3_000L)
+
+        assertEquals(2, entries.size)
+        assertEquals("cash", entries[0].accountId)
+        assertEquals(100_000L, entries[0].creditAmount)
+        assertNull(entries[0].debitAmount)
+        assertNull(entries[0].instrumentCreditAmount)
+        assertEquals("usd", entries[1].accountId)
+        assertEquals(100_000L, entries[1].debitAmount)
+        assertEquals(3_000L, entries[1].instrumentDebitAmount)
+        assertNull(entries[1].intermediaryDebitAmount)
+        assertValid(entries)
+    }
+
+    @Test
+    fun `buildBaseEntries yields null amounts for non-positive values`() {
+        val entries = SwapBuilder.buildBaseEntries("cash", "usd", amount = 0L, toAmount = 0L)
+
+        assertNull(entries[0].creditAmount)
+        assertNull(entries[1].debitAmount)
+        assertNull(entries[1].instrumentDebitAmount)
+    }
+
+    @Test
+    fun `computeBaseSwapFee values the fee at the swap price in base units`() {
+        val result = SwapBuilder.computeBaseSwapFee("exp", feeAmount = 30L, fromAmount = 100_000L, toAmount = 3_000L)!!
+
+        // 30 * 100,000 / 3,000 = 1,000 base units, which are also the from units
+        assertEquals(1_000L, result.feeBaseAmount)
+        assertEquals(1_000L, result.feeFromAmount)
+        assertEquals(30L, result.feeAmount)
+        assertEquals("exp", result.expenseAccountId)
+    }
+
+    @Test
+    fun `computeBaseSwapFee is null for invalid fees`() {
+        assertNull(SwapBuilder.computeBaseSwapFee("exp", 0L, 100_000L, 3_000L))
+        assertNull(SwapBuilder.computeBaseSwapFee("exp", 3_000L, 100_000L, 3_000L))
+        assertNull(SwapBuilder.computeBaseSwapFee("exp", 30L, 0L, 3_000L))
+    }
+
+    @Test
+    fun `buildBaseEntries with a swap fee nets the to side and debits the expense`() {
+        val swapFee = SwapBuilder.computeBaseSwapFee("exp", 30L, 100_000L, 3_000L)
+
+        val entries = SwapBuilder.buildBaseEntries("cash", "usd", 100_000L, 3_000L, swapFee)
+
+        assertEquals(3, entries.size)
+        assertEquals(100_000L, entries[0].creditAmount)
+        assertEquals(99_000L, entries[1].debitAmount)
+        assertEquals(2_970L, entries[1].instrumentDebitAmount)
+        assertEquals("exp", entries[2].accountId)
+        assertEquals(1_000L, entries[2].debitAmount)
+        assertValid(entries)
+    }
+
+    @Test
+    fun `buildBaseEntries with a secondary fee adds it on top of the from credit`() {
+        val entries = SwapBuilder.buildBaseEntries(
+            "cash", "usd", 100_000L, 3_000L, secondaryFee = SwapBuilder.SecondaryFee("exp2", 500L)
+        )
+
+        assertEquals(3, entries.size)
+        assertEquals(100_500L, entries[0].creditAmount)
+        assertEquals(100_000L, entries[1].debitAmount)
+        assertEquals(3_000L, entries[1].instrumentDebitAmount)
+        assertEquals("exp2", entries[2].accountId)
+        assertEquals(500L, entries[2].debitAmount)
+        assertValid(entries)
+    }
+
+    @Test
+    fun `buildBaseEntries with both fees balances`() {
+        val swapFee = SwapBuilder.computeBaseSwapFee("exp", 30L, 100_000L, 3_000L)
+
+        val entries = SwapBuilder.buildBaseEntries(
+            "cash", "usd", 100_000L, 3_000L, swapFee, SwapBuilder.SecondaryFee("exp2", 500L)
+        )
+
+        assertEquals(4, entries.size)
+        assertEquals(100_500L, entries[0].creditAmount)
+        assertEquals(99_000L, entries[1].debitAmount)
+        assertEquals(1_000L, entries[2].debitAmount)
+        assertEquals(500L, entries[3].debitAmount)
+        assertValid(entries)
+    }
+
+    @Test
+    fun `buildBaseEntries leaves the from credit null when the amount is not positive`() {
+        val entries = SwapBuilder.buildBaseEntries(
+            "cash", "usd", 0L, 3_000L, secondaryFee = SwapBuilder.SecondaryFee("exp2", 500L)
+        )
+
+        assertNull(entries[0].creditAmount)
     }
 }
