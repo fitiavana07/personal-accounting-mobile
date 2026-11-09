@@ -7,6 +7,12 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.63] - 2026-11-09
+
+### Added
+
+- bank-accounts: show running balance after each transaction
+
 ## [1.62] - 2026-11-09
 
 ### Added
@@ -522,7 +528,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.62...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.63...HEAD
+[1.63]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.62...v1.63
 [1.62]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.61...v1.62
 [1.61]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.60...v1.61
 [1.60]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.59...v1.60
