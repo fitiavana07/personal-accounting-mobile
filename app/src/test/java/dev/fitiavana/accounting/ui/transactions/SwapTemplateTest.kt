@@ -1,6 +1,7 @@
 package dev.fitiavana.accounting.ui.transactions
 
 import android.content.Context
+import android.view.View
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
@@ -97,6 +98,7 @@ class SwapTemplateTest {
             secondaryFeeAmountCode = TextView(context),
             editSecondaryFee = EditText(context),
             secondaryFeeSpinner = secondaryFeeSpinner,
+            gainLossSection = View(context), textGainLoss = TextView(context), gainLossSpinner = Spinner(context),
             onChanged = {},
             runInBackground = { it() },
             runOnUiThread = { it() }
@@ -140,6 +142,15 @@ class SwapTemplateTest {
         assertFalse(controller.applyTemplate(template(TemplateSlots.FROM to "usd", TemplateSlots.TO to "usd")))
         assertFalse(controller.applyTemplate(template(TemplateSlots.FROM to "gone", TemplateSlots.TO to "btc")))
         assertNull(controller.templateSlots())
+    }
+
+    @Test
+    fun `applyTemplate with a sell FROM selects both accounts and leaves the secondary fee hidden`() {
+        assertTrue(controller.applyTemplate(template(TemplateSlots.FROM to "btc", TemplateSlots.TO to "usd")))
+
+        assertEquals("btc", controller.templateSlots()?.first()?.accountId)
+        assertEquals("usd", controller.templateSlots()?.last()?.accountId)
+        assertEquals(android.view.View.GONE, secondaryFeeSection.visibility)
     }
 
     /** Reloads the controller's accounts so a funded base account and a no-intermediary target are offered. */
@@ -207,6 +218,7 @@ class SwapTemplateTest {
             secondaryFeeSection = section, switchSecondaryFee = secondarySwitch,
             secondaryFeeGroup = android.view.View(activity), secondaryFeeAmountCode = TextView(activity),
             editSecondaryFee = EditText(activity), secondaryFeeSpinner = Spinner(activity),
+            gainLossSection = View(activity), textGainLoss = TextView(activity), gainLossSpinner = Spinner(activity),
             onChanged = {}, runInBackground = { it() }, runOnUiThread = { it() }
         )
         c.populateSpinners(accounts + listOf(cash, btcWallet), mapOf("usd" to 1L, "cash" to 1L))
@@ -248,6 +260,7 @@ class SwapTemplateTest {
             switchSecondaryFee = androidx.appcompat.widget.SwitchCompat(activity),
             secondaryFeeGroup = android.view.View(activity), secondaryFeeAmountCode = TextView(activity),
             editSecondaryFee = EditText(activity), secondaryFeeSpinner = Spinner(activity),
+            gainLossSection = View(activity), textGainLoss = TextView(activity), gainLossSpinner = Spinner(activity),
             onChanged = {}, runInBackground = { it() }, runOnUiThread = { it() }
         )
         c.populateSpinners(accounts, accounts.associate { a -> a.id to 1L })

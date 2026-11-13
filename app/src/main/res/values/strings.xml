@@ -72,6 +72,11 @@
     <string name="label_swap_secondary_fee_account">Expense account of the added fee</string>
     <string name="error_swap_insufficient_balance">The From account doesn\'t have enough balance for this swap</string>
     <string name="error_swap_secondary_fee_account_required">Select the expense account for the added fee</string>
+    <string name="label_swap_gain_loss_account">Account for the realized gain or loss</string>
+    <string name="label_swap_gain_preview">Gain ≈ %1$s Ar</string>
+    <string name="label_swap_loss_preview">Loss ≈ %1$s Ar</string>
+    <string name="error_swap_gain_account_required">Select the gain account</string>
+    <string name="error_swap_loss_account_required">Select the loss account</string>
     <string name="mode_description_classic">Manually enter debit and credit amounts across two or more accounts.</string>
     <string name="mode_description_transfer">Move money, or a stock, crypto or other instrument, between two accounts.</string>
     <string name="mode_description_instrument_income">Record dividends, interest, or other income received as an instrument.</string>

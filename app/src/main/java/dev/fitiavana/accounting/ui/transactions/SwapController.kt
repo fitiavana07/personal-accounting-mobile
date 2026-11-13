@@ -5,6 +5,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.Button
+import android.widget.ArrayAdapter
 import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.Spinner
@@ -28,7 +29,9 @@ import dev.fitiavana.accounting.ui.common.plainAmount
  * account's own prior balance ratio, so the cost basis carries into To's
  * intermediary balance. When From is a base-currency account, the amount spent is
  * in base currency and is To's cost basis directly, and a secondary base-currency
- * fee can be added on top. See [SwapBuilder] for the account filtering and entry
+ * fee can be added on top. When From has an intermediary instrument (a cost basis) the swap is a sell into
+ * that instrument, and the difference between what is received and the cost basis is a gain or loss
+ * posted to an account chosen in the gain/loss section. See [SwapBuilder] for the account filtering and entry
  * logic, and [AccountSideController] for the shared account-selection plumbing.
  */
 class SwapController(
@@ -62,6 +65,9 @@ class SwapController(
     secondaryFeeAmountCode: TextView,
     editSecondaryFee: EditText,
     secondaryFeeSpinner: Spinner,
+    private val gainLossSection: View,
+    private val textGainLoss: TextView,
+    private val gainLossSpinner: Spinner,
     private val onChanged: () -> Unit,
     runInBackground: (() -> Unit) -> Unit,
     runOnUiThread: (() -> Unit) -> Unit
@@ -88,6 +94,10 @@ class SwapController(
 
     /** Whether the current From is a base-currency account, to re-apply the fee defaults only when that changes. */
     private var fromWasBase = false
+
+    /** The gain/loss accounts offered in [gainLossSpinner] and whether they are gain (true) or loss accounts; null while hidden. */
+    private var gainLossAccounts: List<Account> = emptyList()
+    private var gainLossIsGain: Boolean? = null
 
     /** The TO account of a template being applied, selected once the TO list has been narrowed to FROM's. */
     private var pendingToAccountId: String? = null
@@ -164,6 +174,9 @@ class SwapController(
     /** True when From is a base-currency account: the amount spent is in base currency (see [SwapBuilder.isBaseFrom]). */
     private fun isBaseFrom(): Boolean = from.account?.let { SwapBuilder.isBaseFrom(it) } == true
 
+    /** True when From has a cost basis and is sold into its intermediary instrument (see [SwapBuilder.isSellFrom]). */
+    private fun isSellFrom(): Boolean = from.account?.let { SwapBuilder.isSellFrom(it) } == true
+
     /**
      * Adapts the form to the kind of From [account]: the ALL button and the secondary fee exist only for the
      * kind that supports them. When the kind changes, both fee switches take its default (on for base currency,
@@ -210,7 +223,11 @@ class SwapController(
 
     /** The fee's value, or null with no fee typed (or an invalid/unrated one, see [collectEntries]). */
     private fun computedFee(): SwapBuilder.SwapFee? =
-        if (isBaseFrom()) {
+        if (isSellFrom()) {
+            computedSell()
+                ?.let { SwapBuilder.sellFeeBase(feeAmount(), toAmount(), it) }
+                ?.let { SwapBuilder.SwapFee(selectedFeeAccountId().orEmpty(), feeAmount(), 0L, it) }
+        } else if (isBaseFrom()) {
             SwapBuilder.computeBaseSwapFee(
                 expenseAccountId = selectedFeeAccountId().orEmpty(),
                 feeAmount = feeAmount(),
@@ -227,6 +244,25 @@ class SwapController(
                 fromInstrumentBalance = from.instrumentBalance
             )
         }
+
+    /** What selling the typed From amount releases and its gain or loss; null when not a sell or without a rate. */
+    private fun computedSell(): SwapBuilder.SellResult? =
+        if (isSellFrom()) {
+            SwapBuilder.computeSell(
+                fromAmount(), toAmount(), from.balance, from.instrumentBalance, from.intermediaryBalance
+            )
+        } else {
+            null
+        }
+
+    /** The base value To receives before any fee: the amount spent, adjusted by a sell's gain or loss. */
+    private fun receivedBase(): Long? {
+        val sell = computedSell() ?: return computedBaseAmount()
+        return if (sell.isGain) sell.base + sell.gainLossBase else sell.base - sell.gainLossBase
+    }
+
+    private fun selectedGainLossAccountId(): String? =
+        gainLossAccounts.getOrNull(gainLossSpinner.selectedItemPosition - 1)?.id
 
     /** The secondary fee typed so far, or null without a positive amount (its account may still be missing). */
     private fun computedSecondaryFee(): SwapBuilder.SecondaryFee? =
@@ -254,6 +290,32 @@ class SwapController(
         updateRatePreview()
         updateFeePreview()
         updateFeeReceived()
+        updateGainLoss()
+    }
+
+    /**
+     * Shows the gain/loss section of a sell whose received amount differs from the cost basis released: the
+     * auto-computed base amount and an account spinner (gain accounts for a gain, loss accounts for a loss,
+     * re-offered whenever the sign flips). Hidden otherwise.
+     */
+    private fun updateGainLoss() {
+        val sell = computedSell()
+        if (sell == null || sell.difference == 0L) {
+            gainLossSection.visibility = View.GONE
+            gainLossIsGain = null
+            return
+        }
+        if (gainLossIsGain != sell.isGain) {
+            gainLossIsGain = sell.isGain
+            gainLossAccounts = SwapBuilder.selectableGainLossAccounts(allAccounts, sell.isGain)
+            val names = listOf(context.getString(R.string.spinner_select_account)) + gainLossAccounts.map { it.name }
+            gainLossSpinner.adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, names).also {
+                it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            }
+        }
+        val label = if (sell.isGain) R.string.label_swap_gain_preview else R.string.label_swap_loss_preview
+        textGainLoss.text = context.getString(label, TransactionDisplay.formatAmount(sell.gainLossBase))
+        gainLossSection.visibility = View.VISIBLE
     }
 
     /** "1 <To code> = <price> <From code>", from the two typed amounts; hidden until both are positive. */
@@ -264,6 +326,8 @@ class SwapController(
         val rate = when {
             toInstrument == null || !bothTyped -> null
             isBaseFrom() -> TransactionDisplay.formatExchangeRate(fromAmount(), toAmount(), toInstrument)
+            isSellFrom() && fromInstrument != null ->
+                TransactionDisplay.formatInstrumentExchangeRate(fromAmount(), fromInstrument, toAmount(), toInstrument)
             fromInstrument != null ->
                 TransactionDisplay.formatInstrumentExchangeRate(toAmount(), toInstrument, fromAmount(), fromInstrument)
             else -> null
@@ -298,13 +362,25 @@ class SwapController(
             else -> {
                 val newBase = from.balance - (computedBaseAmount() ?: 0L)
                 val newInstrument = from.instrumentBalance - fromAmount()
+                val intermediary = fromAccount.intermediaryInstrumentCode?.let { instrumentsMap[it] }
+                val formattedInstrument = TransactionDisplay.formatInstrumentAmountNoWrap(newInstrument, fromInstrument)
+                val line = if (intermediary == null) {
+                    context.getString(
+                        R.string.label_new_balance_ar_instrument, TransactionDisplay.formatAmount(newBase), formattedInstrument
+                    )
+                } else {
+                    context.getString(
+                        R.string.label_new_balance_ar_instrument_intermediary,
+                        TransactionDisplay.formatAmount(newBase),
+                        formattedInstrument,
+                        TransactionDisplay.formatInstrumentAmountNoWrap(
+                            from.intermediaryBalance - (computedSell()?.costBasis ?: 0L), intermediary
+                        )
+                    )
+                }
                 showNewBalance(
                     fromTextNewBalance,
-                    context.getString(
-                        R.string.label_new_balance_ar_instrument,
-                        TransactionDisplay.formatAmount(newBase),
-                        TransactionDisplay.formatInstrumentAmountNoWrap(newInstrument, fromInstrument)
-                    ),
+                    line,
                     TransactionDisplay.formatInstrumentAmountNoWrap(newInstrument, fromInstrument),
                     overdrawn
                 )
@@ -316,7 +392,7 @@ class SwapController(
         val toAccount = to.account
         val toInstrument = toInstrument()
         val intermediary = toAccount?.intermediaryInstrumentCode?.let { instrumentsMap[it] }
-        if (toAccount == null || toInstrument == null || (intermediary == null && !isBaseFrom())) {
+        if (toAccount == null || toInstrument == null || (intermediary == null && !isBaseFrom() && !isSellFrom())) {
             toTextNewBalance.visibility = View.GONE
             return
         }
@@ -325,7 +401,7 @@ class SwapController(
             to.instrumentBalance + toAmount() - (fee?.feeAmount ?: 0L), toInstrument
         )
         val newBase = TransactionDisplay.formatAmount(
-            to.balance + (computedBaseAmount() ?: 0L) - (fee?.feeBaseAmount ?: 0L)
+            to.balance + (receivedBase() ?: 0L) - (fee?.feeBaseAmount ?: 0L)
         )
         val line = if (intermediary == null) {
             context.getString(R.string.label_new_balance_ar_instrument, newBase, newInstrument)
@@ -349,9 +425,9 @@ class SwapController(
     private fun updateFeeReceived() {
         val fee = computedFee()
         val toInstrument = toInstrument()
-        val baseAmount = computedBaseAmount()
+        val baseAmount = receivedBase()
         val intermediary = to.account?.intermediaryInstrumentCode?.let { instrumentsMap[it] }
-        if (fee == null || toInstrument == null || baseAmount == null || (intermediary == null && !isBaseFrom())) {
+        if (fee == null || toInstrument == null || baseAmount == null || (intermediary == null && !isBaseFrom() && !isSellFrom())) {
             textFeeReceived.visibility = View.GONE
             return
         }
@@ -377,7 +453,7 @@ class SwapController(
         val fromInstrument = fromInstrument()
         val text = when {
             fee == null -> null
-            isBaseFrom() -> context.getString(
+            isBaseFrom() || isSellFrom() -> context.getString(
                 R.string.label_swap_fee_preview_base, TransactionDisplay.formatAmount(fee.feeBaseAmount)
             )
             fromInstrument == null -> null
@@ -501,6 +577,11 @@ class SwapController(
             toast(R.string.error_transfer_from_zero_balance)
             return null
         }
+        val sell = computedSell()
+        if (isSellFrom() && sell == null) {
+            toast(R.string.error_transfer_from_zero_balance)
+            return null
+        }
         var fee: SwapBuilder.SwapFee? = null
         if (feeAmount() > 0L) {
             fee = computedFee()
@@ -519,6 +600,10 @@ class SwapController(
         }
         if (overdrawsFrom(baseAmount)) {
             toast(R.string.error_swap_insufficient_balance)
+            return null
+        }
+        if (sell != null && sell.difference != 0L && selectedGainLossAccountId() == null) {
+            toast(if (sell.isGain) R.string.error_swap_gain_account_required else R.string.error_swap_loss_account_required)
             return null
         }
         return buildEntries(fromAccount.id, toAccount.id, baseAmount, fee, computedSecondaryFee())
@@ -548,7 +633,13 @@ class SwapController(
         fee: SwapBuilder.SwapFee?,
         secondaryFee: SwapBuilder.SecondaryFee?
     ): List<TransactionValidator.EntryData> =
-        if (isBaseFrom()) {
+        if (isSellFrom()) {
+            SwapBuilder.buildSellEntries(
+                fromAccountId, toAccountId, fromAmount(), toAmount(), computedSell(),
+                fee?.let { SwapBuilder.SellFee(it.expenseAccountId, it.feeAmount, it.feeBaseAmount) },
+                selectedGainLossAccountId().orEmpty()
+            )
+        } else if (isBaseFrom()) {
             SwapBuilder.buildBaseEntries(fromAccountId, toAccountId, fromAmount(), toAmount(), fee, secondaryFee)
         } else {
             SwapBuilder.buildEntries(fromAccountId, toAccountId, fromAmount(), toAmount(), baseAmount, fee)
@@ -568,6 +659,7 @@ class SwapController(
         editToAmount.text = null
         swapFee.isOn = false
         secondaryFee.isOn = false
+        gainLossSpinner.setSelection(0)
         from.clearSelection()
         applyFromKind(null)
         repopulateToSpinner(null)

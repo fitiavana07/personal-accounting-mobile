@@ -63,6 +63,9 @@ class SwapControllerTest {
     private lateinit var secondaryFeeAmountCode: TextView
     private lateinit var editSecondaryFee: EditText
     private lateinit var secondaryFeeSpinner: Spinner
+    private lateinit var gainLossSection: View
+    private lateinit var textGainLoss: TextView
+    private lateinit var gainLossSpinner: Spinner
 
     private val usd = Instrument(code = "USD", note = "", type = "fiat", decimalPlaces = 2)
     private val btc = Instrument(code = "BTC", note = "", type = "crypto", decimalPlaces = 8)
@@ -80,7 +83,9 @@ class SwapControllerTest {
     private val btcWallet = Account(id = "btcw", name = "BTC Wallet", type = "asset", instrumentCode = "BTC")
     private val fees = Account(id = "fees", name = "Swap fees", type = "expense")
     private val commission = Account(id = "comm", name = "Commission", type = "expense")
-    private val accounts = listOf(cash, usdWallet, btcViaUsd, ethViaUsd, btcWallet, fees, commission)
+    private val gain = Account(id = "gain", name = "Trading gain", type = "gain")
+    private val loss = Account(id = "loss", name = "Trading loss", type = "loss")
+    private val accounts = listOf(cash, usdWallet, btcViaUsd, ethViaUsd, btcWallet, fees, commission, gain, loss)
 
     // Cash is unfunded here so the instrument tests keep USD Wallet as From position 1.
     private val balances = mapOf("cash" to 0L, "usd" to 1L, "btc" to 0L, "eth" to 0L)
@@ -118,6 +123,9 @@ class SwapControllerTest {
         secondaryFeeAmountCode = TextView(context)
         editSecondaryFee = EditText(context)
         secondaryFeeSpinner = Spinner(context)
+        gainLossSection = View(context)
+        textGainLoss = TextView(context)
+        gainLossSpinner = Spinner(context)
     }
 
     private fun controller(
@@ -154,6 +162,9 @@ class SwapControllerTest {
         secondaryFeeAmountCode = secondaryFeeAmountCode,
         editSecondaryFee = editSecondaryFee,
         secondaryFeeSpinner = secondaryFeeSpinner,
+        gainLossSection = gainLossSection,
+        textGainLoss = textGainLoss,
+        gainLossSpinner = gainLossSpinner,
         onChanged = onChanged,
         runInBackground = { it() },
         runOnUiThread = { it() }
@@ -994,5 +1005,123 @@ class SwapControllerTest {
         assertFalse(switchFee.isChecked)
         assertEquals(View.GONE, secondaryFeeSection.visibility)
         assertEquals("", editSecondaryFee.text.toString())
+    }
+
+    // SELL: BTC (From, via USD) holds 0.00001000 BTC worth 1,000,000 Ar with a cost basis of 1,000.00 USD;
+    // selling 0.000004 BTC releases 400,000 Ar and 400.00 USD into USD Wallet (To).
+    private fun sellController(): SwapController {
+        val controller = controller(balances = mapOf("btc" to 1L))
+        stubBalance("btc", balance = 1_000_000L, instrument = 1_000L, intermediary = 100_000L)
+        stubBalance("usd", balance = 0L)
+        fromSpinner.setSelection(1)
+        toSpinner.setSelection(1)
+        editFromAmount.setText("0.000004")
+        return controller
+    }
+
+    @Test
+    fun `sell offers the from's intermediary instrument accounts as to`() {
+        controller(balances = mapOf("btc" to 1L))
+        fromSpinner.setSelection(1)
+
+        assertEquals(listOf("BTC"), names(fromSpinner))
+        assertEquals(listOf("USD Wallet"), names(toSpinner))
+    }
+
+    @Test
+    fun `sell receiving exactly the cost basis has no gain or loss entry`() {
+        val controller = sellController()
+        editToAmount.setText("400")
+
+        val entries = controller.collectEntries()!!
+
+        assertEquals(2, entries.size)
+        assertEquals(400_000L, entries[0].creditAmount)
+        assertEquals(400L, entries[0].instrumentCreditAmount)
+        assertEquals(40_000L, entries[0].intermediaryCreditAmount)
+        assertEquals(400_000L, entries[1].debitAmount)
+        assertEquals(40_000L, entries[1].instrumentDebitAmount)
+        assertEquals(View.GONE, gainLossSection.visibility)
+    }
+
+    @Test
+    fun `sell with a gain asks for a gain account and credits it`() {
+        val controller = sellController()
+        editToAmount.setText("500")
+
+        assertEquals(View.VISIBLE, gainLossSection.visibility)
+        assertEquals(listOf("Trading gain"), names(gainLossSpinner))
+        assertTrue(textGainLoss.text.toString().contains("100,000"))
+        assertNull(controller.collectEntries())
+        assertEquals(context.getString(R.string.error_swap_gain_account_required), ShadowToast.getTextOfLatestToast())
+
+        gainLossSpinner.setSelection(1)
+        val entries = controller.collectEntries()!!
+
+        assertEquals(500_000L, entries[1].debitAmount)
+        assertEquals("gain", entries[2].accountId)
+        assertEquals(100_000L, entries[2].creditAmount)
+    }
+
+    @Test
+    fun `sell with a loss asks for a loss account and debits it`() {
+        val controller = sellController()
+        editToAmount.setText("300")
+
+        assertEquals(View.VISIBLE, gainLossSection.visibility)
+        assertEquals(listOf("Trading loss"), names(gainLossSpinner))
+        assertNull(controller.collectEntries())
+        assertEquals(context.getString(R.string.error_swap_loss_account_required), ShadowToast.getTextOfLatestToast())
+
+        gainLossSpinner.setSelection(1)
+        val entries = controller.collectEntries()!!
+
+        assertEquals(300_000L, entries[1].debitAmount)
+        assertEquals("loss", entries[2].accountId)
+        assertEquals(100_000L, entries[2].debitAmount)
+    }
+
+    @Test
+    fun `sell gain or loss section disappears when the amount matches the cost basis again`() {
+        sellController()
+        editToAmount.setText("500")
+        editToAmount.setText("400")
+
+        assertEquals(View.GONE, gainLossSection.visibility)
+    }
+
+    @Test
+    fun `sell fee is deducted from the to amount and expensed`() {
+        val controller = sellController()
+        editToAmount.setText("500")
+        gainLossSpinner.setSelection(1)
+        switchFee.isChecked = true
+        editFee.setText("50")
+        feeSpinner.setSelection(1)
+
+        val entries = controller.collectEntries()!!
+
+        // fee 50.00 USD = 5,000 units at 10 Ar per unit of cost basis = 50,000 Ar
+        assertEquals(450_000L, entries[1].debitAmount)
+        assertEquals(45_000L, entries[1].instrumentDebitAmount)
+        assertEquals("fees", entries[3].accountId)
+        assertEquals(50_000L, entries[3].debitAmount)
+    }
+
+    @Test
+    fun `sell hides the secondary fee`() {
+        sellController()
+
+        assertEquals(View.GONE, secondaryFeeSection.visibility)
+        assertFalse(switchFee.isChecked)
+    }
+
+    @Test
+    fun `sell is blocked when the amount exceeds the from instrument balance`() {
+        val controller = sellController()
+        editFromAmount.setText("0.00001001")
+        editToAmount.setText("400")
+
+        assertBlockedAsInsufficient(controller)
     }
 }

@@ -205,6 +205,9 @@ class AddTransactionActivity : AppCompatActivity() {
                     secondaryFeeAmountCode = findViewById(R.id.text_swap_secondary_fee_amount_code),
                     editSecondaryFee = findViewById(R.id.edit_swap_secondary_fee),
                     secondaryFeeSpinner = findViewById(R.id.spinner_swap_secondary_fee_account),
+                    gainLossSection = findViewById(R.id.section_swap_gain_loss),
+                    textGainLoss = findViewById(R.id.text_swap_gain_loss),
+                    gainLossSpinner = findViewById(R.id.spinner_swap_gain_loss_account),
                     onChanged = { recalculateBalanceSummary() },
                     runInBackground = backgroundRunner,
                     runOnUiThread = uiThreadRunner

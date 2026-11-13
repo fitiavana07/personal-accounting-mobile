@@ -24,9 +24,9 @@ class SwapBuilderTest {
     private val funded = all.associate { it.id to 1L }
 
     @Test
-    fun `selectableFromAccounts offers base and instrument assets without intermediary that have a swap target`() {
+    fun `selectableFromAccounts offers base, instrument and sellable cost-basis assets that have a target`() {
         assertEquals(
-            listOf(cash, usdWallet, usdSavings, eurWallet),
+            listOf(cash, usdWallet, usdSavings, eurWallet, btcViaUsd, ethViaUsd, btcViaEur),
             SwapBuilder.selectableFromAccounts(all, funded)
         )
     }
@@ -56,9 +56,11 @@ class SwapBuilderTest {
 
     @Test
     fun `selectableFromAccounts hides accounts without a target`() {
-        val accounts = listOf(usdWallet, eurWallet, btcViaUsd)
+        val ethViaGbp = ethViaUsd.copy(intermediaryInstrumentCode = "GBP")
+        val accounts = listOf(usdWallet, eurWallet, btcViaUsd, ethViaGbp)
 
-        assertEquals(listOf(usdWallet), SwapBuilder.selectableFromAccounts(accounts, funded))
+        // EUR Wallet and ETH (via GBP) have no target; BTC can be sold into USD Wallet.
+        assertEquals(listOf(usdWallet, btcViaUsd), SwapBuilder.selectableFromAccounts(accounts, funded))
     }
 
     @Test
@@ -277,5 +279,161 @@ class SwapBuilderTest {
         )
 
         assertNull(entries[0].creditAmount)
+    }
+
+    // SELL: F (instrument I_F, intermediary II_F) is sold into T (instrument II_F, no intermediary).
+    // F holds 10 I_F worth 1,000 Ar with a cost basis of 500 II_F: selling 4 I_F releases B = 400, C = 200.
+    private val sellBalance = 1_000L
+    private val sellInstrumentBalance = 10L
+    private val sellIntermediaryBalance = 500L
+
+    private fun sell(toAmount: Long, fromAmount: Long = 4L) = SwapBuilder.computeSell(
+        fromAmount, toAmount, sellBalance, sellInstrumentBalance, sellIntermediaryBalance
+    )
+
+    @Test
+    fun `isSellFrom is true for an asset with an instrument and an intermediary`() {
+        assertTrue(SwapBuilder.isSellFrom(btcViaUsd))
+        assertTrue(!SwapBuilder.isSellFrom(usdWallet))
+        assertTrue(!SwapBuilder.isSellFrom(cash))
+        assertTrue(!SwapBuilder.isSellFrom(btcViaUsd.copy(type = "expense")))
+    }
+
+    @Test
+    fun `selectableToAccounts for a sell from offers the assets of its intermediary instrument without intermediary`() {
+        assertEquals(listOf(usdWallet, usdSavings), SwapBuilder.selectableToAccounts(all, btcViaUsd))
+        assertEquals(listOf(eurWallet), SwapBuilder.selectableToAccounts(all, btcViaEur))
+    }
+
+    @Test
+    fun `selectableToAccounts for a sell from never offers an account of the from instrument`() {
+        assertEquals(emptyList<Account>(), SwapBuilder.selectableToAccounts(all, usdViaUsd))
+    }
+
+    @Test
+    fun `computeSell releases base and cost basis proportionally`() {
+        val result = sell(toAmount = 200L)!!
+
+        assertEquals(400L, result.base)
+        assertEquals(200L, result.costBasis)
+        assertEquals(0L, result.difference)
+        assertEquals(0L, result.gainLossBase)
+    }
+
+    @Test
+    fun `computeSell values a gain in base at the cost basis rate`() {
+        val result = sell(toAmount = 250L)!!
+
+        assertEquals(50L, result.difference)
+        assertEquals(100L, result.gainLossBase)
+        assertTrue(result.isGain)
+    }
+
+    @Test
+    fun `computeSell values a loss in base at the cost basis rate`() {
+        val result = sell(toAmount = 150L)!!
+
+        assertEquals(-50L, result.difference)
+        assertEquals(100L, result.gainLossBase)
+        assertTrue(!result.isGain)
+    }
+
+    @Test
+    fun `computeSell is null without an instrument balance or a cost basis`() {
+        assertNull(SwapBuilder.computeSell(4L, 200L, 1_000L, 0L, 500L))
+        assertNull(SwapBuilder.computeSell(4L, 200L, 1_000L, 10L, 0L))
+        assertNull(SwapBuilder.computeSell(0L, 200L, 1_000L, 10L, 500L))
+    }
+
+    @Test
+    fun `sellFeeBase values the fee at the cost basis rate`() {
+        val result = sell(toAmount = 250L)!!
+
+        assertEquals(40L, SwapBuilder.sellFeeBase(20L, 250L, result))
+    }
+
+    @Test
+    fun `sellFeeBase is null for a fee outside zero and the to amount`() {
+        val result = sell(toAmount = 250L)!!
+
+        assertNull(SwapBuilder.sellFeeBase(0L, 250L, result))
+        assertNull(SwapBuilder.sellFeeBase(250L, 250L, result))
+    }
+
+    @Test
+    fun `buildSellEntries without gain or loss is the plain two-entry sell`() {
+        val entries = SwapBuilder.buildSellEntries("btc", "usd", 4L, 200L, sell(200L))
+
+        assertEquals(2, entries.size)
+        assertEquals(400L, entries[0].creditAmount)
+        assertEquals(4L, entries[0].instrumentCreditAmount)
+        assertEquals(200L, entries[0].intermediaryCreditAmount)
+        assertNull(entries[0].debitAmount)
+        assertEquals("usd", entries[1].accountId)
+        assertEquals(400L, entries[1].debitAmount)
+        assertEquals(200L, entries[1].instrumentDebitAmount)
+        assertNull(entries[1].intermediaryDebitAmount)
+        assertValid(entries)
+    }
+
+    @Test
+    fun `buildSellEntries with a gain credits the gain account in base only`() {
+        val entries = SwapBuilder.buildSellEntries("btc", "usd", 4L, 250L, sell(250L), gainLossAccountId = "gain")
+
+        assertEquals(3, entries.size)
+        assertEquals(500L, entries[1].debitAmount)
+        assertEquals(250L, entries[1].instrumentDebitAmount)
+        assertEquals("gain", entries[2].accountId)
+        assertEquals(100L, entries[2].creditAmount)
+        assertNull(entries[2].debitAmount)
+        assertNull(entries[2].instrumentCreditAmount)
+        assertValid(entries)
+    }
+
+    @Test
+    fun `buildSellEntries with a loss debits the loss account in base only`() {
+        val entries = SwapBuilder.buildSellEntries("btc", "usd", 4L, 150L, sell(150L), gainLossAccountId = "loss")
+
+        assertEquals(3, entries.size)
+        assertEquals(300L, entries[1].debitAmount)
+        assertEquals("loss", entries[2].accountId)
+        assertEquals(100L, entries[2].debitAmount)
+        assertNull(entries[2].creditAmount)
+        assertValid(entries)
+    }
+
+    @Test
+    fun `buildSellEntries with a fee nets the to side and expenses the fee`() {
+        val result = sell(250L)!!
+        val fee = SwapBuilder.SellFee("exp", 20L, SwapBuilder.sellFeeBase(20L, 250L, result)!!)
+        val entries = SwapBuilder.buildSellEntries("btc", "usd", 4L, 250L, result, fee, "gain")
+
+        assertEquals(4, entries.size)
+        assertEquals(460L, entries[1].debitAmount)
+        assertEquals(230L, entries[1].instrumentDebitAmount)
+        assertEquals("gain", entries[2].accountId)
+        assertEquals(100L, entries[2].creditAmount)
+        assertEquals("exp", entries[3].accountId)
+        assertEquals(40L, entries[3].debitAmount)
+        assertValid(entries)
+    }
+
+    @Test
+    fun `buildSellEntries with a loss and a fee balances`() {
+        val result = sell(150L)!!
+        val fee = SwapBuilder.SellFee("exp", 10L, SwapBuilder.sellFeeBase(10L, 150L, result)!!)
+        val entries = SwapBuilder.buildSellEntries("btc", "usd", 4L, 150L, result, fee, "loss")
+
+        assertEquals(280L, entries[1].debitAmount)
+        assertValid(entries)
+    }
+
+    @Test
+    fun `buildSellEntries yields null amounts without a computed sell`() {
+        val entries = SwapBuilder.buildSellEntries("btc", "usd", 0L, 200L, null)
+
+        assertNull(entries[0].creditAmount)
+        assertNull(entries[0].intermediaryCreditAmount)
+        assertNull(entries[1].debitAmount)
     }
 }

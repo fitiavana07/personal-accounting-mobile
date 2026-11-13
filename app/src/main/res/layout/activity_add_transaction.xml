@@ -921,6 +921,35 @@
 
                 </LinearLayout>
 
+                <LinearLayout
+                    android:id="@+id/section_swap_gain_loss"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/text_swap_gain_loss"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/label_swap_gain_loss_account"
+                        android:textSize="12sp"
+                        android:alpha="0.7" />
+
+                    <Spinner
+                        android:id="@+id/spinner_swap_gain_loss_account"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+
             </LinearLayout>
 
             <LinearLayout
