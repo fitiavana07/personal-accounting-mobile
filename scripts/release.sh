@@ -32,7 +32,7 @@ step() {
 
 # --- Preconditions -----------------------------------------------------
 
-step "Checking preconditions (signing config, clean working tree, changelog)"
+step "Checking preconditions (signing config, clean working tree, changelog, main branch)"
 
 read_local_property() {
   local key="$1"
@@ -77,6 +77,10 @@ if [[ ! -f "$CHANGELOG_FILE" ]]; then
 fi
 
 CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+if [[ "$CURRENT_BRANCH" != "main" ]]; then
+  echo "Error: releases must be made from the main branch (current branch: $CURRENT_BRANCH). Merge into main and check it out first." >&2
+  exit 1
+fi
 echo "Preconditions OK (branch: $CURRENT_BRANCH)."
 
 # --- Compute new version ------------------------------------------------
