@@ -7,6 +7,12 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.65] - 2026-11-23
+
+### Added
+
+- swap: sell an asset back into its intermediary instrument
+
 ## [1.64] - 2026-11-09
 
 ### Added
@@ -536,7 +542,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.64...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.65...HEAD
+[1.65]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.64...v1.65
 [1.64]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.63...v1.64
 [1.63]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.62...v1.63
 [1.62]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.61...v1.62
