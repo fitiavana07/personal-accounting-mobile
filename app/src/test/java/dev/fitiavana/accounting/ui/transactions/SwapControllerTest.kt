@@ -1145,14 +1145,17 @@ class SwapControllerTest {
     }
 
     @Test
-    fun `sell to base exposes the unrounded Ar per unit rate`() {
+    fun `sell to base exposes the Ar per unit rate rounded to a whole number`() {
         val controller = sellToBaseController()
         editToAmount.setText("450000")
 
-        assertEquals(4_500.0, controller.exchangeRate()!!, 1e-9)
+        assertEquals(4_500.0, controller.exchangeRate()!!, 0.0)
 
         editToAmount.setText("450001")
-        assertEquals(4_500.01, controller.exchangeRate()!!, 1e-9)
+        assertEquals(4_500.0, controller.exchangeRate()!!, 0.0)
+
+        editToAmount.setText("450060")
+        assertEquals(4_501.0, controller.exchangeRate()!!, 0.0)
     }
 
     @Test
@@ -1239,6 +1242,30 @@ class SwapControllerTest {
         assertEquals(50_000L, entries[2].creditAmount)
         assertEquals("fees", entries[3].accountId)
         assertEquals(50_000L, entries[3].debitAmount)
+    }
+
+    @Test
+    fun `sell to base rate converts only the from amount minus the fee`() {
+        val controller = sellToBaseController()
+        editToAmount.setText("450000")
+        switchFee.isChecked = true
+        editFee.setText("10")
+        feeSpinner.setSelection(1)
+
+        // 450,000 Ar for 100.00 - 10.00 = 90.00 USD
+        assertEquals(5_000.0, controller.exchangeRate()!!, 0.0)
+        assertEquals("1 USD = Ar 5,000", textRate.text.toString())
+    }
+
+    @Test
+    fun `sell to base rate is null when the fee leaves nothing converted`() {
+        val controller = sellToBaseController()
+        editToAmount.setText("450000")
+        switchFee.isChecked = true
+        editFee.setText("100")
+        feeSpinner.setSelection(1)
+
+        assertNull(controller.exchangeRate())
     }
 
     @Test

@@ -182,14 +182,20 @@ class SwapController(
         from.account?.let { SwapBuilder.isSwapFrom(it) } == true && to.account?.let { SwapBuilder.isBaseTo(it) } == true
 
     /**
-     * The unrounded Ar received per whole unit sold, to persist on the transaction; null unless this is a
-     * sale into base currency with both amounts typed. The same figure as the rate preview.
+     * The Ar received per whole unit sold, rounded to a whole number (informational only), to persist on
+     * the transaction; null unless this is a sale into base currency with both amounts typed. Only the From
+     * amount minus the fee is converted to the received Ar (see [convertedFromAmount]). The same figure as
+     * the rate preview.
      */
     fun exchangeRate(): Double? {
         val instrument = fromInstrument()
-        if (!isSellToBase() || instrument == null || toAmount() <= 0L) return null
-        return TransactionDisplay.exchangeRateValue(toAmount(), fromAmount(), instrument)
+        if (!isSellToBase() || instrument == null || toAmount() <= 0L || convertedFromAmount() <= 0L) return null
+        return TransactionDisplay.exchangeRateValue(toAmount(), convertedFromAmount(), instrument)
+            ?.let { Math.round(it).toDouble() }
     }
+
+    /** The From units actually converted to the received Ar: the sold amount minus the fee (typed in From's instrument). */
+    private fun convertedFromAmount(): Long = fromAmount() - feeAmount()
 
     /** True for either kind of sell, which realizes a gain or loss against the cost basis released. */
     private fun isSell(): Boolean = isSellFrom() || isSellToBase()
@@ -351,8 +357,8 @@ class SwapController(
         val toInstrument = toInstrument()
         val bothTyped = fromAmount() > 0L && toAmount() > 0L
         val rate = when {
-            isSellToBase() && fromInstrument != null && bothTyped ->
-                TransactionDisplay.formatExchangeRate(toAmount(), fromAmount(), fromInstrument)
+            isSellToBase() && fromInstrument != null && toAmount() > 0L && convertedFromAmount() > 0L ->
+                TransactionDisplay.formatExchangeRate(toAmount(), convertedFromAmount(), fromInstrument)
             toInstrument == null || !bothTyped -> null
             isBaseFrom() -> TransactionDisplay.formatExchangeRate(fromAmount(), toAmount(), toInstrument)
             isSellFrom() && fromInstrument != null ->

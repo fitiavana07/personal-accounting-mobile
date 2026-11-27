@@ -195,6 +195,11 @@ Transaction amounts stored as integers
   REFACTOR. Never write production code before there is a test that requires
   it. When doing the RED check for the tests, only run the new/changed tests
   instead of everything, because some other agents may be adding new tests.
+  Compilation errors (source+test) do not count as RED. Only behavioral errors
+  count as RED (functions not working as intended). Fixed compilation errors
+  are verified with compilation passing, not on tests passing to GREEN. Bad
+  behaviors such as bugs and new features to implement (missing behavior)
+  can be verified as fixed/implemented using tests passing to GREEN.
   Because running all the tests at once may be long, run the green CHECK in two
   steps: (1) running the new/changed tests only, (2) running all the tests.
   That way, we catch failing tests early. For the REFACTOR phase, improve code

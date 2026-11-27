@@ -35,9 +35,9 @@ Saved through the normal `AddTransactionViewModel.saveTransaction` path (stamped
 
 A sell into a base-currency account stores the rate shown in the preview on the transaction:
 `transactions.exchange_rate` (nullable `REAL`, `Transaction.exchangeRate: Double?`, added by
-`MIGRATION_26_27`, schema 27). It is `toAmount / (fromAmount in whole units)`, i.e. the typed Ar
-received per unit sold (net of the fee), **unrounded** (`SwapController.exchangeRate()`, computed by
-`TransactionDisplay.exchangeRateValue`; the preview rounds the same value). It is `null` for every
+`MIGRATION_26_27`, schema 27). It is `toAmount / ((fromAmount - fee) in whole units)`, i.e. the typed Ar
+received per unit actually converted (only the sold amount minus the fee is converted), **rounded to a whole number** since it is informational only (`SwapController.exchangeRate()`, computed by
+`TransactionDisplay.exchangeRateValue`; the same figure as the preview). It is `null` for every
 other transaction and for rows from before v27. It travels with the transaction in backups and P2P sync
 (`BackupRowJson.kt`, key `exchange_rate`, absent in older backups) and is shown as "Rate (Ar per unit)"
 on the transaction detail screen when present. A `Double` so future pairs (e.g. USDC/USDT) can store
