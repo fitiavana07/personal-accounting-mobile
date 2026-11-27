@@ -3,7 +3,8 @@
 Fourth mode of *New transaction*: buy an amount of T using an amount of F, carrying the cost
 basis into T's intermediary balance. There are two kinds, chosen by the From account:
 an instrument swap (below), a [base-currency swap](#swap-from-a-base-currency-account) and a
-[sell](#sell-an-asset-back-into-its-intermediary-instrument).
+[sell](#sell-an-asset-back-into-its-intermediary-instrument) (also
+[into a base account](#sell-an-instrument-asset-into-a-base-account)).
 
 ## Eligible accounts (`SwapBuilder`)
 
@@ -111,6 +112,25 @@ expense account. `feeBase = fee * B / C` (`SwapBuilder.sellFeeBase`); T receives
 `debitAmount = B ± G - feeBase`, plus an expense entry `debitAmount = feeBase`. The gain/loss is computed
 on the gross `toAmount` (the fee is a separate expense). There is no secondary fee in a sell. The swap
 fee switch is off by default. ALL is available. No rate (no I_F or II_F balance) blocks saving.
+
+## Sell an instrument asset into a base account
+
+F holds an instrument I_F with **no** intermediary and is sold into T, a base-currency asset (no
+instrument, no intermediary; `SwapBuilder.isBaseTo`). T is offered after the instrument accounts F can
+buy. The kind follows the selected To (`SwapController.isSellToBase`). From amount is in I_F, To amount
+is the Ar received.
+
+- `B = fromAmount * F.balance / F.instrumentBalance` is both the base released and the cost basis
+  (`SwapBuilder.computeSellToBase`). `D = received - B` is a **gain** (> 0) or **loss** (< 0) of `|D|`
+  Ar, posted to a gain/loss account chosen in the same section as a sell (reused, not stored in templates).
+- The typed To amount is what T **actually receives, already net of the fee**. F: `creditAmount = B`,
+  `instrumentCreditAmount = fromAmount`. T: `debitAmount = received`, base only. Gain credit / loss debit
+  `|D|`.
+- Optional fee typed in **I_F**, in (0, fromAmount), taken out of the units sold: the remaining
+  `fromAmount - fee` units fetched `received`, so `feeAr = fee * received / (fromAmount - fee)`
+  (`SwapBuilder.sellToBaseFee`), expensed in Ar. The gross is `received + feeAr` and
+  `D = received + feeAr - B`. Entries balance: `B + gain = received + feeAr`. No secondary fee. ALL is
+  available.
 
 ## No overdraw
 

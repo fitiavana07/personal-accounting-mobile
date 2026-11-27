@@ -19,7 +19,8 @@ import kotlin.math.roundToLong
  */
 object SwapBuilder {
 
-    private fun isSwapFrom(account: Account): Boolean =
+    /** An asset with an instrument and no intermediary: a swap From that buys another instrument or sells into base currency. */
+    fun isSwapFrom(account: Account): Boolean =
         account.type == AccountTypes.ASSET &&
             account.instrumentCode != null &&
             account.intermediaryInstrumentCode == null
@@ -64,12 +65,14 @@ object SwapBuilder {
                     it.intermediaryInstrumentCode == null
             }
         }
-        return accounts.filter {
+        val bought = accounts.filter {
             it.type == AccountTypes.ASSET &&
                 it.instrumentCode != null &&
                 it.instrumentCode != fromAccount.instrumentCode &&
                 it.intermediaryInstrumentCode == fromAccount.instrumentCode
         }
+        // An instrument From can also be sold into a base account, listed after the accounts it can buy.
+        return if (isSwapFrom(fromAccount)) bought + accounts.filter { isBaseTo(it) } else bought
     }
 
     /**
@@ -274,8 +277,6 @@ object SwapBuilder {
         fee: SellFee? = null,
         gainLossAccountId: String = ""
     ): List<TransactionValidator.EntryData> {
-        val gainLoss = sell?.gainLossBase ?: 0L
-        val signedGainLoss = if (sell?.isGain == true) gainLoss else -gainLoss
         val to = toAmount.takeIf { it > 0L }
         val entries = listOf(
             TransactionValidator.EntryData(
@@ -287,18 +288,90 @@ object SwapBuilder {
             ),
             TransactionValidator.EntryData(
                 accountId = toAccountId,
-                debitAmount = sell?.let { it.base + signedGainLoss - (fee?.baseAmount ?: 0L) },
+                debitAmount = sell?.let { it.base + signedGainLoss(it) - (fee?.baseAmount ?: 0L) },
                 creditAmount = null,
                 instrumentDebitAmount = to?.minus(fee?.amount ?: 0L)
             )
         )
-        val gainLossEntry = when {
-            sell == null || gainLoss == 0L -> null
-            sell.isGain -> TransactionValidator.EntryData(gainLossAccountId, debitAmount = null, creditAmount = gainLoss)
-            else -> FeeAccounts.expenseEntry(gainLossAccountId, gainLoss)
-        }
         return entries + listOfNotNull(
-            gainLossEntry,
+            gainLossEntry(sell, gainLossAccountId),
+            fee?.let { FeeAccounts.expenseEntry(it.expenseAccountId, it.baseAmount) }
+        )
+    }
+
+    private fun signedGainLoss(sell: SellResult): Long = if (sell.isGain) sell.gainLossBase else -sell.gainLossBase
+
+    /** The base-only entry realizing [sell]'s gain (credit) or loss (debit) on [accountId]; null when there is none. */
+    private fun gainLossEntry(sell: SellResult?, accountId: String): TransactionValidator.EntryData? = when {
+        sell == null || sell.gainLossBase == 0L -> null
+        sell.isGain -> TransactionValidator.EntryData(accountId, debitAmount = null, creditAmount = sell.gainLossBase)
+        else -> FeeAccounts.expenseEntry(accountId, sell.gainLossBase)
+    }
+
+    /** A base-currency asset (no instrument, no intermediary): a To that an instrument asset is sold into. */
+    fun isBaseTo(account: Account): Boolean = isBaseFrom(account)
+
+    /**
+     * Values selling [fromAmount] of an instrument From (no intermediary) into a base account for
+     * [receivedBase] Ar, already net of the fee worth [feeBase] Ar: From releases [SellResult.base] at its
+     * own prior rate, which is also the cost basis, so the gain or loss is the gross Ar ([receivedBase] +
+     * [feeBase]) minus that. Null without a rate.
+     */
+    fun computeSellToBase(
+        fromAmount: Long,
+        receivedBase: Long,
+        fromBalance: Long,
+        fromInstrumentBalance: Long,
+        feeBase: Long = 0L
+    ): SellResult? {
+        if (fromAmount <= 0L) return null
+        val base = InstrumentValueCalculator.computeBaseAmount(fromAmount, fromBalance, fromInstrumentBalance)
+            ?: return null
+        val difference = receivedBase + feeBase - base
+        return SellResult(base, base, difference, abs(difference))
+    }
+
+    /**
+     * A fee of [feeAmount] units of From's instrument, taken out of the [fromAmount] sold. [toAmount] Ar is
+     * what To receives net of it, i.e. for the remaining `fromAmount - feeAmount` units, so the fee is
+     * valued at that price. Null when the fee is not in (0, [fromAmount]) or [toAmount] is not positive.
+     */
+    fun sellToBaseFee(expenseAccountId: String, feeAmount: Long, fromAmount: Long, toAmount: Long): SellFee? {
+        if (feeAmount <= 0L || feeAmount >= fromAmount || toAmount <= 0L) return null
+        val feeBase = (feeAmount.toDouble() * toAmount.toDouble() / (fromAmount - feeAmount).toDouble()).roundToLong()
+        return SellFee(expenseAccountId, feeAmount, feeBase)
+    }
+
+    /**
+     * The entries of selling an instrument From into a base account: [fromAccountId] credited
+     * [fromAmount] units and the [sell]'s base; [toAccountId] debited [toAmount] Ar (base only), already net
+     * of the [fee], whose Ar value is expensed. The gain or loss goes to [gainLossAccountId]. A null
+     * [sell] yields null amounts, which [TransactionValidator.validate] reports as incomplete.
+     */
+    fun buildSellToBaseEntries(
+        fromAccountId: String,
+        toAccountId: String,
+        fromAmount: Long,
+        toAmount: Long,
+        sell: SellResult?,
+        fee: SellFee? = null,
+        gainLossAccountId: String = ""
+    ): List<TransactionValidator.EntryData> {
+        val entries = listOf(
+            TransactionValidator.EntryData(
+                accountId = fromAccountId,
+                debitAmount = null,
+                creditAmount = sell?.base?.takeIf { it > 0L },
+                instrumentCreditAmount = fromAmount.takeIf { sell != null && it > 0L }
+            ),
+            TransactionValidator.EntryData(
+                accountId = toAccountId,
+                debitAmount = toAmount.takeIf { sell != null && it > 0L },
+                creditAmount = null
+            )
+        )
+        return entries + listOfNotNull(
+            gainLossEntry(sell, gainLossAccountId),
             fee?.let { FeeAccounts.expenseEntry(it.expenseAccountId, it.baseAmount) }
         )
     }

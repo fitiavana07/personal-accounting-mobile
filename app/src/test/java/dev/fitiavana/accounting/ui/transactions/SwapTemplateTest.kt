@@ -153,6 +153,16 @@ class SwapTemplateTest {
         assertEquals(android.view.View.GONE, secondaryFeeSection.visibility)
     }
 
+    @Test
+    fun `applyTemplate with an instrument FROM and a base TO sells into base currency`() {
+        withBaseAccounts()
+
+        assertTrue(controller.applyTemplate(template(TemplateSlots.FROM to "usd", TemplateSlots.TO to "cash")))
+
+        assertEquals("usd", controller.templateSlots()?.first()?.accountId)
+        assertEquals("cash", controller.templateSlots()?.last()?.accountId)
+    }
+
     /** Reloads the controller's accounts so a funded base account and a no-intermediary target are offered. */
     private fun withBaseAccounts() = controller.populateSpinners(
         accounts + listOf(cash, btcWallet, feeExpense, otherExpense),

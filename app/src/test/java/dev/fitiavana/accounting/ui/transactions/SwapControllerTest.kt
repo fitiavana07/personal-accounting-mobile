@@ -208,7 +208,7 @@ class SwapControllerTest {
 
         fromSpinner.setSelection(1)
 
-        assertEquals(listOf("BTC", "ETH"), names(toSpinner))
+        assertEquals(listOf("BTC", "ETH", "Cash"), names(toSpinner))
     }
 
     @Test
@@ -1114,6 +1114,119 @@ class SwapControllerTest {
 
         assertEquals(View.GONE, secondaryFeeSection.visibility)
         assertFalse(switchFee.isChecked)
+    }
+
+    // SELL TO BASE: USD Wallet (From) holds 1,000.00 USD worth 4,500,000 Ar; selling 100.00 USD releases
+    // 450,000 Ar into Cash (To, a base account, position 3 after BTC and ETH).
+    private fun sellToBaseController(): SwapController {
+        val controller = controller()
+        stubBalance("usd", balance = 4_500_000L, instrument = 100_000L)
+        stubBalance("cash", balance = 0L)
+        fromSpinner.setSelection(1)
+        toSpinner.setSelection(3)
+        editFromAmount.setText("100")
+        return controller
+    }
+
+    @Test
+    fun `sell to base offers the base accounts after the instrument ones`() {
+        controller()
+        fromSpinner.setSelection(1)
+
+        assertEquals(listOf("BTC", "ETH", "Cash"), names(toSpinner))
+    }
+
+    @Test
+    fun `sell to base labels the received amount in Ar and the fee in the from instrument`() {
+        sellToBaseController()
+
+        assertEquals("Ar", toAmountCode.text.toString())
+        assertEquals("USD", feeAmountCode.text.toString())
+    }
+
+    @Test
+    fun `sell to base at cost is a plain base transfer of the released base`() {
+        val controller = sellToBaseController()
+        editToAmount.setText("450000")
+
+        val entries = controller.collectEntries()!!
+
+        assertEquals(2, entries.size)
+        assertEquals(450_000L, entries[0].creditAmount)
+        assertEquals(10_000L, entries[0].instrumentCreditAmount)
+        assertEquals("cash", entries[1].accountId)
+        assertEquals(450_000L, entries[1].debitAmount)
+        assertNull(entries[1].instrumentDebitAmount)
+        assertEquals(View.GONE, gainLossSection.visibility)
+    }
+
+    @Test
+    fun `sell to base with a gain asks for a gain account and credits it`() {
+        val controller = sellToBaseController()
+        editToAmount.setText("500000")
+
+        assertEquals(View.VISIBLE, gainLossSection.visibility)
+        assertEquals(listOf("Trading gain"), names(gainLossSpinner))
+        assertNull(controller.collectEntries())
+        assertEquals(context.getString(R.string.error_swap_gain_account_required), ShadowToast.getTextOfLatestToast())
+
+        gainLossSpinner.setSelection(1)
+        val entries = controller.collectEntries()!!
+
+        assertEquals(500_000L, entries[1].debitAmount)
+        assertEquals("gain", entries[2].accountId)
+        assertEquals(50_000L, entries[2].creditAmount)
+    }
+
+    @Test
+    fun `sell to base with a loss asks for a loss account and debits it`() {
+        val controller = sellToBaseController()
+        editToAmount.setText("400000")
+        gainLossSpinner.setSelection(1)
+
+        val entries = controller.collectEntries()!!
+
+        assertEquals(400_000L, entries[1].debitAmount)
+        assertEquals("loss", entries[2].accountId)
+        assertEquals(50_000L, entries[2].debitAmount)
+    }
+
+    @Test
+    fun `sell to base fee typed in the from instrument is converted to Ar and deducted`() {
+        val controller = sellToBaseController()
+        editToAmount.setText("450000")
+        switchFee.isChecked = true
+        editFee.setText("10")
+        feeSpinner.setSelection(1)
+        // The fee makes the gross exceed the cost basis, which is what shows the gain section.
+        gainLossSpinner.setSelection(1)
+
+        val entries = controller.collectEntries()!!
+
+        // 450,000 Ar net for 90.00 USD (100.00 sold minus the 10.00 fee): 10.00 USD = 50,000 Ar.
+        // Gross 500,000 vs 450,000 released: gain 50,000. To receives the typed 450,000.
+        assertEquals(450_000L, entries[0].creditAmount)
+        assertEquals(450_000L, entries[1].debitAmount)
+        assertEquals("gain", entries[2].accountId)
+        assertEquals(50_000L, entries[2].creditAmount)
+        assertEquals("fees", entries[3].accountId)
+        assertEquals(50_000L, entries[3].debitAmount)
+    }
+
+    @Test
+    fun `sell to base is blocked when the amount exceeds the from instrument balance`() {
+        val controller = sellToBaseController()
+        editFromAmount.setText("1000.01")
+        editToAmount.setText("450000")
+
+        assertBlockedAsInsufficient(controller)
+    }
+
+    @Test
+    fun `sell to base hides the secondary fee`() {
+        sellToBaseController()
+
+        assertEquals(View.GONE, secondaryFeeSection.visibility)
     }
 
     @Test
