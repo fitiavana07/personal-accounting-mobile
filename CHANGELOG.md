@@ -7,6 +7,17 @@ Versions are numbered by `scripts/release.sh`.
 
 ## [Unreleased]
 
+## [1.66] - 2026-11-27
+
+### Added
+
+- swap: sell an instrument asset into a base-currency account
+- swap: persist the sell-to-base exchange rate
+
+### Fixed
+
+- swap: compute the sell-to-base rate on the amount net of the fee
+
 ## [1.65] - 2026-11-23
 
 ### Added
@@ -542,7 +553,8 @@ Versions are numbered by `scripts/release.sh`.
 
 - Maintenance and internal changes.
 
-[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.65...HEAD
+[Unreleased]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.66...HEAD
+[1.66]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.65...v1.66
 [1.65]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.64...v1.65
 [1.64]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.63...v1.64
 [1.63]: https://github.com/fitiavana07/personal-accounting-mobile/compare/v1.62...v1.63
