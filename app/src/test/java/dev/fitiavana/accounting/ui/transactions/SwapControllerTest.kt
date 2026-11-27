@@ -1145,6 +1145,34 @@ class SwapControllerTest {
     }
 
     @Test
+    fun `sell to base exposes the unrounded Ar per unit rate`() {
+        val controller = sellToBaseController()
+        editToAmount.setText("450000")
+
+        assertEquals(4_500.0, controller.exchangeRate()!!, 1e-9)
+
+        editToAmount.setText("450001")
+        assertEquals(4_500.01, controller.exchangeRate()!!, 1e-9)
+    }
+
+    @Test
+    fun `sell to base rate is null until the received amount is typed`() {
+        val controller = sellToBaseController()
+
+        assertNull(controller.exchangeRate())
+    }
+
+    @Test
+    fun `a non sell to base swap has no rate`() {
+        val controller = controller()
+        selectUsdToBtc()
+        editFromAmount.setText("100")
+        editToAmount.setText("0.002")
+
+        assertNull(controller.exchangeRate())
+    }
+
+    @Test
     fun `sell to base at cost is a plain base transfer of the released base`() {
         val controller = sellToBaseController()
         editToAmount.setText("450000")

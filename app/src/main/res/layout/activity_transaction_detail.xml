@@ -98,6 +98,32 @@
                 android:background="@color/report_divider" />
 
             <LinearLayout
+                android:id="@+id/row_rate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="12sp"
+                    android:alpha="0.7"
+                    android:text="@string/label_exchange_rate" />
+
+                <TextView
+                    android:id="@+id/value_rate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:gravity="end" />
+
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/row_created"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

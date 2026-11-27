@@ -158,6 +158,30 @@ class TransactionDisplayTest {
         assertEquals("0 JPY", TransactionDisplay.formatInstrumentAmount(0, jpy))
     }
 
+    // --- exchangeRateValue ---
+
+    @Test
+    fun `exchange rate value keeps the fraction`() {
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        // 1000 Ar / 3.33 USD
+        assertEquals(300.3003003, TransactionDisplay.exchangeRateValue(1000, 333, usd)!!, 1e-6)
+    }
+
+    @Test
+    fun `exchange rate value is null when instrument amount is zero`() {
+        val usd = Instrument(code = "USD", note = "", type = "currency", decimalPlaces = 2)
+        assertEquals(null, TransactionDisplay.exchangeRateValue(1000, 0, usd))
+    }
+
+    // --- formatRate ---
+
+    @Test
+    fun `rate drops trailing zeros and groups thousands`() {
+        assertEquals("4,500", TransactionDisplay.formatRate(4500.0))
+        assertEquals("4,500.01", TransactionDisplay.formatRate(4500.01))
+        assertEquals("0.99875", TransactionDisplay.formatRate(0.99875))
+    }
+
     // --- formatExchangeRate ---
 
     @Test

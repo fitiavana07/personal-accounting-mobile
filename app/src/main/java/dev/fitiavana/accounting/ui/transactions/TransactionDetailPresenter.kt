@@ -38,7 +38,8 @@ object TransactionDetailPresenter {
         return TransactionDetailView(
             totalAmount = totalDebit,
             note = twe.transaction.note,
-            rows = rows
+            rows = rows,
+            rateText = twe.transaction.exchangeRate?.let { TransactionDisplay.formatRate(it) }
         )
     }
 

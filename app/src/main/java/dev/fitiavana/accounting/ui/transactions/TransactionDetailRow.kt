@@ -24,5 +24,7 @@ sealed class TransactionDetailRow {
 data class TransactionDetailView(
     val totalAmount: Long,
     val note: String,
-    val rows: List<TransactionDetailRow>
+    val rows: List<TransactionDetailRow>,
+    /** The stored exchange rate (Ar per unit sold) formatted, or null when the transaction has none. */
+    val rateText: String? = null
 )

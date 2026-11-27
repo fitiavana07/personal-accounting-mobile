@@ -74,6 +74,14 @@ class TransactionDetailActivity : AppCompatActivity() {
         setFieldValue(R.id.value_id, t.id)
         setFieldValue(R.id.value_created, createdDateFormat.format(Date(t.createdAt)))
 
+        val rateRow = findViewById<View>(R.id.row_rate)
+        if (view.rateText == null) {
+            rateRow.visibility = View.GONE
+        } else {
+            rateRow.visibility = View.VISIBLE
+            setFieldValue(R.id.value_rate, view.rateText)
+        }
+
         val noteSection = findViewById<LinearLayout>(R.id.section_note)
         if (view.note.isBlank()) {
             noteSection.visibility = View.GONE

@@ -112,6 +112,9 @@ recalculates balances.
 Schema version 20 adds the `sync_meta` table (`kind`, `id`, `stampTime`, `stampDevice`, `deleted`, primary key
 `(kind, id)`) with `MIGRATION_19_20`; the backup file format is unchanged except that a backup of another schema
 version is refused, as before. The row JSON shapes are shared between backup and sync (`BackupRowJson.kt`).
+Schema version 27 adds the nullable `transactions.exchange_rate` (`MIGRATION_26_27`; see
+`swap-feature.md`): the transaction row JSON gains an `exchange_rate` key (null/absent for none). Peers on
+schema 26 and 27 refuse to sync until both are updated.
 
 ## Where each part lives (`features/sync/`, UI in `ui/sync/`)
 

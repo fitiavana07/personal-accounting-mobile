@@ -6,6 +6,7 @@ import dev.fitiavana.accounting.features.transactions.Transaction
 import dev.fitiavana.accounting.features.transactions.TransactionEntry
 import dev.fitiavana.accounting.features.transactions.TransactionWithEntries
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class TransactionDetailPresenterTest {
@@ -206,5 +207,26 @@ class TransactionDetailPresenterTest {
 
         val names = view.rows.filterIsInstance<TransactionDetailRow.Entry>().map { it.accountName }
         assertEquals(listOf("Cash", "Bitcoin Wallet", "Salary Revenue"), names)
+    }
+
+    @Test
+    fun `a stored exchange rate is formatted for display`() {
+        val twe = TransactionWithEntries(
+            Transaction(id = "t1", createdAt = 0L, transactionDatetime = 0L, note = "", exchangeRate = 4512.375),
+            emptyList()
+        )
+
+        val view = TransactionDetailPresenter.present(twe, emptyMap(), emptyMap())
+
+        assertEquals("4,512.375", view.rateText)
+    }
+
+    @Test
+    fun `a transaction without an exchange rate has no rate text`() {
+        val twe = TransactionWithEntries(transaction(), emptyList())
+
+        val view = TransactionDetailPresenter.present(twe, emptyMap(), emptyMap())
+
+        assertNull(view.rateText)
     }
 }

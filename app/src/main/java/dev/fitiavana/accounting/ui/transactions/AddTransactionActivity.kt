@@ -578,7 +578,8 @@ class AddTransactionActivity : AppCompatActivity() {
             id = transactionId,
             createdAt = System.currentTimeMillis(),
             transactionDatetime = selectedCalendar.timeInMillis,
-            note = editNote.text.toString().trim()
+            note = editNote.text.toString().trim(),
+            exchangeRate = if (mode == Mode.SWAP && ::swapController.isInitialized) swapController.exchangeRate() else null
         )
 
         val entries = entryDataList.map { entry ->

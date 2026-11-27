@@ -55,15 +55,27 @@ object TransactionDisplay {
 
     fun formatAmount(amount: Long): String = String.format("%,d", amount)
 
+    /** A stored exchange rate: thousands-grouped, up to 8 decimals, no trailing zeros. */
+    fun formatRate(rate: Double): String = java.text.DecimalFormat("#,##0.########").format(rate)
+
+    /** Base units per whole unit of [instrument], unrounded; null when [instrumentAmount] is zero. */
+    fun exchangeRateValue(
+        baseAmount: Long,
+        instrumentAmount: Long,
+        instrument: Instrument
+    ): Double? {
+        if (instrumentAmount == 0L) return null
+        val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())
+        return baseAmount * factor / instrumentAmount
+    }
+
     fun formatExchangeRate(
         baseAmount: Long,
         instrumentAmount: Long,
         instrument: Instrument
     ): String? {
-        if (instrumentAmount == 0L) return null
-        val factor = Math.pow(10.0, instrument.decimalPlaces.toDouble())
-        val rate = Math.round(baseAmount * factor / instrumentAmount)
-        return "1 ${instrument.code} = Ar ${formatAmount(rate)}"
+        val rate = exchangeRateValue(baseAmount, instrumentAmount, instrument) ?: return null
+        return "1 ${instrument.code} = Ar ${formatAmount(Math.round(rate))}"
     }
 
     fun formatInstrumentExchangeRate(

@@ -86,13 +86,15 @@ internal fun Transaction.toJson() = JSONObject().apply {
     put("createdAt", createdAt)
     put("transactionDatetime", transactionDatetime)
     put("note", note)
+    put("exchange_rate", exchangeRate ?: JSONObject.NULL)
 }
 
 internal fun transactionFromJson(json: JSONObject) = Transaction(
     id = json.getString("id"),
     createdAt = json.getLong("createdAt"),
     transactionDatetime = json.getLong("transactionDatetime"),
-    note = json.getString("note")
+    note = json.getString("note"),
+    exchangeRate = if (json.has("exchange_rate") && !json.isNull("exchange_rate")) json.getDouble("exchange_rate") else null
 )
 
 internal fun TransactionTemplate.toJson() = JSONObject().apply {

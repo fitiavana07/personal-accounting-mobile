@@ -190,6 +190,7 @@
     <string name="label_account">Account</string>
     <string name="label_account_type">Account type</string>
     <string name="label_created">Created</string>
+    <string name="label_exchange_rate">Rate (Ar per unit)</string>
     <string name="label_credit">Credit</string>
     <string name="label_credit_ar">Credit (Ar)</string>
     <string name="label_date">Date</string>

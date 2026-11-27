@@ -29,7 +29,19 @@ F.instrumentBalance)`: F's own prior cost rate, as in Transfer. No rate (zero ba
 - T: `debitAmount = B`, `instrumentDebitAmount = toAmount`, `intermediaryDebitAmount = fromAmount`.
 
 Saved through the normal `AddTransactionViewModel.saveTransaction` path (stamped by
-`ChangeTracker`, balances recalculated). No schema change.
+`ChangeTracker`, balances recalculated). No schema change for the entries.
+
+## Persisted exchange rate (sell to base)
+
+A sell into a base-currency account stores the rate shown in the preview on the transaction:
+`transactions.exchange_rate` (nullable `REAL`, `Transaction.exchangeRate: Double?`, added by
+`MIGRATION_26_27`, schema 27). It is `toAmount / (fromAmount in whole units)`, i.e. the typed Ar
+received per unit sold (net of the fee), **unrounded** (`SwapController.exchangeRate()`, computed by
+`TransactionDisplay.exchangeRateValue`; the preview rounds the same value). It is `null` for every
+other transaction and for rows from before v27. It travels with the transaction in backups and P2P sync
+(`BackupRowJson.kt`, key `exchange_rate`, absent in older backups) and is shown as "Rate (Ar per unit)"
+on the transaction detail screen when present. A `Double` so future pairs (e.g. USDC/USDT) can store
+fractional rates.
 
 ## Swap fee (optional)
 

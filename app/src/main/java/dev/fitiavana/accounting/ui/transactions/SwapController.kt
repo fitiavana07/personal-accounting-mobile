@@ -181,6 +181,16 @@ class SwapController(
     private fun isSellToBase(): Boolean =
         from.account?.let { SwapBuilder.isSwapFrom(it) } == true && to.account?.let { SwapBuilder.isBaseTo(it) } == true
 
+    /**
+     * The unrounded Ar received per whole unit sold, to persist on the transaction; null unless this is a
+     * sale into base currency with both amounts typed. The same figure as the rate preview.
+     */
+    fun exchangeRate(): Double? {
+        val instrument = fromInstrument()
+        if (!isSellToBase() || instrument == null || toAmount() <= 0L) return null
+        return TransactionDisplay.exchangeRateValue(toAmount(), fromAmount(), instrument)
+    }
+
     /** True for either kind of sell, which realizes a gain or loss against the cost basis released. */
     private fun isSell(): Boolean = isSellFrom() || isSellToBase()
 

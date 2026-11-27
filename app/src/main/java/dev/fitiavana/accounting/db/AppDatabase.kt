@@ -58,7 +58,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun bankAccountDao(): BankAccountDao
 
     companion object {
-        const val SCHEMA_VERSION = 26
+        const val SCHEMA_VERSION = 27
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -496,6 +496,22 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** Adds the transactions' nullable exchange rate (sell-to-base swap). Internal so it can be checked against Room's generated schema. */
+        internal val MIGRATION_26_27 = object : Migration(26, 27) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val hasColumn = db.query("PRAGMA table_info(`transactions`)").use { cursor ->
+                    var found = false
+                    while (cursor.moveToNext()) {
+                        if (cursor.getString(1) == "exchange_rate") found = true
+                    }
+                    found
+                }
+                if (!hasColumn) {
+                    db.execSQL("ALTER TABLE `transactions` ADD COLUMN `exchange_rate` REAL")
+                }
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -528,7 +544,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_22_23,
                         MIGRATION_23_24,
                         MIGRATION_24_25,
-                        MIGRATION_25_26
+                        MIGRATION_25_26,
+                        MIGRATION_26_27
                     )
                     .build().also { instance = it }
             }
